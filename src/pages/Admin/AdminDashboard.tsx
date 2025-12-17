@@ -7,7 +7,7 @@ import Logo from '../../components/Logo';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'members' | 'simulator'>('members');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -56,7 +56,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'cafe' && 'Manage Cafe Menu'}
                {activeTab === 'events' && 'Manage Events'}
                {activeTab === 'announcements' && 'Manage Updates'}
-               {activeTab === 'members' && 'Member Directory'}
+               {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
            </h1>
         </div>
@@ -64,14 +64,14 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsAdmin />}
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
-        {activeTab === 'members' && <MembersAdmin />}
+        {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
       </main>
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-6 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
         <ul className="flex justify-between items-center text-white/50 w-full max-w-md mx-auto">
-            <NavItem icon="groups" label="Members" active={activeTab === 'members'} onClick={() => setActiveTab('members')} />
+            <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
             <NavItem icon="campaign" label="Updates" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
@@ -633,32 +633,73 @@ const AnnouncementsAdmin: React.FC = () => {
     );
 };
 
-// --- MEMBERS ADMIN ---
+// --- DIRECTORY ADMIN (Members + Staff Tabs) ---
+
+const TIER_OPTIONS = ['All', 'Social', 'Core', 'Premium', 'Corporate', 'Founding'] as const;
 
 const MembersAdmin: React.FC = () => {
     const { members, updateMember, setViewAsUser, actualUser } = useData();
     const navigate = useNavigate();
+    const [subTab, setSubTab] = useState<'members' | 'staff'>('members');
     const [isEditing, setIsEditing] = useState(false);
+    const [isAddingStaff, setIsAddingStaff] = useState(false);
     const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [tierFilter, setTierFilter] = useState<string>('All');
+    
+    const isAdmin = actualUser?.role === 'admin';
 
-    const filteredMembers = useMemo(() => {
-        if (!searchQuery.trim()) return members;
-        const query = searchQuery.toLowerCase();
-        return members.filter(m => 
-            m.name.toLowerCase().includes(query) ||
-            m.email.toLowerCase().includes(query) ||
-            (m.tier && m.tier.toLowerCase().includes(query)) ||
-            (m.phone && m.phone.toLowerCase().includes(query))
-        );
-    }, [members, searchQuery]);
+    // Split members into regular members vs staff/admin
+    const regularMembers = useMemo(() => 
+        members.filter(m => !m.role || m.role === 'member'), 
+        [members]
+    );
+    
+    const staffMembers = useMemo(() => 
+        members.filter(m => m.role === 'staff' || m.role === 'admin'), 
+        [members]
+    );
+
+    // Filter based on search and tier (tier filter only for members tab)
+    const filteredList = useMemo(() => {
+        const baseList = subTab === 'members' ? regularMembers : staffMembers;
+        let filtered = baseList;
+        
+        // Apply tier filter only on members tab
+        if (subTab === 'members' && tierFilter !== 'All') {
+            filtered = filtered.filter(m => {
+                const tier = m.tier || '';
+                // Handle tier variants like "Founding Core" -> check if tier contains the filter
+                return tier === tierFilter || tier.includes(tierFilter);
+            });
+        }
+        
+        // Apply search
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(m => 
+                m.name.toLowerCase().includes(query) ||
+                m.email.toLowerCase().includes(query) ||
+                (m.tier && m.tier.toLowerCase().includes(query)) ||
+                (m.phone && m.phone.toLowerCase().includes(query))
+            );
+        }
+        
+        return filtered;
+    }, [subTab, regularMembers, staffMembers, tierFilter, searchQuery]);
 
     const openEdit = (member: MemberProfile) => {
         setSelectedMember(member);
         setIsEditing(true);
     };
     
+    const openAddStaff = () => {
+        // Create a new staff entry - admin will select from existing members
+        setIsAddingStaff(true);
+    };
+    
     const handleViewAs = (member: MemberProfile) => {
+        if (!isAdmin) return; // Only admins can View As
         setViewAsUser(member);
         navigate('/dashboard');
     };
@@ -666,7 +707,8 @@ const MembersAdmin: React.FC = () => {
     const handleSave = async () => {
         if (selectedMember) {
             updateMember(selectedMember);
-            if (selectedMember.role) {
+            // Only update role if admin
+            if (isAdmin && selectedMember.role) {
                 try {
                     await fetch(`/api/members/${selectedMember.id}/role`, {
                         method: 'PUT',
@@ -680,15 +722,55 @@ const MembersAdmin: React.FC = () => {
         }
         setIsEditing(false);
     };
+    
+    const handlePromoteToStaff = async (member: MemberProfile) => {
+        if (!isAdmin) return;
+        try {
+            await fetch(`/api/members/${member.id}/role`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: 'staff' })
+            });
+            updateMember({ ...member, role: 'staff' });
+        } catch (e) {
+            console.error('Failed to promote to staff:', e);
+        }
+        setIsAddingStaff(false);
+    };
 
     return (
         <div>
-            <div className="mb-6">
+            {/* Sub-tab navigation */}
+            <div className="flex gap-2 mb-6">
+                <button
+                    onClick={() => { setSubTab('members'); setTierFilter('All'); }}
+                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+                        subTab === 'members' 
+                            ? 'bg-primary text-white' 
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                    }`}
+                >
+                    Members ({regularMembers.length})
+                </button>
+                <button
+                    onClick={() => setSubTab('staff')}
+                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+                        subTab === 'staff' 
+                            ? 'bg-primary text-white' 
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                    }`}
+                >
+                    Staff ({staffMembers.length})
+                </button>
+            </div>
+
+            {/* Search and filters */}
+            <div className="mb-6 space-y-3">
                 <div className="relative">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">search</span>
                     <input
                         type="text"
-                        placeholder="Search by name, email, tier, or phone..."
+                        placeholder={subTab === 'members' ? "Search members..." : "Search staff..."}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -702,15 +784,50 @@ const MembersAdmin: React.FC = () => {
                         </button>
                     )}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    {filteredMembers.length} member{filteredMembers.length !== 1 ? 's' : ''} found
+                
+                {/* Tier filter - only show on members tab */}
+                {subTab === 'members' && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Filter by Tier:</span>
+                        {TIER_OPTIONS.map(tier => (
+                            <button
+                                key={tier}
+                                onClick={() => setTierFilter(tier)}
+                                className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
+                                    tierFilter === tier
+                                        ? 'bg-primary text-white'
+                                        : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                                }`}
+                            >
+                                {tier}
+                            </button>
+                        ))}
+                    </div>
+                )}
+                
+                {/* Add Staff button - only show on staff tab for admins */}
+                {subTab === 'staff' && isAdmin && (
+                    <button
+                        onClick={openAddStaff}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">person_add</span>
+                        Add Staff Member
+                    </button>
+                )}
+                
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {filteredList.length} {subTab === 'members' ? 'member' : 'staff'}{filteredList.length !== 1 ? 's' : ''} found
                 </p>
             </div>
 
+            {/* Edit Modal */}
             {isEditing && selectedMember && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95">
-                        <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">Edit Member</h3>
+                        <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">
+                            Edit {selectedMember.role === 'staff' || selectedMember.role === 'admin' ? 'Staff' : 'Member'}
+                        </h3>
                         <div className="space-y-3 mb-6">
                             <div>
                                 <label className="text-[10px] uppercase font-bold text-gray-500">Name</label>
@@ -740,19 +857,32 @@ const MembersAdmin: React.FC = () => {
                                     </select>
                                 </div>
                             </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500">Role</label>
-                                <select 
-                                    className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" 
-                                    value={selectedMember.role || 'member'} 
-                                    onChange={e => setSelectedMember({...selectedMember, role: e.target.value as any})}
-                                >
-                                    <option value="member">Member</option>
-                                    <option value="staff">Staff</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                                <p className="text-[10px] text-gray-400 mt-1">Staff and Admin can access the staff portal</p>
-                            </div>
+                            {/* Role selector - only for admins */}
+                            {isAdmin && (
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-500">Role</label>
+                                    <select 
+                                        className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" 
+                                        value={selectedMember.role || 'member'} 
+                                        onChange={e => setSelectedMember({...selectedMember, role: e.target.value as any})}
+                                    >
+                                        <option value="member">Member</option>
+                                        <option value="staff">Staff</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                    <p className="text-[10px] text-gray-400 mt-1">Staff and Admin can access the staff portal</p>
+                                </div>
+                            )}
+                            {/* Show role as read-only for staff users */}
+                            {!isAdmin && (
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-500">Role</label>
+                                    <div className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white bg-gray-50">
+                                        {selectedMember.role || 'member'}
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 mt-1">Only admins can modify roles</p>
+                                </div>
+                            )}
                         </div>
                         <div className="flex gap-3 justify-end">
                             <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
@@ -761,10 +891,36 @@ const MembersAdmin: React.FC = () => {
                     </div>
                 </div>
             )}
+            
+            {/* Add Staff Modal - select from existing members */}
+            {isAddingStaff && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden animate-in zoom-in-95">
+                        <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">Add Staff Member</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select a member to promote to staff:</p>
+                        <div className="overflow-y-auto max-h-[50vh] space-y-2">
+                            {regularMembers.map(m => (
+                                <button
+                                    key={m.id}
+                                    onClick={() => handlePromoteToStaff(m)}
+                                    className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                                >
+                                    <div className="font-bold text-primary dark:text-white">{m.name}</div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">{m.email}</div>
+                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Tier: {m.tier}</div>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex gap-3 justify-end mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+                            <button onClick={() => setIsAddingStaff(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Mobile View: Cards */}
             <div className="md:hidden space-y-3">
-                {filteredMembers.map(m => (
+                {filteredList.map(m => (
                     <div key={m.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
                             <div onClick={() => openEdit(m)} className="flex-1 cursor-pointer">
@@ -774,8 +930,7 @@ const MembersAdmin: React.FC = () => {
                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${m.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{m.status}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tier</span>
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <span className="bg-primary/5 dark:bg-white/10 text-primary dark:text-white px-2 py-0.5 rounded text-xs font-bold">{m.tier}</span>
                                 {m.role && m.role !== 'member' && (
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>
@@ -784,13 +939,16 @@ const MembersAdmin: React.FC = () => {
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <button 
-                                    onClick={() => handleViewAs(m)} 
-                                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-[14px]">visibility</span>
-                                    View As
-                                </button>
+                                {/* View As - admin only */}
+                                {isAdmin && (
+                                    <button 
+                                        onClick={() => handleViewAs(m)} 
+                                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-[14px]">visibility</span>
+                                        View As
+                                    </button>
+                                )}
                                 <button onClick={() => openEdit(m)} className="text-primary dark:text-white text-xs font-bold">
                                     <span className="material-symbols-outlined text-[18px]">edit</span>
                                 </button>
@@ -814,7 +972,7 @@ const MembersAdmin: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredMembers.map(m => (
+                        {filteredList.map(m => (
                             <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
                                 <td className="p-4 font-medium text-primary dark:text-white">{m.name}</td>
                                 <td className="p-4"><span className="bg-primary/10 dark:bg-white/10 text-primary dark:text-white px-2 py-1 rounded text-xs font-bold">{m.tier}</span></td>
@@ -831,13 +989,16 @@ const MembersAdmin: React.FC = () => {
                                 <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{m.email}</td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-2">
-                                        <button 
-                                            onClick={() => handleViewAs(m)} 
-                                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-[14px]">visibility</span>
-                                            View As
-                                        </button>
+                                        {/* View As - admin only */}
+                                        {isAdmin && (
+                                            <button 
+                                                onClick={() => handleViewAs(m)} 
+                                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-[14px]">visibility</span>
+                                                View As
+                                            </button>
+                                        )}
                                         <button onClick={() => openEdit(m)} className="text-primary dark:text-white hover:underline text-xs font-bold">Edit</button>
                                     </div>
                                 </td>
