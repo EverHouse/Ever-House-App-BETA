@@ -3,6 +3,17 @@ import { triggerHaptic } from '../utils/haptics';
 
 const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
+const getHubspotCookie = (): string | null => {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'hubspotutk') {
+      return value;
+    }
+  }
+  return null;
+};
+
 interface FormField {
   name: string;
   label: string;
@@ -54,15 +65,21 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
         value
       }));
 
+      const hutk = getHubspotCookie();
+      const context: Record<string, any> = {
+        pageUri: window.location.href,
+        pageName: document.title
+      };
+      if (hutk) {
+        context.hutk = hutk;
+      }
+
       const response = await fetch(`${API_BASE}/api/hubspot/forms/${formType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fields: fieldArray,
-          context: {
-            pageUri: window.location.href,
-            pageName: document.title
-          }
+          context
         })
       });
 
