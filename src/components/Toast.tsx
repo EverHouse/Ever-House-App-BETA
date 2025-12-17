@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useData } from '../contexts/DataContext';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -74,7 +73,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: () => void; isDark: 
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const { isDarkTheme } = useData();
+  const isDarkTheme = false; // Default to light theme for toasts in global context
 
   const showToast = useCallback((message: string, type: ToastType = 'success', duration: number = 3000) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

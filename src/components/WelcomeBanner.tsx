@@ -63,15 +63,15 @@ const WelcomeBanner: React.FC = () => {
             <QuickTip 
               icon="group_add" 
               label="Guest Passes" 
-              value={tierPermissions.guestPassesPerMonth === 999 ? 'Unlimited' : `${tierPermissions.guestPassesPerMonth}/month`}
-              available={tierPermissions.guestPassesPerMonth > 0}
+              value={tierPermissions.guestPassesPerYear === 999 ? 'Unlimited' : `${tierPermissions.guestPassesPerYear}/year`}
+              available={tierPermissions.guestPassesPerYear > 0}
               isDark={isDark}
             />
             <QuickTip 
               icon="spa" 
               label="Wellness" 
-              value={tierPermissions.canAccessWellness ? 'Full Access' : 'Limited'}
-              available={tierPermissions.canAccessWellness}
+              value={tierPermissions.canBookWellness ? 'Full Access' : 'Limited'}
+              available={tierPermissions.canBookWellness}
               isDark={isDark}
             />
           </div>
