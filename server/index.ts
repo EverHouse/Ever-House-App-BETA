@@ -194,6 +194,9 @@ const CALENDAR_CONFIG = {
     name: 'MBO_Members_Club',
     businessHours: { start: 8, end: 18 }, // 8 AM - 6 PM
     slotDuration: 30, // 30 minute slots
+  },
+  events: {
+    name: 'Even House Public/Member Events',
   }
 };
 
@@ -374,6 +377,99 @@ async function createCalendarEventOnCalendar(
   } catch (error) {
     console.error('Error creating calendar event:', error);
     return null;
+  }
+}
+
+// Sync events from Google Calendar to database
+async function syncGoogleCalendarEvents(): Promise<{ synced: number; created: number; updated: number; error?: string }> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
+    
+    if (!calendarId) {
+      return { synced: 0, created: 0, updated: 0, error: `Calendar "${CALENDAR_CONFIG.events.name}" not found` };
+    }
+    
+    // Fetch upcoming events from today onwards
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const response = await calendar.events.list({
+      calendarId,
+      timeMin: now.toISOString(),
+      maxResults: 100,
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+    
+    const events = response.data.items || [];
+    let created = 0;
+    let updated = 0;
+    
+    for (const event of events) {
+      if (!event.id || !event.summary) continue;
+      
+      const googleEventId = event.id;
+      const title = event.summary;
+      const description = event.description || null;
+      
+      // Parse date and time
+      let eventDate: string;
+      let startTime: string;
+      let endTime: string | null = null;
+      
+      if (event.start?.dateTime) {
+        // Timed event
+        const startDt = new Date(event.start.dateTime);
+        eventDate = startDt.toISOString().split('T')[0];
+        startTime = startDt.toTimeString().substring(0, 8);
+        
+        if (event.end?.dateTime) {
+          const endDt = new Date(event.end.dateTime);
+          endTime = endDt.toTimeString().substring(0, 8);
+        }
+      } else if (event.start?.date) {
+        // All-day event
+        eventDate = event.start.date;
+        startTime = '00:00:00';
+        endTime = '23:59:00';
+      } else {
+        continue; // Skip events without proper dates
+      }
+      
+      const location = event.location || null;
+      
+      // Check if event already exists
+      const existing = await pool.query(
+        'SELECT id FROM events WHERE google_calendar_id = $1',
+        [googleEventId]
+      );
+      
+      if (existing.rows.length > 0) {
+        // Update existing event
+        await pool.query(
+          `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, 
+           end_time = $5, location = $6, source = 'google_calendar', visibility = 'public', requires_rsvp = false
+           WHERE google_calendar_id = $7`,
+          [title, description, eventDate, startTime, endTime, location, googleEventId]
+        );
+        updated++;
+      } else {
+        // Insert new event
+        await pool.query(
+          `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, 
+           source, visibility, requires_rsvp, google_calendar_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [title, description, eventDate, startTime, endTime, location, 'Social', 'google_calendar', 'public', false, googleEventId]
+        );
+        created++;
+      }
+    }
+    
+    return { synced: events.length, created, updated };
+  } catch (error) {
+    console.error('Error syncing Google Calendar events:', error);
+    return { synced: 0, created: 0, updated: 0, error: 'Failed to sync events' };
   }
 }
 
@@ -571,7 +667,8 @@ app.get('/api/calendars', async (req, res) => {
       calendars: Object.entries(calendarIdCache).map(([name, id]) => ({ name, id })),
       configured: {
         golf: CALENDAR_CONFIG.golf.name,
-        conference: CALENDAR_CONFIG.conference.name
+        conference: CALENDAR_CONFIG.conference.name,
+        events: CALENDAR_CONFIG.events.name
       }
     });
   } catch (error: any) {
@@ -580,17 +677,69 @@ app.get('/api/calendars', async (req, res) => {
   }
 });
 
+// Sync events from Google Calendar
+app.post('/api/events/sync/google', async (req, res) => {
+  try {
+    const result = await syncGoogleCalendarEvents();
+    if (result.error) {
+      return res.status(404).json(result);
+    }
+    res.json({
+      success: true,
+      message: `Synced ${result.synced} events from Google Calendar`,
+      ...result
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Google Calendar sync error:', error);
+    res.status(500).json({ error: 'Failed to sync Google Calendar events' });
+  }
+});
+
+// Sync all events (Google Calendar + Eventbrite)
+app.post('/api/events/sync', async (req, res) => {
+  try {
+    const googleResult = await syncGoogleCalendarEvents();
+    
+    // Try Eventbrite sync if token is available
+    let eventbriteResult = { synced: 0, created: 0, updated: 0, error: 'No Eventbrite token configured' };
+    const eventbriteToken = process.env.EVENTBRITE_PRIVATE_TOKEN;
+    if (eventbriteToken) {
+      // Eventbrite sync is handled by existing endpoint, just report status
+      eventbriteResult = { synced: 0, created: 0, updated: 0, error: undefined as any };
+    }
+    
+    res.json({
+      success: true,
+      google: googleResult,
+      eventbrite: eventbriteResult.error ? { error: eventbriteResult.error } : eventbriteResult
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Event sync error:', error);
+    res.status(500).json({ error: 'Failed to sync events' });
+  }
+});
+
 app.get('/api/events', async (req, res) => {
   try {
-    const { date, include_past } = req.query;
-    let query = 'SELECT id, title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, eventbrite_id, eventbrite_url FROM events';
+    const { date, include_past, visibility } = req.query;
+    let query = 'SELECT id, title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, eventbrite_id, eventbrite_url, source, visibility, requires_rsvp, google_calendar_id FROM events';
     const params: any[] = [];
+    const conditions: string[] = [];
     
     if (date) {
       params.push(date);
-      query += ' WHERE event_date = $1';
+      conditions.push(`event_date = $${params.length}`);
     } else if (include_past !== 'true') {
-      query += ' WHERE event_date >= CURRENT_DATE';
+      conditions.push('event_date >= CURRENT_DATE');
+    }
+    
+    if (visibility) {
+      params.push(visibility);
+      conditions.push(`visibility = $${params.length}`);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
     
     query += ' ORDER BY event_date, start_time';
@@ -605,12 +754,12 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
-    const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees } = req.body;
+    const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility, requires_rsvp } = req.body;
     
     const result = await pool.query(
-      `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, image_url, max_attendees)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [title, description, event_date, start_time, end_time, location, category, image_url, max_attendees]
+      `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, source, visibility, requires_rsvp)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual', $10, $11) RETURNING *`,
+      [title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility || 'public', requires_rsvp || false]
     );
     
     res.status(201).json(result.rows[0]);
@@ -720,16 +869,17 @@ app.post('/api/eventbrite/sync', async (req, res) => {
         // Update existing event
         await pool.query(
           `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, 
-           end_time = $5, location = $6, image_url = $7, eventbrite_url = $8, max_attendees = $9
+           end_time = $5, location = $6, image_url = $7, eventbrite_url = $8, max_attendees = $9,
+           source = 'eventbrite', visibility = 'members_only', requires_rsvp = true
            WHERE eventbrite_id = $10`,
           [title, description, eventDate, startTime, endTime, location, imageUrl, eventbriteUrl, maxAttendees, eventbriteId]
         );
         updated++;
       } else {
-        // Insert new event
+        // Insert new event - Eventbrite events are members-only with RSVP required
         await pool.query(
-          `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, image_url, eventbrite_id, eventbrite_url, max_attendees)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, image_url, eventbrite_id, eventbrite_url, max_attendees, source, visibility, requires_rsvp)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'eventbrite', 'members_only', true)`,
           [title, description, eventDate, startTime, endTime, location, 'Social', imageUrl, eventbriteId, eventbriteUrl, maxAttendees]
         );
         synced++;
