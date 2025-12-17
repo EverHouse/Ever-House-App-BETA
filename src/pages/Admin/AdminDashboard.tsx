@@ -30,8 +30,8 @@ const AdminDashboard: React.FC = () => {
           <span className="material-symbols-outlined text-[24px]">menu</span>
         </button>
         
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer font-bold tracking-widest text-lg opacity-90" onClick={() => navigate('/')}>
-          <span className="font-bold text-xl tracking-tight">EH</span>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer" onClick={() => navigate('/')}>
+          <img src="/assets/logos/header-logo.png?v=2" alt="Even House" className="h-6 w-auto" />
         </div>
 
         {/* Top Right - Exit to Member Dashboard */}
