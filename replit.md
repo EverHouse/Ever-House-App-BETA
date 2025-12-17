@@ -6,7 +6,7 @@ A private members club application built with React, Vite, and TypeScript. The a
 ## Architecture
 - **Frontend**: React 19 with React Router DOM, built with Vite (port 5000)
 - **Backend**: Express.js API server (port 3001) with PostgreSQL database
-- **Styling**: Tailwind CSS (via CDN)
+- **Styling**: Tailwind CSS (PostCSS build with @tailwindcss/postcss)
 - **Integrations**: HubSpot CRM for contact/member management
 
 ## Project Structure
@@ -40,6 +40,7 @@ A private members club application built with React, Vite, and TypeScript. The a
 - **bays**: id, name, description, is_active - TrackMan simulator bays
 - **booking_requests**: id, user_email, user_name, bay_id, bay_preference, request_date, start_time, end_time, duration_minutes, notes, status (pending/approved/declined/cancelled), staff_notes, suggested_time, reviewed_by, reviewed_at
 - **notifications**: id, user_email, title, message, type, related_id, related_type, is_read, created_at
+- **push_subscriptions**: id, user_email, endpoint, p256dh, auth, created_at - Web push notification subscriptions
 
 ## API Endpoints
 - `GET /api/resources` - List all bookable resources
@@ -71,6 +72,10 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `GET /api/notifications?user_email=X` - Get user's notifications
 - `PUT /api/notifications/:id/read` - Mark notification as read
 - `PUT /api/notifications/mark-all-read?user_email=X` - Mark all notifications as read
+- `GET /api/push/vapid-public-key` - Get VAPID public key for push subscriptions
+- `POST /api/push/subscribe` - Subscribe to push notifications
+- `POST /api/push/unsubscribe` - Unsubscribe from push notifications
+- `POST /api/push/test` - Send test push notification (for debugging)
 
 ## Integrations
 - **Replit Auth**: User authentication via OAuth
