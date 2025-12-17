@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import MenuOverlay from '../../components/MenuOverlay';
+import Logo from '../../components/Logo';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const AdminDashboard: React.FC = () => {
         </button>
         
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer" onClick={() => navigate('/')}>
-          <img src="/assets/logos/header-logo.png?v=2" alt="Even House" className="h-6 w-auto" />
+          <Logo type="mascot" variant="white" className="h-10 w-auto" />
         </div>
 
         {/* Top Right - Exit to Member Dashboard */}

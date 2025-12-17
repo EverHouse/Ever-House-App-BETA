@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useContext, createContext, ErrorInfo } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './contexts/DataContext';
+import Logo from './components/Logo';
 import Dashboard from './pages/Member/Dashboard';
 import BookGolf from './pages/Member/BookGolf';
 import MemberEvents from './pages/Member/Events';
@@ -191,7 +192,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer" 
                   onClick={() => navigate('/')}
                 >
-                  <img src="/assets/logos/header-logo.png?v=2" alt="Even House" className="h-6 w-auto" />
+                  <Logo 
+                    isMemberRoute={isMemberRoute} 
+                    isDarkBackground={true} 
+                    className="h-8 w-auto"
+                  />
                 </div>
 
                 <button 
