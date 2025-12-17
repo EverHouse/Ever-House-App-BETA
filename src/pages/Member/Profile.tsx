@@ -168,27 +168,27 @@ const Profile: React.FC = () => {
       {/* Full Screen Card Modal */}
       {isCardOpen && (
          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
-            <div className="w-full max-w-sm aspect-[1/1.4] bg-[#1c1c1e] rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500">
+            <div className="w-full max-w-sm aspect-[1/1.4] bg-[#293515] rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500">
                 {/* Header Section of Pass */}
-                <div className="bg-[#2c2c2e] p-6 pb-4">
+                <div className="bg-[#293515] p-6 pb-4 border-b border-[#F2F2EC]/10">
                     <div className="flex justify-between items-center mb-6">
                          <img src="/assets/logos/monogram-white.png" className="w-10 h-10" alt="" />
-                         <span className="font-bold text-lg tracking-wide">Even House</span>
+                         <span className="font-bold text-lg tracking-wide text-[#F2F2EC]">Even House</span>
                     </div>
                 </div>
                 
                 {/* Body */}
-                <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-6 bg-gradient-to-b from-[#2c2c2e] to-[#1c1c1e]">
+                <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-6 bg-[#293515]">
                     <div className="w-48 h-48 bg-white rounded-2xl p-2 flex items-center justify-center">
                         <span className="material-symbols-outlined text-9xl text-black">qr_code_2</span>
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold mb-1">{user.name}</h2>
-                        <p className="text-white/50 text-sm uppercase tracking-widest">{user.tier} Member</p>
+                        <h2 className="text-2xl font-bold mb-1 text-[#F2F2EC]">{user.name}</h2>
+                        <p className="text-[#F2F2EC]/50 text-sm uppercase tracking-widest">{user.tier} Member</p>
                     </div>
                 </div>
 
-                <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white">
+                <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#F2F2EC]/20 flex items-center justify-center text-[#F2F2EC]">
                     <span className="material-symbols-outlined text-sm">close</span>
                 </button>
             </div>
