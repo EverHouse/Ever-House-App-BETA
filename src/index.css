@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+@theme {
+  --font-family-display: "Inter", sans-serif;
+  --font-family-sans: "Inter", sans-serif;
+  
+  --color-primary: #293515;
+  --color-secondary: #E7E7DC;
+  --color-accent: #CCB8E4;
+  --color-surface-light: #FFFFFF;
+  --color-surface-dark: rgba(255, 255, 255, 0.05);
+  --color-brand-green: #293515;
+  --color-brand-bone: #F2F2EC;
+  --color-brand-lavender: #CCB8E4;
+  
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+}
+
+/* Global box-sizing reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  background-color: #F2F2EC;
+  color: #293515;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive images and media */
+img, video, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* iOS safe area support */
+.safe-area-bottom {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+}
+
+.safe-area-top {
+  padding-top: calc(env(safe-area-inset-top, 0));
+}
+
+.safe-area-inset {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* Prevent horizontal overflow globally */
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Minimum tap target size helper */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+html.dark body {
+  background-color: #293515;
+  color: white;
+}
+
+.liquid-bg {
+  background: radial-gradient(circle at 50% 0%, #293515 0%, #1a1d15 100%);
+}
+
+/* --- Crystalline Glass System --- */
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 8px 32px -4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.2s;
+}
+
+.glass-card:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.glass-button:active {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(0.96);
+}
+
+::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Debug Layout Mode - activate with ?debugLayout=1 */
+.debug-layout * {
+  outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+}
+.debug-layout *:hover {
+  outline: 2px solid red !important;
+  background: rgba(255, 0, 0, 0.1) !important;
+}
+.debug-layout [class*="overflow"] {
+  outline: 2px solid orange !important;
+}
+.debug-layout .debug-overflow-warning {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: red;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 99999;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Accessibility: Focus visible styles */
+:focus-visible {
+  outline: 2px solid #CCB8E4;
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #293515;
+  color: white;
+  padding: 8px 16px;
+  z-index: 100;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 0 0 8px 0;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Improved text contrast for accessibility */
+.text-accessible-muted {
+  color: rgba(255, 255, 255, 0.7);
+}
