@@ -5,7 +5,17 @@ import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import { Client } from '@hubspot/api-client';
 import { google } from 'googleapis';
+import webpush from 'web-push';
 import { setupAuth, registerAuthRoutes } from './replit_integrations/auth';
+
+// Configure web push
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:hello@evenhouse.club',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1018,18 +1028,26 @@ app.put('/api/booking-requests/:id', async (req, res) => {
       
       // Create notification for member
       const updated = result.rows[0];
+      const approvalMessage = `Your simulator booking for ${updated.request_date} at ${updated.start_time.substring(0, 5)} has been approved.`;
       await pool.query(
         `INSERT INTO notifications (user_email, title, message, type, related_id, related_type)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [
           updated.user_email,
           'Booking Request Approved',
-          `Your simulator booking for ${updated.request_date} at ${updated.start_time.substring(0, 5)} has been approved.`,
+          approvalMessage,
           'booking_approved',
           updated.id,
           'booking_request'
         ]
       );
+      
+      // Send push notification
+      await sendPushNotification(updated.user_email, {
+        title: 'Booking Approved!',
+        body: approvalMessage,
+        url: '/#/sims'
+      });
       
       return res.json(result.rows[0]);
     }
@@ -1044,15 +1062,22 @@ app.put('/api/booking-requests/:id', async (req, res) => {
       );
       
       const updated = result.rows[0];
-      const message = suggested_time 
+      const declineMessage = suggested_time 
         ? `Your simulator booking request for ${updated.request_date} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
         : `Your simulator booking request for ${updated.request_date} was declined.${staff_notes ? ' Note: ' + staff_notes : ''}`;
       
       await pool.query(
         `INSERT INTO notifications (user_email, title, message, type, related_id, related_type)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [updated.user_email, 'Booking Request Declined', message, 'booking_declined', updated.id, 'booking_request']
+        [updated.user_email, 'Booking Request Declined', declineMessage, 'booking_declined', updated.id, 'booking_request']
       );
+      
+      // Send push notification
+      await sendPushNotification(updated.user_email, {
+        title: 'Booking Request Update',
+        body: declineMessage,
+        url: '/#/sims'
+      });
       
       return res.json(result.rows[0]);
     }
@@ -1196,6 +1221,113 @@ app.put('/api/notifications/mark-all-read', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Mark all read error:', error);
     res.status(500).json({ error: 'Failed to mark notifications as read' });
+  }
+});
+
+// Push Notification Endpoints
+
+// Get VAPID public key for client-side subscription
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
+// Subscribe to push notifications
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const { subscription, user_email } = req.body;
+    
+    if (!subscription || !user_email) {
+      return res.status(400).json({ error: 'subscription and user_email are required' });
+    }
+    
+    const { endpoint, keys } = subscription;
+    
+    await pool.query(
+      `INSERT INTO push_subscriptions (user_email, endpoint, p256dh, auth)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (endpoint) DO UPDATE SET
+         user_email = $1,
+         p256dh = $3,
+         auth = $4`,
+      [user_email, endpoint, keys.p256dh, keys.auth]
+    );
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Push subscription error:', error);
+    res.status(500).json({ error: 'Failed to save push subscription' });
+  }
+});
+
+// Unsubscribe from push notifications
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    
+    if (!endpoint) {
+      return res.status(400).json({ error: 'endpoint is required' });
+    }
+    
+    await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [endpoint]);
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Push unsubscribe error:', error);
+    res.status(500).json({ error: 'Failed to unsubscribe' });
+  }
+});
+
+// Send push notification to a specific user
+async function sendPushNotification(userEmail: string, payload: { title: string; body: string; url?: string }) {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM push_subscriptions WHERE user_email = $1',
+      [userEmail]
+    );
+    
+    const notifications = result.rows.map(async (sub) => {
+      const pushSubscription = {
+        endpoint: sub.endpoint,
+        keys: {
+          p256dh: sub.p256dh,
+          auth: sub.auth
+        }
+      };
+      
+      try {
+        await webpush.sendNotification(pushSubscription, JSON.stringify(payload));
+      } catch (err: any) {
+        if (err.statusCode === 410) {
+          await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [sub.endpoint]);
+        }
+      }
+    });
+    
+    await Promise.all(notifications);
+  } catch (error) {
+    console.error('Failed to send push notification:', error);
+  }
+}
+
+// Test push notification endpoint (for admin testing)
+app.post('/api/push/test', async (req, res) => {
+  try {
+    const { user_email } = req.body;
+    
+    if (!user_email) {
+      return res.status(400).json({ error: 'user_email is required' });
+    }
+    
+    await sendPushNotification(user_email, {
+      title: 'Test Notification',
+      body: 'This is a test push notification from Even House!',
+      url: '/#/dashboard'
+    });
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Test push error:', error);
+    res.status(500).json({ error: 'Failed to send test notification' });
   }
 });
 

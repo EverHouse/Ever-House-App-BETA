@@ -4,6 +4,7 @@ import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getTierPermissions } from '../../utils/permissions';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
+import { isPushSupported, isSubscribedToPush, subscribeToPush, unsubscribeFromPush } from '../../services/pushNotifications';
 
 
 const GUEST_CHECKIN_FIELDS = [
@@ -21,6 +22,9 @@ const Profile: React.FC = () => {
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [showGuestCheckin, setShowGuestCheckin] = useState(false);
   const [guestPasses, setGuestPasses] = useState<{ passes_used: number; passes_total: number; passes_remaining: number } | null>(null);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
 
   const tierPermissions = getTierPermissions(user?.tier || 'Social');
 
@@ -32,6 +36,35 @@ const Profile: React.FC = () => {
         .catch(err => console.error('Error fetching guest passes:', err));
     }
   }, [user?.email, user?.tier]);
+
+  useEffect(() => {
+    const checkPush = async () => {
+      const supported = await isPushSupported();
+      setPushSupported(supported);
+      if (supported) {
+        const subscribed = await isSubscribedToPush();
+        setPushEnabled(subscribed);
+      }
+    };
+    checkPush();
+  }, []);
+
+  const handlePushToggle = async () => {
+    if (!user?.email || pushLoading) return;
+    
+    setPushLoading(true);
+    try {
+      if (pushEnabled) {
+        await unsubscribeFromPush();
+        setPushEnabled(false);
+      } else {
+        const success = await subscribeToPush(user.email);
+        setPushEnabled(success);
+      }
+    } finally {
+      setPushLoading(false);
+    }
+  };
 
   if (!user) return null;
 
@@ -132,7 +165,24 @@ const Profile: React.FC = () => {
          </Section>
 
          <Section title="Settings" isDark={isDark}>
-            <Row icon="notifications" label="Notifications" toggle isDark={isDark} />
+            {pushSupported && (
+              <div className={`p-4 flex items-center justify-between transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+                <div className="flex items-center gap-4">
+                  <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>notifications</span>
+                  <div>
+                    <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>Push Notifications</span>
+                    <p className={`text-xs mt-0.5 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>Get notified when bookings are approved</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={handlePushToggle}
+                  disabled={pushLoading}
+                  className={`w-12 h-7 rounded-full relative transition-colors ${pushEnabled ? 'bg-green-500' : (isDark ? 'bg-white/20' : 'bg-black/20')}`}
+                >
+                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm transition-all ${pushEnabled ? 'right-1' : 'left-1'}`}></div>
+                </button>
+              </div>
+            )}
             <Row icon="lock" label="Privacy" arrow isDark={isDark} />
          </Section>
 

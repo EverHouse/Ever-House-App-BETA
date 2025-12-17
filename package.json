@@ -42,7 +42,8 @@
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.10.1",
     "tailwindcss": "^4.1.18",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
