@@ -116,7 +116,7 @@ A private members club application built with React, Vite, and TypeScript. The a
 - **Social** ($180/mo): Events, wellness, conference rooms only. No golf simulator access. 2 guest passes/year.
 - **Core** ($250/mo): Full access including simulators (60 min/day). 7-day advance booking. 4 guest passes/year.
 - **Premium** ($450/mo): Priority access, 90 min/day simulators. 10-day advance booking. 8 guest passes/year.
-- **Corporate** ($350/mo per seat): All Premium benefits. 10-day advance booking. 15 guest passes/year. Dedicated account manager.
+- **Corporate** ($350/mo per seat): 90min daily sim time, 10-day advance booking. 15 guest passes/year. Dedicated account manager. No complimentary drink.
 
 ## Tier Permissions Utility
 - `src/utils/permissions.ts` - Centralized tier permission checks
@@ -179,6 +179,20 @@ A private members club application built with React, Vite, and TypeScript. The a
 - **Express Backend**: Full REST API for booking operations
 - **PostgreSQL Database**: Tables for resources, bookings, events, RSVPs, guest_passes
 - **Haptic Feedback**: Mobile interactions provide tactile feedback
+- **Real Venue Photography**: All placeholder images replaced with actual Even House photos
+  - Landing page hero: Interior lounge
+  - Feature cards: TrackMan sims, cowork space, outdoor yoga, events crowd
+  - Private Hire: Venue wide shot, events crowd, private dining, terrace
+  - Gallery: 10 real venue photos across categories
+  - Photos stored in `/public/images/`
+- **Amarie Aesthetics MedSpa Integration**: Full service menu from Amarie brochure
+  - IV Hydration Drip Menu ($125): 6 drip options
+  - Wellness Shots: Essentials, Signature Shots, Peptides
+  - NAD+ Treatments: Single shot and packages
+  - Injectables: Neurotoxins (Botox, Dysport, Lip Flip), Dermal Fillers
+  - Medical Weightloss: Semaglutide and Tirzepatide programs
+  - Direct booking link to amarieaesthetics.co
+- **Corporate Tier Update**: Removed complimentary drink benefit, now features 90min daily sim time + 10-day advance booking
 
 ## Responsive Guidelines
 - Target viewports: iPhone SE (375×667), iPhone 14/15 (390×844), iPhone Pro Max (430×932), iPad (768×1024), Desktop (1440×900)

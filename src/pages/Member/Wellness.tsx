@@ -211,25 +211,83 @@ const MedSpaView: React.FC<{onBook: () => void; isDark?: boolean}> = ({ onBook, 
       </p>
     </div>
 
-    <div className={`sticky top-0 z-10 py-2 backdrop-blur-sm -mx-6 px-6 border-b mb-6 ${isDark ? 'bg-[#293515]/90 border-white/5' : 'bg-[#F2F2EC]/90 border-black/5'}`}>
-       <button onClick={onBook} className="w-full py-3.5 rounded-xl bg-brand-green text-white font-bold tracking-wide shadow-glow hover:bg-brand-green/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+    <div className={`sticky top-0 z-10 py-3 -mx-6 px-6 mb-6 ${isDark ? 'bg-[#293515]' : 'bg-[#F2F2EC]'}`}>
+       <a 
+         href="https://www.amarieaesthetics.co" 
+         target="_blank" 
+         rel="noopener noreferrer"
+         className={`w-full py-3.5 rounded-xl font-bold tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-white text-primary hover:bg-white/90' : 'bg-primary text-white hover:bg-primary/90'}`}
+       >
          <span className="material-symbols-outlined text-[20px]">calendar_add_on</span>
          Book with Amarie
-       </button>
+       </a>
     </div>
 
     <div className="space-y-6">
-      <MedSpaCard title="IV Hydration" isDark={isDark}>
-        <MenuItem name="The Quench Hydration" price="$149" isDark={isDark} />
-        <MenuItem name="Immunity Armor" price="$179" isDark={isDark} />
-        <MenuItem name="Performance Recovery" price="$199" isDark={isDark} />
+      <MedSpaCard title="IV Hydration Drip Menu" subtitle="$125" isDark={isDark}>
+        <MenuItem name="The Beauty Drip" desc="Healthy hair, skin, nails, hydration, glowy skin" isDark={isDark} />
+        <MenuItem name="Immunity Boost" desc="Immune-supporting vitamins for wellness & recovery" isDark={isDark} />
+        <MenuItem name="Hangover Relief" desc="Rehydrate, ease headaches, restore energy" isDark={isDark} />
+        <MenuItem name="The Wellness Blend" desc="Myers Cocktail for overall wellness" isDark={isDark} />
+        <MenuItem name="Fitness Recovery" desc="Vitamins, minerals, electrolytes for athletes" isDark={isDark} />
+        <MenuItem name="Energy Recharge" desc="B12 infusion to boost energy & reduce fatigue" isDark={isDark} />
       </MedSpaCard>
       
       <MedSpaCard title="Wellness Shots" isDark={isDark}>
-        <div className="mb-3">
-          <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Essentials & Energy</h4>
-          <MenuItem name="B12 Energy Boost" price="$35" isDark={isDark} />
-          <MenuItem name="Vitamin D3 Sunshine" price="$30" isDark={isDark} />
+        <div className="mb-4">
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Essentials & Energy</h4>
+          <MenuItem name="B12" price="$15" isDark={isDark} />
+          <MenuItem name="Glutathione" price="$25" isDark={isDark} />
+          <MenuItem name="Folic Acid" price="$20" isDark={isDark} />
+          <MenuItem name="Vitamin D3" price="$20" isDark={isDark} />
+          <MenuItem name="Zinc" price="$20" isDark={isDark} />
+          <MenuItem name="MIC B12" price="$20" isDark={isDark} />
+        </div>
+        <div className="mb-4">
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Amarie x EvenHouse Signature Shots</h4>
+          <MenuItem name="The Beauty Trio" price="$30" isDark={isDark} />
+          <MenuItem name="Boost Me Up" price="$30" isDark={isDark} />
+          <MenuItem name="The Happy Shot" price="$30" isDark={isDark} />
+          <MenuItem name="Immuniglow" price="$30" isDark={isDark} />
+        </div>
+        <div>
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Peptides</h4>
+          <MenuItem name="BPC-157" price="$85" isDark={isDark} />
+          <MenuItem name="GHK-Cu" price="$110" isDark={isDark} />
+          <MenuItem name="Thymosin Beta-4" price="$115" isDark={isDark} />
+        </div>
+      </MedSpaCard>
+
+      <MedSpaCard title="NAD+ Treatments" isDark={isDark}>
+        <MenuItem name="NAD+ Single Shot" price="$50" isDark={isDark} />
+        <MenuItem name="NAD+ Low Dose Package" price="$180" isDark={isDark} />
+        <MenuItem name="NAD+ High Dose Package" price="$350" isDark={isDark} />
+      </MedSpaCard>
+
+      <MedSpaCard title="Injectables" isDark={isDark}>
+        <div className="mb-4">
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Neurotoxins</h4>
+          <MenuItem name="Botox" price="$10/unit" isDark={isDark} />
+          <MenuItem name="Dysport" price="$10/unit" isDark={isDark} />
+          <MenuItem name="Lip Flip" price="$50" isDark={isDark} />
+          <MenuItem name="Masseters" price="Varies" isDark={isDark} />
+        </div>
+        <div>
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Dermal Fillers</h4>
+          <p className={`text-xs ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Special pricing for Even House members. Consultation required.</p>
+        </div>
+      </MedSpaCard>
+
+      <MedSpaCard title="Medical Weightloss" isDark={isDark}>
+        <div className="mb-4">
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Semaglutide GLP-1</h4>
+          <MenuItem name="1 Month" price="$299" isDark={isDark} />
+          <MenuItem name="3 Months" price="$799" isDark={isDark} />
+        </div>
+        <div>
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Tirzepatide GLP-1/GIP</h4>
+          <MenuItem name="1 Month" price="$399" isDark={isDark} />
+          <MenuItem name="3 Months" price="$999" isDark={isDark} />
         </div>
       </MedSpaCard>
     </div>
@@ -278,21 +336,27 @@ const ClassCard: React.FC<any> = ({ title, time, instructor, duration, category,
   </div>
 );
 
-const MedSpaCard: React.FC<{title: string; children: React.ReactNode; isDark?: boolean}> = ({ title, children, isDark = true }) => (
+const MedSpaCard: React.FC<{title: string; subtitle?: string; children: React.ReactNode; isDark?: boolean}> = ({ title, subtitle, children, isDark = true }) => (
   <div className={`rounded-2xl p-5 border ${isDark ? 'glass-card border-white/5' : 'bg-white border-black/10 shadow-sm'}`}>
-    <h3 className={`font-bold text-xl mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-primary'}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
-      {title}
-    </h3>
-    <ul className="space-y-3">{children}</ul>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className={`font-bold text-xl flex items-center gap-2 ${isDark ? 'text-white' : 'text-primary'}`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
+        {title}
+      </h3>
+      {subtitle && <span className={`text-lg font-bold ${isDark ? 'text-accent' : 'text-primary'}`}>{subtitle}</span>}
+    </div>
+    <div className="space-y-3">{children}</div>
   </div>
 );
 
-const MenuItem: React.FC<{name: string; price: string; isDark?: boolean}> = ({ name, price, isDark = true }) => (
-  <li className="flex justify-between items-start">
-    <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-primary/80'}`}>{name}</span>
-    <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{price}</span>
-  </li>
+const MenuItem: React.FC<{name: string; price?: string; desc?: string; isDark?: boolean}> = ({ name, price, desc, isDark = true }) => (
+  <div className="flex justify-between items-start py-1">
+    <div className="flex-1 pr-4">
+      <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-primary/80'}`}>{name}</span>
+      {desc && <p className={`text-xs mt-0.5 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{desc}</p>}
+    </div>
+    {price && <span className={`text-sm font-bold flex-shrink-0 ${isDark ? 'text-white' : 'text-primary'}`}>{price}</span>}
+  </div>
 );
 
 export default Wellness;

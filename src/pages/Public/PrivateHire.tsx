@@ -24,7 +24,7 @@ const PrivateHire: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-[#F2F2EC]">
        <div className="relative w-full h-[420px] bg-primary flex flex-col justify-end overflow-hidden group rounded-b-[2rem]">
          <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" 
-              style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCUuPWF3ePM-tEnxyYsghH7Vc-n7DOoCfQJ__3NR3QAowrsuiL8Sv3aiqoq1IPoxSq5Y5yCdXiqV_aOdxFMe7DD9MxQLYRP3fkXynSRaPHFmpgYcg6lqNiyRCc6pfMzdNzVE3y5vVDHUf-dlwsqdC8nmEu6MpDifwOgq2g50rPb9ZT_pIOvlcRC8dTj_rr7aAvQXHYPLwB4uFxrNn7sJecijD9ZLumsRkTyM--OCWV9O5cAImV52Cbyv6PVLIoWgMhG4Jjq_nsM9C_D")'}}></div>
+              style={{backgroundImage: 'url("/images/venue-wide.jpg")'}}></div>
          <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent"></div>
          <div className="relative z-10 p-6 pb-12">
             <span className="inline-block px-3 py-1 mb-3 text-[10px] font-bold tracking-widest text-white uppercase bg-white/20 backdrop-blur-sm rounded-full border border-white/10">Events</span>
@@ -46,21 +46,21 @@ const PrivateHire: React.FC = () => {
           <SpaceCard 
             title="The Main Hall"
             cap="150 Max"
-            img="https://lh3.googleusercontent.com/aida-public/AB6AXuCF8XZt1NbdNjRHhRPmBFzYMN99aN_A6_Yt0LrZmQb_X-4KGKv-T36vuzZoKSiNeVgRr7-LEFn7rBrA1qQ_jw_PR8TZRJgKTTpHl-IdZ5eJIVzsJG9_zhXRIIpuG1wd-0GKgXvs3k2yIOzfeId1oTNPShriRJ_OaSpnz8rB0ABzRl-L0ALTm4zUfyBzzRvJtJY3IPNkVWkO8wskyDO9IoDgGC4P0AB9MEpNsavIiGPIJrmWMk1m19yqR8aLiL-vzWZaENzFaFZ5LI74"
+            img="/images/events-crowd.jpg"
             tags={['AV System', 'Full Bar', 'Stage']}
             desc="Our signature space featuring vaulted ceilings, abundant natural light, and a dedicated stage area."
           />
           <SpaceCard 
             title="The Private Dining Room"
             cap="20 Seated"
-            img="https://lh3.googleusercontent.com/aida-public/AB6AXuCd42kNwny7mXLMILG9qpMsDTqh49VUjY93FFHTRhuHAGrvtbbD90zopQr0sMDYGZpZuo1pEUyhazHUpWDxR4tzRko0uwSCV6-X4JLdHCopIdw6RlR5pS0uT8owzy3QdBva06k_AH_id71L0b3FChUlAPiIJDil0O1rvD6UJZ0MAA8CaH9VWZZD_ENpJa8gN3dhhz47D8ru6ixXp_mRLMauxgcXomnCjEVzpUmduhA4UspMj2zJ1bMrCDDonAz4gRVwlYkHS4CqtEry"
+            img="/images/private-dining.jpg"
             tags={['Private Service', 'Custom Menu']}
             desc="An exclusive enclave for business meetings or family gatherings, offering complete privacy."
           />
           <SpaceCard 
             title="The Terrace"
             cap="60 Standing"
-            img="https://lh3.googleusercontent.com/aida-public/AB6AXuCCei0uMoDDGtP16sLikZ2C3lsjEf__HqKqJZLd2jlEgh9V2ew6skOuiWd9bIINAdS7OvNGH901VaRpcGOBkYdtrCCcUKZMpxyk8hmNbRHaC_1jLPnt8OSbKsI0mPtBPJq_Gh4c8d-Q2KFj86NvwygAbSjXE22DRHdNlrqiV-HRUIicNx6EFnMLNCVndH9mxk-fsI1zg4_L_RgLGYMq03q5h0XCn1z2mPf4K_rQXKbcMLozMLPEPNjNg2f2ToaRsBrGUWndxL0-kNLR"
+            img="/images/terrace.jpg"
             tags={['Outdoor Heating', 'Fire Pit']}
             desc="Enjoy the California breeze in our lush outdoor setting, perfect for cocktail hours."
           />

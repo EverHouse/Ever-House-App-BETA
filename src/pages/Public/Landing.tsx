@@ -20,8 +20,8 @@ const Landing: React.FC = () => {
     <div className="bg-[#F2F2EC] min-h-screen pb-0 overflow-x-hidden">
       {/* Hero Section */}
       <div className="relative h-[85vh] flex flex-col justify-end p-6 pb-16 overflow-hidden rounded-b-[2.5rem] shadow-sm">
-        {/* Hero Background Image - Updated to premium interior */}
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?q=80&w=2661&auto=format&fit=crop')] bg-cover bg-center"></div>
+        {/* Hero Background Image - Even House interior lounge */}
+        <div className="absolute inset-0 bg-[url('/images/hero-lounge.jpg')] bg-cover bg-center"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
         
         <div className="relative z-10 animate-pop-in flex flex-col items-center text-center">
@@ -47,28 +47,28 @@ const Landing: React.FC = () => {
         <h2 className="text-3xl font-bold text-[#293515] mb-8 font-sans">Why Even House</h2>
         <div className="grid grid-cols-2 gap-4">
           <FeatureCard 
-            image="https://lh3.googleusercontent.com/aida-public/AB6AXuB4cJv0jX_Q6g4XOR02SdveS0i0W9GBNM-0Brg1NVJqCe42zUKk7Y5m4JyWvRerLHa-wZPY2_ImoWC6NBatsFkSvQcGQqBKTHfsUyrWkJFwLQUgqycCI9Ky2odlg5EfiwrZNW0RPla61IlnFigW8JXN3Byd2z7S1T548aK5hq5VUtTpxAzcA5BqOgbEldke-6O5lq4kfkXQ7Bzvo7Tz7YMxpiA6qRtwqHejpinT_S5VKLWoybx5Dm2bm3JMgcE91Tjrri740okHaDJ7"
+            image="/images/golf-sims.jpg"
             icon="sports_golf"
             title="Golf all year"
             desc="4 TrackMan bays, putting course, private/group lessons"
             delay="0.1s"
           />
           <FeatureCard 
-            image="https://lh3.googleusercontent.com/aida-public/AB6AXuAzWRhzIrjwSfnj7Fn_YowoOoLnp97WiABk-tWFX-vHm9vYVgWfDHLMPoT4ZQbVU2EGAhTv-KaHV5aEOs4VcL4_wZ7ECvGSzK6fGflXG8YuTS_lK-L3gw9hcdx3rm2lxFR6Ffa1ZzLGc5KIVuV1qvgFJwnZq7ogeg1NN27FL1jDNSYSSMZv3ByuwH9pIVSQvbb-bsggfttrAXW-8nbxmxv3gjb_pN7PGcHxmy19tYOu9aVExJxUVAJ3Nen9mWcol8py-fbGO8-cN4dv"
+            image="/images/cowork.jpg"
             icon="work"
             title="Work from the club"
             desc="Luxury work spaces, conference room, wifi, cafe"
             delay="0.2s"
           />
           <FeatureCard 
-            image="https://lh3.googleusercontent.com/aida-public/AB6AXuDcO6CHcRG7eZJIHoNQK3q7IDLsrPvpz5MHv8bX8jsBdNpsrxUiVfvcNGutkJAL4hMb54BloTAH3eeQmu1TbSozitCeIgwKamQ2EwxE0-gxx5YtGEyK8JPgdrf5tqRGPw5CuItiduF2BHgbMw-lIExEMD6cFGpbrnGajYHH_Qh1ZzYBPqat4BAeK0EzQ6GNIevs51s15awVavnoti78WHg7qQnjjV40ePXBucxKQ2s2YyT638bkMaDOhlvcDDTcfLNPRKVOjCgmSBMD"
+            image="/images/wellness-yoga.jpg"
             icon="spa"
             title="Wellness & classes"
             desc="Med spa, fitness, yoga, recovery options"
             delay="0.3s"
           />
           <FeatureCard 
-            image="https://lh3.googleusercontent.com/aida-public/AB6AXuCrOquG_r7TmoaNda1akCtAZSL5euiwkQMkDzJHxsHljXdgNZ_sBlG5vQHxiUJu7Z5Ggf6vk0VtUBmXa2q1F7nKVB2YVodDjaCaveowpkDEzzuDMsRyHwqsb-nJjiEpd7faaiSrnEEQxI86oPFK5h-LZpmn7uURvYYshSQHG7ovgIFayEAaUGvQOPnPoyqgadHO4bezO7IEbYqLcuAD_1CI6gRpfkYadehp_O4sQlGJRPFaFW3WTZqNvnlS5l7Wmbx6J9IB28YlSXm-"
+            image="/images/events-crowd.jpg"
             icon="groups"
             title="Events & community"
             desc="Member events, watch parties, mixers"
@@ -122,7 +122,7 @@ const Landing: React.FC = () => {
                 <p className="text-sm text-[#293515]/70 mb-4">Elevate your team with premium amenities.</p>
                 <ul className="space-y-2 mb-6">
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 90min Daily Sim Time</li>
-                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Free Coffee/Beer/Drink Daily</li>
+                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 10-Day Advance Booking</li>
                 </ul>
                 <button onClick={() => navigate('/membership/corporate')} className="w-full py-3 rounded-xl border border-[#293515]/10 text-[#293515] font-bold text-xs hover:bg-[#293515]/5">View Details</button>
             </div>
@@ -137,7 +137,7 @@ const Landing: React.FC = () => {
       {/* Private Events Inquiry Section */}
       <div className="px-4 pb-12">
          <div className="relative rounded-[2rem] overflow-hidden h-[400px] group">
-            <div className="absolute inset-0 bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuCUuPWF3ePM-tEnxyYsghH7Vc-n7DOoCfQJ__3NR3QAowrsuiL8Sv3aiqoq1IPoxSq5Y5yCdXiqV_aOdxFMe7DD9MxQLYRP3fkXynSRaPHFmpgYcg6lqNiyRCc6pfMzdNzVE3y5vVDHUf-dlwsqdC8nmEu6MpDifwOgq2g50rPb9ZT_pIOvlcRC8dTj_rr7aAvQXHYPLwB4uFxrNn7sJecijD9ZLumsRkTyM--OCWV9O5cAImV52Cbyv6PVLIoWgMhG4Jjq_nsM9C_D')] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"></div>
+            <div className="absolute inset-0 bg-[url('/images/events-crowd.jpg')] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"></div>
             <div className="absolute inset-0 bg-black/40"></div>
             <div className="absolute inset-0 p-8 flex flex-col justify-center items-center text-center">
                 <span className="text-white/80 text-xs font-bold uppercase tracking-[0.2em] mb-4">Host with Us</span>

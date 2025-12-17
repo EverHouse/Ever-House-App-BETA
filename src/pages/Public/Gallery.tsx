@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { Footer } from '../../components/Footer';
 
 const INITIAL_DATA = [
-    { img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAzWRhzIrjwSfnj7Fn_YowoOoLnp97WiABk-tWFX-vHm9vYVgWfDHLMPoT4ZQbVU2EGAhTv-KaHV5aEOs4VcL4_wZ7ECvGSzK6fGflXG8YuTS_lK-L3gw9hcdx3rm2lxFR6Ffa1ZzLGc5KIVuV1qvgFJwnZq7ogeg1NN27FL1jDNSYSSMZv3ByuwH9pIVSQvbb-bsggfttrAXW-8nbxmxv3gjb_pN7PGcHxmy19tYOu9aVExJxUVAJ3Nen9mWcol8py-fbGO8-cN4dv", category: "Golf Bays" },
-    { img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCHkFphah_JJxqbQaFDfRxCBg_6bNMjWolrhJdxHK6VNk0GoluIqsI0S6H0O6WCVOr55LtP75FXl6a7wwArWhD1MY_ZLwuDLINDZuRClUQFKmGFC6UjpTpo8bT7nQcI9hiGw_a7qkBiSwv6T3LJycKt3xJxHqn6aqfGnRnZt82xx24nElAT13HxE3YgHcGMq6M00WO1zWXJGxOqFyA8JE6fL_sslkN_QyE7s0wBHkCJe5clsAp8hhnnQX6vyLZkj0nwfMMkW-DjUuvE", category: "Lounge" },
-    { img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB4cJv0jX_Q6g4XOR02SdveS0i0W9GBNM-0Brg1NVJqCe42zUKk7Y5m4JyWvRerLHa-wZPY2_ImoWC6NBatsFkSvQcGQqBKTHfsUyrWkJFwLQUgqycCI9Ky2odlg5EfiwrZNW0RPla61IlnFigW8JXN3Byd2z7S1T548aK5hq5VUtTpxAzcA5BqOgbEldke-6O5lq4kfkXQ7Bzvo7Tz7YMxpiA6qRtwqHejpinT_S5VKLWoybx5Dm2bm3JMgcE91Tjrri740okHaDJ7", category: "Golf Bays" },
-    { img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDcO6CHcRG7eZJIHoNQK3q7IDLsrPvpz5MHv8bX8jsBdNpsrxUiVfvcNGutkJAL4hMb54BloTAH3eeQmu1TbSozitCeIgwKamQ2EwxE0-gxx5YtGEyK8JPgdrf5tqRGPw5CuItiduF2BHgbMw-lIExEMD6cFGpbrnGajYHH_Qh1ZzYBPqat4BAeK0EzQ6GNIevs51s15awVavnoti78WHg7qQnjjV40ePXBucxKQ2s2YyT638bkMaDOhlvcDDTcfLNPRKVOjCgmSBMD", category: "Wellness" },
-    { img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrOquG_r7TmoaNda1akCtAZSL5euiwkQMkDzJHxsHljXdgNZ_sBlG5vQHxiUJu7Z5Ggf6vk0VtUBmXa2q1F7nKVB2YVodDjaCaveowpkDEzzuDMsRyHwqsb-nJjiEpd7faaiSrnEEQxI86oPFK5h-LZpmn7uURvYYshSQHG7ovgIFayEAaUGvQOPnPoyqgadHO4bezO7IEbYqLcuAD_1CI6gRpfkYadehp_O4sQlGJRPFaFW3WTZqNvnlS5l7Wmbx6J9IB28YlSXm-", category: "Events" },
-    { img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBE289XWOuAlWqQJmbWfhZ80zBuRs6z3V9UbBnx7TY3sTy-6x1RSYaoZAAQS3jMQ7Mle2gEPKY6DkkjVN4lI9j48hmNzapBU78tyW5U-rulCRLpg_bgGl083T-DZxgVH3s9m3SC-OUncvM7DKszJBNwtSZl6glcG8UPwu_FWA4VEym1eKeKsmEO2ajJ9dWyIM5BUhjUydmrWhaQWK__s7LicL2pw6qyUuWWXG0UIHL1RJ3nmI45qFpHue6-Ad1DgIaNva4s5vKMZP1h", category: "Lounge" }
+    { img: "/images/golf-sims.jpg", category: "Golf Bays" },
+    { img: "/images/hero-lounge.jpg", category: "Lounge" },
+    { img: "/images/venue-wide.jpg", category: "Golf Bays" },
+    { img: "/images/wellness-yoga.jpg", category: "Wellness" },
+    { img: "/images/events-crowd.jpg", category: "Events" },
+    { img: "/images/terrace.jpg", category: "Lounge" },
+    { img: "/images/private-dining.jpg", category: "Events" },
+    { img: "/images/cowork.jpg", category: "Lounge" },
+    { img: "/images/indoor-outdoor.png", category: "Lounge" },
+    { img: "/images/cafe-bar.png", category: "Lounge" }
 ];
 
 const Gallery: React.FC = () => {
