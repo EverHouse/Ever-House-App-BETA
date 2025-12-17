@@ -2,13 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { getTierPermissions } from '../../utils/permissions';
+import HubSpotFormModal from '../../components/HubSpotFormModal';
 
 const API_BASE = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001';
+
+const GUEST_CHECKIN_FIELDS = [
+  { name: 'guest_firstname', label: 'Guest First Name', type: 'text' as const, required: true, placeholder: 'John' },
+  { name: 'guest_lastname', label: 'Guest Last Name', type: 'text' as const, required: true, placeholder: 'Smith' },
+  { name: 'guest_email', label: 'Guest Email', type: 'email' as const, required: true, placeholder: 'john@example.com' },
+  { name: 'guest_phone', label: 'Guest Phone', type: 'tel' as const, required: false, placeholder: '(555) 123-4567' }
+];
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useData();
   const [isCardOpen, setIsCardOpen] = useState(false);
+  const [showGuestCheckin, setShowGuestCheckin] = useState(false);
   const [guestPasses, setGuestPasses] = useState<{ passes_used: number; passes_total: number; passes_remaining: number } | null>(null);
 
   const tierPermissions = getTierPermissions(user?.tier || 'Social');
@@ -72,15 +81,26 @@ const Profile: React.FC = () => {
               <Row icon="sports_golf" label="Daily Simulator Time" value={`${tierPermissions.dailySimulatorMinutes} min`} />
             )}
             {guestPasses && (
-              <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-lg opacity-60">group_add</span>
-                  <span className="text-sm">Guest Passes</span>
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-lg opacity-60">group_add</span>
+                    <span className="text-sm">Guest Passes</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-accent">{guestPasses.passes_remaining}</span>
+                    <span className="text-xs opacity-50">/ {guestPasses.passes_total} remaining</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-accent">{guestPasses.passes_remaining}</span>
-                  <span className="text-xs opacity-50">/ {guestPasses.passes_total} remaining</span>
-                </div>
+                {guestPasses.passes_remaining > 0 && (
+                  <button
+                    onClick={() => setShowGuestCheckin(true)}
+                    className="w-full py-3 bg-accent/20 hover:bg-accent/30 text-accent rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-lg">person_add</span>
+                    Check In a Guest
+                  </button>
+                )}
               </div>
             )}
          </Section>
@@ -94,6 +114,30 @@ const Profile: React.FC = () => {
             Sign Out
          </button>
       </div>
+
+      {/* Guest Check-In Modal */}
+      <HubSpotFormModal
+        isOpen={showGuestCheckin}
+        onClose={() => setShowGuestCheckin(false)}
+        formType="guest-checkin"
+        title="Guest Check-In"
+        subtitle="Register your guest for today's visit."
+        fields={GUEST_CHECKIN_FIELDS}
+        submitButtonText="Check In Guest"
+        additionalFields={{
+          member_name: user.name,
+          member_email: user.email
+        }}
+        onSuccess={async () => {
+          try {
+            const res = await fetch(`${API_BASE}/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`);
+            const data = await res.json();
+            setGuestPasses(data);
+          } catch (err) {
+            console.error('Error refreshing guest passes:', err);
+          }
+        }}
+      />
 
       {/* Full Screen Card Modal */}
       {isCardOpen && (

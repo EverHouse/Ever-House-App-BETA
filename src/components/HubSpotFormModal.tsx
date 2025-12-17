@@ -31,6 +31,8 @@ interface HubSpotFormModalProps {
   subtitle?: string;
   fields: FormField[];
   submitButtonText?: string;
+  onSuccess?: () => void;
+  additionalFields?: Record<string, string>;
 }
 
 const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
@@ -40,7 +42,9 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
   title,
   subtitle,
   fields,
-  submitButtonText = 'Submit'
+  submitButtonText = 'Submit',
+  onSuccess,
+  additionalFields = {}
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -60,7 +64,8 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
     triggerHaptic('medium');
 
     try {
-      const fieldArray = Object.entries(formData).map(([name, value]) => ({
+      const allFormData = { ...formData, ...additionalFields };
+      const fieldArray = Object.entries(allFormData).map(([name, value]) => ({
         name,
         value
       }));
@@ -90,6 +95,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
 
       triggerHaptic('success');
       setSuccess(true);
+      onSuccess?.();
     } catch (err: any) {
       triggerHaptic('error');
       setError(err.message || 'Something went wrong. Please try again.');

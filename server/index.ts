@@ -444,6 +444,36 @@ app.post('/api/hubspot/forms/:formType', async (req, res) => {
     
     const { fields, context } = req.body;
     
+    if (formType === 'guest-checkin') {
+      const memberEmailField = fields.find((f: { name: string; value: string }) => f.name === 'member_email');
+      if (!memberEmailField?.value) {
+        return res.status(400).json({ error: 'Member email is required for guest check-in' });
+      }
+      
+      const memberEmail = memberEmailField.value;
+      
+      const updateResult = await pool.query(
+        `UPDATE guest_passes 
+         SET passes_used = passes_used + 1 
+         WHERE member_email = $1 AND passes_used < passes_total
+         RETURNING passes_used, passes_total`,
+        [memberEmail]
+      );
+      
+      if (updateResult.rows.length === 0) {
+        const passCheck = await pool.query(
+          'SELECT passes_used, passes_total FROM guest_passes WHERE member_email = $1',
+          [memberEmail]
+        );
+        
+        if (passCheck.rows.length === 0) {
+          return res.status(400).json({ error: 'Guest pass record not found. Please contact staff.' });
+        }
+        
+        return res.status(400).json({ error: 'No guest passes remaining. Please contact staff for assistance.' });
+      }
+    }
+    
     const hubspotPayload = {
       fields: fields.map((f: { name: string; value: string }) => ({
         objectTypeId: '0-1',
@@ -452,7 +482,8 @@ app.post('/api/hubspot/forms/:formType', async (req, res) => {
       })),
       context: {
         pageUri: context?.pageUri || '',
-        pageName: context?.pageName || ''
+        pageName: context?.pageName || '',
+        ...(context?.hutk && { hutk: context.hutk })
       }
     };
     
