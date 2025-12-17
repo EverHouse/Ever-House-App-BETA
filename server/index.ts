@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import { Client } from '@hubspot/api-client';
+import { google } from 'googleapis';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,6 +73,96 @@ async function getHubSpotAccessToken() {
 async function getHubSpotClient() {
   const accessToken = await getHubSpotAccessToken();
   return new Client({ accessToken });
+}
+
+// Google Calendar Integration
+let googleCalendarConnectionSettings: any;
+
+async function getGoogleCalendarAccessToken() {
+  if (googleCalendarConnectionSettings && googleCalendarConnectionSettings.settings.expires_at && new Date(googleCalendarConnectionSettings.settings.expires_at).getTime() > Date.now()) {
+    return googleCalendarConnectionSettings.settings.access_token;
+  }
+  
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY 
+    ? 'repl ' + process.env.REPL_IDENTITY 
+    : process.env.WEB_REPL_RENEWAL 
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+    : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  }
+
+  googleCalendarConnectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=google-calendar',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then((data: any) => data.items?.[0]);
+
+  const accessToken = googleCalendarConnectionSettings?.settings?.access_token || googleCalendarConnectionSettings.settings?.oauth?.credentials?.access_token;
+
+  if (!googleCalendarConnectionSettings || !accessToken) {
+    throw new Error('Google Calendar not connected');
+  }
+  return accessToken;
+}
+
+async function getGoogleCalendarClient() {
+  const accessToken = await getGoogleCalendarAccessToken();
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials({ access_token: accessToken });
+  return google.calendar({ version: 'v3', auth: oauth2Client });
+}
+
+async function createCalendarEvent(booking: any, bayName: string): Promise<string | null> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    
+    const startDateTime = new Date(`${booking.request_date}T${booking.start_time}`);
+    const endDateTime = new Date(`${booking.request_date}T${booking.end_time}`);
+    
+    const event = {
+      summary: `Simulator: ${booking.user_name || booking.user_email}`,
+      description: `Bay: ${bayName}\nMember: ${booking.user_email}\nDuration: ${booking.duration_minutes} minutes${booking.notes ? '\nNotes: ' + booking.notes : ''}`,
+      start: {
+        dateTime: startDateTime.toISOString(),
+        timeZone: 'America/Los_Angeles',
+      },
+      end: {
+        dateTime: endDateTime.toISOString(),
+        timeZone: 'America/Los_Angeles',
+      },
+    };
+    
+    const response = await calendar.events.insert({
+      calendarId: 'primary',
+      requestBody: event,
+    });
+    
+    return response.data.id || null;
+  } catch (error) {
+    console.error('Error creating calendar event:', error);
+    return null;
+  }
+}
+
+async function deleteCalendarEvent(eventId: string): Promise<boolean> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    await calendar.events.delete({
+      calendarId: 'primary',
+      eventId: eventId,
+    });
+    return true;
+  } catch (error) {
+    console.error('Error deleting calendar event:', error);
+    return false;
+  }
 }
 
 app.get('/api/resources', async (req, res) => {
@@ -735,12 +826,24 @@ app.put('/api/booking-requests/:id', async (req, res) => {
         return res.status(409).json({ error: 'Time slot conflicts with existing booking' });
       }
       
-      // Update with bay assignment
+      // Get bay name for calendar event
+      const bayResult = await pool.query('SELECT name FROM bays WHERE id = $1', [assignedBayId]);
+      const bayName = bayResult.rows[0]?.name || 'Simulator';
+      
+      // Create Google Calendar event
+      let calendarEventId: string | null = null;
+      try {
+        calendarEventId = await createCalendarEvent(req_data, bayName);
+      } catch (calError) {
+        console.error('Calendar sync failed (non-blocking):', calError);
+      }
+      
+      // Update with bay assignment and calendar event ID
       const result = await pool.query(
         `UPDATE booking_requests 
-         SET status = $1, staff_notes = $2, suggested_time = $3, reviewed_by = $4, reviewed_at = CURRENT_TIMESTAMP, bay_id = $5, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $6 RETURNING *`,
-        [status, staff_notes, suggested_time, reviewed_by, assignedBayId, id]
+         SET status = $1, staff_notes = $2, suggested_time = $3, reviewed_by = $4, reviewed_at = CURRENT_TIMESTAMP, bay_id = $5, calendar_event_id = $6, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $7 RETURNING *`,
+        [status, staff_notes, suggested_time, reviewed_by, assignedBayId, calendarEventId, id]
       );
       
       // Create notification for member
@@ -782,6 +885,18 @@ app.put('/api/booking-requests/:id', async (req, res) => {
       );
       
       return res.json(result.rows[0]);
+    }
+    
+    // For cancellation, delete calendar event if exists
+    if (status === 'cancelled') {
+      const existing = await pool.query('SELECT calendar_event_id FROM booking_requests WHERE id = $1', [id]);
+      if (existing.rows[0]?.calendar_event_id) {
+        try {
+          await deleteCalendarEvent(existing.rows[0].calendar_event_id);
+        } catch (calError) {
+          console.error('Failed to delete calendar event (non-blocking):', calError);
+        }
+      }
     }
     
     // Generic update
