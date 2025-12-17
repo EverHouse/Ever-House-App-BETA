@@ -226,6 +226,34 @@
       .material-symbols-outlined.filled {
         font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
       }
+      
+      /* Accessibility: Focus visible styles */
+      :focus-visible {
+        outline: 2px solid #CCB8E4;
+        outline-offset: 2px;
+      }
+      
+      /* Skip link for keyboard navigation */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: #293515;
+        color: white;
+        padding: 8px 16px;
+        z-index: 100;
+        text-decoration: none;
+        font-weight: bold;
+        border-radius: 0 0 8px 0;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+      
+      /* Improved text contrast for accessibility */
+      .text-accessible-muted {
+        color: rgba(255, 255, 255, 0.7);
+      }
     </style>
   <script type="importmap">
 {

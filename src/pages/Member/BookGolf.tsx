@@ -4,7 +4,7 @@ import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001';
 
 interface APIResource {
   id: number;
@@ -28,6 +28,7 @@ interface TimeSlot {
   endTime24: string;
   label: string;
   available: boolean;
+  availableResourceDbIds: number[];
 }
 
 interface Resource {
@@ -141,26 +142,32 @@ const BookGolf: React.FC = () => {
             if (!slot.available) return;
             
             const key = slot.start_time;
-            const timeSlot: TimeSlot = {
-              id: `slot-${slot.start_time}`,
-              start: formatTime12(slot.start_time),
-              end: formatTime12(slot.end_time),
-              startTime24: slot.start_time,
-              endTime24: slot.end_time,
-              label: `${formatTime12(slot.start_time)} – ${formatTime12(slot.end_time)}`,
-              available: true
-            };
             
             if (allSlots.has(key)) {
               allSlots.get(key)!.resourceIds.push(resource.dbId);
             } else {
-              allSlots.set(key, { slot: timeSlot, resourceIds: [resource.dbId] });
+              allSlots.set(key, { 
+                slot: {
+                  id: `slot-${slot.start_time}`,
+                  start: formatTime12(slot.start_time),
+                  end: formatTime12(slot.end_time),
+                  startTime24: slot.start_time,
+                  endTime24: slot.end_time,
+                  label: `${formatTime12(slot.start_time)} – ${formatTime12(slot.end_time)}`,
+                  available: true,
+                  availableResourceDbIds: []
+                }, 
+                resourceIds: [resource.dbId] 
+              });
             }
           });
         }));
         
         const sortedSlots = Array.from(allSlots.values())
-          .map(({ slot }) => slot)
+          .map(({ slot, resourceIds }) => ({
+            ...slot,
+            availableResourceDbIds: resourceIds
+          }))
           .sort((a, b) => a.startTime24.localeCompare(b.startTime24));
         
         setAvailableSlots(sortedSlots);
@@ -176,7 +183,7 @@ const BookGolf: React.FC = () => {
   }, [resources, selectedDateObj, duration]);
 
   const getAvailableResourcesForSlot = (slot: TimeSlot): Resource[] => {
-    return resources;
+    return resources.filter(r => slot.availableResourceDbIds.includes(r.dbId));
   };
 
   const handleConfirm = async () => {
@@ -330,7 +337,7 @@ const BookGolf: React.FC = () => {
                   >
                     <div className="font-bold text-base mb-0.5">{slot.start}</div>
                     <div className={`text-[10px] font-bold uppercase tracking-wide ${selectedSlot?.id === slot.id ? 'opacity-80' : 'opacity-40'}`}>
-                      {resources.length} Available
+                      {slot.availableResourceDbIds.length} Available
                     </div>
                   </button>
                 ))}
@@ -349,7 +356,7 @@ const BookGolf: React.FC = () => {
                 Select {activeTab === 'simulator' ? 'Bay' : 'Room'}
               </h3>
               <div className="space-y-3">
-                {resources.map((resource, index) => (
+                {getAvailableResourcesForSlot(selectedSlot).map((resource, index) => (
                   <div key={resource.id} className="animate-pop-in" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}>
                     <ResourceCard
                       resource={resource}

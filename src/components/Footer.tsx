@@ -42,7 +42,7 @@ export const Footer: React.FC = () => (
      
      <div className="flex flex-col gap-2">
         <a href="https://evenhouse.club" target="_blank" rel="noreferrer" className="text-[10px] opacity-40 hover:opacity-100 transition-opacity">evenhouse.club</a>
-        <p className="text-[10px] opacity-40">© 2024 Even House. All rights reserved.</p>
+        <p className="text-[10px] opacity-40">© {new Date().getFullYear()} Even House. All rights reserved.</p>
      </div>
   </footer>
 );
