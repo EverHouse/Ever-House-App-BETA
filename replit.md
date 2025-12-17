@@ -48,6 +48,9 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `POST /api/bookings` - Create a booking
 - `DELETE /api/bookings/:id` - Cancel a booking
 - `GET /api/events` - List upcoming events
+- `POST /api/events` - Create a new event
+- `PUT /api/events/:id` - Update an event
+- `DELETE /api/events/:id` - Delete an event
 - `GET /api/rsvps?user_email=X` - Get user's RSVPs
 - `POST /api/rsvps` - RSVP to an event
 - `DELETE /api/rsvps/:event_id/:user_email` - Cancel RSVP
