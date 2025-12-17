@@ -1,6 +1,5 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NotificationContext } from '../../App';
 import { useData, Booking } from '../../contexts/DataContext';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
@@ -52,9 +51,7 @@ const formatDate = (dateStr: string): string => {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { openNotifications } = useContext(NotificationContext);
-  const { announcements, user, addBooking, deleteBooking } = useData();
-  const latestAnnouncement = announcements[0];
+  const { user, addBooking, deleteBooking } = useData();
   
   const [dbBookings, setDbBookings] = useState<DBBooking[]>([]);
   const [dbRSVPs, setDbRSVPs] = useState<DBRSVP[]>([]);
@@ -195,23 +192,13 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="px-6 pt-4 pb-32 font-sans relative min-h-full bg-[#0f120a]">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight animate-pop-in">
-            {getGreeting()}, {user?.name.split(' ')[0]}
-          </h1>
-          <p className="text-white/60 text-sm font-medium mt-1 animate-pop-in" style={{animationDelay: '0.1s'}}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-        <button 
-          onClick={() => openNotifications('announcements')} 
-          className="relative w-10 h-10 flex items-center justify-center rounded-full glass-button text-white hover:bg-white/10 active:scale-95 transition-all focus:ring-2 focus:ring-accent focus:outline-none"
-          aria-label="View notifications"
-        >
-          <span className="material-symbols-outlined text-[24px]">notifications</span>
-          {announcements.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-[#0f120a]"></span>}
-        </button>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-white tracking-tight animate-pop-in">
+          {getGreeting()}, {user?.name.split(' ')[0]}
+        </h1>
+        <p className="text-white/60 text-sm font-medium mt-1 animate-pop-in" style={{animationDelay: '0.1s'}}>
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </p>
       </div>
 
       {isLoading ? (
