@@ -8,6 +8,7 @@ const TOUR_REQUEST_FIELDS = [
   { name: 'lastname', label: 'Last Name', type: 'text' as const, required: true, placeholder: 'Doe' },
   { name: 'email', label: 'Email', type: 'email' as const, required: true, placeholder: 'jane@example.com' },
   { name: 'phone', label: 'Phone', type: 'tel' as const, required: false, placeholder: '(949) 555-0100' },
+  { name: 'visit_type', label: 'Type of Visit', type: 'select' as const, required: true, options: ['Personal Tour', 'Group Tour', 'Membership Inquiry', 'Other'] },
   { name: 'message', label: 'Preferred Date/Time', type: 'textarea' as const, required: false, placeholder: 'Let us know when you\'d like to visit...' }
 ];
 

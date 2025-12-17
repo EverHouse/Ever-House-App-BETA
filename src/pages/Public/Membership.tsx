@@ -8,7 +8,8 @@ const MEMBERSHIP_FIELDS = [
   { name: 'lastname', label: 'Last Name', type: 'text' as const, required: true, placeholder: 'Doe' },
   { name: 'email', label: 'Email', type: 'email' as const, required: true, placeholder: 'jane@example.com' },
   { name: 'phone', label: 'Phone', type: 'tel' as const, required: true, placeholder: '(949) 555-0100' },
-  { name: 'message', label: 'Which tier are you interested in?', type: 'textarea' as const, required: false, placeholder: 'Tell us about yourself and which membership tier you\'re interested in...' }
+  { name: 'membership_tier', label: 'Which tier are you interested in?', type: 'select' as const, required: false, options: ['Social', 'Core', 'Premium', 'Corporate', 'Not sure yet'] },
+  { name: 'message', label: 'Tell us about yourself', type: 'textarea' as const, required: false, placeholder: 'Tell us about yourself and your interests...' }
 ];
 
 const Membership: React.FC = () => {
