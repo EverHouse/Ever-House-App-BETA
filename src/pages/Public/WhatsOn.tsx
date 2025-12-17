@@ -57,7 +57,7 @@ const WhatsOn: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#EAEBE6]">
+    <div className="flex flex-col min-h-screen bg-[#EAEBE6] overflow-x-hidden">
       <section className="px-6 pt-10 pb-8 bg-[#EAEBE6] rounded-b-3xl">
         <h1 className="text-5xl font-light text-primary mb-4 tracking-tight">What's On</h1>
         <p className="text-primary/70 text-base leading-relaxed max-w-[90%]">
