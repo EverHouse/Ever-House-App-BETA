@@ -30,8 +30,7 @@ async function seed() {
     // Seed Resources
     console.log('Creating resources...');
     const resources = [
-      { name: 'Conference Room A', type: 'conference_room', description: 'Main conference room with AV setup', capacity: 12 },
-      { name: 'Conference Room B', type: 'conference_room', description: 'Small meeting room', capacity: 6 },
+      { name: 'Conference Room', type: 'conference_room', description: 'Main conference room with AV setup', capacity: 12 },
       { name: 'Wellness Studio', type: 'wellness_room', description: 'Multi-purpose wellness and yoga studio', capacity: 15 },
       { name: 'Meditation Room', type: 'wellness_room', description: 'Quiet space for meditation and relaxation', capacity: 8 },
     ];
