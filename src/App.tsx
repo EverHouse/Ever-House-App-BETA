@@ -191,7 +191,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer" 
                   onClick={() => navigate('/')}
                 >
-                  <img src="/assets/logos/header-logo.png" alt="Even House" className="h-6 w-auto" />
+                  <img src="/assets/logos/header-logo.png?v=2" alt="Even House" className="h-6 w-auto" />
                 </div>
 
                 <button 
