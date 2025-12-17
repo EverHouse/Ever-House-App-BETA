@@ -73,6 +73,11 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `PUT /api/notifications/mark-all-read?user_email=X` - Mark all notifications as read
 
 ## Integrations
+- **Replit Auth**: User authentication via OAuth
+  - Supports Google, Apple, GitHub, and email/password login
+  - Routes: /api/login (redirect to auth), /api/logout, /api/auth/user (current user)
+  - Session stored in PostgreSQL via connect-pg-simple
+  - DataContext checks auth on mount and maps user to MemberProfile
 - **HubSpot CRM**: Connected via OAuth for managing contacts/members
   - Admin dashboard fetches real contacts from HubSpot
   - Access token automatically refreshed via Replit Connectors
