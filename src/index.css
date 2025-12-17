@@ -60,8 +60,14 @@ img, video, svg {
 .safe-area-inset {
   padding-top: env(safe-area-inset-top, 0);
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
-  padding-left: env(safe-area-inset-left, 0);
-  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* Menu-specific safe area that preserves base horizontal padding */
+.safe-area-inset-menu {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+  padding-left: max(2rem, env(safe-area-inset-left, 0));
+  padding-right: max(2rem, env(safe-area-inset-right, 0));
 }
 
 /* Prevent horizontal overflow globally */

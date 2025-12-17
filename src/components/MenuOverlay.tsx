@@ -48,7 +48,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-multiply"></div>
 
         {/* Content Container with iOS Safe Area */}
-        <div className="relative z-10 flex flex-col h-full px-10 py-8 text-[#293515] safe-area-inset">
+        <div className="relative z-10 flex flex-col h-full py-8 text-[#293515] safe-area-inset-menu">
             
             {/* Header: Close Button */}
             <div className="flex items-center justify-end mb-8">
