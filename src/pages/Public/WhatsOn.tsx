@@ -15,6 +15,10 @@ interface Event {
   max_attendees?: number;
   eventbrite_id?: string;
   eventbrite_url?: string;
+  source?: string;
+  visibility?: string;
+  requires_rsvp?: boolean;
+  google_calendar_id?: string;
 }
 
 const WhatsOn: React.FC = () => {
@@ -25,7 +29,8 @@ const WhatsOn: React.FC = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('/api/events');
+        // Only fetch public events for the public page
+        const response = await fetch('/api/events?visibility=public');
         if (response.ok) {
           const data = await response.json();
           setEvents(data);

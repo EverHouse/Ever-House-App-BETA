@@ -298,6 +298,15 @@ const INITIAL_BOOKINGS: Booking[] = [
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+// Helper function to format time string from HH:MM:SS to 12-hour format
+const formatTimeString = (timeString: string): string => {
+  const [hours, minutes] = timeString.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
+
 export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [actualUser, setActualUser] = useState<MemberProfile | null>(null);
   const [viewAsUser, setViewAsUserState] = useState<MemberProfile | null>(null);
@@ -414,6 +423,37 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       }
     };
     fetchCafeMenu();
+  }, []);
+
+  // Fetch events from API (for members, all events are visible)
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch('/api/events');
+        if (res.ok) {
+          const data = await res.json();
+          const formatted: EventData[] = data.map((event: any) => ({
+            id: event.id.toString(),
+            source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
+            externalLink: event.eventbrite_url || undefined,
+            title: event.title,
+            category: event.category || 'Social',
+            date: new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
+            location: event.location || 'Even House',
+            image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',
+            description: event.description || '',
+            attendees: [],
+            capacity: event.max_attendees || undefined,
+            ticketsSold: undefined
+          }));
+          setEvents(formatted);
+        }
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+      }
+    };
+    fetchEvents();
   }, []);
 
   // Auth Logic - redirects to Replit Auth
