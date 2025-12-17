@@ -166,17 +166,214 @@ async function createCalendarEvent(booking: any, bayName: string): Promise<strin
   }
 }
 
-async function deleteCalendarEvent(eventId: string): Promise<boolean> {
+async function deleteCalendarEvent(eventId: string, calendarId: string = 'primary'): Promise<boolean> {
   try {
     const calendar = await getGoogleCalendarClient();
     await calendar.events.delete({
-      calendarId: 'primary',
+      calendarId,
       eventId: eventId,
     });
     return true;
   } catch (error) {
     console.error('Error deleting calendar event:', error);
     return false;
+  }
+}
+
+// Calendar ID Cache - maps calendar name to ID
+const calendarIdCache: Record<string, string> = {};
+
+// Calendar configuration
+const CALENDAR_CONFIG = {
+  golf: {
+    name: 'Booked Golf',
+    businessHours: { start: 9, end: 21 }, // 9 AM - 9 PM
+    slotDuration: 60, // 60 minute slots
+  },
+  conference: {
+    name: 'MBO_Members_Club',
+    businessHours: { start: 8, end: 18 }, // 8 AM - 6 PM
+    slotDuration: 30, // 30 minute slots
+  }
+};
+
+async function discoverCalendarIds(): Promise<void> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    const response = await calendar.calendarList.list();
+    const calendars = response.data.items || [];
+    
+    for (const cal of calendars) {
+      if (cal.summary && cal.id) {
+        calendarIdCache[cal.summary] = cal.id;
+        console.log(`Discovered calendar: "${cal.summary}" -> ${cal.id}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error discovering calendars:', error);
+  }
+}
+
+async function getCalendarIdByName(name: string): Promise<string | null> {
+  if (calendarIdCache[name]) {
+    return calendarIdCache[name];
+  }
+  
+  // Try to rediscover calendars
+  await discoverCalendarIds();
+  return calendarIdCache[name] || null;
+}
+
+interface TimeSlot {
+  start: string; // HH:MM format
+  end: string;   // HH:MM format
+  available: boolean;
+}
+
+interface BusyPeriod {
+  start: Date;
+  end: Date;
+}
+
+async function getCalendarBusyTimes(calendarId: string, date: string): Promise<BusyPeriod[]> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    
+    const startOfDay = new Date(`${date}T00:00:00`);
+    const endOfDay = new Date(`${date}T23:59:59`);
+    
+    const response = await calendar.freebusy.query({
+      requestBody: {
+        timeMin: startOfDay.toISOString(),
+        timeMax: endOfDay.toISOString(),
+        timeZone: 'America/Los_Angeles',
+        items: [{ id: calendarId }]
+      }
+    });
+    
+    const busyPeriods: BusyPeriod[] = [];
+    const calendarBusy = response.data.calendars?.[calendarId]?.busy || [];
+    
+    for (const period of calendarBusy) {
+      if (period.start && period.end) {
+        busyPeriods.push({
+          start: new Date(period.start),
+          end: new Date(period.end)
+        });
+      }
+    }
+    
+    return busyPeriods;
+  } catch (error) {
+    console.error('Error fetching busy times:', error);
+    return [];
+  }
+}
+
+function generateTimeSlots(
+  date: string,
+  busyPeriods: BusyPeriod[],
+  businessHours: { start: number; end: number },
+  slotDurationMinutes: number
+): TimeSlot[] {
+  const slots: TimeSlot[] = [];
+  const dateObj = new Date(date);
+  
+  // Generate slots within business hours
+  for (let hour = businessHours.start; hour < businessHours.end; hour++) {
+    for (let minute = 0; minute < 60; minute += slotDurationMinutes) {
+      const slotStart = new Date(dateObj);
+      slotStart.setHours(hour, minute, 0, 0);
+      
+      const slotEnd = new Date(slotStart);
+      slotEnd.setMinutes(slotEnd.getMinutes() + slotDurationMinutes);
+      
+      // Check if slot end exceeds business hours
+      if (slotEnd.getHours() > businessHours.end || 
+          (slotEnd.getHours() === businessHours.end && slotEnd.getMinutes() > 0)) {
+        continue;
+      }
+      
+      // Check if slot overlaps with any busy period
+      const isAvailable = !busyPeriods.some(busy => {
+        return (slotStart < busy.end && slotEnd > busy.start);
+      });
+      
+      const formatTime = (d: Date) => {
+        const h = d.getHours().toString().padStart(2, '0');
+        const m = d.getMinutes().toString().padStart(2, '0');
+        return `${h}:${m}`;
+      };
+      
+      slots.push({
+        start: formatTime(slotStart),
+        end: formatTime(slotEnd),
+        available: isAvailable
+      });
+    }
+  }
+  
+  return slots;
+}
+
+async function getCalendarAvailability(
+  resourceType: 'golf' | 'conference',
+  date: string,
+  durationMinutes?: number
+): Promise<{ slots: TimeSlot[]; calendarId: string | null; error?: string }> {
+  const config = CALENDAR_CONFIG[resourceType];
+  if (!config) {
+    return { slots: [], calendarId: null, error: 'Invalid resource type' };
+  }
+  
+  const calendarId = await getCalendarIdByName(config.name);
+  if (!calendarId) {
+    return { slots: [], calendarId: null, error: `Calendar "${config.name}" not found` };
+  }
+  
+  const busyPeriods = await getCalendarBusyTimes(calendarId, date);
+  const slotDuration = durationMinutes || config.slotDuration;
+  const slots = generateTimeSlots(date, busyPeriods, config.businessHours, slotDuration);
+  
+  return { slots, calendarId };
+}
+
+async function createCalendarEventOnCalendar(
+  calendarId: string,
+  summary: string,
+  description: string,
+  date: string,
+  startTime: string,
+  endTime: string
+): Promise<string | null> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    
+    const startDateTime = new Date(`${date}T${startTime}`);
+    const endDateTime = new Date(`${date}T${endTime}`);
+    
+    const event = {
+      summary,
+      description,
+      start: {
+        dateTime: startDateTime.toISOString(),
+        timeZone: 'America/Los_Angeles',
+      },
+      end: {
+        dateTime: endDateTime.toISOString(),
+        timeZone: 'America/Los_Angeles',
+      },
+    };
+    
+    const response = await calendar.events.insert({
+      calendarId,
+      requestBody: event,
+    });
+    
+    return response.data.id || null;
+  } catch (error) {
+    console.error('Error creating calendar event:', error);
+    return null;
   }
 }
 
@@ -306,6 +503,80 @@ app.get('/api/availability', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
     res.status(500).json({ error: 'Request failed' });
+  }
+});
+
+// Google Calendar-based availability endpoints
+app.get('/api/calendar-availability/golf', async (req, res) => {
+  try {
+    const { date, duration } = req.query;
+    
+    if (!date) {
+      return res.status(400).json({ error: 'date is required (YYYY-MM-DD format)' });
+    }
+    
+    const durationMinutes = duration ? parseInt(duration as string) : undefined;
+    const result = await getCalendarAvailability('golf', date as string, durationMinutes);
+    
+    if (result.error) {
+      return res.status(404).json({ error: result.error });
+    }
+    
+    res.json({
+      date,
+      calendarName: CALENDAR_CONFIG.golf.name,
+      businessHours: CALENDAR_CONFIG.golf.businessHours,
+      slots: result.slots,
+      availableSlots: result.slots.filter(s => s.available)
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Golf calendar availability error:', error);
+    res.status(500).json({ error: 'Failed to fetch golf availability' });
+  }
+});
+
+app.get('/api/calendar-availability/conference', async (req, res) => {
+  try {
+    const { date, duration } = req.query;
+    
+    if (!date) {
+      return res.status(400).json({ error: 'date is required (YYYY-MM-DD format)' });
+    }
+    
+    const durationMinutes = duration ? parseInt(duration as string) : undefined;
+    const result = await getCalendarAvailability('conference', date as string, durationMinutes);
+    
+    if (result.error) {
+      return res.status(404).json({ error: result.error });
+    }
+    
+    res.json({
+      date,
+      calendarName: CALENDAR_CONFIG.conference.name,
+      businessHours: CALENDAR_CONFIG.conference.businessHours,
+      slots: result.slots,
+      availableSlots: result.slots.filter(s => s.available)
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Conference calendar availability error:', error);
+    res.status(500).json({ error: 'Failed to fetch conference room availability' });
+  }
+});
+
+// Admin endpoint to list all discovered calendars
+app.get('/api/calendars', async (req, res) => {
+  try {
+    await discoverCalendarIds();
+    res.json({
+      calendars: Object.entries(calendarIdCache).map(([name, id]) => ({ name, id })),
+      configured: {
+        golf: CALENDAR_CONFIG.golf.name,
+        conference: CALENDAR_CONFIG.conference.name
+      }
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Calendar list error:', error);
+    res.status(500).json({ error: 'Failed to list calendars' });
   }
 });
 
