@@ -46,7 +46,7 @@ const Wellness: React.FC = () => {
   };
 
   return (
-    <SwipeablePage className={`px-6 pt-2 relative min-h-screen pb-24 overflow-hidden ${isDark ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]'}`}>
+    <SwipeablePage className="px-6 pt-2 relative min-h-screen pb-24 overflow-hidden">
       <section className="mb-4 pt-2">
         <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Wellness</h1>
         <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Book your next session.</p>

@@ -1,6 +1,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SwipeablePageProps {
   children: React.ReactNode;
@@ -9,6 +10,8 @@ interface SwipeablePageProps {
 
 const SwipeablePage: React.FC<SwipeablePageProps> = ({ children, className = "" }) => {
   const navigate = useNavigate();
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
   const containerRef = useRef<HTMLDivElement>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchX, setTouchX] = useState<number | null>(null);
@@ -86,7 +89,7 @@ const SwipeablePage: React.FC<SwipeablePageProps> = ({ children, className = "" 
     <div 
         ref={containerRef}
         className={`
-            w-full min-h-full bg-[#0f120a] relative
+            w-full min-h-full ${isDark ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]'} relative
             ${animatingOut ? 'animate-slide-out-right' : 'animate-slide-in-right'}
             ${className}
         `}
