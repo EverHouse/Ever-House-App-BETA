@@ -188,10 +188,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </button>
                 
                 <div 
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer font-bold tracking-widest text-lg opacity-90" 
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer" 
                   onClick={() => navigate('/')}
                 >
-                  <span className="font-bold text-xl tracking-tight">EH</span>
+                  <img src="/assets/logos/header-logo.png" alt="Even House" className="h-6 w-auto" />
                 </div>
 
                 <button 
