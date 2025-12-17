@@ -556,7 +556,7 @@ if (isProduction) {
   });
 }
 
-const PORT = isProduction ? 5000 : (Number(process.env.PORT) || 3001);
+const PORT = Number(process.env.PORT) || (isProduction ? 80 : 3001);
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`API Server running on port ${PORT}`);
 });
