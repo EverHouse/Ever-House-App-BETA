@@ -49,6 +49,7 @@ import MemberEvents from './pages/Member/Events';
 import MemberWellness from './pages/Member/Wellness';
 import Profile from './pages/Member/Profile';
 import Cafe from './pages/Member/Cafe';
+import Sims from './pages/Member/Sims';
 import Landing from './pages/Public/Landing';
 import Membership from './pages/Public/Membership';
 import Contact from './pages/Public/Contact';
@@ -405,6 +406,11 @@ const App: React.FC = () => {
               <Route path="/cafe" element={
                 <ProtectedRoute>
                   <Cafe />
+                </ProtectedRoute>
+              } />
+              <Route path="/sims" element={
+                <ProtectedRoute>
+                  <Sims />
                 </ProtectedRoute>
               } />
               
