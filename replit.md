@@ -33,8 +33,27 @@ src/
   - Use `src/services/hubspot.ts` for API calls
   - Functions available: getContacts, createContact, updateContact, deleteContact, getDeals, getCompanies
 
+## Design System
+- **Typography**: Inter (sans-serif) exclusively across all pages
+- **Icons**: Material Symbols Outlined with weight 300, `.filled` class for active states
+- **Colors**: 
+  - Primary (Deep Green): #293515
+  - Accent (Lavender): #CCB8E4
+  - Background Light (Bone): #F2F2EC
+  - Background Dark: #0f120a
+- **Glass Effects**: 3-5% opacity, 40px+ blur, 12px squircle corners
+- **Selection States**: Lavender background with Deep Green text (bg-accent text-brand-green)
+
+## Branding
+- **Logo Component**: `src/components/Logo.tsx` with dynamic variant selection
+- **Config**: `src/config/branding.ts` for centralized logo paths
+- Mascot logo for member pages, Monogram logo for public pages
+- Auto dark/white variant based on background
+
 ## Recent Changes (December 2024)
 - Fixed Vite config: Changed port to 5000 and enabled allowedHosts for Replit
 - Added missing Profile.tsx to src/pages/Member/
 - Added missing PrivateEvents.tsx to src/pages/Public/
 - Added HubSpot CRM integration service
+- Created dynamic branding system with Logo component
+- Final polish QA: Standardized fonts, icons, selection states, and glass effects
