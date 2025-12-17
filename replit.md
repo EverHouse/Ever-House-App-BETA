@@ -49,6 +49,7 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `POST /api/rsvps` - RSVP to an event
 - `DELETE /api/rsvps/:event_id/:user_email` - Cancel RSVP
 - `GET /api/hubspot/contacts` - Fetch contacts from HubSpot CRM
+- `POST /api/hubspot/forms/:formType` - Submit to HubSpot forms (tour-request, membership, private-hire, guest-checkin)
 - `GET /api/guest-passes/:email?tier=X` - Get member's guest pass usage
 - `POST /api/guest-passes/:email/use` - Use a guest pass
 - `PUT /api/guest-passes/:email` - Update guest pass total
@@ -57,6 +58,10 @@ A private members club application built with React, Vite, and TypeScript. The a
 - **HubSpot CRM**: Connected via OAuth for managing contacts/members
   - Admin dashboard fetches real contacts from HubSpot
   - Access token automatically refreshed via Replit Connectors
+- **HubSpot Forms**: Native app forms submit to existing HubSpot forms
+  - Forms: Tour Request, Membership Application, Private Hire Inquiry, Guest Check-In
+  - Uses HubSpot Forms API with hutk cookie tracking for analytics
+  - Environment variables: HUBSPOT_PORTAL_ID, HUBSPOT_FORM_TOUR_REQUEST, HUBSPOT_FORM_MEMBERSHIP, HUBSPOT_FORM_PRIVATE_HIRE, HUBSPOT_FORM_GUEST_CHECKIN
 
 ## Design System
 - **Typography**: Inter (sans-serif) exclusively across all pages
@@ -89,12 +94,17 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `getMaxBookingDate(tier)` - Returns max bookable date based on advance days
 
 ## Recent Changes (December 2024)
+- **HubSpot Forms Integration**: Native forms submit to HubSpot
+  - Tour Request, Membership Application, Private Hire Inquiry forms connected
+  - Guest Check-In form with atomic pass consumption
+  - Reusable HubSpotFormModal component with hutk tracking cookie
 - **Membership Tier Gating**: Booking permissions based on tier
   - Social members see upgrade prompt when trying to book simulators
   - Advance booking days limited by tier (7 or 10 days)
   - Guest pass tracking per member with tier-based allowances
 - **Guest Pass System**: Database-backed guest pass tracking
-  - Profile page shows remaining passes
+  - Profile page shows remaining passes with "Check In a Guest" button
+  - Atomic pass consumption prevents race conditions
   - API endpoints to track/use passes
 - **Branding Update**: Member portal uses walking golfer logo
 - **Membership Page Redesign**: Core is now the featured "Popular" tier with dark green standout card
