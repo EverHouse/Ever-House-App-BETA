@@ -1,0 +1,41 @@
+Membership gating (tiers/roles), booking/event flows, and admin tools
+
+FEATURES
+Implement with clean scaffolding for:
+- Auth: sign in/out, profile, member status, tier
+- Pages: Public (home, membership, events, contact) + Member (dashboard, bookings, events, perks) + Admin (member management, content)
+- Tier gating: Social/Core/Premium/Corporate
+- Data models for: Users, Memberships/Tiers, Events, Bookings, Venues/Resources, Announcements
+
+Integrate the Even House logo assets into the mobile app design, using each variant in appropriate contexts for optimal brand consistency and user experience. The logos provided include both script wordmarks and the walking golfer icon, in color, black, and white variations.
+Usage Guidelines for Logos:
+1. Primary Script Wordmark (“Even House”):
+    * Use Case: Public-facing screens (e.g., marketing site header, splash screen).
+    * Color Selection:
+        * Use white version on dark or colored backgrounds (e.g., #293515).
+        * Use black version on light backgrounds (e.g., #E7E7DC or white).
+    * Placement: Header, footer, or hero section.
+2. EH Monogram Logo (cursive 'E' and 'H'):
+    * Use Case: App icon, loading screen, favicon, or mobile nav bar.
+    * Color Selection:
+        * White version on dark backgrounds (dark mode or green/black sections).
+        * Black version on light backgrounds.
+    * Optional: Add subtle animation on app launch (e.g., fade in or scale up).
+3. Walking Golfer Icon:
+    * Use Case: Member dashboard, “Book Golf” page, empty states, or as a watermark/background motif.
+    * Color Selection:
+        * White or light version for dark sections or overlays.
+        * Dark green version (#293515) for use on light/neutral backgrounds.
+        * Black version for print or contrast-heavy UI zones.
+    * Styling Tip: Consider using this icon in a circular badge or enclosed UI card to give it structure in small UI components.
+4. Light/Dark Mode Handling:
+    * Use conditional rendering to swap logos based on system theme or user-selected theme.
+    * Default to:
+        * White logos in dark mode.
+        * Black or green logos in light mode.
+    * Ensure logos maintain legibility and contrast against background tones.
+Instruction to Implement: Include a centralized logo asset handler/component in the app’s theme or UI library that dynamically selects the appropriate logo version based on:
+* Background color
+* UI mode (light/dark)
+* Component size and context (e.g., nav bar vs. hero banner)
+Ensure all image assets are optimized for mobile (SVG preferred or 2x PNGs for Retina) and consistently scaled across breakpoints."
