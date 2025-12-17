@@ -7,6 +7,7 @@ import { Client } from '@hubspot/api-client';
 import { google } from 'googleapis';
 import webpush from 'web-push';
 import { setupAuth, registerAuthRoutes } from './replit_integrations/auth';
+import { setupSupabaseAuthRoutes } from './supabase/auth';
 
 // Configure web push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -1637,7 +1638,10 @@ async function autoSeedCafeMenu() {
 }
 
 async function startServer() {
-  // Setup authentication (must be before other routes)
+  // Setup Supabase authentication (primary auth method)
+  setupSupabaseAuthRoutes(app);
+  
+  // Setup Replit authentication (secondary/fallback auth method)
   await setupAuth(app);
   registerAuthRoutes(app);
 

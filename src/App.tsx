@@ -60,6 +60,7 @@ import PrivateEvents from './pages/Public/PrivateEvents';
 import PublicWellness from './pages/Public/Wellness';
 import FAQ from './pages/Public/FAQ';
 import Login from './pages/Public/Login';
+import AuthCallback from './pages/Public/AuthCallback';
 import MenuOverlay from './components/MenuOverlay';
 import ViewAsBanner from './components/ViewAsBanner';
 import AdminDashboard from './pages/Admin/AdminDashboard';
@@ -523,6 +524,8 @@ const App: React.FC = () => {
               <Route path="/wellness" element={<PublicWellness />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/reset-password" element={<Login />} />
 
               {/* Admin Routes - requires admin role */}
               <Route path="/admin" element={

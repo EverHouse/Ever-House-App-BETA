@@ -1,0 +1,65 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
+
+const AuthCallback: React.FC = () => {
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          setError(error.message);
+          return;
+        }
+        
+        if (session) {
+          navigate('/dashboard');
+        } else {
+          navigate('/login');
+        }
+      } catch (err: any) {
+        setError(err.message || 'Authentication failed');
+      }
+    };
+
+    handleCallback();
+  }, [navigate]);
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#F2F2EC] items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-black/5 max-w-sm w-full mx-4">
+          <div className="text-center">
+            <span className="material-symbols-outlined text-red-500 text-4xl mb-4">error</span>
+            <h2 className="text-xl font-bold text-primary mb-2">Authentication Failed</h2>
+            <p className="text-primary/60 mb-4">{error}</p>
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full py-3 px-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-[#F2F2EC] items-center justify-center">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-black/5 max-w-sm w-full mx-4">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold text-primary">Signing you in...</h2>
+          <p className="text-primary/60 mt-2">Please wait</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AuthCallback;
