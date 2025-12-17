@@ -202,7 +202,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Activate debug layout mode
   useDebugLayout();
   
-  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe'].some(path => location.pathname.startsWith(path));
+  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe', '/sims'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isDarkTheme = isMemberRoute || isAdminRoute;
   const showHeader = !isAdminRoute;
