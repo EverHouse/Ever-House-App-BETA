@@ -357,12 +357,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Member Dock - Full Width with iOS Safe Area */}
             {isMemberRoute && !isAdminRoute && user && (
               <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30 px-4 pb-4 safe-area-bottom">
-                 <nav className={`w-full max-w-md glass-card rounded-2xl p-1.5 flex items-stretch justify-between shadow-glass backdrop-blur-2xl h-16 ${isDarkTheme ? 'bg-[#0f120a]/80 border border-white/10' : 'bg-[#293515] border border-[#293515]/20'}`} role="navigation" aria-label="Member navigation">
-                    <NavItem to="/dashboard" icon="dashboard" isActive={location.pathname === '/dashboard'} label="Dashboard" />
-                    <NavItem to="/book" icon="sports_golf" isActive={location.pathname === '/book'} label="Book Golf" />
-                    <NavItem to="/member-wellness" icon="spa" isActive={location.pathname === '/member-wellness'} label="Wellness" />
-                    <NavItem to="/member-events" icon="calendar_month" isActive={location.pathname === '/member-events'} label="Events" />
-                    <NavItem to="/cafe" icon="local_cafe" isActive={location.pathname === '/cafe'} label="Cafe" />
+                 <nav 
+                   className={`w-full max-w-md rounded-2xl p-1.5 flex items-stretch justify-between h-16 ${
+                     isDarkTheme 
+                       ? 'glass-card bg-[#0f120a]/80 border border-white/10 shadow-glass backdrop-blur-2xl' 
+                       : 'bg-[#293515] shadow-lg'
+                   }`} 
+                   role="navigation" 
+                   aria-label="Member navigation"
+                 >
+                    <NavItem to="/dashboard" icon="dashboard" isActive={location.pathname === '/dashboard'} label="Dashboard" isDarkTheme={isDarkTheme} />
+                    <NavItem to="/book" icon="sports_golf" isActive={location.pathname === '/book'} label="Book Golf" isDarkTheme={isDarkTheme} />
+                    <NavItem to="/member-wellness" icon="spa" isActive={location.pathname === '/member-wellness'} label="Wellness" isDarkTheme={isDarkTheme} />
+                    <NavItem to="/member-events" icon="calendar_month" isActive={location.pathname === '/member-events'} label="Events" isDarkTheme={isDarkTheme} />
+                    <NavItem to="/cafe" icon="local_cafe" isActive={location.pathname === '/cafe'} label="Cafe" isDarkTheme={isDarkTheme} />
                  </nav>
               </div>
             )}
@@ -464,15 +472,23 @@ const NotifItem: React.FC<{icon: string; title: string; desc: string; time: stri
   </div>
 );
 
-const NavItem: React.FC<{ to: string; icon: string; isActive: boolean; label: string }> = ({ to, icon, isActive, label }) => {
+const NavItem: React.FC<{ to: string; icon: string; isActive: boolean; label: string; isDarkTheme: boolean }> = ({ to, icon, isActive, label, isDarkTheme }) => {
   const navigate = useNavigate();
   const isGolfIcon = icon === 'sports_golf';
   const shouldFill = isActive && !isGolfIcon;
 
+  const activeClasses = isDarkTheme 
+    ? 'bg-[#E7E7DC] text-[#293515] shadow-glow scale-105' 
+    : 'bg-white text-[#293515] shadow-md scale-105';
+  
+  const inactiveClasses = isDarkTheme
+    ? 'text-white/60 hover:text-white hover:bg-white/5 active:scale-95'
+    : 'text-white/70 hover:text-white hover:bg-white/10 active:scale-95';
+
   return (
     <button 
       onClick={() => navigate(to)} 
-      className={`flex-1 h-full flex items-center justify-center rounded-xl transition-all duration-300 focus:ring-2 focus:ring-accent focus:outline-none ${isActive ? 'bg-[#E7E7DC] text-[#293515] shadow-glow scale-105' : 'text-white/60 hover:text-white hover:bg-white/5 active:scale-95'}`}
+      className={`flex-1 h-full flex items-center justify-center rounded-xl transition-all duration-300 focus:ring-2 focus:ring-accent focus:outline-none ${isActive ? activeClasses : inactiveClasses}`}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
     >
