@@ -31,6 +31,7 @@ A private members club application built with React, Vite, and TypeScript. The a
 - Backend API server: `npm run server` (port 3001)
 - Build: `npm run build`
 - Seed database: `npm run seed` (populates bays, resources, cafe menu, sample events)
+- Auto-seed: Server automatically populates cafe_items table if empty on startup (works in production)
 
 ## Database Schema (PostgreSQL)
 - **resources**: id, name, type (simulator/conference_room/wellness_room/instructor), description, capacity
