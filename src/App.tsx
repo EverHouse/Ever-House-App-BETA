@@ -269,9 +269,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {isMemberRoute && !isAdminRoute && user && (
               <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30 px-4 pb-4 safe-area-bottom">
                  <nav className="w-full max-w-md glass-card rounded-2xl p-1.5 flex items-stretch justify-between shadow-glass backdrop-blur-2xl bg-[#0f120a]/80 border border-white/10 h-16" role="navigation" aria-label="Member navigation">
+                    <NavItem to="/dashboard" icon="dashboard" isActive={location.pathname === '/dashboard'} label="Dashboard" />
                     <NavItem to="/book" icon="sports_golf" isActive={location.pathname === '/book'} label="Book Golf" />
                     <NavItem to="/member-wellness" icon="spa" isActive={location.pathname === '/member-wellness'} label="Wellness" />
-                    <NavItem to="/dashboard" icon="dashboard" isActive={location.pathname === '/dashboard'} label="Dashboard" />
                     <NavItem to="/member-events" icon="calendar_month" isActive={location.pathname === '/member-events'} label="Events" />
                     <NavItem to="/cafe" icon="local_cafe" isActive={location.pathname === '/cafe'} label="Cafe" />
                  </nav>
