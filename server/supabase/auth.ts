@@ -5,20 +5,19 @@ import { authStorage } from '../replit_integrations/auth/storage';
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 
-let supabase: SupabaseClient | null = null;
+let supabaseClient: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient | null {
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase credentials not configured. Supabase auth will be disabled.');
     return null;
   }
-  if (!supabase) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+  if (!supabaseClient) {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
   }
-  return supabase;
+  return supabaseClient;
 }
 
-export { supabase, getSupabaseClient };
+export { getSupabaseClient };
 
 export function setupSupabaseAuthRoutes(app: Express) {
   const client = getSupabaseClient();
@@ -31,6 +30,8 @@ export function setupSupabaseAuthRoutes(app: Express) {
     });
     return;
   }
+
+  console.log('Supabase auth routes enabled');
 
   app.post('/api/supabase/signup', async (req, res) => {
     try {
@@ -75,7 +76,7 @@ export function setupSupabaseAuthRoutes(app: Express) {
     try {
       const { email, password } = req.body;
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await client.auth.signInWithPassword({
         email,
         password,
       });
@@ -106,7 +107,7 @@ export function setupSupabaseAuthRoutes(app: Express) {
 
   app.post('/api/supabase/logout', async (req, res) => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await client.auth.signOut();
       
       if (error) {
         return res.status(400).json({ error: error.message });
@@ -123,7 +124,7 @@ export function setupSupabaseAuthRoutes(app: Express) {
     try {
       const { email } = req.body;
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await client.auth.resetPasswordForEmail(email, {
         redirectTo: `${req.protocol}://${req.hostname}/reset-password`,
       });
       
@@ -146,7 +147,7 @@ export function setupSupabaseAuthRoutes(app: Express) {
       }
       
       const token = authHeader.substring(7);
-      const { data: { user }, error } = await supabase.auth.getUser(token);
+      const { data: { user }, error } = await client.auth.getUser(token);
       
       if (error || !user) {
         return res.status(401).json({ error: 'Invalid token' });
@@ -172,7 +173,7 @@ export function setupSupabaseAuthRoutes(app: Express) {
     try {
       const { provider } = req.body;
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await client.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${req.protocol}://${req.hostname}/auth/callback`,
@@ -192,6 +193,12 @@ export function setupSupabaseAuthRoutes(app: Express) {
 }
 
 export const isSupabaseAuthenticated: RequestHandler = async (req, res, next) => {
+  const client = getSupabaseClient();
+  
+  if (!client) {
+    return res.status(503).json({ error: 'Supabase authentication is not configured' });
+  }
+  
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
@@ -199,7 +206,7 @@ export const isSupabaseAuthenticated: RequestHandler = async (req, res, next) =>
     }
     
     const token = authHeader.substring(7);
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await client.auth.getUser(token);
     
     if (error || !user) {
       return res.status(401).json({ error: 'Invalid token' });

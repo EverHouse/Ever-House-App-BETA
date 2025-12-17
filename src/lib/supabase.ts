@@ -1,14 +1,31 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+let supabaseClient: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient | null {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+  if (!supabaseClient) {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return supabaseClient;
+}
+
+export const supabase = getSupabase();
+export const isSupabaseConfigured = !!supabase;
 
 export type AuthProvider = 'google' | 'apple' | 'github';
 
 export async function signInWithEmail(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const client = getSupabase();
+  if (!client) {
+    return { data: null, error: { message: 'Supabase is not configured' } };
+  }
+  const { data, error } = await client.auth.signInWithPassword({
     email,
     password,
   });
@@ -16,7 +33,11 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 export async function signUpWithEmail(email: string, password: string, metadata?: { firstName?: string; lastName?: string }) {
-  const { data, error } = await supabase.auth.signUp({
+  const client = getSupabase();
+  if (!client) {
+    return { data: null, error: { message: 'Supabase is not configured' } };
+  }
+  const { data, error } = await client.auth.signUp({
     email,
     password,
     options: {
@@ -30,7 +51,11 @@ export async function signUpWithEmail(email: string, password: string, metadata?
 }
 
 export async function signInWithOAuth(provider: AuthProvider) {
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const client = getSupabase();
+  if (!client) {
+    return { data: null, error: { message: 'Supabase is not configured' } };
+  }
+  const { data, error } = await client.auth.signInWithOAuth({
     provider,
     options: {
       redirectTo: `${window.location.origin}/auth/callback`,
@@ -40,23 +65,39 @@ export async function signInWithOAuth(provider: AuthProvider) {
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const client = getSupabase();
+  if (!client) {
+    return { error: { message: 'Supabase is not configured' } };
+  }
+  const { error } = await client.auth.signOut();
   return { error };
 }
 
 export async function resetPassword(email: string) {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+  const client = getSupabase();
+  if (!client) {
+    return { data: null, error: { message: 'Supabase is not configured' } };
+  }
+  const { data, error } = await client.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/reset-password`,
   });
   return { data, error };
 }
 
 export async function getSession() {
-  const { data, error } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!client) {
+    return { data: null, error: { message: 'Supabase is not configured' } };
+  }
+  const { data, error } = await client.auth.getSession();
   return { data, error };
 }
 
 export async function getUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const client = getSupabase();
+  if (!client) {
+    return { user: null, error: { message: 'Supabase is not configured' } };
+  }
+  const { data: { user }, error } = await client.auth.getUser();
   return { user, error };
 }
