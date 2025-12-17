@@ -1,30 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
 import { Footer } from '../../components/Footer';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useData();
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setLoading(true);
-    setError('');
-    
-    try {
-      await login(email);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Membership not found. Please verify your email.');
-    } finally {
-      setLoading(false);
-    }
+  const handleLogin = () => {
+    window.location.href = '/api/login';
   };
 
   return (
@@ -38,55 +20,31 @@ const Login: React.FC = () => {
                     Member's Portal
                 </h2>
                 <p className="mt-2 text-base text-primary/60 font-medium">
-                    Enter your email to access your account.
+                    Sign in to access your account.
                 </p>
             </div>
 
-            <div className="bg-white py-8 px-6 shadow-sm rounded-2xl border border-black/5">
-                <form className="space-y-6" onSubmit={handleLogin}>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-bold text-primary pl-1">
-                            Email address
-                        </label>
-                        <div className="mt-2">
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="block w-full rounded-xl border-0 py-4 px-4 text-primary shadow-sm ring-1 ring-inset ring-black/10 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary bg-[#F9F9F7] sm:text-sm sm:leading-6 font-medium"
-                                placeholder="alex@example.com"
-                            />
-                        </div>
+            <div className="bg-white py-8 px-6 shadow-sm rounded-2xl border border-black/5 space-y-4">
+                <button
+                    onClick={handleLogin}
+                    className="flex w-full justify-center items-center gap-3 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98]"
+                >
+                    <span className="material-symbols-outlined">login</span>
+                    Sign In with Replit
+                </button>
+                
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-black/10"></div>
                     </div>
-
-                    {error && (
-                        <div className="p-3 rounded-lg bg-red-50 border border-red-100 flex items-start gap-2">
-                            <span className="material-symbols-outlined text-red-600 text-sm mt-0.5">error</span>
-                            <span className="text-sm text-red-600 font-medium">{error}</span>
-                        </div>
-                    )}
-
-                    <div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex w-full justify-center items-center gap-2 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-                        >
-                            {loading ? (
-                                <>
-                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    Logging In...
-                                </>
-                            ) : (
-                                "Log In"
-                            )}
-                        </button>
+                    <div className="relative flex justify-center text-xs">
+                        <span className="bg-white px-4 text-primary/40 font-medium">Secure login via Replit</span>
                     </div>
-                </form>
+                </div>
+
+                <p className="text-center text-xs text-primary/50">
+                    Sign in with your Google, Apple, GitHub account or email.
+                </p>
             </div>
 
             <p className="text-center text-sm text-primary/60 font-medium">

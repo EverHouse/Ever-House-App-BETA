@@ -287,17 +287,7 @@ const INITIAL_BOOKINGS: Booking[] = [
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  // Initialize from LocalStorage to prevent logout on refresh
-  const [user, setUser] = useState<MemberProfile | null>(() => {
-    try {
-      const savedUser = localStorage.getItem('eh_member_session');
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch (e) {
-      console.error("Failed to restore session", e);
-      return null;
-    }
-  });
-
+  const [user, setUser] = useState<MemberProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cafeMenu, setCafeMenu] = useState<CafeItem[]>([]);
   const [events, setEvents] = useState<EventData[]>(INITIAL_EVENTS);
@@ -305,6 +295,36 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [members, setMembers] = useState<MemberProfile[]>(INITIAL_MEMBERS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
 
+  // Check auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/user', { credentials: 'include' });
+        if (res.ok) {
+          const authUser = await res.json();
+          // Map Replit Auth user to MemberProfile
+          const memberProfile: MemberProfile = {
+            id: authUser.id,
+            name: [authUser.firstName, authUser.lastName].filter(Boolean).join(' ') || authUser.email || 'Member',
+            tier: 'Core', // Default tier - can be fetched from HubSpot later
+            status: 'Active',
+            email: authUser.email || '',
+            phone: '',
+            avatar: authUser.profileImageUrl,
+            role: 'member'
+          };
+          setUser(memberProfile);
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // Fetch cafe menu
   useEffect(() => {
     const fetchCafeMenu = async () => {
       try {
@@ -327,41 +347,21 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       } catch (err) {
         console.error('Failed to fetch cafe menu:', err);
         setCafeMenu(INITIAL_CAFE);
-      } finally {
-        setIsLoading(false);
       }
     };
     fetchCafeMenu();
   }, []);
 
-  // Auth Logic
-  const login = async (email: string) => {
-    // Simulate HubSpot API verification for Email & Phone Data
-    return new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-            const member = members.find(m => m.email.toLowerCase() === email.toLowerCase());
-            
-            if (!member) {
-                reject(new Error("Email not found in database."));
-                return;
-            }
-
-            if (member.status !== 'Active') {
-                reject(new Error("Membership is currently pending approval."));
-                return;
-            }
-
-            setUser(member);
-            // Save to LocalStorage
-            localStorage.setItem('eh_member_session', JSON.stringify(member));
-            resolve();
-        }, 1500); // Simulate API latency
-    });
+  // Auth Logic - redirects to Replit Auth
+  const login = async (_email: string) => {
+    // Redirect to Replit Auth login
+    window.location.href = '/api/login';
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('eh_member_session');
+    // Redirect to Replit Auth logout
+    window.location.href = '/api/logout';
   };
 
   // Cafe Actions (now using API)

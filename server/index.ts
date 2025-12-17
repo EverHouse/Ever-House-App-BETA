@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import { Client } from '@hubspot/api-client';
 import { google } from 'googleapis';
+import { setupAuth, registerAuthRoutes } from './replit_integrations/auth';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +13,9 @@ const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production';
 
 const app = express();
+
+// Trust proxy for secure cookies behind reverse proxy
+app.set('trust proxy', 1);
 
 const corsOptions = {
   origin: isProduction 
@@ -1444,7 +1448,15 @@ if (isProduction) {
   });
 }
 
-const PORT = Number(process.env.PORT) || (isProduction ? 80 : 3001);
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`API Server running on port ${PORT}`);
-});
+async function startServer() {
+  // Setup authentication (must be before other routes)
+  await setupAuth(app);
+  registerAuthRoutes(app);
+
+  const PORT = Number(process.env.PORT) || (isProduction ? 80 : 3001);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`API Server running on port ${PORT}`);
+  });
+}
+
+startServer().catch(console.error);
