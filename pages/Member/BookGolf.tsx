@@ -6,7 +6,17 @@ interface TimeSlot {
   start: string;
   end: string;
   label: string;
-  availableResourceIds: string[];
+  available: boolean;
+  start_time: string;
+  end_time: string;
+}
+
+interface DBResource {
+  id: number;
+  name: string;
+  type: string;
+  description: string;
+  capacity: number;
 }
 
 interface Resource {
@@ -16,77 +26,180 @@ interface Resource {
   badge?: string;
   icon?: string;
   image?: string;
+  dbId?: number;
 }
 
 const BookGolf: React.FC = () => {
-  const { addBooking } = useData();
+  const { user } = useData();
   const [activeTab, setActiveTab] = useState<'simulator' | 'lessons' | 'conference'>('simulator');
-  const [selectedDate, setSelectedDate] = useState('Tue 24');
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [duration, setDuration] = useState<number>(60);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [dbResources, setDbResources] = useState<DBResource[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
-    setSelectedSlot(null);
-    setSelectedResource(null);
-    setAvailableSlots([]);
-    setIsCalculating(true);
-    const timer = setTimeout(() => {
-      setAvailableSlots(generateMockSlots(activeTab, duration));
-      setIsCalculating(false);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [activeTab, selectedDate, duration]);
+    fetchResources();
+  }, []);
 
-  const handleConfirm = () => {
-    if (selectedSlot && selectedResource) {
-        const resources = getResourcesForTab();
-        const r = resources.find(r => r.id === selectedResource);
-        addBooking({
-            id: Date.now().toString(),
-            type: 'golf',
-            title: r ? r.name : 'Booking',
-            // Pass full date string
-            date: selectedDate,
-            time: selectedSlot.start,
-            details: `${duration} min`,
-            color: 'primary'
-        });
+  useEffect(() => {
+    if (selectedResource && selectedDate) {
+      fetchAvailability();
     }
-    setShowConfirmation(true);
-    setTimeout(() => {
-        setShowConfirmation(false);
-        setSelectedSlot(null);
-        setSelectedResource(null);
-    }, 2500);
+  }, [selectedResource, selectedDate, duration]);
+
+  const fetchResources = async () => {
+    try {
+      const res = await fetch('/api/resources');
+      if (res.ok) {
+        const data = await res.json();
+        setDbResources(data);
+      }
+    } catch (err) {
+      console.error('Error fetching resources:', err);
+    }
+  };
+
+  const fetchAvailability = async () => {
+    if (!selectedResource) return;
+    
+    const resource = getResourcesForTab().find(r => r.id === selectedResource);
+    if (!resource?.dbId) {
+      setAvailableSlots([]);
+      return;
+    }
+    
+    setIsCalculating(true);
+    try {
+      const durationMinutes = duration;
+      const res = await fetch(`/api/availability?resource_id=${resource.dbId}&date=${selectedDate}&duration=${durationMinutes}`);
+      if (res.ok) {
+        const slots = await res.json();
+        setAvailableSlots(slots.map((slot: any, idx: number) => ({
+          id: `slot-${idx}`,
+          start: formatTime(slot.start_time),
+          end: formatTime(slot.end_time),
+          start_time: slot.start_time,
+          end_time: slot.end_time,
+          label: `${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`,
+          available: slot.available
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching availability:', err);
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  const formatTime = (time: string) => {
+    const [hours] = time.split(':');
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:00 ${ampm}`;
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedSlot || !selectedResource || !user?.email) return;
+    
+    const resource = getResourcesForTab().find(r => r.id === selectedResource);
+    if (!resource?.dbId) return;
+    
+    setBookingError(null);
+    
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resource_id: resource.dbId,
+          user_email: user.email,
+          booking_date: selectedDate,
+          start_time: selectedSlot.start_time,
+          end_time: selectedSlot.end_time,
+          notes: `${duration} min booking`
+        })
+      });
+      
+      if (res.ok) {
+        setShowConfirmation(true);
+        setTimeout(() => {
+          setShowConfirmation(false);
+          setSelectedSlot(null);
+          fetchAvailability();
+        }, 2500);
+      } else {
+        const error = await res.json();
+        setBookingError(error.error || 'Booking failed');
+        setTimeout(() => setBookingError(null), 3000);
+      }
+    } catch (err) {
+      setBookingError('Failed to create booking');
+      setTimeout(() => setBookingError(null), 3000);
+    }
   };
 
   const getResourcesForTab = (): Resource[] => {
     if (activeTab === 'simulator') {
-      return [
-        { id: 'bay1', name: 'Bay 1', meta: 'TrackMan 4 • Up to 4 players', badge: 'Indoor', icon: 'golf_course' },
-        { id: 'bay2', name: 'Bay 2', meta: 'TrackMan 4 • Up to 4 players', badge: 'Indoor', icon: 'golf_course' },
-        { id: 'bay3', name: 'Bay 3', meta: 'TrackMan 4 • Up to 4 players', badge: 'Indoor', icon: 'golf_course' },
-        { id: 'bay4', name: 'Bay 4', meta: 'TrackMan 4 • Pro Series', badge: 'Private', icon: 'golf_course' },
-      ];
+      const simulators = dbResources.filter(r => r.type === 'simulator');
+      return simulators.map(sim => ({
+        id: `sim-${sim.id}`,
+        dbId: sim.id,
+        name: sim.name,
+        meta: sim.description || 'TrackMan 4 • Up to 4 players',
+        badge: 'Indoor',
+        icon: 'golf_course'
+      }));
     } else if (activeTab === 'lessons') {
-      return [
-        { id: 'inst1', name: 'Rebecca Lee', meta: 'LPGA Pro • $150/hr', image: 'https://images.unsplash.com/photo-1589579234096-291f034e482c?q=80&w=2787&auto=format&fit=crop' },
-        { id: 'inst2', name: 'Tim Silverman', meta: 'PGA Coach • $130/hr', image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=2787&auto=format&fit=crop' },
-      ];
+      const instructors = dbResources.filter(r => r.type === 'instructor');
+      if (instructors.length > 0) {
+        return instructors.map(inst => ({
+          id: `inst-${inst.id}`,
+          dbId: inst.id,
+          name: inst.name,
+          meta: inst.description || 'Golf Pro',
+          image: 'https://images.unsplash.com/photo-1589579234096-291f034e482c?q=80&w=2787&auto=format&fit=crop'
+        }));
+      }
+      return [];
     } else {
-      return [
-        { id: 'room1', name: 'The Boardroom', meta: 'Seats 8 • TV & Video Conf', badge: 'Core+', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2301&auto=format&fit=crop' }
-      ];
+      const rooms = dbResources.filter(r => r.type === 'conference_room');
+      return rooms.map(room => ({
+        id: `room-${room.id}`,
+        dbId: room.id,
+        name: room.name,
+        meta: room.description || 'Conference Room',
+        badge: 'Core+',
+        image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2301&auto=format&fit=crop'
+      }));
     }
   };
 
-  const visibleResources = selectedSlot 
-    ? getResourcesForTab().filter(r => selectedSlot.availableResourceIds.includes(r.id))
-    : [];
+  const isLessonsTabWithNoResources = activeTab === 'lessons' && getResourcesForTab().length === 0;
+
+  const getNextDays = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      days.push({
+        dateStr: date.toISOString().split('T')[0],
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        dateNum: date.getDate().toString()
+      });
+    }
+    return days;
+  };
+
+  const visibleResources = getResourcesForTab();
 
   // Logic check: Button only shows if Date, Duration (state), Slot, and Resource are present.
   const canBook = selectedDate && duration && selectedSlot && selectedResource;
@@ -108,23 +221,60 @@ const BookGolf: React.FC = () => {
 
       <div className="relative z-10 animate-pop-in space-y-6">
         
-        <section className="glass-card rounded-2xl p-4 border border-white/10">
+        <section className="glass-card rounded-2xl p-4 border border-white/10 mb-6">
+             <span className="text-xs font-bold uppercase text-white/60 tracking-wider mb-3 block">
+                Select {activeTab === 'simulator' ? 'Bay' : activeTab === 'lessons' ? 'Instructor' : 'Room'}
+             </span>
+             <div className="space-y-3">
+                {isLessonsTabWithNoResources ? (
+                    <div className="text-center py-8 space-y-3">
+                        <span className="material-symbols-outlined text-4xl text-white/30">school</span>
+                        <div>
+                            <p className="text-white/60 text-sm mb-2">Private lessons require personal scheduling</p>
+                            <p className="text-white/40 text-xs">Contact the pro shop or call the front desk to book a lesson with one of our PGA instructors.</p>
+                        </div>
+                        <button className="mt-4 px-6 py-2 bg-accent text-brand-green rounded-lg font-bold text-sm">
+                            Contact Pro Shop
+                        </button>
+                    </div>
+                ) : visibleResources.length > 0 ? visibleResources.map((resource) => (
+                    <ResourceCard
+                        key={resource.id}
+                        resource={resource}
+                        selected={selectedResource === resource.id}
+                        onClick={() => {
+                            setSelectedResource(resource.id);
+                            setSelectedSlot(null);
+                        }}
+                        type={activeTab}
+                    />
+                )) : (
+                    <div className="text-center py-6 text-sm text-white/40">
+                        No {activeTab === 'simulator' ? 'bays' : activeTab === 'lessons' ? 'instructors' : 'rooms'} available
+                    </div>
+                )}
+             </div>
+        </section>
+
+        {selectedResource && (
+        <section className="glass-card rounded-2xl p-4 border border-white/10 animate-pop-in">
              <div className="flex items-center justify-between mb-3">
                  <span className="text-xs font-bold uppercase text-white/60 tracking-wider">Date & Duration</span>
              </div>
              <div className="space-y-4">
                  <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-                    {['Mon 23', 'Tue 24', 'Wed 25', 'Thu 26', 'Fri 27'].map((d) => {
-                        const day = d.split(' ')[0];
-                        const dateNum = d.split(' ')[1];
-                        const isActive = selectedDate === d;
+                    {getNextDays().map((d) => {
+                        const isActive = selectedDate === d.dateStr;
                         return (
                             <DateButton 
-                                key={d}
-                                day={day} 
-                                date={dateNum} 
+                                key={d.dateStr}
+                                day={d.day} 
+                                date={d.dateNum} 
                                 active={isActive} 
-                                onClick={() => setSelectedDate(d)} 
+                                onClick={() => {
+                                    setSelectedDate(d.dateStr);
+                                    setSelectedSlot(null);
+                                }}
                             />
                         );
                     })}
@@ -146,8 +296,10 @@ const BookGolf: React.FC = () => {
                 </div>
              </div>
         </section>
+        )}
 
-        <section className="min-h-[120px]">
+        {selectedResource && (
+        <section className="min-h-[120px] mt-6 animate-pop-in">
             <h3 className="text-sm font-bold uppercase tracking-wider text-white/80 mb-3 pl-1">Available Times</h3>
             
             {isCalculating ? (
@@ -155,14 +307,11 @@ const BookGolf: React.FC = () => {
                     <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 gap-3">
-                    {availableSlots.map((slot, index) => (
+                <div className="grid grid-cols-2 gap-3 pb-24">
+                    {availableSlots.filter(slot => slot.available).map((slot, index) => (
                         <button
                             key={slot.id}
-                            onClick={() => {
-                                setSelectedSlot(slot);
-                                setSelectedResource(null);
-                            }}
+                            onClick={() => setSelectedSlot(slot)}
                             className={`p-4 rounded-xl border text-left transition-all active:scale-[0.98] relative overflow-hidden flex flex-col justify-center animate-pop-in ${
                                 selectedSlot?.id === slot.id
                                 ? 'bg-accent text-brand-green border-accent shadow-glow'
@@ -172,37 +321,18 @@ const BookGolf: React.FC = () => {
                         >
                            <div className="font-bold text-base mb-0.5">{slot.start}</div>
                            <div className={`text-[10px] font-bold uppercase tracking-wide ${selectedSlot?.id === slot.id ? 'opacity-80' : 'opacity-40'}`}>
-                               {slot.availableResourceIds.length} Available
+                               Available
                            </div>
                         </button>
                     ))}
-                    {availableSlots.length === 0 && (
-                        <div className="col-span-2 text-center py-8 text-sm opacity-60 glass-card rounded-xl border-dashed">
-                            No slots available.
+                    {availableSlots.filter(slot => slot.available).length === 0 && !isCalculating && (
+                        <div className="col-span-2 text-center py-8 text-sm opacity-60 glass-card rounded-xl border-dashed text-white">
+                            No slots available for this date.
                         </div>
                     )}
                 </div>
             )}
         </section>
-
-        {selectedSlot && (
-            <section className="animate-pop-in pb-24">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white/80 mb-3 pl-1">
-                    Select {activeTab === 'simulator' ? 'Bay' : activeTab === 'lessons' ? 'Instructor' : 'Room'}
-                </h3>
-                <div className="space-y-3">
-                    {visibleResources.map((resource, index) => (
-                        <div key={resource.id} className="animate-pop-in" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}>
-                             <ResourceCard
-                                resource={resource}
-                                selected={selectedResource === resource.id}
-                                onClick={() => setSelectedResource(resource.id)}
-                                type={activeTab}
-                            />
-                        </div>
-                    ))}
-                </div>
-            </section>
         )}
       </div>
 
@@ -229,32 +359,6 @@ const BookGolf: React.FC = () => {
       )}
     </div>
   );
-};
-
-const generateMockSlots = (tab: string, duration: number): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    const startHour = 8;
-    const endHour = 20;
-    for (let h = startHour; h < endHour; h++) {
-        if (Math.random() > 0.7) continue;
-        const start = `${h > 12 ? h - 12 : h}:00 ${h >= 12 ? 'PM' : 'AM'}`;
-        const totalMinutes = h * 60 + duration;
-        const endH = Math.floor(totalMinutes / 60);
-        const endM = totalMinutes % 60;
-        const end = `${endH > 12 ? endH - 12 : endH}:${endM === 0 ? '00' : endM} ${endH >= 12 ? 'PM' : 'AM'}`;
-        let availableResourceIds: string[] = [];
-        if (tab === 'simulator') {
-             availableResourceIds = ['bay1', 'bay2', 'bay3', 'bay4'].filter(() => Math.random() > 0.3);
-        } else if (tab === 'lessons') {
-             availableResourceIds = ['inst1', 'inst2'].filter(() => Math.random() > 0.4);
-        } else {
-             if (Math.random() > 0.2) availableResourceIds = ['room1'];
-        }
-        if (availableResourceIds.length > 0) {
-            slots.push({ id: `slot-${h}`, start, end, label: `${start} – ${end}`, availableResourceIds });
-        }
-    }
-    return slots;
 };
 
 const TabButton: React.FC<{label: string; active: boolean; onClick: () => void}> = ({ label, active, onClick }) => (

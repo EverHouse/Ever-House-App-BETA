@@ -434,62 +434,117 @@ const AnnouncementsAdmin: React.FC = () => {
 
 // --- MEMBERS ADMIN ---
 
+interface HubSpotContact {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    company: string;
+    status: string;
+    createdAt: string;
+}
+
 const MembersAdmin: React.FC = () => {
-    const { members, updateMember } = useData();
-    const [isEditing, setIsEditing] = useState(false);
-    const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
+    const [hubspotContacts, setHubspotContacts] = useState<HubSpotContact[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedContact, setSelectedContact] = useState<HubSpotContact | null>(null);
 
-    const openEdit = (member: MemberProfile) => {
-        setSelectedMember(member);
-        setIsEditing(true);
-    };
+    useEffect(() => {
+        fetchHubSpotContacts();
+    }, []);
 
-    const handleSave = () => {
-        if (selectedMember) {
-            updateMember(selectedMember);
+    const fetchHubSpotContacts = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/hubspot/contacts');
+            if (!response.ok) {
+                throw new Error('Failed to fetch contacts from HubSpot');
+            }
+            const data = await response.json();
+            setHubspotContacts(data);
+            setError(null);
+        } catch (err: any) {
+            setError(err.message);
+            console.error('HubSpot fetch error:', err);
+        } finally {
+            setLoading(false);
         }
-        setIsEditing(false);
     };
+
+    const openDetails = (contact: HubSpotContact) => {
+        setSelectedContact(contact);
+    };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-16">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-500 dark:text-gray-400">Loading members from HubSpot...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+                <span className="material-symbols-outlined text-red-500 text-3xl mb-2">error</span>
+                <h3 className="font-bold text-red-700 dark:text-red-300 mb-2">Connection Error</h3>
+                <p className="text-red-600 dark:text-red-400 text-sm mb-4">{error}</p>
+                <button onClick={fetchHubSpotContacts} className="px-4 py-2 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 rounded-lg font-bold text-sm hover:bg-red-200">
+                    Try Again
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div>
-            {isEditing && selectedMember && (
+            <div className="flex justify-between items-center mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <span className="font-bold text-primary dark:text-white">{hubspotContacts.length}</span> contacts from HubSpot
+                </p>
+                <button onClick={fetchHubSpotContacts} className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg text-sm font-bold text-gray-600 dark:text-white hover:bg-gray-50">
+                    <span className="material-symbols-outlined text-[16px]">sync</span> Refresh
+                </button>
+            </div>
+
+            {selectedContact && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95">
-                        <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">Edit Member</h3>
+                        <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">Member Details</h3>
                         <div className="space-y-3 mb-6">
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500">Name</label>
-                                <input className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.name} onChange={e => setSelectedMember({...selectedMember, name: e.target.value})} />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500">Email</label>
-                                <input className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.email} onChange={e => setSelectedMember({...selectedMember, email: e.target.value})} />
-                            </div>
-                            <div className="flex gap-3">
-                                <div className="flex-1">
-                                    <label className="text-[10px] uppercase font-bold text-gray-500">Tier</label>
-                                    <select className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.tier} onChange={e => setSelectedMember({...selectedMember, tier: e.target.value})}>
-                                        <option>Social</option>
-                                        <option>Core</option>
-                                        <option>Premium</option>
-                                        <option>Corporate</option>
-                                        <option>Founding</option>
-                                    </select>
+                            <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-white/10">
+                                <div className="w-14 h-14 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center text-primary dark:text-white font-bold text-xl">
+                                    {selectedContact.firstName?.[0]}{selectedContact.lastName?.[0]}
                                 </div>
-                                <div className="flex-1">
-                                    <label className="text-[10px] uppercase font-bold text-gray-500">Status</label>
-                                    <select className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.status} onChange={e => setSelectedMember({...selectedMember, status: e.target.value as any})}>
-                                        <option>Active</option>
-                                        <option>Pending</option>
-                                        <option>Suspended</option>
-                                    </select>
+                                <div>
+                                    <h4 className="font-bold text-lg text-primary dark:text-white">{selectedContact.firstName} {selectedContact.lastName}</h4>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">{selectedContact.company || 'No company'}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400">Email</label>
+                                    <p className="text-sm text-primary dark:text-white">{selectedContact.email}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400">Phone</label>
+                                    <p className="text-sm text-primary dark:text-white">{selectedContact.phone || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400">Status</label>
+                                    <p className="text-sm text-primary dark:text-white">{selectedContact.status}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400">Added</label>
+                                    <p className="text-sm text-primary dark:text-white">{new Date(selectedContact.createdAt).toLocaleDateString()}</p>
                                 </div>
                             </div>
                         </div>
                         <div className="flex gap-3 justify-end">
-                            <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
-                            <button onClick={handleSave} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md">Save</button>
+                            <button onClick={() => setSelectedContact(null)} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md">Close</button>
                         </div>
                     </div>
                 </div>
@@ -497,19 +552,23 @@ const MembersAdmin: React.FC = () => {
 
             {/* Mobile View: Cards */}
             <div className="md:hidden space-y-3">
-                {members.map(m => (
-                    <div key={m.id} onClick={() => openEdit(m)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm active:scale-[0.98] transition-transform">
+                {hubspotContacts.map(contact => (
+                    <div key={contact.id} onClick={() => openDetails(contact)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm active:scale-[0.98] transition-transform cursor-pointer">
                         <div className="flex justify-between items-start mb-2">
                             <div>
-                                <h4 className="font-bold text-lg text-primary dark:text-white">{m.name}</h4>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
+                                <h4 className="font-bold text-lg text-primary dark:text-white">{contact.firstName} {contact.lastName}</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{contact.email}</p>
                             </div>
-                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${m.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{m.status}</span>
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${contact.status === 'Active' || !contact.status ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                {contact.status || 'Active'}
+                            </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tier</span>
-                            <span className="bg-primary/5 dark:bg-white/10 text-primary dark:text-white px-2 py-0.5 rounded text-xs font-bold">{m.tier}</span>
-                        </div>
+                        {contact.company && (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Company</span>
+                                <span className="bg-primary/5 dark:bg-white/10 text-primary dark:text-white px-2 py-0.5 rounded text-xs font-bold">{contact.company}</span>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
@@ -520,27 +579,35 @@ const MembersAdmin: React.FC = () => {
                     <thead className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/5">
                         <tr>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Name</th>
-                            <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Tier</th>
+                            <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Company</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Status</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Email</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {members.map(m => (
-                            <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
-                                <td className="p-4 font-medium text-primary dark:text-white">{m.name}</td>
-                                <td className="p-4"><span className="bg-primary/10 dark:bg-white/10 text-primary dark:text-white px-2 py-1 rounded text-xs font-bold">{m.tier}</span></td>
-                                <td className="p-4 text-sm font-bold text-gray-700 dark:text-gray-300">{m.status}</td>
-                                <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{m.email}</td>
+                        {hubspotContacts.map(contact => (
+                            <tr key={contact.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
+                                <td className="p-4 font-medium text-primary dark:text-white">{contact.firstName} {contact.lastName}</td>
+                                <td className="p-4"><span className="bg-primary/10 dark:bg-white/10 text-primary dark:text-white px-2 py-1 rounded text-xs font-bold">{contact.company || 'N/A'}</span></td>
+                                <td className="p-4 text-sm font-bold text-gray-700 dark:text-gray-300">{contact.status || 'Active'}</td>
+                                <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{contact.email}</td>
                                 <td className="p-4">
-                                    <button onClick={() => openEdit(m)} className="text-primary dark:text-white hover:underline text-xs font-bold">Edit</button>
+                                    <button onClick={() => openDetails(contact)} className="text-primary dark:text-white hover:underline text-xs font-bold">View</button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {hubspotContacts.length === 0 && (
+                <div className="py-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
+                    <span className="material-symbols-outlined text-gray-300 text-4xl mb-2">groups</span>
+                    <p className="text-gray-400">No contacts found in HubSpot.</p>
+                    <p className="text-gray-300 text-sm mt-1">Add contacts in HubSpot to see them here.</p>
+                </div>
+            )}
         </div>
     );
 };

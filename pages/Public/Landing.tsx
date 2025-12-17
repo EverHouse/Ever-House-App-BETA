@@ -101,6 +101,31 @@ const Landing: React.FC = () => {
                 </ul>
                 <button onClick={() => navigate('/membership')} className="w-full py-3 rounded-xl bg-white text-[#293515] font-bold text-xs hover:bg-gray-100 relative z-10">View Details</button>
             </div>
+
+            <div className="bg-white p-6 rounded-2xl border-2 border-[#293515]/20 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-[#293515]">Corporate</h3>
+                        <span className="bg-[#293515] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Teams</span>
+                    </div>
+                    <span className="text-lg font-bold text-[#293515]">Custom</span>
+                </div>
+                <p className="text-sm text-[#293515]/70 mb-4">Tailored packages for companies and groups.</p>
+                <ul className="space-y-2 mb-6">
+                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Team Memberships</li>
+                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Priority Booking</li>
+                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Dedicated Account Manager</li>
+                </ul>
+                <button onClick={() => navigate('/membership/corporate')} className="w-full py-3 rounded-xl border border-[#293515]/10 text-[#293515] font-bold text-xs hover:bg-[#293515]/5">View Details</button>
+            </div>
+
+            <button 
+                onClick={() => navigate('/membership/compare')} 
+                className="w-full text-center py-3 text-[#293515] font-bold text-sm hover:underline flex items-center justify-center gap-2"
+            >
+                <span className="material-symbols-outlined text-lg">compare_arrows</span>
+                Compare All Plans
+            </button>
          </div>
       </div>
 

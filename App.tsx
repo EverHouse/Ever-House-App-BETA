@@ -134,9 +134,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   onClick={() => navigate('/')}
                 >
                   <img
-                    src="/assets/logos/EH_logo-23_white.png"
+                    src={isMemberRoute ? "/assets/logos/EH-guy-icon.png" : "/assets/logos/EH_logo-23_white.png"}
                     alt="Even House"
-                    className="h-7 w-auto object-contain opacity-95"
+                    className={isMemberRoute ? "h-8 w-8 object-contain" : "h-7 w-auto object-contain opacity-95"}
                   />
                 </div>
 

@@ -1,32 +1,115 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationContext } from '../../App';
 import { useData } from '../../contexts/DataContext';
 
+interface DBBooking {
+  id: number;
+  resource_id: number;
+  user_email: string;
+  booking_date: string;
+  start_time: string;
+  end_time: string;
+  resource_name: string;
+  resource_type: string;
+}
+
+interface DBRSVP {
+  id: number;
+  event_id: number;
+  user_email: string;
+  title: string;
+  event_date: string;
+  start_time: string;
+  location: string;
+  category: string;
+}
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { openNotifications } = useContext(NotificationContext);
-  const { announcements, user, bookings, deleteBooking } = useData();
+  const { announcements, user } = useData();
   const latestAnnouncement = announcements[0];
   
-  const resourceBookings = bookings.filter(b => b.type === 'golf' || b.type === 'dining');
-  const rsvpBookings = bookings.filter(b => b.type === 'event' || b.type === 'wellness');
+  const [resourceBookings, setResourceBookings] = useState<DBBooking[]>([]);
+  const [rsvpBookings, setRsvpBookings] = useState<DBRSVP[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleReschedule = (id: string) => {
-    deleteBooking(id);
-    navigate('/book');
+  useEffect(() => {
+    if (user?.email) {
+      fetchUserData();
+    }
+  }, [user?.email]);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      const [bookingsRes, rsvpsRes] = await Promise.all([
+        fetch(`/api/bookings?user_email=${encodeURIComponent(user?.email || '')}`),
+        fetch(`/api/rsvps?user_email=${encodeURIComponent(user?.email || '')}`)
+      ]);
+      
+      if (bookingsRes.ok) {
+        const bookingsData = await bookingsRes.json();
+        setResourceBookings(bookingsData);
+      }
+      
+      if (rsvpsRes.ok) {
+        const rsvpsData = await rsvpsRes.json();
+        setRsvpBookings(rsvpsData);
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCancelRSVP = (id: string) => {
-    deleteBooking(id);
+  const handleReschedule = async (id: number) => {
+    try {
+      const res = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        console.error('Failed to cancel booking');
+        return;
+      }
+      fetchUserData();
+      navigate('/book');
+    } catch (err) {
+      console.error('Error cancelling booking:', err);
+    }
+  };
+
+  const handleCancelRSVP = async (eventId: number) => {
+    try {
+      const res = await fetch(`/api/rsvps/${eventId}/${encodeURIComponent(user?.email || '')}`, { method: 'DELETE' });
+      if (!res.ok) {
+        console.error('Failed to cancel RSVP');
+        return;
+      }
+      fetchUserData();
+    } catch (err) {
+      console.error('Error cancelling RSVP:', err);
+    }
+  };
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:${minutes} ${ampm}`;
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
   const getIconForType = (type: string) => {
     switch(type) {
-        case 'golf': return 'sports_golf';
-        case 'dining': return 'restaurant';
-        case 'wellness': return 'spa';
-        case 'event': return 'celebration';
+        case 'simulator': return 'sports_golf';
+        case 'conference_room': return 'meeting_room';
+        case 'wellness_room': return 'spa';
         default: return 'event';
     }
   };
@@ -108,12 +191,16 @@ const Dashboard: React.FC = () => {
                <button onClick={() => navigate('/book')} className="w-8 h-8 rounded-lg glass-button flex items-center justify-center text-white hover:bg-white hover:text-brand-green transition-colors active:scale-90"><span className="material-symbols-outlined text-[20px]">add</span></button>
             </div>
             <div className="space-y-3">
-               {resourceBookings.length > 0 ? resourceBookings.map((b, idx) => (
+               {loading ? (
+                  <div className="glass-panel p-8 rounded-2xl text-center text-sm opacity-50 text-white flex justify-center">
+                     <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                  </div>
+               ) : resourceBookings.length > 0 ? resourceBookings.map((b, idx) => (
                   <GlassRow 
                     key={b.id} 
-                    title={b.title} 
-                    subtitle={`${b.date} • ${b.time} • ${b.details}`} 
-                    icon={getIconForType(b.type)} 
+                    title={b.resource_name} 
+                    subtitle={`${formatDate(b.booking_date)} • ${formatTime(b.start_time)}`} 
+                    icon={getIconForType(b.resource_type)} 
                     color="text-[#E7E7DC]"
                     actionIcon="edit_calendar"
                     onAction={() => handleReschedule(b.id)}
@@ -131,15 +218,19 @@ const Dashboard: React.FC = () => {
                <button onClick={() => navigate('/member-events')} className="text-xs font-bold text-accent hover:text-white transition-colors uppercase tracking-wider">View All</button>
             </div>
             <div className="space-y-3">
-               {rsvpBookings.length > 0 ? rsvpBookings.map((b, idx) => (
+               {loading ? (
+                  <div className="glass-panel p-8 rounded-2xl text-center text-sm opacity-50 text-white flex justify-center">
+                     <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                  </div>
+               ) : rsvpBookings.length > 0 ? rsvpBookings.map((b, idx) => (
                   <GlassRow 
                     key={b.id} 
                     title={b.title} 
-                    subtitle={`${b.date} • ${b.time} • ${b.details}`} 
-                    icon={getIconForType(b.type)} 
+                    subtitle={`${formatDate(b.event_date)} • ${formatTime(b.start_time)} • ${b.location}`} 
+                    icon="celebration"
                     color="text-[#E7E7DC]"
                     actionIcon="close"
-                    onAction={() => handleCancelRSVP(b.id)}
+                    onAction={() => handleCancelRSVP(b.event_id)}
                     delay={`${0.5 + (idx * 0.1)}s`}
                   />
                )) : (
