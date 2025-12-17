@@ -1,7 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { triggerHaptic } from '../utils/haptics';
-import { TABS } from './BottomTabBar';
 
 interface SwipeableTabContainerProps {
   children: React.ReactNode[];
@@ -15,6 +13,7 @@ const SwipeableTabContainer: React.FC<SwipeableTabContainerProps> = ({
   onIndexChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
@@ -26,6 +25,23 @@ const SwipeableTabContainer: React.FC<SwipeableTabContainerProps> = ({
   const lastTouchX = useRef(0);
   const lastTouchTime = useRef(0);
   const velocity = useRef(0);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+
+    const resizeObserver = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
@@ -111,8 +127,8 @@ const SwipeableTabContainer: React.FC<SwipeableTabContainerProps> = ({
     setIsHorizontalSwipe(null);
   }, [isDragging, dragOffset, activeIndex, children.length, onIndexChange]);
 
-  const containerWidth = containerRef.current?.offsetWidth || (typeof window !== 'undefined' ? window.innerWidth : 400);
-  const translateX = -activeIndex * containerWidth + dragOffset;
+  const translateX = containerWidth > 0 ? -activeIndex * containerWidth + dragOffset : 0;
+  const isReady = containerWidth > 0;
 
   return (
     <div 
@@ -129,6 +145,7 @@ const SwipeableTabContainer: React.FC<SwipeableTabContainerProps> = ({
           transform: `translateX(${translateX}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           width: `${children.length * 100}%`,
+          opacity: isReady ? 1 : 0,
         }}
       >
         {React.Children.map(children, (child, index) => (
