@@ -33,7 +33,13 @@ const Login: React.FC = () => {
         <div className="w-full max-w-sm mx-auto space-y-8">
             
             <div className="text-center">
-                <div className="w-16 h-16 bg-primary text-[#F2F2EC] rounded-full flex items-center justify-center mx-auto text-2xl font-bold tracking-tighter mb-6 shadow-xl">EH</div>
+                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                  <img
+                    src="/assets/logos/EH-guy-icon.png"
+                    alt="Even House"
+                    className="h-9 w-9 object-contain"
+                  />
+                </div>
                 <h2 className="text-3xl font-bold tracking-tight text-primary">
                     Member's Portal
                 </h2>

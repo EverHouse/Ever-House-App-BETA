@@ -19,7 +19,11 @@ const Contact: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC]">
       <div className="px-6 pt-6 pb-6 text-center">
-        <span className="font-serif font-bold text-xl tracking-tight text-primary">EH</span>
+        <img
+          src="/assets/logos/EH_logo-23.png"
+          alt="Even House"
+          className="h-7 w-auto object-contain mx-auto"
+        />
         <h1 className="mt-8 text-3xl font-bold tracking-tight text-primary mb-3">Get in Touch</h1>
         <p className="text-primary/70 text-sm leading-relaxed max-w-xs mx-auto">
            We look forward to hearing from you. Please fill out the form below or visit us in Tustin.

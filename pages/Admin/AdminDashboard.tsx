@@ -22,7 +22,7 @@ const AdminDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col">
       
       {/* Header - Relative to sit flush with content */}
-      <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40">
+      <header className="relative flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40">
         <button 
           onClick={() => setIsMenuOpen(true)}
           className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
@@ -30,8 +30,12 @@ const AdminDashboard: React.FC = () => {
           <span className="material-symbols-outlined text-[24px]">menu</span>
         </button>
         
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer font-bold tracking-widest text-lg opacity-90" onClick={() => navigate('/')}>
-          <span className="font-bold text-xl tracking-tight">EH</span>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer" onClick={() => navigate('/')}>
+          <img
+            src="/assets/logos/EH_logo-23_white.png"
+            alt="Even House"
+            className="h-7 w-auto object-contain opacity-95"
+          />
         </div>
 
         {/* Top Right - Exit to Member Dashboard */}
