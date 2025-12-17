@@ -617,6 +617,77 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
   }
 });
 
+app.post('/api/hubspot/sync-members', async (req, res) => {
+  try {
+    const hubspot = await getHubSpotClient();
+    
+    const properties = [
+      'firstname',
+      'lastname',
+      'email',
+      'phone',
+      'membership_tier',
+      'membership_status'
+    ];
+    
+    let allContacts: any[] = [];
+    let after: string | undefined = undefined;
+    
+    do {
+      const response = await hubspot.crm.contacts.basicApi.getPage(100, after, properties);
+      allContacts = allContacts.concat(response.results);
+      after = response.paging?.next?.after;
+    } while (after);
+    
+    const activeContacts = allContacts.filter((contact: any) => {
+      const status = contact.properties.membership_status || '';
+      return status.toLowerCase() === 'active';
+    });
+    
+    let updated = 0;
+    let created = 0;
+    
+    for (const contact of activeContacts) {
+      const email = contact.properties.email;
+      if (!email) continue;
+      
+      const firstName = contact.properties.firstname || null;
+      const lastName = contact.properties.lastname || null;
+      const phone = contact.properties.phone || null;
+      const tier = contact.properties.membership_tier || 'Social';
+      
+      const result = await pool.query(
+        `INSERT INTO users (id, email, first_name, last_name, phone, tier, created_at, updated_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW())
+         ON CONFLICT (email) DO UPDATE SET
+           first_name = COALESCE($2, users.first_name),
+           last_name = COALESCE($3, users.last_name),
+           phone = COALESCE($4, users.phone),
+           tier = COALESCE($5, users.tier),
+           updated_at = NOW()
+         RETURNING (xmax = 0) AS inserted`,
+        [email, firstName, lastName, phone, tier]
+      );
+      
+      if (result.rows[0]?.inserted) {
+        created++;
+      } else {
+        updated++;
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      message: `Synced ${activeContacts.length} active members from HubSpot`,
+      created,
+      updated
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('HubSpot sync error:', error);
+    res.status(500).json({ error: 'Failed to sync members from HubSpot' });
+  }
+});
+
 app.put('/api/members/:id/role', async (req, res) => {
   try {
     const { id } = req.params;
