@@ -3,10 +3,10 @@ import { Footer } from '../../components/Footer';
 
 const FAQ: React.FC = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-[#F2F2EC] dark:bg-[#0f120a] overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
       <div className="px-6 pt-8 pb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-primary dark:text-white mb-2">Frequently Asked Questions</h1>
-        <p className="text-gray-600 dark:text-gray-400 text-base font-medium">Common questions about membership, amenities, and policies.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary mb-2">Frequently Asked Questions</h1>
+        <p className="text-primary/70 text-base font-medium">Common questions about membership, amenities, and policies.</p>
       </div>
 
       <div className="px-6 pb-12 flex-1 space-y-3">
@@ -53,10 +53,10 @@ const AccordionItem: React.FC<{ question: string; answer: string }> = ({ questio
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border border-primary/10 dark:border-white/10 rounded-xl overflow-hidden bg-surface-light dark:bg-surface-dark">
+    <div className="border border-primary/10 rounded-xl overflow-hidden bg-white/40 backdrop-blur-xl">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 text-left font-bold text-primary dark:text-white hover:bg-primary/5 dark:hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between p-4 text-left font-bold text-primary hover:bg-primary/5 transition-colors"
       >
         <span>{question}</span>
         <span className={`material-symbols-outlined transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>expand_more</span>
@@ -64,7 +64,7 @@ const AccordionItem: React.FC<{ question: string; answer: string }> = ({ questio
       <div 
         className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
       >
-        <div className="p-4 pt-0 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+        <div className="p-4 pt-0 text-sm text-primary/70 leading-relaxed">
           {answer}
         </div>
       </div>

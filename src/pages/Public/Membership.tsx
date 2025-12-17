@@ -362,12 +362,12 @@ const MEMBERSHIP_DATA: Record<string, {
             "Putting Course": true,
             "Programs & Events": true,
             "Daily Guests Allowed": true,
-            "Group Lessons": false,
-            "Advanced Simulator Booking": false,
-            "Extended Simulator Sessions": false,
-            "Complimentary Private Lesson": false,
-            "Simulator Guest Passes": false,
-            "Discounted Merchandise": false
+            "Group Lessons": true,
+            "Advanced Simulator Booking": true,
+            "Extended Simulator Sessions": true,
+            "Complimentary Private Lesson": true,
+            "Simulator Guest Passes": true,
+            "Discounted Merchandise": true
         }
     }
 };
