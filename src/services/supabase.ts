@@ -1,22 +1,23 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-const isConfigured = supabaseUrl && supabaseAnonKey;
+const isConfigured = Boolean(supabaseUrl && supabaseUrl.length > 0 && supabaseAnonKey && supabaseAnonKey.length > 0);
 
 const dummyClient = {
   auth: {
-    signInWithOtp: async () => ({ error: new Error('Supabase not configured') }),
+    signInWithOtp: async () => ({ error: new Error('Supabase not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment.') }),
     signOut: async () => {},
     getSession: async () => ({ data: { session: null }, error: null }),
     getUser: async () => ({ data: { user: null }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+    exchangeCodeForSession: async () => ({ data: { session: null }, error: null }),
   },
 } as unknown as SupabaseClient;
 
-export const supabase = isConfigured 
-  ? createClient(supabaseUrl, supabaseAnonKey)
+export const supabase: SupabaseClient = isConfigured 
+  ? createClient(supabaseUrl!, supabaseAnonKey!)
   : dummyClient;
 
 export const isSupabaseConfigured = isConfigured;

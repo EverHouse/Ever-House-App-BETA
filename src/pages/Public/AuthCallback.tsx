@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../services/supabase';
+import { supabase, isSupabaseConfigured } from '../../services/supabase';
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -9,11 +9,48 @@ const AuthCallback: React.FC = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const { data: { session }, error: authError } = await supabase.auth.getSession();
-        
-        if (authError) {
-          setError(authError.message);
+        if (!isSupabaseConfigured) {
+          setError('Supabase is not configured. Please contact support.');
           return;
+        }
+
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const errorDescription = hashParams.get('error_description');
+        
+        if (errorDescription) {
+          setError(decodeURIComponent(errorDescription));
+          return;
+        }
+        
+        let session = null;
+        
+        if (accessToken && refreshToken) {
+          const { data, error: setSessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (setSessionError) {
+            setError(setSessionError.message);
+            return;
+          }
+          
+          session = data.session;
+          
+          if (window.history.replaceState) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+        } else {
+          const { data: { session: existingSession }, error: authError } = await supabase.auth.getSession();
+          
+          if (authError) {
+            setError(authError.message);
+            return;
+          }
+          
+          session = existingSession;
         }
 
         if (session?.user) {
