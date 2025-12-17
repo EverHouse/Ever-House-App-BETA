@@ -1,7 +1,61 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Footer } from '../../components/Footer';
 
+interface Event {
+  id: number;
+  title: string;
+  description: string;
+  event_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  location: string;
+  category: string;
+  image_url?: string;
+  max_attendees?: number;
+  eventbrite_id?: string;
+  eventbrite_url?: string;
+}
+
 const WhatsOn: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/events');
+        if (response.ok) {
+          const data = await response.json();
+          setEvents(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return {
+      day: date.getDate().toString().padStart(2, '0'),
+      month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+      weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      full: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    };
+  };
+
+  const formatTime = (timeString: string | null | undefined) => {
+    if (!timeString) return 'TBD';
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#EAEBE6]">
       <section className="px-6 pt-10 pb-8 bg-[#EAEBE6] rounded-b-3xl">
@@ -12,66 +66,78 @@ const WhatsOn: React.FC = () => {
       </section>
 
       <div className="px-4 space-y-4 pb-12 flex-1">
-         
-         {/* Green Card Event */}
-         <div className="bg-[#EAEBE6] rounded-[2rem] p-4 pb-6">
-             <div className="rounded-[1.5rem] overflow-hidden relative mb-4">
-                 <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFj5KTVllgBdz8O1WrPA1eT9Xzs4o_OvSC4vVZqdHC2wZS8kA0Mod5wylBhNodT2z1EzkHDWDs7LARu6H7BOm_TPGR7AG-5MQTU2_xKN1wxn3U9jbc1yPVi7MqlGzYzfNV0qg71URDuYS7gOR_n9RkQdQpRZyiPF8a1HaZkDN6NBy4zv_P1RdxDZ4CzfE2wBzLANPrsDvOCsUzORLvEeGhjDK8MHUAo98a4-MuuoeCt8d36nl29ob-1Iq_9yt2ckUb_FxNK4wpewiu" className="w-full h-56 object-cover" alt="" />
-                 <span className="absolute top-4 left-4 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-primary">Social</span>
-             </div>
-             <div className="flex justify-between items-start px-2">
-                 <div>
-                     <div className="flex items-center gap-2 mb-1">
-                         <span className="bg-[#E2DCE6] text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Sat, June 21</span>
-                         <span className="text-xs text-primary/60">7:00 PM</span>
-                     </div>
-                     <h3 className="text-2xl font-bold text-primary mb-2">Summer Solstice Jazz</h3>
-                     <p className="text-primary/70 text-sm leading-relaxed mb-4">An evening of live jazz, curated cocktails, and seasonal bites under the stars to celebrate the longest day of the year.</p>
-                     
-                     <div className="w-full bg-[#F2F2EC] py-3 rounded-xl flex items-center justify-center px-4">
-                        <span className="text-xs font-medium text-primary/60">Members Only Event</span>
-                     </div>
-                 </div>
-             </div>
-         </div>
-         
-         {/* Dark Green Card Event */}
-         <div className="bg-[#3a4a25] rounded-[2rem] p-6 text-white mx-2">
-            <span className="inline-block bg-[#C6BED9] text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-8">Dining</span>
-            
-            <div className="flex flex-col items-center text-center mb-8 opacity-40">
-                <span className="material-symbols-outlined text-6xl">restaurant</span>
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="text-center py-20">
+            <span className="material-symbols-outlined text-5xl text-primary/30 mb-4">calendar_month</span>
+            <p className="text-primary/60">No upcoming events scheduled.</p>
+            <p className="text-primary/40 text-sm mt-2">Check back soon for new experiences.</p>
+          </div>
+        ) : (
+          events.map((event, index) => {
+            const date = formatDate(event.event_date);
+            const isDark = index % 3 === 2;
+            const isFeatured = index === 0;
 
-            <h3 className="text-2xl font-bold text-white mb-1">Sunday Harvest Brunch</h3>
-            <p className="text-white/80 text-xs font-medium mb-6">Weekly • 10:00 AM - 2:00 PM</p>
-            
-            <p className="text-white/70 text-sm leading-relaxed mb-6">Farm-to-table brunch featuring local Tustin produce. Open to the public with reservation.</p>
+            if (isFeatured) {
+              return (
+                <div key={event.id} className="bg-[#EAEBE6] rounded-[2rem] p-4 pb-6">
+                  {event.image_url && (
+                    <div className="rounded-[1.5rem] overflow-hidden relative mb-4">
+                      <img src={event.image_url} className="w-full h-56 object-cover" alt={event.title} />
+                      <span className="absolute top-4 left-4 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-primary">{event.category}</span>
+                    </div>
+                  )}
+                  {!event.image_url && (
+                    <div className="rounded-[1.5rem] overflow-hidden relative mb-4 h-56 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-6xl text-primary/20">celebration</span>
+                      <span className="absolute top-4 left-4 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-primary">{event.category}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-start px-2">
+                    <div className="w-full">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-[#E2DCE6] text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{date.full}</span>
+                        <span className="text-xs text-primary/60">{formatTime(event.start_time)}</span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-primary mb-2">{event.title}</h3>
+                      <p className="text-primary/70 text-sm leading-relaxed mb-4">{event.description}</p>
+                      
+                      {event.eventbrite_url ? (
+                        <a 
+                          href={event.eventbrite_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="w-full bg-[#F05537] hover:bg-[#d94a2f] text-white py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-colors"
+                        >
+                          <span>Get Tickets</span>
+                          <span className="material-symbols-outlined text-sm">open_in_new</span>
+                        </a>
+                      ) : (
+                        <div className="w-full bg-[#F2F2EC] py-3 rounded-xl flex items-center justify-center px-4">
+                          <span className="text-xs font-medium text-primary/60">Members Only Event</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
 
-            <div className="flex gap-2">
-                 <button className="flex-1 bg-[#F2F2EC] text-primary py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1">
-                    Book a Table <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                 </button>
-                 <span className="flex-1 flex items-center justify-center text-[10px] text-white/40 bg-white/10 rounded-xl px-2">Priority seating</span>
-            </div>
-         </div>
-
-         {/* Standard Cards */}
-         <ListItem 
-            day="04" 
-            month="JUL" 
-            category="Community" 
-            title="Independence Day BBQ" 
-            desc="Family-friendly celebration on The Lawn. Gourmet BBQ stations, games, and music." 
-        />
-         <ListItem 
-            day="12" 
-            month="JUL" 
-            category="Art" 
-            title="Private Art Viewing" 
-            desc="Exclusive preview of local modern art collection. Wine and cheese pairing included." 
-            dark
-        />
+            return (
+              <EventCard 
+                key={event.id}
+                event={event}
+                date={date}
+                formatTime={formatTime}
+                dark={isDark}
+              />
+            );
+          })
+        )}
       </div>
 
       <Footer />
@@ -79,18 +145,44 @@ const WhatsOn: React.FC = () => {
   );
 };
 
-const ListItem: React.FC<any> = ({ day, month, category, title, desc, dark }) => (
+interface EventCardProps {
+  event: Event;
+  date: { day: string; month: string; weekday: string; full: string };
+  formatTime: (time: string) => string;
+  dark?: boolean;
+}
+
+const EventCard: React.FC<EventCardProps> = ({ event, date, formatTime, dark }) => (
   <article className={`group p-6 rounded-[2rem] mx-2 ${dark ? 'bg-[#293515] text-white' : 'bg-[#F2F2EC] text-primary'}`}>
-     <div className="flex justify-between items-start mb-4">
-        <div className={`w-16 h-20 flex-shrink-0 flex flex-col items-center justify-center rounded-xl ${dark ? 'bg-white/10 text-white' : 'bg-[#EAEBE6] text-primary'}`}>
-           <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">{month}</span>
-           <span className="text-3xl font-light leading-none">{day}</span>
-        </div>
-        <span className={`px-2 py-0.5 rounded border ${dark ? 'border-white/20 text-white/60' : 'border-primary/20 text-primary/60'} text-[10px] font-bold uppercase`}>{category}</span>
-     </div>
-     
-     <h3 className="text-xl font-bold mb-2">{title}</h3>
-     <p className={`text-sm leading-relaxed ${dark ? 'text-white/60' : 'text-primary/70'}`}>{desc}</p>
+    <div className="flex justify-between items-start mb-4">
+      <div className={`w-16 h-20 flex-shrink-0 flex flex-col items-center justify-center rounded-xl ${dark ? 'bg-white/10 text-white' : 'bg-[#EAEBE6] text-primary'}`}>
+        <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">{date.month}</span>
+        <span className="text-3xl font-light leading-none">{date.day}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        {event.eventbrite_url && (
+          <span className="px-2 py-0.5 rounded bg-[#F05537] text-white text-[10px] font-bold uppercase">Eventbrite</span>
+        )}
+        <span className={`px-2 py-0.5 rounded border ${dark ? 'border-white/20 text-white/60' : 'border-primary/20 text-primary/60'} text-[10px] font-bold uppercase`}>{event.category}</span>
+      </div>
+    </div>
+    
+    <h3 className="text-xl font-bold mb-2">{event.title}</h3>
+    <p className={`text-sm leading-relaxed mb-1 ${dark ? 'text-white/60' : 'text-primary/70'}`}>{event.description}</p>
+    <p className={`text-xs ${dark ? 'text-white/40' : 'text-primary/50'}`}>
+      {formatTime(event.start_time)} - {formatTime(event.end_time)} • {event.location}
+    </p>
+    
+    {event.eventbrite_url && (
+      <a 
+        href={event.eventbrite_url} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className={`mt-4 inline-flex items-center gap-1 text-sm font-bold ${dark ? 'text-white hover:text-white/80' : 'text-primary hover:text-primary/80'} transition-colors`}
+      >
+        Get Tickets <span className="material-symbols-outlined text-sm">arrow_forward</span>
+      </a>
+    )}
   </article>
 );
 

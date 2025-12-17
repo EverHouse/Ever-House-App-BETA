@@ -64,12 +64,12 @@ const Contact: React.FC = () => {
       <section className="px-4 mb-8 space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
            <ContactCard icon="location_on" title="VISIT US" value="15771 Red Hill Ave, Ste 500" />
            <ContactCard icon="call" title="CALL US" value="(949) 545-5855" href="tel:9495455855" />
-           <ContactCard icon="mail" title="EMAIL US" value="hello@evenhouse.club" href="mailto:hello@evenhouse.club" />
+           <ContactCard icon="mail" title="EMAIL US" value="info@evenhouse.club" href="mailto:info@evenhouse.club" />
            <a 
              href="https://bcrw.apple.com/urn:biz:91355ac7-f202-440d-a19e-f5a1cca16848" 
              target="_blank" 
              rel="noopener noreferrer"
-             className="group flex items-center justify-between bg-black p-4 rounded-2xl border border-black/5 shadow-sm hover:shadow-md transition-all cursor-pointer"
+             className="group flex items-center justify-between bg-zinc-700 p-4 rounded-2xl border border-black/5 shadow-sm hover:shadow-md transition-all cursor-pointer"
            >
               <div className="flex items-center gap-4">
                    <div className="flex items-center justify-center size-12 rounded-full bg-white/10 text-white shrink-0">
