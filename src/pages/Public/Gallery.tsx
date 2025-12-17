@@ -83,16 +83,31 @@ const FilterButton: React.FC<{label: string; active?: boolean; onClick?: () => v
   </button>
 );
 
-const GalleryItem: React.FC<{img: string}> = ({ img }) => (
-  <div className="break-inside-avoid relative group rounded-2xl overflow-hidden shadow-sm cursor-pointer mb-4 border border-white/20">
-    <img 
-      src={img} 
-      className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out" 
-      alt="Gallery"
-      loading="lazy" 
-    />
-    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
-  </div>
-);
+const GalleryItem: React.FC<{img: string}> = ({ img }) => {
+  const [loaded, setLoaded] = React.useState(false);
+  const [error, setError] = React.useState(false);
+  
+  return (
+    <div className="break-inside-avoid relative group rounded-2xl overflow-hidden shadow-sm cursor-pointer mb-4 border border-white/20">
+      {!loaded && !error && (
+        <div className="w-full aspect-[4/3] bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-2xl" />
+      )}
+      <img 
+        src={img} 
+        className={`w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out ${loaded ? 'opacity-100' : 'opacity-0 absolute'}`}
+        alt="Gallery"
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+      />
+      {error && (
+        <div className="w-full aspect-[4/3] bg-gray-200 flex items-center justify-center rounded-2xl">
+          <span className="material-symbols-outlined text-gray-400 text-3xl">broken_image</span>
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+    </div>
+  );
+};
 
 export default Gallery;

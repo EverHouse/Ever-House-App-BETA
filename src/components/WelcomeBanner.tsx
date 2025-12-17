@@ -76,9 +76,6 @@ const WelcomeBanner: React.FC = () => {
             />
           </div>
 
-          <div className={`text-xs ${isDark ? 'text-white/50' : 'text-brand-green/50'}`}>
-            Use the menu <span className="material-symbols-outlined text-[12px] align-middle">menu</span> to explore all features
-          </div>
         </div>
         
         <button 

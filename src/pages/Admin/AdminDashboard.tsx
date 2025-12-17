@@ -435,8 +435,8 @@ const EventsAdmin: React.FC = () => {
                             </div>
                         )}
                         <div className="space-y-3 mb-6">
-                            <input className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
-                            <select className="w-full border p-3 rounded-lg bg-white dark:bg-black/20 dark:border-white/10 dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
+                            <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
+                            <select className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
                                 <option value="Social">Event</option>
                                 <option value="Wellness">Class</option>
                                 <option value="MedSpa">MedSpa</option>
@@ -444,16 +444,16 @@ const EventsAdmin: React.FC = () => {
                                 <option value="Sport">Sport</option>
                             </select>
                             <div className="grid grid-cols-1 gap-3">
-                                <input type="date" className="border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={newItem.event_date || ''} onChange={e => setNewItem({...newItem, event_date: e.target.value})} />
+                                <input type="date" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.event_date || ''} onChange={e => setNewItem({...newItem, event_date: e.target.value})} />
                                 <div className="grid grid-cols-2 gap-3">
-                                    <input type="time" className="border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Start Time" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} />
-                                    <input type="time" className="border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="End Time" value={newItem.end_time || ''} onChange={e => setNewItem({...newItem, end_time: e.target.value})} />
+                                    <input type="time" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" placeholder="Start Time" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} />
+                                    <input type="time" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" placeholder="End Time" value={newItem.end_time || ''} onChange={e => setNewItem({...newItem, end_time: e.target.value})} />
                                 </div>
                             </div>
-                            <input className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Location" value={newItem.location || ''} onChange={e => setNewItem({...newItem, location: e.target.value})} />
-                            <input className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Image URL (optional)" value={newItem.image_url || ''} onChange={e => setNewItem({...newItem, image_url: e.target.value})} />
-                            <input type="number" className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Max Attendees (optional)" value={newItem.max_attendees || ''} onChange={e => setNewItem({...newItem, max_attendees: parseInt(e.target.value) || null})} />
-                            <textarea className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                            <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Location" value={newItem.location || ''} onChange={e => setNewItem({...newItem, location: e.target.value})} />
+                            <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Image URL (optional)" value={newItem.image_url || ''} onChange={e => setNewItem({...newItem, image_url: e.target.value})} />
+                            <input type="number" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Max Attendees (optional)" value={newItem.max_attendees || ''} onChange={e => setNewItem({...newItem, max_attendees: parseInt(e.target.value) || null})} />
+                            <textarea className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                         </div>
                         <div className="flex gap-3 justify-end">
                             <button onClick={() => { setIsEditing(false); setError(null); }} className="px-4 py-2 text-gray-500 font-bold" disabled={isSaving}>Cancel</button>
