@@ -30,3 +30,7 @@ export const haptic = {
     }
   }
 };
+
+export const triggerHaptic = (type: 'light' | 'medium' | 'heavy' | 'success' | 'error' | 'selection') => {
+  haptic[type]?.();
+};

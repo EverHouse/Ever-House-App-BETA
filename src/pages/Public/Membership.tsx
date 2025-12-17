@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
+import HubSpotFormModal from '../../components/HubSpotFormModal';
+
+const MEMBERSHIP_FIELDS = [
+  { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
+  { name: 'lastname', label: 'Last Name', type: 'text' as const, required: true, placeholder: 'Doe' },
+  { name: 'email', label: 'Email', type: 'email' as const, required: true, placeholder: 'jane@example.com' },
+  { name: 'phone', label: 'Phone', type: 'tel' as const, required: true, placeholder: '(949) 555-0100' },
+  { name: 'message', label: 'Which tier are you interested in?', type: 'textarea' as const, required: false, placeholder: 'Tell us about yourself and which membership tier you\'re interested in...' }
+];
 
 const Membership: React.FC = () => {
   return (
@@ -15,6 +24,7 @@ const Membership: React.FC = () => {
 const MembershipOverview: React.FC = () => {
   const navigate = useNavigate();
   const [selectedPass, setSelectedPass] = useState<'workspace' | 'sim' | null>(null);
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
 
   return (
     <div className="px-4 pt-6 pb-12 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen">
@@ -78,7 +88,7 @@ const MembershipOverview: React.FC = () => {
             "Daily guest passes",
             "Concierge for bookings"
           ]}
-          onClick={() => navigate('/contact')} 
+          onClick={() => setShowApplicationForm(true)} 
         />
         {/* Core Card - Dark Green (Popular) */}
         <div className="relative flex flex-col p-6 bg-primary rounded-3xl shadow-xl overflow-hidden text-white border border-white/10">
@@ -111,7 +121,7 @@ const MembershipOverview: React.FC = () => {
             ))}
           </ul>
           <button 
-            onClick={() => navigate('/contact')}
+            onClick={() => setShowApplicationForm(true)}
             className="w-full relative z-10 py-4 px-6 rounded-2xl bg-white text-primary font-bold text-sm tracking-widest uppercase hover:scale-[1.02] transition-transform active:scale-[0.98] shadow-lg"
           >
             Apply
@@ -129,7 +139,7 @@ const MembershipOverview: React.FC = () => {
             "8 guest passes per year",
             "Daily comp. coffee/beer/wine"
           ]}
-          onClick={() => navigate('/contact')}
+          onClick={() => setShowApplicationForm(true)}
         />
 
         <MembershipCard 
@@ -157,6 +167,16 @@ const MembershipOverview: React.FC = () => {
       </div>
 
       <Footer />
+
+      <HubSpotFormModal
+        isOpen={showApplicationForm}
+        onClose={() => setShowApplicationForm(false)}
+        formType="membership"
+        title="Membership Application"
+        subtitle="Join the Even House community."
+        fields={MEMBERSHIP_FIELDS}
+        submitButtonText="Submit Application"
+      />
     </div>
   );
 };

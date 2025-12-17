@@ -15,7 +15,7 @@ const Logo: React.FC<LogoProps> = ({
   variant,
   isMemberRoute = false,
   isDarkBackground = true,
-  className = 'h-8 w-auto',
+  className = 'h-12 w-auto',
   alt = BRAND.name,
 }) => {
   const logoType: LogoType = type || (isMemberRoute ? 'mascot' : 'monogram');

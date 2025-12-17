@@ -425,6 +425,60 @@ app.put('/api/guest-passes/:email', async (req, res) => {
   }
 });
 
+const HUBSPOT_FORMS: Record<string, string> = {
+  'tour-request': process.env.HUBSPOT_FORM_TOUR_REQUEST || '',
+  'membership': process.env.HUBSPOT_FORM_MEMBERSHIP || '',
+  'private-hire': process.env.HUBSPOT_FORM_PRIVATE_HIRE || '',
+  'guest-checkin': process.env.HUBSPOT_FORM_GUEST_CHECKIN || ''
+};
+
+app.post('/api/hubspot/forms/:formType', async (req, res) => {
+  try {
+    const { formType } = req.params;
+    const formId = HUBSPOT_FORMS[formType];
+    const portalId = process.env.HUBSPOT_PORTAL_ID;
+    
+    if (!formId || !portalId) {
+      return res.status(400).json({ error: 'Invalid form type or missing configuration' });
+    }
+    
+    const { fields, context } = req.body;
+    
+    const hubspotPayload = {
+      fields: fields.map((f: { name: string; value: string }) => ({
+        objectTypeId: '0-1',
+        name: f.name,
+        value: f.value
+      })),
+      context: {
+        pageUri: context?.pageUri || '',
+        pageName: context?.pageName || ''
+      }
+    };
+    
+    const response = await fetch(
+      `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(hubspotPayload)
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('HubSpot form error:', errorData);
+      return res.status(response.status).json({ error: 'Form submission failed', details: errorData });
+    }
+    
+    const result: any = await response.json();
+    res.json({ success: true, message: result.inlineMessage || 'Form submitted successfully' });
+  } catch (error: any) {
+    console.error('HubSpot form submission error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = Number(process.env.PORT) || 3001;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`API Server running on port ${PORT}`);

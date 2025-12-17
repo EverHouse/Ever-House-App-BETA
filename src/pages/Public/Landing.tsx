@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
+import HubSpotFormModal from '../../components/HubSpotFormModal';
+
+const TOUR_REQUEST_FIELDS = [
+  { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
+  { name: 'lastname', label: 'Last Name', type: 'text' as const, required: true, placeholder: 'Doe' },
+  { name: 'email', label: 'Email', type: 'email' as const, required: true, placeholder: 'jane@example.com' },
+  { name: 'phone', label: 'Phone', type: 'tel' as const, required: false, placeholder: '(949) 555-0100' },
+  { name: 'message', label: 'Preferred Date/Time', type: 'textarea' as const, required: false, placeholder: 'Let us know when you\'d like to visit...' }
+];
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
+  const [showTourForm, setShowTourForm] = useState(false);
 
   return (
     <div className="bg-[#F2F2EC] min-h-screen pb-0">
@@ -24,7 +34,7 @@ const Landing: React.FC = () => {
              <button onClick={() => navigate('/membership')} className="w-full py-4 rounded-xl bg-[#F2F2EC] text-[#293515] font-bold text-sm shadow-lg hover:scale-[1.02] transition-transform">
                 Apply for Membership
              </button>
-             <button onClick={() => navigate('/contact')} className="w-full py-4 rounded-xl border border-white/30 bg-white/5 backdrop-blur-sm text-white font-bold text-sm hover:bg-white/10 transition-colors">
+             <button onClick={() => setShowTourForm(true)} className="w-full py-4 rounded-xl border border-white/30 bg-white/5 backdrop-blur-sm text-white font-bold text-sm hover:bg-white/10 transition-colors">
                 Book a Tour
              </button>
           </div>
@@ -121,6 +131,16 @@ const Landing: React.FC = () => {
       </div>
 
       <Footer />
+
+      <HubSpotFormModal
+        isOpen={showTourForm}
+        onClose={() => setShowTourForm(false)}
+        formType="tour-request"
+        title="Book a Tour"
+        subtitle="Schedule a visit to experience Even House firsthand."
+        fields={TOUR_REQUEST_FIELDS}
+        submitButtonText="Request Tour"
+      />
     </div>
   );
 };

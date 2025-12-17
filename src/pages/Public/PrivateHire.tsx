@@ -1,10 +1,24 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Footer } from '../../components/Footer';
-import Input from '../../components/Input';
+import HubSpotFormModal from '../../components/HubSpotFormModal';
+import { triggerHaptic } from '../../utils/haptics';
+
+const PRIVATE_HIRE_FIELDS = [
+  { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
+  { name: 'lastname', label: 'Last Name', type: 'text' as const, required: true, placeholder: 'Doe' },
+  { name: 'email', label: 'Email', type: 'email' as const, required: true, placeholder: 'jane@example.com' },
+  { name: 'phone', label: 'Phone', type: 'tel' as const, required: false, placeholder: '(949) 555-0100' },
+  { name: 'company', label: 'Company', type: 'text' as const, required: false, placeholder: 'Your company name' },
+  { name: 'message', label: 'Event Details', type: 'textarea' as const, required: true, placeholder: 'Tell us about your event: date, guest count, type of event, special requests...' }
+];
 
 const PrivateHire: React.FC = () => {
-  const navigate = useNavigate();
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
+
+  const openForm = () => {
+    triggerHaptic('light');
+    setShowInquiryForm(true);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC]">
@@ -61,20 +75,8 @@ const PrivateHire: React.FC = () => {
              <p className="text-primary/70 mb-8 max-w-xs mx-auto text-sm leading-relaxed">
                Tell us a bit about your event and our team will get back to you with availability and pricing.
              </p>
-             <div className="w-full space-y-4 mb-6 text-left">
-                <Input label="Full Name" placeholder="Jane Doe" />
-                <div className="grid grid-cols-2 gap-3">
-                     <Input label="Date" placeholder="mm/dd/yyyy" icon="calendar_today" />
-                     <Input label="Guests" placeholder="50" />
-                </div>
-                <Input label="Email Address" placeholder="jane@example.com" />
-                <div>
-                     <label className="block text-sm font-bold text-primary mb-1.5 pl-1">Message</label>
-                     <textarea className="w-full bg-[#F9F9F7] border-0 rounded-lg py-3 px-4 text-primary ring-1 ring-inset ring-gray-200" rows={3} placeholder="Tell us about your event..."></textarea>
-                </div>
-             </div>
              <button 
-                onClick={() => navigate('/private-events')} 
+                onClick={openForm}
                 className="w-full bg-primary hover:bg-primary/90 text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
              >
                 Submit Inquiry
@@ -83,6 +85,16 @@ const PrivateHire: React.FC = () => {
        </div>
        
        <Footer />
+
+       <HubSpotFormModal
+         isOpen={showInquiryForm}
+         onClose={() => setShowInquiryForm(false)}
+         formType="private-hire"
+         title="Private Event Inquiry"
+         subtitle="Tell us about your event and we'll get back to you with availability."
+         fields={PRIVATE_HIRE_FIELDS}
+         submitButtonText="Submit Inquiry"
+       />
     </div>
   );
 };
