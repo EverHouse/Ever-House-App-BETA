@@ -64,6 +64,9 @@ export interface Booking {
 
 interface DataContextType {
   user: MemberProfile | null;
+  actualUser: MemberProfile | null;
+  viewAsUser: MemberProfile | null;
+  isViewingAs: boolean;
   cafeMenu: CafeItem[];
   events: EventData[];
   announcements: Announcement[];
@@ -74,6 +77,10 @@ interface DataContextType {
   // Auth Actions
   login: (email: string) => Promise<void>;
   logout: () => void;
+  
+  // View As Actions
+  setViewAsUser: (member: MemberProfile) => void;
+  clearViewAsUser: () => void;
 
   // Data Actions
   addCafeItem: (item: CafeItem) => Promise<void>;
@@ -287,13 +294,17 @@ const INITIAL_BOOKINGS: Booking[] = [
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const [user, setUser] = useState<MemberProfile | null>(null);
+  const [actualUser, setActualUser] = useState<MemberProfile | null>(null);
+  const [viewAsUser, setViewAsUserState] = useState<MemberProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cafeMenu, setCafeMenu] = useState<CafeItem[]>([]);
   const [events, setEvents] = useState<EventData[]>(INITIAL_EVENTS);
   const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
   const [members, setMembers] = useState<MemberProfile[]>(INITIAL_MEMBERS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  
+  const isViewingAs = viewAsUser !== null;
+  const user = viewAsUser || actualUser;
 
   // Admin emails get admin role and Premium tier
   const ADMIN_EMAILS = [
@@ -323,7 +334,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             avatar: authUser.profileImageUrl,
             role: isAdmin ? 'admin' : 'member'
           };
-          setUser(memberProfile);
+          setActualUser(memberProfile);
         }
       } catch (err) {
         console.error('Auth check failed:', err);
@@ -333,11 +344,22 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     };
     checkAuth();
   }, []);
+  
+  // View As Functions - only for admins
+  const setViewAsUser = (member: MemberProfile) => {
+    if (actualUser?.role === 'admin' || actualUser?.role === 'staff') {
+      setViewAsUserState(member);
+    }
+  };
+  
+  const clearViewAsUser = () => {
+    setViewAsUserState(null);
+  };
 
   // Fetch members from HubSpot for admin/staff users
   useEffect(() => {
     const fetchMembers = async () => {
-      if (!user || (user.role !== 'admin' && user.role !== 'staff')) return;
+      if (!actualUser || (actualUser.role !== 'admin' && actualUser.role !== 'staff')) return;
       
       try {
         const res = await fetch('/api/hubspot/contacts');
@@ -359,7 +381,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       }
     };
     fetchMembers();
-  }, [user]);
+  }, [actualUser]);
 
   // Fetch cafe menu
   useEffect(() => {
@@ -396,7 +418,8 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   };
 
   const logout = () => {
-    setUser(null);
+    setActualUser(null);
+    setViewAsUserState(null);
     // Redirect to Replit Auth logout
     window.location.href = '/api/logout';
   };
@@ -509,7 +532,8 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
 
   return (
     <DataContext.Provider value={{
-      user, login, logout,
+      user, actualUser, viewAsUser, isViewingAs,
+      login, logout, setViewAsUser, clearViewAsUser,
       cafeMenu, events, announcements, members, bookings, isLoading,
       addCafeItem, updateCafeItem, deleteCafeItem,
       addEvent, updateEvent, deleteEvent, syncEventbrite,

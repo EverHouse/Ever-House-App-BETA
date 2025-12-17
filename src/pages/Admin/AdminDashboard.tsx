@@ -636,7 +636,8 @@ const AnnouncementsAdmin: React.FC = () => {
 // --- MEMBERS ADMIN ---
 
 const MembersAdmin: React.FC = () => {
-    const { members, updateMember } = useData();
+    const { members, updateMember, setViewAsUser, actualUser } = useData();
+    const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -655,6 +656,11 @@ const MembersAdmin: React.FC = () => {
     const openEdit = (member: MemberProfile) => {
         setSelectedMember(member);
         setIsEditing(true);
+    };
+    
+    const handleViewAs = (member: MemberProfile) => {
+        setViewAsUser(member);
+        navigate('/dashboard');
     };
 
     const handleSave = async () => {
@@ -759,24 +765,36 @@ const MembersAdmin: React.FC = () => {
             {/* Mobile View: Cards */}
             <div className="md:hidden space-y-3">
                 {filteredMembers.map(m => (
-                    <div key={m.id} onClick={() => openEdit(m)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm active:scale-[0.98] transition-transform">
+                    <div key={m.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
-                            <div>
+                            <div onClick={() => openEdit(m)} className="flex-1 cursor-pointer">
                                 <h4 className="font-bold text-lg text-primary dark:text-white">{m.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
                             </div>
                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${m.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{m.status}</span>
                         </div>
-                        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
+                        <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
                             <div className="flex items-center gap-2">
                                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tier</span>
                                 <span className="bg-primary/5 dark:bg-white/10 text-primary dark:text-white px-2 py-0.5 rounded text-xs font-bold">{m.tier}</span>
+                                {m.role && m.role !== 'member' && (
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>
+                                        {m.role}
+                                    </span>
+                                )}
                             </div>
-                            {m.role && m.role !== 'member' && (
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>
-                                    {m.role}
-                                </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => handleViewAs(m)} 
+                                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-[14px]">visibility</span>
+                                    View As
+                                </button>
+                                <button onClick={() => openEdit(m)} className="text-primary dark:text-white text-xs font-bold">
+                                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -812,7 +830,16 @@ const MembersAdmin: React.FC = () => {
                                 <td className="p-4 text-sm font-bold text-gray-700 dark:text-gray-300">{m.status}</td>
                                 <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{m.email}</td>
                                 <td className="p-4">
-                                    <button onClick={() => openEdit(m)} className="text-primary dark:text-white hover:underline text-xs font-bold">Edit</button>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => handleViewAs(m)} 
+                                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-[14px]">visibility</span>
+                                            View As
+                                        </button>
+                                        <button onClick={() => openEdit(m)} className="text-primary dark:text-white hover:underline text-xs font-bold">Edit</button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

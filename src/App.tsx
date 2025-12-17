@@ -61,6 +61,7 @@ import PublicWellness from './pages/Public/Wellness';
 import FAQ from './pages/Public/FAQ';
 import Login from './pages/Public/Login';
 import MenuOverlay from './components/MenuOverlay';
+import ViewAsBanner from './components/ViewAsBanner';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 
 // Error Boundary Component
@@ -139,9 +140,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useData();
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  const { actualUser } = useData();
+  if (!actualUser) return <Navigate to="/login" replace />;
+  if (actualUser.role !== 'admin' && actualUser.role !== 'staff') return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -288,6 +289,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
 
       <NotificationContext.Provider value={{ openNotifications }}>
+        {/* View As Banner - shows when admin is viewing as another member */}
+        <ViewAsBanner />
+        
         {/* Main App Container */}
         <div className={`relative w-full h-full flex flex-col overflow-hidden ${isDarkTheme ? 'text-white' : 'text-primary'}`}>
             
