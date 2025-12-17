@@ -20,21 +20,5 @@ export default defineConfig({
       '@': path.resolve(__dirname, '.'),
       '@assets': path.resolve(__dirname, 'attached_assets'),
     }
-  },
-  build: {
-    target: 'esnext',
-    minify: 'esbuild',
-    cssMinify: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-        }
-      }
-    },
-    chunkSizeWarningLimit: 500
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom']
   }
 });

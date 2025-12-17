@@ -20,10 +20,7 @@ export const users = pgTable("users", {
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
-  phone: varchar("phone"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").default("member"), // 'member', 'staff', 'admin'
-  tier: varchar("tier").default("Social"), // Membership tier: Social, Core, Premium, Corporate, VIP
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

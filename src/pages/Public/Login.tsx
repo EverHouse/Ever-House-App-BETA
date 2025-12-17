@@ -5,7 +5,7 @@ import { Footer } from '../../components/Footer';
 const Login: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleReplitLogin = () => {
+  const handleLogin = () => {
     window.location.href = '/api/login';
   };
 
@@ -26,12 +26,21 @@ const Login: React.FC = () => {
 
             <div className="bg-white py-8 px-6 shadow-sm rounded-2xl border border-black/5 space-y-4">
                 <button
-                    onClick={handleReplitLogin}
+                    onClick={handleLogin}
                     className="flex w-full justify-center items-center gap-3 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98]"
                 >
                     <span className="material-symbols-outlined">login</span>
-                    Sign In
+                    Sign In with Replit
                 </button>
+                
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-black/10"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                        <span className="bg-white px-4 text-primary/40 font-medium">Secure login via Replit</span>
+                    </div>
+                </div>
 
                 <p className="text-center text-xs text-primary/50">
                     Sign in with your Google, Apple, GitHub account or email.

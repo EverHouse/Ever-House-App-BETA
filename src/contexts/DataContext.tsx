@@ -313,7 +313,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     'afogel@evenhouse.club'
   ];
 
-  // Check auth status on mount (Replit Auth)
+  // Check auth status on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -323,15 +323,16 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           const email = authUser.email?.toLowerCase() || '';
           const isAdmin = ADMIN_EMAILS.includes(email);
           
+          // Map Replit Auth user to MemberProfile
           const memberProfile: MemberProfile = {
             id: authUser.id,
             name: [authUser.firstName, authUser.lastName].filter(Boolean).join(' ') || authUser.email || 'Member',
-            tier: authUser.tier || (isAdmin ? 'Premium' : 'Core'),
+            tier: isAdmin ? 'Premium' : 'Core',
             status: 'Active',
             email: authUser.email || '',
-            phone: authUser.phone || '',
+            phone: '',
             avatar: authUser.profileImageUrl,
-            role: authUser.role || (isAdmin ? 'admin' : 'member')
+            role: isAdmin ? 'admin' : 'member'
           };
           setActualUser(memberProfile);
         }
