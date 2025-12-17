@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 
 interface Event {
@@ -17,6 +18,7 @@ interface Event {
 }
 
 const WhatsOn: React.FC = () => {
+  const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -139,6 +141,19 @@ const WhatsOn: React.FC = () => {
           })
         )}
       </div>
+
+      <section className="px-4 py-8 mb-4">
+        <div className="bg-[#293515] rounded-2xl p-6 text-center">
+          <h3 className="text-xl font-bold text-white mb-2">Want full access to all events?</h3>
+          <p className="text-white/70 text-sm mb-4">Join Even House and unlock exclusive member-only experiences.</p>
+          <button 
+            onClick={() => navigate('/membership')}
+            className="bg-[#F2F2EC] text-[#293515] px-6 py-3 rounded-xl font-bold text-sm hover:bg-white transition-colors"
+          >
+            Explore Membership
+          </button>
+        </div>
+      </section>
 
       <Footer />
     </div>

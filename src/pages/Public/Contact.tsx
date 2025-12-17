@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import Input from '../../components/Input';
 
 const Contact: React.FC = () => {
+  const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -219,6 +221,19 @@ const Contact: React.FC = () => {
                     Open in Apple Maps
                  </a>
             </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 mb-4">
+        <div className="bg-[#293515] rounded-2xl p-6 text-center">
+          <h3 className="text-xl font-bold text-white mb-2">Ready to become a member?</h3>
+          <p className="text-white/70 text-sm mb-4">Join our community of golfers, creatives, and wellness enthusiasts.</p>
+          <button 
+            onClick={() => navigate('/membership')}
+            className="bg-[#F2F2EC] text-[#293515] px-6 py-3 rounded-xl font-bold text-sm hover:bg-white transition-colors"
+          >
+            Apply for Membership
+          </button>
         </div>
       </section>
       

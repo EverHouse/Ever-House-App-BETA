@@ -63,6 +63,7 @@ import Login from './pages/Public/Login';
 import MenuOverlay from './components/MenuOverlay';
 import ViewAsBanner from './components/ViewAsBanner';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import { ToastProvider } from './components/Toast';
 
 // Error Boundary Component
 interface ErrorBoundaryProps {
@@ -506,6 +507,7 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <ThemeProvider>
         <DataProvider>
+          <ToastProvider>
           <HashRouter>
             <ScrollToTop />
             <Layout>
@@ -570,6 +572,7 @@ const App: React.FC = () => {
               </Routes>
             </Layout>
           </HashRouter>
+          </ToastProvider>
         </DataProvider>
       </ThemeProvider>
     </ErrorBoundary>

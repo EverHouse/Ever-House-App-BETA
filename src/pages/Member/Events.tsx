@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useData, EventData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useToast } from '../../components/Toast';
 import Skeleton from '../../components/Skeleton';
 import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
@@ -10,10 +11,10 @@ import SwipeablePage from '../../components/SwipeablePage';
 const MemberEvents: React.FC = () => {
   const { events, addBooking, isLoading } = useData();
   const { effectiveTheme } = useTheme();
+  const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   const [filter, setFilter] = useState('All');
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const filteredEvents = filter === 'All' 
     ? events 
@@ -38,10 +39,7 @@ const MemberEvents: React.FC = () => {
     }
 
     setSelectedEvent(null);
-    setShowConfirmation(true);
-    setTimeout(() => {
-      setShowConfirmation(false);
-    }, 2500);
+    showToast('You are on the list!', 'success');
   };
 
   return (
@@ -137,17 +135,6 @@ const MemberEvents: React.FC = () => {
             </div>
          </section>
       </div>
-
-      {showConfirmation && (
-         <div className="fixed bottom-32 left-0 right-0 z-[60] flex justify-center pointer-events-none">
-             <div className={`backdrop-blur-md px-6 py-3 rounded-full shadow-2xl text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] border pointer-events-auto ${isDark ? 'bg-black/80 text-white border-white/10' : 'bg-white/95 text-primary border-black/10'}`}>
-                <span className="material-symbols-outlined text-xl text-green-500">check_circle</span>
-                <div>
-                  <p>You are on the list.</p>
-                </div>
-             </div>
-         </div>
-      )}
 
       {selectedEvent && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
