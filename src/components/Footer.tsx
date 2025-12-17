@@ -7,24 +7,20 @@ export const Footer: React.FC = () => (
      </div>
      
      <div className="space-y-6 text-sm font-medium mb-10 flex flex-col items-center">
-        <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center justify-center gap-2 text-[#E7E7DC]">
-                <span className="material-symbols-outlined text-lg">location_on</span>
-                <p>15771 Red Hill Ave, Ste 500</p>
-            </div>
+        <div className="relative flex flex-col items-center">
+            <span className="material-symbols-outlined text-lg absolute -left-8 top-0.5 text-[#E7E7DC]/70">location_on</span>
+            <p className="text-[#E7E7DC]">15771 Red Hill Ave, Ste 500</p>
             <p className="text-[#E7E7DC]/70 text-xs">Tustin, CA 92780</p>
         </div>
 
-        <div className="flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-lg">call</span>
+        <div className="relative flex items-center">
+            <span className="material-symbols-outlined text-lg absolute -left-8 text-[#E7E7DC]/70">call</span>
             <a href="tel:9495455855" className="hover:underline">(949) 545-5855</a>
         </div>
 
-        <div className="flex flex-col items-center gap-2 text-xs">
-            <div className="flex items-center gap-2 text-[#E7E7DC]">
-                <span className="material-symbols-outlined text-lg">schedule</span>
-                <span className="font-bold uppercase tracking-wider">Hours</span>
-            </div>
+        <div className="relative flex flex-col items-center text-xs">
+            <span className="material-symbols-outlined text-lg absolute -left-8 top-0 text-[#E7E7DC]/70">schedule</span>
+            <span className="font-bold uppercase tracking-wider text-[#E7E7DC] mb-2">Hours</span>
             <div className="space-y-1 text-[#E7E7DC]/70 text-center">
                 <p>Mon: Closed</p>
                 <p>Tue–Thu: 8:30 AM–8 PM</p>
