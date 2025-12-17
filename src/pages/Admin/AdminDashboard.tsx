@@ -6,18 +6,18 @@ import Logo from '../../components/Logo';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useData();
+  const { actualUser } = useData();
   const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'members' | 'simulator'>('members');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // Protect route
+  // Protect route - use actualUser so admins can still access while viewing as member
   useEffect(() => {
-    if (!user || (user.role !== 'admin' && user.role !== 'staff')) {
+    if (!actualUser || (actualUser.role !== 'admin' && actualUser.role !== 'staff')) {
         navigate('/login');
     }
-  }, [user, navigate]);
+  }, [actualUser, navigate]);
 
-  if (!user || (user.role !== 'admin' && user.role !== 'staff')) return null;
+  if (!actualUser || (actualUser.role !== 'admin' && actualUser.role !== 'staff')) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col">
