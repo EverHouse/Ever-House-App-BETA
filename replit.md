@@ -51,6 +51,10 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **HubSpot CRM**: Integrated for contact and member management. Access tokens refreshed via Replit Connectors.
 - **HubSpot Forms**: Native application forms (Tour Request, Membership Application, Private Hire Inquiry, Guest Check-In, Contact) submit directly to HubSpot Forms API, utilizing `hutk` cookie for tracking.
 - **Eventbrite**: Syncs events from Eventbrite organization to the application database, linking back to ticketing pages.
-- **Google Calendar**: Approved simulator bookings automatically create calendar events. Used to fetch free/busy times for bay availability.
+- **Google Calendar**: Two-way calendar sync with named calendars:
+  - **Booked Golf**: Primary calendar for golf simulator bookings. Approved booking requests create events here; availability is checked via freeBusy API.
+  - **MBO_Members_Club**: Calendar for conference room bookings with similar availability checking.
+  - Business hours configured per resource type (golf: 9AM-9PM, conference: 8AM-6PM).
+  - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`.
 - **Apple Messages for Business**: Direct messaging support via a button on the Contact page, linking to Apple Business Chat.
 - **Amarie Aesthetics MedSpa**: Integration for wellness services, including IV Hydration Drip Menu, Wellness Shots, NAD+ Treatments, Injectables, and Medical Weightloss programs, with a direct booking link.

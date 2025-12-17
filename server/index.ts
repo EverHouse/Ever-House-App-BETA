@@ -1295,10 +1295,25 @@ app.put('/api/booking-requests/:id', async (req, res) => {
       const bayResult = await pool.query('SELECT name FROM bays WHERE id = $1', [assignedBayId]);
       const bayName = bayResult.rows[0]?.name || 'Simulator';
       
-      // Create Google Calendar event
+      // Create Google Calendar event on the "Booked Golf" calendar
       let calendarEventId: string | null = null;
       try {
-        calendarEventId = await createCalendarEvent(req_data, bayName);
+        const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+        if (golfCalendarId) {
+          const summary = `Simulator: ${req_data.user_name || req_data.user_email}`;
+          const description = `Bay: ${bayName}\nMember: ${req_data.user_email}\nDuration: ${req_data.duration_minutes} minutes${req_data.notes ? '\nNotes: ' + req_data.notes : ''}`;
+          calendarEventId = await createCalendarEventOnCalendar(
+            golfCalendarId,
+            summary,
+            description,
+            req_data.request_date,
+            req_data.start_time,
+            req_data.end_time
+          );
+        } else {
+          // Fallback to primary calendar if Booked Golf not found
+          calendarEventId = await createCalendarEvent(req_data, bayName);
+        }
       } catch (calError) {
         console.error('Calendar sync failed (non-blocking):', calError);
       }
@@ -1372,7 +1387,8 @@ app.put('/api/booking-requests/:id', async (req, res) => {
       const existing = await pool.query('SELECT calendar_event_id FROM booking_requests WHERE id = $1', [id]);
       if (existing.rows[0]?.calendar_event_id) {
         try {
-          await deleteCalendarEvent(existing.rows[0].calendar_event_id);
+          const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+          await deleteCalendarEvent(existing.rows[0].calendar_event_id, golfCalendarId || 'primary');
         } catch (calError) {
           console.error('Failed to delete calendar event (non-blocking):', calError);
         }
