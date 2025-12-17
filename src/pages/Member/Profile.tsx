@@ -51,18 +51,18 @@ const Profile: React.FC = () => {
       {/* Wallet Pass Preview */}
       <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-2xl mb-8 group">
          {/* Card Background */}
-         <div className="absolute inset-0 bg-gradient-to-br from-[#1c1c1e] to-[#2c2c2e]"></div>
+         <div className="absolute inset-0 bg-[#293515]"></div>
          {/* Gloss */}
          <div className="absolute inset-0 bg-glossy opacity-50"></div>
          {/* Content */}
          <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
             <div className="flex justify-between items-start">
                <img src="/assets/logos/monogram-white.png" className="w-8 h-8 opacity-90" alt="" />
-               <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Even House</span>
+               <span className="text-[10px] font-bold uppercase tracking-widest text-[#F2F2EC]/60">Even House</span>
             </div>
             <div>
-               <p className="text-xs opacity-60 uppercase tracking-wider mb-1">Member</p>
-               <h3 className="text-xl font-bold tracking-wide text-shadow">{user.name}</h3>
+               <p className="text-xs text-[#F2F2EC]/60 uppercase tracking-wider mb-1">Member</p>
+               <h3 className="text-xl font-bold tracking-wide text-[#F2F2EC]">{user.name}</h3>
             </div>
          </div>
          {/* Tap Hint */}
