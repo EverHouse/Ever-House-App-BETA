@@ -140,7 +140,7 @@ const BookGolf: React.FC = () => {
                             onClick={() => setDuration(mins)}
                             className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95 ${
                                 duration === mins 
-                                ? 'bg-white text-brand-green shadow-glow'
+                                ? 'bg-accent text-brand-green shadow-glow'
                                 : 'text-white/60 hover:bg-white/5 hover:text-white'
                             }`}
                         >

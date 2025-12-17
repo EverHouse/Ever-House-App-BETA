@@ -2,7 +2,7 @@ import React from 'react';
 
 export const Footer: React.FC = () => (
   <footer className="bg-[#293515] text-[#E7E7DC] py-16 px-6 text-center rounded-t-[2.5rem] mt-4">
-     <div className="font-serif italic text-3xl mb-8">Even House</div>
+     <div className="font-bold text-3xl mb-8">Even House</div>
      
      <div className="space-y-6 text-sm font-medium mb-10">
         <div className="flex flex-col items-center gap-1">

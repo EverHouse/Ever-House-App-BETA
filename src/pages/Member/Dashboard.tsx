@@ -228,7 +228,7 @@ const Dashboard: React.FC = () => {
                                 onClick={() => setNewTime(time)}
                                 className={`py-3 rounded-xl text-xs font-bold transition-all border ${
                                     newTime === time 
-                                    ? 'bg-white text-brand-green border-white shadow-glow' 
+                                    ? 'bg-accent text-brand-green border-accent shadow-glow' 
                                     : 'bg-white/5 text-white/70 border-transparent hover:bg-white/10'
                                 }`}
                             >

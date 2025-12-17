@@ -45,7 +45,7 @@ const Wellness: React.FC = () => {
   return (
     <SwipeablePage className="px-6 pt-2 relative min-h-screen pb-24 overflow-hidden">
       <section className="mb-4 pt-2">
-        <h1 className="text-3xl font-serif leading-tight text-white drop-shadow-md">Wellness</h1>
+        <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-md">Wellness</h1>
         <p className="text-white/70 text-sm font-medium mt-1">Book your next session.</p>
       </section>
 
@@ -84,7 +84,7 @@ const Wellness: React.FC = () => {
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-white/10 text-white">{selectedClass.category}</span>
                             <span className="text-xs font-bold text-white/60">• {selectedClass.duration}</span>
                         </div>
-                        <h2 className="text-2xl font-serif text-white leading-tight">{selectedClass.title}</h2>
+                        <h2 className="text-2xl font-bold text-white leading-tight">{selectedClass.title}</h2>
                     </div>
                     <button onClick={() => setSelectedClass(null)} className="p-1 rounded-full bg-white/10 text-white">
                         <span className="material-symbols-outlined">close</span>
@@ -201,7 +201,7 @@ const MedSpaView: React.FC<{onBook: () => void}> = ({ onBook }) => (
   <div className="animate-pop-in space-y-8">
     <div className="text-center space-y-2 mb-6">
       <p className="text-xs uppercase tracking-[0.2em] text-white/60">Powered by</p>
-      <h2 className="font-serif text-3xl text-white italic">Amarie Aesthetics</h2>
+      <h2 className="font-bold text-3xl text-white">Amarie Aesthetics</h2>
       <div className="w-12 h-0.5 bg-accent mx-auto my-4"></div>
       <p className="text-sm text-white/80 leading-relaxed max-w-[90%] mx-auto">
         Exclusive medical aesthetics and wellness treatments curated for Even House members.
@@ -234,7 +234,7 @@ const MedSpaView: React.FC<{onBook: () => void}> = ({ onBook }) => (
 );
 
 const FilterPill: React.FC<{label: string; active?: boolean; onClick?: () => void}> = ({ label, active, onClick }) => (
-  <button onClick={onClick} className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-bold border transition-colors ${active ? 'bg-white text-brand-green border-white shadow-glow' : 'bg-transparent border-white/20 text-white hover:bg-white/5'}`}>
+  <button onClick={onClick} className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-bold border transition-colors ${active ? 'bg-accent text-brand-green border-accent shadow-glow' : 'bg-transparent border-white/20 text-white hover:bg-white/5'}`}>
     {label}
   </button>
 );
@@ -277,7 +277,7 @@ const ClassCard: React.FC<any> = ({ title, time, instructor, duration, category,
 
 const MedSpaCard: React.FC<{title: string; children: React.ReactNode}> = ({ title, children }) => (
   <div className="glass-card rounded-2xl p-5 border border-white/5">
-    <h3 className="font-serif text-xl font-medium text-white mb-4 flex items-center gap-2">
+    <h3 className="font-bold text-xl text-white mb-4 flex items-center gap-2">
       <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
       {title}
     </h3>

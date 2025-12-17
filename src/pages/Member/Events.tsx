@@ -44,7 +44,7 @@ const MemberEvents: React.FC = () => {
   return (
     <SwipeablePage className="px-6 pt-2 relative min-h-screen pb-24 overflow-hidden">
       <section className="mb-4 pt-2">
-        <h1 className="text-3xl font-serif leading-tight text-white drop-shadow-md">Upcoming Events</h1>
+        <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-md">Upcoming Events</h1>
         <p className="text-white/70 text-sm font-medium mt-1">Discover what's happening at the House.</p>
       </section>
 
@@ -167,7 +167,7 @@ const MemberEvents: React.FC = () => {
              <div className="flex-1 overflow-y-auto px-6 py-8">
                 <div className="flex items-start justify-between">
                     <div className="inline-block bg-white/5 border border-white/10 rounded-lg px-3 py-2 mb-4">
-                        <span className="block text-white font-serif text-lg leading-none mb-0.5">{selectedEvent.date.split(',')[0]}</span>
+                        <span className="block text-white font-bold text-lg leading-none mb-0.5">{selectedEvent.date.split(',')[0]}</span>
                         <span className="block text-white/60 text-xs font-medium uppercase">{selectedEvent.time}</span>
                     </div>
                     {selectedEvent.source === 'eventbrite' && (
@@ -178,7 +178,7 @@ const MemberEvents: React.FC = () => {
                     )}
                 </div>
 
-                <h2 className="text-3xl font-serif text-white mb-2 leading-tight">{selectedEvent.title}</h2>
+                <h2 className="text-3xl font-bold text-white mb-2 leading-tight">{selectedEvent.title}</h2>
                 <p className="text-white/60 text-sm mb-6">{selectedEvent.location}</p>
 
                 <div className="w-full h-px bg-white/10 mb-6"></div>

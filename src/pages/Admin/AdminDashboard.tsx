@@ -48,7 +48,7 @@ const AdminDashboard: React.FC = () => {
       <main className="flex-1 overflow-y-auto pb-28 px-4 md:px-8 max-w-4xl mx-auto pt-6 w-full">
         <div className="mb-6">
            <span className="text-xs font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 block mb-1">Staff Portal</span>
-           <h1 className="text-2xl font-serif font-bold text-primary dark:text-white">
+           <h1 className="text-2xl font-bold text-primary dark:text-white">
                {activeTab === 'cafe' && 'Manage Cafe Menu'}
                {activeTab === 'events' && 'Manage Events'}
                {activeTab === 'announcements' && 'Manage Updates'}
@@ -84,7 +84,7 @@ const AdminDashboard: React.FC = () => {
 
 const NavItem: React.FC<{icon: string; label: string; active?: boolean; onClick: () => void}> = ({ icon, label, active, onClick }) => (
     <li onClick={onClick} className={`flex-1 flex flex-col items-center gap-1 cursor-pointer transition-colors ${active ? 'text-white' : 'hover:text-white'}`}>
-      <span className={`material-symbols-outlined ${active ? 'filled-icon' : ''}`}>{icon}</span>
+      <span className={`material-symbols-outlined ${active ? 'filled' : ''}`}>{icon}</span>
       <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'} tracking-wide`}>{label}</span>
     </li>
 );
