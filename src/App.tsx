@@ -1,70 +1,32 @@
-
-import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo } from 'react';
+import React, { useState, useEffect, useContext, createContext, ErrorInfo, Suspense, lazy } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './contexts/DataContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
-// Debug layout mode - activate with ?debugLayout=1
-const useDebugLayout = () => {
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const debugMode = params.get('debugLayout') === '1';
-    
-    if (debugMode) {
-      document.documentElement.classList.add('debug-layout');
-      
-      const checkOverflow = () => {
-        const existing = document.querySelector('.debug-overflow-warning');
-        if (document.documentElement.scrollWidth > window.innerWidth) {
-          if (!existing) {
-            const warning = document.createElement('div');
-            warning.className = 'debug-overflow-warning';
-            warning.textContent = `Overflow! ${document.documentElement.scrollWidth}px > ${window.innerWidth}px`;
-            document.body.appendChild(warning);
-          }
-        } else if (existing) {
-          existing.remove();
-        }
-      };
-      
-      checkOverflow();
-      window.addEventListener('resize', checkOverflow);
-      
-      return () => {
-        window.removeEventListener('resize', checkOverflow);
-        document.documentElement.classList.remove('debug-layout');
-        const warning = document.querySelector('.debug-overflow-warning');
-        if (warning) warning.remove();
-      };
-    }
-    
-    return undefined;
-  }, []);
-};
-
 import Logo from './components/Logo';
-import Dashboard from './pages/Member/Dashboard';
-import BookGolf from './pages/Member/BookGolf';
-import MemberEvents from './pages/Member/Events';
-import MemberWellness from './pages/Member/Wellness';
-import Profile from './pages/Member/Profile';
-import Cafe from './pages/Member/Cafe';
-import Sims from './pages/Member/Sims';
-import Landing from './pages/Public/Landing';
-import Membership from './pages/Public/Membership';
-import Contact from './pages/Public/Contact';
-import Gallery from './pages/Public/Gallery';
-import WhatsOn from './pages/Public/WhatsOn';
-import PrivateHire from './pages/Public/PrivateHire';
-import PrivateEvents from './pages/Public/PrivateEvents';
-import PublicWellness from './pages/Public/Wellness';
-import FAQ from './pages/Public/FAQ';
-import Login from './pages/Public/Login';
 import MenuOverlay from './components/MenuOverlay';
 import ViewAsBanner from './components/ViewAsBanner';
-import AdminDashboard from './pages/Admin/AdminDashboard';
 import { ToastProvider } from './components/Toast';
-import MemberPortal from './components/MemberPortal';
+
+const Landing = lazy(() => import('./pages/Public/Landing'));
+const Membership = lazy(() => import('./pages/Public/Membership'));
+const Contact = lazy(() => import('./pages/Public/Contact'));
+const Gallery = lazy(() => import('./pages/Public/Gallery'));
+const WhatsOn = lazy(() => import('./pages/Public/WhatsOn'));
+const PrivateHire = lazy(() => import('./pages/Public/PrivateHire'));
+const PrivateEvents = lazy(() => import('./pages/Public/PrivateEvents'));
+const PublicWellness = lazy(() => import('./pages/Public/Wellness'));
+const FAQ = lazy(() => import('./pages/Public/FAQ'));
+const Login = lazy(() => import('./pages/Public/Login'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
+const MemberPortal = lazy(() => import('./components/MemberPortal'));
+const Sims = lazy(() => import('./pages/Member/Sims'));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-full">
+    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 // Error Boundary Component
 interface ErrorBoundaryProps {
@@ -209,9 +171,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       console.error('Failed to mark all as read:', err);
     }
   };
-  
-  // Activate debug layout mode
-  useDebugLayout();
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe', '/sims'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -443,46 +402,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-const NotifItem: React.FC<{icon: string; title: string; desc: string; time: string}> = ({ icon, title, desc, time }) => (
-  <div className="flex gap-3 p-3 rounded-xl glass-button border-0 bg-white/5 hover:bg-white/10 transition-colors">
-     <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
-        <span className="material-symbols-outlined text-[20px] text-white">{icon}</span>
-     </div>
-     <div>
-        <div className="flex justify-between items-center w-full">
-           <h4 className="font-bold text-sm text-white">{title}</h4>
-           <span className="text-[10px] text-white/50 ml-2">{time}</span>
-        </div>
-        <p className="text-xs text-white/70 mt-0.5">{desc}</p>
-     </div>
-  </div>
-);
-
-const NavItem: React.FC<{ to: string; icon: string; isActive: boolean; label: string; isDarkTheme: boolean }> = ({ to, icon, isActive, label, isDarkTheme }) => {
-  const navigate = useNavigate();
-  const isGolfIcon = icon === 'sports_golf';
-  const shouldFill = isActive && !isGolfIcon;
-
-  const activeClasses = isDarkTheme 
-    ? 'bg-[#E7E7DC] text-[#293515] shadow-glow scale-105' 
-    : 'bg-white text-[#293515] shadow-md scale-105';
-  
-  const inactiveClasses = isDarkTheme
-    ? 'text-white/60 hover:text-white hover:bg-white/5 active:scale-95'
-    : 'text-white/70 hover:text-white hover:bg-white/10 active:scale-95';
-
-  return (
-    <button 
-      onClick={() => navigate(to)} 
-      className={`flex-1 h-full flex items-center justify-center rounded-xl transition-all duration-300 focus:ring-2 focus:ring-accent focus:outline-none ${isActive ? activeClasses : inactiveClasses}`}
-      aria-label={label}
-      aria-current={isActive ? 'page' : undefined}
-    >
-      <span className={`material-symbols-outlined text-[24px] ${shouldFill ? 'filled' : ''}`}>{icon}</span>
-    </button>
-  );
-};
-
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
@@ -492,6 +411,7 @@ const App: React.FC = () => {
           <HashRouter>
             <ScrollToTop />
             <Layout>
+              <Suspense fallback={<PageLoader />}>
               <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Landing />} />
@@ -551,6 +471,7 @@ const App: React.FC = () => {
               
               <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              </Suspense>
             </Layout>
           </HashRouter>
           </ToastProvider>
