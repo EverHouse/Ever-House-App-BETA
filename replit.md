@@ -30,6 +30,7 @@ A private members club application built with React, Vite, and TypeScript. The a
 - Frontend dev server: `npm run dev` (port 5000)
 - Backend API server: `npm run server` (port 3001)
 - Build: `npm run build`
+- Seed database: `npm run seed` (populates bays, resources, cafe menu, sample events)
 
 ## Database Schema (PostgreSQL)
 - **resources**: id, name, type (simulator/conference_room/wellness_room/instructor), description, capacity
