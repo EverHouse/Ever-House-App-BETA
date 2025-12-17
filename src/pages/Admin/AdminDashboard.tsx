@@ -224,6 +224,8 @@ interface DBEvent {
     category: string;
     image_url: string | null;
     max_attendees: number | null;
+    eventbrite_id: string | null;
+    eventbrite_url: string | null;
 }
 
 const CATEGORY_TABS = [
@@ -243,6 +245,8 @@ const EventsAdmin: React.FC = () => {
     const [newItem, setNewItem] = useState<Partial<DBEvent>>({ category: 'Social' });
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
     const fetchEvents = async () => {
         try {
@@ -341,6 +345,27 @@ const EventsAdmin: React.FC = () => {
         }
     };
 
+    const handleSyncEventbrite = async () => {
+        setIsSyncing(true);
+        setSyncMessage(null);
+        try {
+            const res = await fetch('/api/eventbrite/sync', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setSyncMessage(data.message);
+                await fetchEvents();
+            } else {
+                setSyncMessage(`Error: ${data.error}`);
+            }
+        } catch (err) {
+            console.error('Failed to sync Eventbrite:', err);
+            setSyncMessage('Failed to sync with Eventbrite');
+        } finally {
+            setIsSyncing(false);
+            setTimeout(() => setSyncMessage(null), 5000);
+        }
+    };
+
     const formatDate = (dateStr: string) => {
         if (!dateStr) return 'TBD';
         const date = new Date(dateStr);
@@ -374,7 +399,27 @@ const EventsAdmin: React.FC = () => {
                 ))}
             </div>
 
-            <div className="flex justify-end mb-4">
+            {syncMessage && (
+                <div className={`mb-4 px-4 py-2 rounded-lg text-sm font-medium ${
+                    syncMessage.startsWith('Error') 
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' 
+                        : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
+                }`}>
+                    {syncMessage}
+                </div>
+            )}
+
+            <div className="flex justify-end gap-2 mb-4">
+                <button 
+                    onClick={handleSyncEventbrite} 
+                    disabled={isSyncing}
+                    className="bg-[#F05537] text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md disabled:opacity-50"
+                >
+                    <span className={`material-symbols-outlined text-[16px] ${isSyncing ? 'animate-spin' : ''}`}>
+                        {isSyncing ? 'progress_activity' : 'sync'}
+                    </span> 
+                    {isSyncing ? 'Syncing...' : 'Sync Eventbrite'}
+                </button>
                 <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md">
                     <span className="material-symbols-outlined">add</span> Create
                 </button>
@@ -434,6 +479,11 @@ const EventsAdmin: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredEvents.map(event => (
                         <div key={event.id} onClick={() => openEdit(event)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all">
+                            {event.eventbrite_id && (
+                                <div className="absolute top-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase px-2 py-1 rounded-bl-lg z-10">
+                                    Eventbrite
+                                </div>
+                            )}
                             <div className="flex gap-4">
                                 <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-white/5 flex-shrink-0 overflow-hidden flex items-center justify-center">
                                     {event.image_url ? (
@@ -452,7 +502,20 @@ const EventsAdmin: React.FC = () => {
                             </div>
                             <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
                                 <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
-                                <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="text-red-500 text-xs font-bold uppercase tracking-wider hover:bg-red-50 px-2 py-1 rounded">Delete</button>
+                                <div className="flex items-center gap-2">
+                                    {event.eventbrite_url && (
+                                        <a 
+                                            href={event.eventbrite_url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="text-[#F05537] text-xs font-bold uppercase tracking-wider hover:bg-orange-50 px-2 py-1 rounded flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-[14px]">open_in_new</span> View
+                                        </a>
+                                    )}
+                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="text-red-500 text-xs font-bold uppercase tracking-wider hover:bg-red-50 px-2 py-1 rounded">Delete</button>
+                                </div>
                             </div>
                         </div>
                     ))}

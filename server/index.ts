@@ -296,14 +296,14 @@ app.get('/api/availability', async (req, res) => {
 
 app.get('/api/events', async (req, res) => {
   try {
-    const { date } = req.query;
-    let query = 'SELECT * FROM events';
+    const { date, include_past } = req.query;
+    let query = 'SELECT id, title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, eventbrite_id, eventbrite_url FROM events';
     const params: any[] = [];
     
     if (date) {
       params.push(date);
       query += ' WHERE event_date = $1';
-    } else {
+    } else if (include_past !== 'true') {
       query += ' WHERE event_date >= CURRENT_DATE';
     }
     
@@ -365,6 +365,101 @@ app.delete('/api/events/:id', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Event delete error:', error);
     res.status(500).json({ error: 'Failed to delete event' });
+  }
+});
+
+// Eventbrite Sync Endpoint
+app.post('/api/eventbrite/sync', async (req, res) => {
+  try {
+    const eventbriteToken = process.env.EVENTBRITE_PRIVATE_TOKEN;
+    if (!eventbriteToken) {
+      return res.status(400).json({ error: 'Eventbrite token not configured' });
+    }
+
+    // Fetch user's organization ID first
+    const meResponse = await fetch('https://www.eventbriteapi.com/v3/users/me/organizations/', {
+      headers: { 'Authorization': `Bearer ${eventbriteToken}` }
+    });
+    
+    if (!meResponse.ok) {
+      const errorText = await meResponse.text();
+      if (!isProduction) console.error('Eventbrite org fetch error:', errorText);
+      return res.status(400).json({ error: 'Failed to fetch Eventbrite organizations' });
+    }
+    
+    const orgData = await meResponse.json();
+    const organizationId = orgData.organizations?.[0]?.id;
+    
+    if (!organizationId) {
+      return res.status(400).json({ error: 'No Eventbrite organization found' });
+    }
+
+    // Fetch events from Eventbrite
+    const eventsResponse = await fetch(
+      `https://www.eventbriteapi.com/v3/organizations/${organizationId}/events/?status=live,started,ended&order_by=start_desc`,
+      { headers: { 'Authorization': `Bearer ${eventbriteToken}` } }
+    );
+
+    if (!eventsResponse.ok) {
+      const errorText = await eventsResponse.text();
+      if (!isProduction) console.error('Eventbrite events fetch error:', errorText);
+      return res.status(400).json({ error: 'Failed to fetch Eventbrite events' });
+    }
+
+    const eventsData = await eventsResponse.json();
+    const eventbriteEvents = eventsData.events || [];
+
+    let synced = 0;
+    let updated = 0;
+
+    for (const ebEvent of eventbriteEvents) {
+      const eventbriteId = ebEvent.id;
+      const title = ebEvent.name?.text || 'Untitled Event';
+      const description = ebEvent.description?.text || '';
+      const eventDate = ebEvent.start?.local?.split('T')[0] || null;
+      const startTime = ebEvent.start?.local?.split('T')[1]?.substring(0, 8) || '18:00:00';
+      const endTime = ebEvent.end?.local?.split('T')[1]?.substring(0, 8) || '21:00:00';
+      const location = ebEvent.venue?.name || ebEvent.online_event ? 'Online Event' : 'TBD';
+      const imageUrl = ebEvent.logo?.url || null;
+      const eventbriteUrl = ebEvent.url || null;
+      const maxAttendees = ebEvent.capacity || null;
+
+      // Check if event already exists
+      const existing = await pool.query(
+        'SELECT id FROM events WHERE eventbrite_id = $1',
+        [eventbriteId]
+      );
+
+      if (existing.rows.length > 0) {
+        // Update existing event
+        await pool.query(
+          `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, 
+           end_time = $5, location = $6, image_url = $7, eventbrite_url = $8, max_attendees = $9
+           WHERE eventbrite_id = $10`,
+          [title, description, eventDate, startTime, endTime, location, imageUrl, eventbriteUrl, maxAttendees, eventbriteId]
+        );
+        updated++;
+      } else {
+        // Insert new event
+        await pool.query(
+          `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, image_url, eventbrite_id, eventbrite_url, max_attendees)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [title, description, eventDate, startTime, endTime, location, 'Social', imageUrl, eventbriteId, eventbriteUrl, maxAttendees]
+        );
+        synced++;
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Synced ${synced} new events, updated ${updated} existing events`,
+      total: eventbriteEvents.length,
+      synced,
+      updated
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Eventbrite sync error:', error);
+    res.status(500).json({ error: 'Failed to sync Eventbrite events' });
   }
 });
 
