@@ -138,6 +138,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useData();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
 interface UserNotification {
   id: number;
   type: string;
@@ -495,11 +502,11 @@ const App: React.FC = () => {
               <Route path="/faq" element={<FAQ />} />
               <Route path="/login" element={<Login />} />
 
-              {/* Admin Routes */}
+              {/* Admin Routes - requires admin role */}
               <Route path="/admin" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AdminDashboard />
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
 
               {/* Member Routes */}

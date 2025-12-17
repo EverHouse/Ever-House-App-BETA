@@ -295,6 +295,13 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [members, setMembers] = useState<MemberProfile[]>(INITIAL_MEMBERS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
 
+  // Admin emails get admin role and Premium tier
+  const ADMIN_EMAILS = [
+    'nick@evenhouse.club',
+    'adam@evenhouse.club',
+    'afogel@evenhouse.club'
+  ];
+
   // Check auth status on mount
   useEffect(() => {
     const checkAuth = async () => {
@@ -302,16 +309,19 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
         const res = await fetch('/api/auth/user', { credentials: 'include' });
         if (res.ok) {
           const authUser = await res.json();
+          const email = authUser.email?.toLowerCase() || '';
+          const isAdmin = ADMIN_EMAILS.includes(email);
+          
           // Map Replit Auth user to MemberProfile
           const memberProfile: MemberProfile = {
             id: authUser.id,
             name: [authUser.firstName, authUser.lastName].filter(Boolean).join(' ') || authUser.email || 'Member',
-            tier: 'Core', // Default tier - can be fetched from HubSpot later
+            tier: isAdmin ? 'Premium' : 'Core',
             status: 'Active',
             email: authUser.email || '',
             phone: '',
             avatar: authUser.profileImageUrl,
-            role: 'member'
+            role: isAdmin ? 'admin' : 'member'
           };
           setUser(memberProfile);
         }
