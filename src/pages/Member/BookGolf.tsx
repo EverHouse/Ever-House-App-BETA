@@ -3,6 +3,7 @@ import { useData } from '../../contexts/DataContext';
 import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
+import { haptic } from '../../utils/haptics';
 
 const API_BASE = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001';
 
@@ -221,6 +222,7 @@ const BookGolf: React.FC = () => {
         color: 'primary'
       });
       
+      haptic.success();
       setShowConfirmation(true);
       setTimeout(() => {
         setShowConfirmation(false);
@@ -229,6 +231,7 @@ const BookGolf: React.FC = () => {
         setAvailableSlots(prev => prev.filter(s => s.id !== selectedSlot.id));
       }, 2500);
     } catch (err: any) {
+      haptic.error();
       setError(err.message || 'Booking failed. Please try again.');
     } finally {
       setIsBooking(false);
@@ -289,7 +292,7 @@ const BookGolf: React.FC = () => {
                 {[30, 60, 90, 120].map(mins => (
                   <button 
                     key={mins}
-                    onClick={() => setDuration(mins)}
+                    onClick={() => { haptic.selection(); setDuration(mins); }}
                     aria-pressed={duration === mins}
                     className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-accent focus:outline-none ${
                       duration === mins 
@@ -324,6 +327,7 @@ const BookGolf: React.FC = () => {
                   <button
                     key={slot.id}
                     onClick={() => {
+                      haptic.light();
                       setSelectedSlot(slot);
                       setSelectedResource(null);
                     }}
@@ -361,7 +365,7 @@ const BookGolf: React.FC = () => {
                     <ResourceCard
                       resource={resource}
                       selected={selectedResource?.id === resource.id}
-                      onClick={() => setSelectedResource(resource)}
+                      onClick={() => { haptic.medium(); setSelectedResource(resource); }}
                     />
                   </div>
                 ))}
@@ -374,7 +378,7 @@ const BookGolf: React.FC = () => {
       {canBook && (
         <div className="fixed bottom-24 left-0 right-0 z-20 px-6 flex justify-center w-full max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-300">
           <button 
-            onClick={handleConfirm}
+            onClick={() => { haptic.heavy(); handleConfirm(); }}
             disabled={isBooking}
             className="w-full py-4 rounded-xl font-bold text-lg shadow-glow transition-all flex items-center justify-center gap-2 bg-accent text-brand-green hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 focus:ring-2 focus:ring-white focus:outline-none"
           >
