@@ -1,9 +1,25 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const isConfigured = supabaseUrl && supabaseAnonKey;
+
+const dummyClient = {
+  auth: {
+    signInWithOtp: async () => ({ error: new Error('Supabase not configured') }),
+    signOut: async () => {},
+    getSession: async () => ({ data: { session: null }, error: null }),
+    getUser: async () => ({ data: { user: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+  },
+} as unknown as SupabaseClient;
+
+export const supabase = isConfigured 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : dummyClient;
+
+export const isSupabaseConfigured = isConfigured;
 
 export async function signInWithMagicLink(email: string): Promise<{ error: Error | null }> {
   const { error } = await supabase.auth.signInWithOtp({

@@ -18,6 +18,7 @@ const PrivateEvents = lazy(() => import('./pages/Public/PrivateEvents'));
 const PublicWellness = lazy(() => import('./pages/Public/Wellness'));
 const FAQ = lazy(() => import('./pages/Public/FAQ'));
 const Login = lazy(() => import('./pages/Public/Login'));
+const AuthCallback = lazy(() => import('./pages/Public/AuthCallback'));
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 const MemberPortal = lazy(() => import('./components/MemberPortal'));
 const Sims = lazy(() => import('./pages/Member/Sims'));
@@ -424,6 +425,7 @@ const App: React.FC = () => {
               <Route path="/wellness" element={<PublicWellness />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
 
               {/* Admin Routes - requires admin role */}
               <Route path="/admin" element={

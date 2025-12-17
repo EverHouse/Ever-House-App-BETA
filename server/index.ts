@@ -189,6 +189,52 @@ app.get('/api/resources', async (req, res) => {
   }
 });
 
+app.get('/api/users/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    const result = await pool.query(
+      'SELECT id, email, first_name, last_name, phone, role, tier FROM users WHERE email = $1',
+      [email]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('User fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+app.post('/api/auth/supabase-sync', async (req, res) => {
+  try {
+    const { id, email, firstName, lastName } = req.body;
+    
+    if (!id || !email) {
+      return res.status(400).json({ error: 'id and email are required' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO users (id, email, first_name, last_name, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, NOW(), NOW())
+       ON CONFLICT (email) DO UPDATE SET
+         first_name = COALESCE($3, users.first_name),
+         last_name = COALESCE($4, users.last_name),
+         updated_at = NOW()
+       RETURNING *`,
+      [id, email, firstName || null, lastName || null]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Supabase sync error:', error);
+    res.status(500).json({ error: 'Failed to sync user' });
+  }
+});
+
 app.get('/api/bookings', async (req, res) => {
   try {
     const { user_email, date, resource_id } = req.query;
