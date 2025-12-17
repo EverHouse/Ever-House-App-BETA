@@ -53,16 +53,16 @@ const Login: React.FC = () => {
             <div className="bg-white py-8 px-6 shadow-sm rounded-2xl border border-black/5 space-y-4">
                 {!showMagicLink ? (
                   <>
-                    <button
-                        onClick={handleReplitLogin}
-                        className="flex w-full justify-center items-center gap-3 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98]"
-                    >
-                        <span className="material-symbols-outlined">login</span>
-                        Sign In with Replit
-                    </button>
-                    
-                    {isSupabaseConfigured && (
+                    {isSupabaseConfigured ? (
                       <>
+                        <button
+                            onClick={() => setShowMagicLink(true)}
+                            className="flex w-full justify-center items-center gap-3 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98]"
+                        >
+                            <span className="material-symbols-outlined">mail</span>
+                            Continue with Email
+                        </button>
+                        
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-black/10"></div>
@@ -73,13 +73,21 @@ const Login: React.FC = () => {
                         </div>
 
                         <button
-                            onClick={() => setShowMagicLink(true)}
+                            onClick={handleReplitLogin}
                             className="flex w-full justify-center items-center gap-3 rounded-xl bg-white border-2 border-primary px-3 py-4 text-sm font-bold leading-6 text-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98]"
                         >
-                            <span className="material-symbols-outlined">mail</span>
-                            Continue with Email
+                            <span className="material-symbols-outlined">login</span>
+                            Sign In with Replit
                         </button>
                       </>
+                    ) : (
+                      <button
+                          onClick={handleReplitLogin}
+                          className="flex w-full justify-center items-center gap-3 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98]"
+                      >
+                          <span className="material-symbols-outlined">login</span>
+                          Sign In with Replit
+                      </button>
                     )}
                   </>
                 ) : (
