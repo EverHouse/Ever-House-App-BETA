@@ -50,11 +50,14 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Replit Auth**: User authentication supporting Google, Apple, GitHub, and email/password login. Sessions stored in PostgreSQL.
 - **HubSpot CRM**: Integrated for contact and member management. Access tokens refreshed via Replit Connectors.
 - **HubSpot Forms**: Native application forms (Tour Request, Membership Application, Private Hire Inquiry, Guest Check-In, Contact) submit directly to HubSpot Forms API, utilizing `hutk` cookie for tracking.
-- **Eventbrite**: Syncs events from Eventbrite organization to the application database, linking back to ticketing pages.
-- **Google Calendar**: Two-way calendar sync with named calendars:
+- **Eventbrite**: Syncs members-only events from Eventbrite organization to the application database. Synced events are marked with `source='eventbrite'`, `visibility='members_only'`, and `requires_rsvp=true`. Ticketing links redirect to Eventbrite.
+  - Sync endpoint: `POST /api/eventbrite/sync`
+  - Requires `EVENTBRITE_PRIVATE_TOKEN` environment variable.
+- **Google Calendar**: Three-calendar integration system with named calendars:
   - **Booked Golf**: Primary calendar for golf simulator bookings. Approved booking requests create events here; availability is checked via freeBusy API.
   - **MBO_Members_Club**: Calendar for conference room bookings with similar availability checking.
+  - **Even House Public/Member Events**: Calendar for public events synced to the database. Events marked with `source='google_calendar'`, `visibility='public'`, and `requires_rsvp=false`.
   - Business hours configured per resource type (golf: 9AM-9PM, conference: 8AM-6PM).
-  - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`.
+  - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`, `POST /api/events/sync/google`, `POST /api/events/sync`.
 - **Apple Messages for Business**: Direct messaging support via a button on the Contact page, linking to Apple Business Chat.
 - **Amarie Aesthetics MedSpa**: Integration for wellness services, including IV Hydration Drip Menu, Wellness Shots, NAD+ Treatments, Injectables, and Medical Weightloss programs, with a direct booking link.
