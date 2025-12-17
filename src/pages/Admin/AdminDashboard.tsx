@@ -918,7 +918,38 @@ const MembersAdmin: React.FC = () => {
                 </div>
             )}
 
+            {/* Empty State */}
+            {filteredList.length === 0 && (
+                <div className="text-center py-12 px-6 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5">
+                    <span className="material-symbols-outlined text-5xl mb-4 text-gray-300 dark:text-white/20">
+                        {subTab === 'members' ? 'person_off' : 'badge'}
+                    </span>
+                    <h3 className="text-lg font-bold mb-2 text-gray-600 dark:text-white/70">
+                        {searchQuery ? 'No results found' : subTab === 'members' ? 'No members yet' : 'No staff members'}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-white/50 max-w-xs mx-auto">
+                        {searchQuery 
+                            ? `Try a different search term or clear the filter.`
+                            : subTab === 'members' 
+                                ? 'Members will appear here once they sign up.'
+                                : isAdmin 
+                                    ? 'Add staff members to help manage the club.'
+                                    : 'No staff members have been added yet.'}
+                    </p>
+                    {subTab === 'staff' && isAdmin && !searchQuery && (
+                        <button
+                            onClick={openAddStaff}
+                            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">person_add</span>
+                            Add Staff Member
+                        </button>
+                    )}
+                </div>
+            )}
+
             {/* Mobile View: Cards */}
+            {filteredList.length > 0 && (
             <div className="md:hidden space-y-3">
                 {filteredList.map(m => (
                     <div key={m.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
@@ -957,10 +988,12 @@ const MembersAdmin: React.FC = () => {
                     </div>
                 ))}
             </div>
+            )}
 
             {/* Desktop View: Table */}
-            <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden">
-                <table className="w-full text-left">
+            {filteredList.length > 0 && (
+            <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden overflow-x-auto">
+                <table className="w-full text-left min-w-[700px]">
                     <thead className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/5">
                         <tr>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Name</th>
@@ -1007,6 +1040,7 @@ const MembersAdmin: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+            )}
         </div>
     );
 };

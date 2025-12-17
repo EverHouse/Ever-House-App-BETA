@@ -4,6 +4,7 @@ import { useData, Booking } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
+import WelcomeBanner from '../../components/WelcomeBanner';
 
 
 interface DBBooking {
@@ -195,6 +196,9 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="px-6 pt-4 pb-32 font-sans relative min-h-full">
+      {/* Welcome banner for new members */}
+      <WelcomeBanner />
+      
       <div className="mb-6">
         <h1 className={`text-3xl font-bold tracking-tight animate-pop-in ${isDark ? 'text-white' : 'text-primary'}`}>
           {getGreeting()}, {user?.name.split(' ')[0]}
