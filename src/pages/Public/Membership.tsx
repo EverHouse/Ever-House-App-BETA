@@ -81,12 +81,11 @@ const MembershipOverview: React.FC = () => {
         <MembershipCard 
           title="Social Membership"
           price="$180"
-          desc="Perfect for those who want to join the community and enjoy the club’s lifestyle offerings, without the golf simulators."
+          desc="Perfect for those who want to join the community and enjoy the club's lifestyle offerings, without the golf simulators. Social Members have full access to our lounges, cafe, putting course, events, work spaces, and more."
           features={[
-            "Lounges, Café & Work spaces",
-            "Putting course & Practice green",
             "Member events",
             "Daily guest passes",
+            "Putting course & practice green",
             "Concierge for bookings"
           ]}
           onClick={() => setShowApplicationForm(true)} 
@@ -97,7 +96,7 @@ const MembershipOverview: React.FC = () => {
           <div className="flex justify-between items-start mb-4 relative z-10">
             <div className="pr-2">
               <h3 className="text-xl font-semibold mb-2">Core Membership</h3>
-              <p className="text-sm text-white/70 leading-relaxed font-light">Your all-access pass to the Even House experience.</p>
+              <p className="text-sm text-white/70 leading-relaxed font-light">Your all-access pass to the Even House experience. From the cafe and lounges to the putting course and conference room.</p>
             </div>
             <span className="shrink-0 px-3 py-1 bg-accent text-primary text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm mt-1">
               Popular
@@ -109,10 +108,9 @@ const MembershipOverview: React.FC = () => {
           </div>
           <ul className="flex flex-col gap-3 mb-8 relative z-10">
             {[
-              "Café, Lounges, Putting course",
-              "60 mins/day Golf Simulators",
-              "60 mins/day Conf Room",
-              "4 guest passes per year",
+              "60 mins/day golf simulator bookings",
+              "60 mins/day conf room bookings",
+              "Daily guest passes",
               "Concierge for bookings & support"
             ].map((f, i) => (
               <li key={i} className="flex gap-3 text-sm text-white/90 font-light">
@@ -132,13 +130,13 @@ const MembershipOverview: React.FC = () => {
         <MembershipCard 
           title="Premium Membership"
           price="$450"
-          desc="Everything from Core plus priority access and extra perks."
+          desc="Premium gives you everything from the Core Membership plus priority bookings for amenities and events, and added benefits that elevate every visit."
           features={[
-            "Everything from Core",
-            "90 mins/day Golf Simulator",
+            "90 mins/day golf simulator bookings",
             "Priority booking of amenities",
-            "8 guest passes per year",
-            "Daily comp. coffee/beer/wine"
+            "Group lessons package included",
+            "Daily complimentary coffee, beer or wine",
+            "Additional discounts and perks"
           ]}
           onClick={() => setShowApplicationForm(true)}
         />
@@ -146,14 +144,14 @@ const MembershipOverview: React.FC = () => {
         <MembershipCard 
           title="Corporate Membership"
           price="$350"
-          suffix="/mo per seat"
-          desc="Elevate your team with premium amenities and client entertainment."
+          suffix="/mo per employee"
+          desc="Unlock a powerful business asset. Corporate memberships provide your team with professional workspaces, private meeting rooms, and premium golf amenities."
           features={[
-            "All Premium benefits per seat",
-            "10-day advance booking window",
-            "15 guest passes per year",
-            "Dedicated account manager",
-            "Private event hosting"
+            "Daily workspaces & lounge access",
+            "90 min/day golf simulator bookings",
+            "Priority bookings",
+            "15 full-access guest passes per year",
+            "Additional passes $25/each"
           ]}
           onClick={() => navigate('corporate')}
           btnText="View Details"
@@ -303,66 +301,91 @@ const MEMBERSHIP_DATA: Record<string, {
     Social: {
         price: "$180",
         features: {
-            "Lounges & Café": true,
-            "Work Spaces": true,
+            "Cafe, Bar & Patio Dining": true,
+            "Lounge & Entertaining Spaces": true,
+            "Work Desks & Conference Room": true,
+            "Trackman Simulators": false,
             "Putting Course": true,
-            "Conf Room": "—",
-            "Golf Simulators": false,
-            "Daily Allowance": "—",
-            "Booking Priority": "—",
-            "Guests": "Daily"
+            "Programs & Events": true,
+            "Daily Guests Allowed": true,
+            "Group Lessons": false,
+            "Advanced Simulator Booking": false,
+            "Extended Simulator Sessions": false,
+            "Complimentary Private Lesson": false,
+            "Simulator Guest Passes": false,
+            "Discounted Merchandise": false
         }
     },
     Core: {
         price: "$250",
         features: {
-            "Lounges & Café": true,
-            "Work Spaces": true,
+            "Cafe, Bar & Patio Dining": true,
+            "Lounge & Entertaining Spaces": true,
+            "Work Desks & Conference Room": true,
+            "Trackman Simulators": true,
             "Putting Course": true,
-            "Conf Room": "60m",
-            "Golf Simulators": true,
-            "Daily Allowance": "60m",
-            "Booking Priority": "Std",
-            "Guests": "Daily"
+            "Programs & Events": true,
+            "Daily Guests Allowed": true,
+            "Group Lessons": false,
+            "Advanced Simulator Booking": false,
+            "Extended Simulator Sessions": false,
+            "Complimentary Private Lesson": false,
+            "Simulator Guest Passes": false,
+            "Discounted Merchandise": false
         }
     },
     Premium: {
         price: "$450",
         features: {
-            "Lounges & Café": true,
-            "Work Spaces": true,
+            "Cafe, Bar & Patio Dining": true,
+            "Lounge & Entertaining Spaces": true,
+            "Work Desks & Conference Room": true,
+            "Trackman Simulators": true,
             "Putting Course": true,
-            "Conf Room": "Prio",
-            "Golf Simulators": true,
-            "Daily Allowance": "90m",
-            "Booking Priority": "High",
-            "Guests": "Unlim"
+            "Programs & Events": true,
+            "Daily Guests Allowed": true,
+            "Group Lessons": true,
+            "Advanced Simulator Booking": true,
+            "Extended Simulator Sessions": true,
+            "Complimentary Private Lesson": true,
+            "Simulator Guest Passes": true,
+            "Discounted Merchandise": true
         }
     },
     Corporate: {
         price: "$350",
         features: {
-            "Lounges & Café": true,
-            "Work Spaces": "Ded.",
+            "Cafe, Bar & Patio Dining": true,
+            "Lounge & Entertaining Spaces": true,
+            "Work Desks & Conference Room": true,
+            "Trackman Simulators": true,
             "Putting Course": true,
-            "Conf Room": "Prio",
-            "Golf Simulators": true,
-            "Daily Allowance": "90m",
-            "Booking Priority": "High",
-            "Guests": "15/yr"
+            "Programs & Events": true,
+            "Daily Guests Allowed": true,
+            "Group Lessons": false,
+            "Advanced Simulator Booking": false,
+            "Extended Simulator Sessions": false,
+            "Complimentary Private Lesson": false,
+            "Simulator Guest Passes": false,
+            "Discounted Merchandise": false
         }
     }
 };
 
 const FEATURE_KEYS = [
-    "Lounges & Café",
-    "Work Spaces",
+    "Cafe, Bar & Patio Dining",
+    "Lounge & Entertaining Spaces",
+    "Work Desks & Conference Room",
+    "Trackman Simulators",
     "Putting Course",
-    "Conf Room",
-    "Golf Simulators",
-    "Daily Allowance",
-    "Booking Priority",
-    "Guests"
+    "Programs & Events",
+    "Daily Guests Allowed",
+    "Group Lessons",
+    "Advanced Simulator Booking",
+    "Extended Simulator Sessions",
+    "Complimentary Private Lesson",
+    "Simulator Guest Passes",
+    "Discounted Merchandise"
 ];
 
 const CompareFeatures: React.FC = () => {

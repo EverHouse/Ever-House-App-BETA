@@ -2,42 +2,84 @@ export type BaseTier = 'Social' | 'Core' | 'Premium' | 'Corporate' | 'VIP';
 
 export interface TierPermissions {
   canBookSimulators: boolean;
+  canBookWellness: boolean;
   advanceBookingDays: number;
   guestPassesPerYear: number;
   dailySimulatorMinutes: number;
+  dailyConfRoomMinutes: number;
+  hasGroupLessons: boolean;
+  hasExtendedSessions: boolean;
+  hasPrivateLesson: boolean;
+  hasSimulatorGuestPasses: boolean;
+  hasDiscountedMerch: boolean;
   unlimitedAccess?: boolean;
 }
 
 export const TIER_PERMISSIONS: Record<BaseTier, TierPermissions> = {
   Social: {
     canBookSimulators: false,
+    canBookWellness: true,
     advanceBookingDays: 7,
     guestPassesPerYear: 2,
     dailySimulatorMinutes: 0,
+    dailyConfRoomMinutes: 0,
+    hasGroupLessons: false,
+    hasExtendedSessions: false,
+    hasPrivateLesson: false,
+    hasSimulatorGuestPasses: false,
+    hasDiscountedMerch: false,
   },
   Core: {
     canBookSimulators: true,
-    advanceBookingDays: 7,
+    canBookWellness: true,
+    advanceBookingDays: 10,
     guestPassesPerYear: 4,
     dailySimulatorMinutes: 60,
+    dailyConfRoomMinutes: 60,
+    hasGroupLessons: false,
+    hasExtendedSessions: false,
+    hasPrivateLesson: false,
+    hasSimulatorGuestPasses: false,
+    hasDiscountedMerch: false,
   },
   Premium: {
     canBookSimulators: true,
-    advanceBookingDays: 10,
+    canBookWellness: true,
+    advanceBookingDays: 14,
     guestPassesPerYear: 8,
     dailySimulatorMinutes: 90,
+    dailyConfRoomMinutes: 90,
+    hasGroupLessons: true,
+    hasExtendedSessions: true,
+    hasPrivateLesson: true,
+    hasSimulatorGuestPasses: true,
+    hasDiscountedMerch: true,
   },
   Corporate: {
     canBookSimulators: true,
-    advanceBookingDays: 10,
+    canBookWellness: true,
+    advanceBookingDays: 14,
     guestPassesPerYear: 15,
     dailySimulatorMinutes: 90,
+    dailyConfRoomMinutes: 90,
+    hasGroupLessons: false,
+    hasExtendedSessions: false,
+    hasPrivateLesson: false,
+    hasSimulatorGuestPasses: false,
+    hasDiscountedMerch: false,
   },
   VIP: {
     canBookSimulators: true,
+    canBookWellness: true,
     advanceBookingDays: 14,
     guestPassesPerYear: 999,
     dailySimulatorMinutes: 999,
+    dailyConfRoomMinutes: 999,
+    hasGroupLessons: true,
+    hasExtendedSessions: true,
+    hasPrivateLesson: true,
+    hasSimulatorGuestPasses: true,
+    hasDiscountedMerch: true,
     unlimitedAccess: true,
   },
 };

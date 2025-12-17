@@ -830,17 +830,17 @@ const MembersAdmin: React.FC = () => {
                         </h3>
                         <div className="space-y-3 mb-6">
                             <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500">Name</label>
-                                <input className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.name} onChange={e => setSelectedMember({...selectedMember, name: e.target.value})} />
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Name</label>
+                                <input className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.name} onChange={e => setSelectedMember({...selectedMember, name: e.target.value})} />
                             </div>
                             <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500">Email</label>
-                                <input className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.email} onChange={e => setSelectedMember({...selectedMember, email: e.target.value})} />
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Email</label>
+                                <input className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.email} onChange={e => setSelectedMember({...selectedMember, email: e.target.value})} />
                             </div>
                             <div className="flex gap-3">
                                 <div className="flex-1">
-                                    <label className="text-[10px] uppercase font-bold text-gray-500">Tier</label>
-                                    <select className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.tier} onChange={e => setSelectedMember({...selectedMember, tier: e.target.value})}>
+                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Tier</label>
+                                    <select className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.tier} onChange={e => setSelectedMember({...selectedMember, tier: e.target.value})}>
                                         <option>Social</option>
                                         <option>Core</option>
                                         <option>Premium</option>
@@ -849,8 +849,8 @@ const MembersAdmin: React.FC = () => {
                                     </select>
                                 </div>
                                 <div className="flex-1">
-                                    <label className="text-[10px] uppercase font-bold text-gray-500">Status</label>
-                                    <select className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.status} onChange={e => setSelectedMember({...selectedMember, status: e.target.value as any})}>
+                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Status</label>
+                                    <select className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.status} onChange={e => setSelectedMember({...selectedMember, status: e.target.value as any})}>
                                         <option>Active</option>
                                         <option>Pending</option>
                                         <option>Suspended</option>
@@ -860,9 +860,9 @@ const MembersAdmin: React.FC = () => {
                             {/* Role selector - only for admins */}
                             {isAdmin && (
                                 <div>
-                                    <label className="text-[10px] uppercase font-bold text-gray-500">Role</label>
+                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Role</label>
                                     <select 
-                                        className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" 
+                                        className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" 
                                         value={selectedMember.role || 'member'} 
                                         onChange={e => setSelectedMember({...selectedMember, role: e.target.value as any})}
                                     >
@@ -876,8 +876,8 @@ const MembersAdmin: React.FC = () => {
                             {/* Show role as read-only for staff users */}
                             {!isAdmin && (
                                 <div>
-                                    <label className="text-[10px] uppercase font-bold text-gray-500">Role</label>
-                                    <div className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white bg-gray-50">
+                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Role</label>
+                                    <div className="w-full border border-gray-300 p-2 rounded-lg bg-gray-50 text-primary dark:bg-black/20 dark:border-white/10 dark:text-white">
                                         {selectedMember.role || 'member'}
                                     </div>
                                     <p className="text-[10px] text-gray-400 mt-1">Only admins can modify roles</p>
