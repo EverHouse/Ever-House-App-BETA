@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useData, CafeItem } from '../../contexts/DataContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import Skeleton from '../../components/Skeleton';
 import SwipeablePage from '../../components/SwipeablePage';
 
@@ -13,6 +14,8 @@ interface CartItem {
 
 const Cafe: React.FC = () => {
   const { cafeMenu, isLoading } = useData();
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
   const categories = useMemo(() => Array.from(new Set(cafeMenu.map(item => item.category))), [cafeMenu]);
 
   const [activeCategory, setActiveCategory] = useState(categories[0] || 'Coffee');
@@ -139,7 +142,7 @@ const Cafe: React.FC = () => {
   return (
     <SwipeablePage className="relative min-h-screen pb-24">
       <div className="pt-2 px-6">
-        <h1 className="text-3xl font-bold text-white mb-4 drop-shadow-md">Café</h1>
+        <h1 className={`text-3xl font-bold mb-4 drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Café</h1>
         {isLoading ? (
            <div className="flex gap-2 overflow-x-hidden pb-4 -mx-6 px-6">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -152,7 +155,7 @@ const Cafe: React.FC = () => {
                 <button
                 key={cat.category}
                 onClick={() => setActiveCategory(cat.category)}
-                className={`snap-start flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-bold transition-all border active:scale-95 ${activeCategory === cat.category ? 'bg-accent text-brand-green shadow-glow border-accent' : 'glass-button text-white border-white/10 hover:bg-white/10'}`}
+                className={`snap-start flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-bold transition-all border active:scale-95 ${activeCategory === cat.category ? 'bg-accent text-brand-green shadow-glow border-accent' : (isDark ? 'glass-button text-white border-white/10 hover:bg-white/10' : 'bg-white text-primary border-black/10 hover:bg-black/5')}`}
                 >
                 {cat.category}
                 </button>
@@ -193,25 +196,25 @@ const Cafe: React.FC = () => {
                     <div 
                     key={item.id} 
                     onClick={() => setSelectedItem(item)}
-                    className="glass-card flex justify-between items-start group p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-white/5 animate-pop-in active:scale-[0.98]"
+                    className={`flex justify-between items-center group p-3 rounded-xl transition-all cursor-pointer animate-pop-in active:scale-[0.98] ${isDark ? 'glass-card hover:bg-white/5 border border-white/5' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
                     style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
                     >
-                    <div className="flex gap-4 flex-1">
-                        <div className="w-16 h-16 flex-shrink-0 rounded-lg bg-white/5 flex items-center justify-center text-white/40 overflow-hidden relative border border-white/5">
+                    <div className="flex gap-4 flex-1 items-center">
+                        <div className={`w-14 h-14 flex-shrink-0 rounded-lg flex items-center justify-center overflow-hidden relative ${isDark ? 'bg-white/5 text-white/40 border border-white/5' : 'bg-black/5 text-primary/40 border border-black/5'}`}>
                             {item.image ? (
                             <img src={item.image} alt={item.name} className="w-full h-full object-cover absolute inset-0 opacity-80" />
                             ) : (
-                            <span className="material-symbols-outlined text-3xl">{item.icon || 'restaurant'}</span>
+                            <span className="material-symbols-outlined text-2xl">{item.icon || 'restaurant'}</span>
                             )}
                         </div>
-                        <div className="flex-1 min-w-0 pr-2 pt-0.5">
-                            <div className="flex justify-between items-start mb-1 gap-2">
-                            <h3 className="font-bold text-base text-white leading-tight">{item.name}</h3>
-                            <span className="font-bold text-sm text-accent whitespace-nowrap">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center gap-2">
+                            <h3 className={`font-bold text-base leading-tight ${isDark ? 'text-white' : 'text-primary'}`}>{item.name}</h3>
+                            <span className={`font-bold text-sm whitespace-nowrap ${isDark ? 'text-accent' : 'text-brand-green'}`}>
                                 {item.price === 0 ? 'MP' : `$${item.price}`}
                             </span>
                             </div>
-                            {item.desc && <p className="text-xs text-white/60 leading-snug line-clamp-2 pr-4">{item.desc}</p>}
+                            {item.desc && <p className={`text-xs leading-snug line-clamp-1 mt-0.5 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{item.desc}</p>}
                         </div>
                     </div>
                     <button 
@@ -219,7 +222,7 @@ const Cafe: React.FC = () => {
                         e.stopPropagation();
                         addToCart(item);
                         }}
-                        className="self-center w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white hover:bg-white hover:text-brand-green transition-colors active:scale-90 flex-shrink-0 ml-2"
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors active:scale-90 flex-shrink-0 ml-3 ${isDark ? 'bg-white/10 text-white hover:bg-white hover:text-brand-green' : 'bg-brand-green/10 text-brand-green hover:bg-brand-green hover:text-white'}`}
                         aria-label={`Add ${item.name} to cart`}
                     >
                         <span className="material-symbols-outlined text-[20px]">add</span>

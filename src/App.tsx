@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './contexts/DataContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 // Debug layout mode - activate with ?debugLayout=1
 const useDebugLayout = () => {
@@ -152,6 +152,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { announcements, user } = useData();
+  const { effectiveTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifTab, setNotifTab] = useState<'updates' | 'announcements'>('updates');
@@ -204,7 +205,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe', '/sims'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const isDarkTheme = isMemberRoute || isAdminRoute;
+  // Admin always dark, member routes respect theme preference, public routes always light
+  const isDarkTheme = isAdminRoute || (isMemberRoute && effectiveTheme === 'dark');
   const showHeader = !isAdminRoute;
 
   // Routes that handle their own slide animation
@@ -222,9 +224,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
+  const isProfilePage = location.pathname === '/profile';
+  
   const handleTopRightClick = () => {
     if (user) {
-        if (isMemberRoute) {
+        if (isProfilePage) {
+            navigate('/dashboard');
+        } else if (isMemberRoute) {
             navigate('/profile');
         } else {
             navigate('/dashboard');
@@ -236,7 +242,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const getTopRightIcon = () => {
       if (!user) return 'login';
-      if (isMemberRoute) return 'qr_code_2'; // Updated to clean QR icon
+      if (isProfilePage) return 'account_circle';
+      if (isMemberRoute) return 'badge';
       return 'account_circle';
   };
 
@@ -245,9 +252,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     setIsNotificationsOpen(true);
   };
   
-  // Header: Black for member routes, Brand Green for public
+  // Header: Depends on theme for member routes, Brand Green for public
   const headerClasses = isMemberRoute 
-    ? "bg-[#0f120a] text-[#F2F2EC] shadow-md relative z-40 border-b border-white/5"
+    ? (isDarkTheme 
+        ? "bg-[#0f120a] text-[#F2F2EC] shadow-md relative z-40 border-b border-white/5"
+        : "bg-[#293515] text-[#F2F2EC] shadow-md relative z-40")
     : "bg-[#293515] text-[#F2F2EC] shadow-md relative z-40";
   // Icon-only buttons with simple hover state, no background shapes
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
@@ -289,7 +298,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </button>
                 
                 <button 
-                  className="cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
+                  className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
                   onClick={() => navigate('/')}
                   aria-label="Go to home"
                 >
@@ -300,7 +309,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   />
                 </button>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 ml-auto">
                   {isMemberRoute && user && (
                     <button 
                       onClick={() => setIsNotificationsOpen(true)}
@@ -331,7 +340,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Main Content - No top padding needed due to flex layout */}
             <main 
                 id="main-content"
-                className={`flex-1 overflow-y-auto overscroll-contain relative scrollbar-hide ${showHeader ? 'pb-32' : ''} ${isMemberRoute ? 'bg-[#0f120a]' : ''}`}
+                className={`flex-1 overflow-y-auto overscroll-contain relative scrollbar-hide ${showHeader ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
             >
                 <div key={location.pathname} className={`${shouldAnimate ? 'animate-page-enter' : ''} min-h-full`}>
                     {children}
@@ -341,7 +350,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Member Dock - Full Width with iOS Safe Area */}
             {isMemberRoute && !isAdminRoute && user && (
               <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30 px-4 pb-4 safe-area-bottom">
-                 <nav className="w-full max-w-md glass-card rounded-2xl p-1.5 flex items-stretch justify-between shadow-glass backdrop-blur-2xl bg-[#0f120a]/80 border border-white/10 h-16" role="navigation" aria-label="Member navigation">
+                 <nav className={`w-full max-w-md glass-card rounded-2xl p-1.5 flex items-stretch justify-between shadow-glass backdrop-blur-2xl h-16 ${isDarkTheme ? 'bg-[#0f120a]/80 border border-white/10' : 'bg-[#293515] border border-[#293515]/20'}`} role="navigation" aria-label="Member navigation">
                     <NavItem to="/dashboard" icon="dashboard" isActive={location.pathname === '/dashboard'} label="Dashboard" />
                     <NavItem to="/book" icon="sports_golf" isActive={location.pathname === '/book'} label="Book Golf" />
                     <NavItem to="/member-wellness" icon="spa" isActive={location.pathname === '/member-wellness'} label="Wellness" />

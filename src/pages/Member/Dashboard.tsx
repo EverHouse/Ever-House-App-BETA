@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, Booking } from '../../contexts/DataContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 
@@ -52,6 +53,8 @@ const formatDate = (dateStr: string): string => {
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, addBooking, deleteBooking } = useData();
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
   
   const [dbBookings, setDbBookings] = useState<DBBooking[]>([]);
   const [dbRSVPs, setDbRSVPs] = useState<DBRSVP[]>([]);
@@ -191,18 +194,18 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="px-6 pt-4 pb-32 font-sans relative min-h-full bg-[#0f120a]">
+    <div className="px-6 pt-4 pb-32 font-sans relative min-h-full">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white tracking-tight animate-pop-in">
+        <h1 className={`text-3xl font-bold tracking-tight animate-pop-in ${isDark ? 'text-white' : 'text-primary'}`}>
           {getGreeting()}, {user?.name.split(' ')[0]}
         </h1>
-        <p className="text-white/60 text-sm font-medium mt-1 animate-pop-in" style={{animationDelay: '0.1s'}}>
+        <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/60' : 'text-primary/60'}`} style={{animationDelay: '0.1s'}}>
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-16 text-white/50">
+        <div className={`flex flex-col items-center justify-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
           <span className="material-symbols-outlined animate-spin text-3xl mb-4">progress_activity</span>
           <p className="text-sm">Loading your schedule...</p>
         </div>
@@ -255,10 +258,10 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 p-6 flex items-center justify-between group">
+              <div className={`relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-black/5 shadow-sm'}`}>
                 <div>
-                  <h2 className="text-xl font-bold text-white mb-1">No upcoming bookings</h2>
-                  <p className="text-sm text-white/50">Ready to plan your day?</p>
+                  <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-primary'}`}>No upcoming bookings</h2>
+                  <p className={`text-sm ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Ready to plan your day?</p>
                 </div>
                 <button 
                   onClick={() => navigate('/book')} 
@@ -272,16 +275,16 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="mb-8 -mx-6 px-6 overflow-x-auto scrollbar-hide flex gap-4 animate-slide-in-right" style={{animationDelay: '0.2s'}}>
-            <QuickAction icon="sports_golf" label="Golf" onClick={() => navigate('/book')} delay="0s" />
-            <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.05s" />
-            <QuickAction icon="calendar_month" label="Events" onClick={() => navigate('/member-events')} delay="0.1s" />
-            <QuickAction icon="local_cafe" label="Cafe" onClick={() => navigate('/cafe')} delay="0.15s" />
+            <QuickAction icon="sports_golf" label="Golf" onClick={() => navigate('/book')} delay="0s" isDark={isDark} />
+            <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.05s" isDark={isDark} />
+            <QuickAction icon="calendar_month" label="Events" onClick={() => navigate('/member-events')} delay="0.1s" isDark={isDark} />
+            <QuickAction icon="local_cafe" label="Cafe" onClick={() => navigate('/cafe')} delay="0.15s" isDark={isDark} />
           </div>
 
           <div className="space-y-8 animate-pop-in" style={{animationDelay: '0.3s'}}>
             <div>
               <div className="flex justify-between items-center mb-4 px-1">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white/60">Upcoming</h3>
+                <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Upcoming</h3>
               </div>
               <div className="space-y-3">
                 {laterItems.length > 0 ? laterItems.map((item, idx) => (
@@ -290,7 +293,7 @@ const Dashboard: React.FC = () => {
                     title={item.title} 
                     subtitle={`${item.date} • ${item.details}`} 
                     icon={getIconForType(item.resourceType)} 
-                    color="text-[#E7E7DC]"
+                    color={isDark ? "text-[#E7E7DC]" : "text-primary"}
                     actions={item.type === 'booking' ? [
                       { icon: 'close', label: 'Cancel', onClick: () => handleCancelBooking(item.dbId) }
                     ] : [
@@ -299,11 +302,11 @@ const Dashboard: React.FC = () => {
                     delay={`${0.3 + (idx * 0.1)}s`}
                   />
                 )) : (
-                  <div className="p-4 rounded-2xl border border-white/5 bg-white/5 text-center">
-                    <p className="text-sm text-white/40">No upcoming bookings or events.</p>
+                  <div className={`p-4 rounded-2xl text-center ${isDark ? 'border border-white/5 bg-white/5' : 'border border-black/5 bg-white shadow-sm'}`}>
+                    <p className={`text-sm ${isDark ? 'text-white/40' : 'text-primary/40'}`}>No upcoming bookings or events.</p>
                     <button 
                       onClick={() => navigate('/book')}
-                      className="mt-3 text-accent text-sm font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded"
+                      className={`mt-3 text-sm font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded ${isDark ? 'text-accent' : 'text-brand-green'}`}
                     >
                       Book something now
                     </button>
@@ -318,17 +321,17 @@ const Dashboard: React.FC = () => {
   );
 };
 
-const QuickAction: React.FC<{icon: string; label: string; onClick: () => void; delay: string}> = ({ icon, label, onClick, delay }) => (
+const QuickAction: React.FC<{icon: string; label: string; onClick: () => void; delay: string; isDark: boolean}> = ({ icon, label, onClick, delay, isDark }) => (
   <button 
     onClick={onClick}
     className="flex flex-col items-center gap-2 min-w-[80px] group focus:outline-none"
     style={{animationDelay: delay}}
     aria-label={label}
   >
-    <div className="w-16 h-16 rounded-2xl glass-button border border-white/10 flex items-center justify-center text-white group-hover:bg-white/10 group-active:scale-95 transition-all shadow-lg group-focus:ring-2 group-focus:ring-accent">
+    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center group-active:scale-95 transition-all shadow-lg group-focus:ring-2 group-focus:ring-accent ${isDark ? 'glass-button border border-white/10 text-white group-hover:bg-white/10' : 'bg-white border border-black/5 text-brand-green group-hover:bg-black/5'}`}>
       <span className="material-symbols-outlined text-[28px]">{icon}</span>
     </div>
-    <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">{label}</span>
+    <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-white/70' : 'text-primary/70'}`}>{label}</span>
   </button>
 );
 

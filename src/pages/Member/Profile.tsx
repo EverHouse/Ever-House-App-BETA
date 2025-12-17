@@ -16,7 +16,8 @@ const GUEST_CHECKIN_FIELDS = [
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useData();
-  const { themeMode, setThemeMode } = useTheme();
+  const { themeMode, setThemeMode, effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [showGuestCheckin, setShowGuestCheckin] = useState(false);
   const [guestPasses, setGuestPasses] = useState<{ passes_used: number; passes_total: number; passes_remaining: number } | null>(null);
@@ -38,12 +39,12 @@ const Profile: React.FC = () => {
     <div className="px-6 pt-6 pb-24">
       <div className="flex flex-col items-center mb-8">
          <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-accent to-purple-500 mb-4 shadow-glow">
-            <img src={user.avatar || "https://i.pravatar.cc/300"} className="w-full h-full rounded-full object-cover border-4 border-[#0f172a]" alt="Profile" />
+            <img src={user.avatar || "https://i.pravatar.cc/300"} className={`w-full h-full rounded-full object-cover border-4 ${isDark ? 'border-[#0f172a]' : 'border-white'}`} alt="Profile" />
          </div>
-         <h1 className="text-2xl font-bold">{user.name}</h1>
+         <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user.name}</h1>
          <div className="flex items-center gap-2 mt-2">
-            <span className="px-2 py-0.5 rounded-md glass-button text-[10px] font-bold uppercase tracking-wider">{user.tier} Member</span>
-            <span className="text-xs opacity-50">#{user.id}</span>
+            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${isDark ? 'glass-button' : 'bg-brand-green/10 text-brand-green'}`}>{user.tier} Member</span>
+            <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>#{user.id}</span>
          </div>
       </div>
 
@@ -71,34 +72,34 @@ const Profile: React.FC = () => {
       </div>
 
       <div className="space-y-6">
-         <Section title="Account">
-            <Row icon="mail" label="Email" value={user.email} />
-            <Row icon="call" label="Phone" value={user.phone} />
+         <Section title="Account" isDark={isDark}>
+            <Row icon="mail" label="Email" value={user.email} isDark={isDark} />
+            <Row icon="call" label="Phone" value={user.phone} isDark={isDark} />
          </Section>
 
-         <Section title="Membership Benefits">
-            <Row icon="calendar_month" label="Advance Booking" value={`${tierPermissions.advanceBookingDays} days`} />
+         <Section title="Membership Benefits" isDark={isDark}>
+            <Row icon="calendar_month" label="Advance Booking" value={`${tierPermissions.advanceBookingDays} days`} isDark={isDark} />
             {tierPermissions.canBookSimulators && (
-              <Row icon="sports_golf" label="Daily Simulator Time" value={`${tierPermissions.dailySimulatorMinutes} min`} />
+              <Row icon="sports_golf" label="Daily Simulator Time" value={`${tierPermissions.dailySimulatorMinutes} min`} isDark={isDark} />
             )}
             {guestPasses && (
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-lg opacity-60">group_add</span>
-                    <span className="text-sm">Guest Passes</span>
+                    <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>group_add</span>
+                    <span className={`text-sm ${isDark ? '' : 'text-primary'}`}>Guest Passes</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-accent">{guestPasses.passes_remaining}</span>
-                    <span className="text-xs opacity-50">/ {guestPasses.passes_total} remaining</span>
+                    <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-brand-green'}`}>{guestPasses.passes_remaining}</span>
+                    <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>/ {guestPasses.passes_total} remaining</span>
                   </div>
                 </div>
                 {guestPasses.passes_remaining > 0 && (
                   <button
                     onClick={() => setShowGuestCheckin(true)}
-                    className="w-full py-3 bg-accent/20 hover:bg-accent/30 text-accent rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                    className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${isDark ? 'bg-accent/20 hover:bg-accent/30 text-accent' : 'bg-brand-green/10 hover:bg-brand-green/20 text-brand-green'}`}
                   >
-                    <span className="material-symbols-outlined text-lg">person_add</span>
+                    <span className="material-symbols-outlined text-lg">confirmation_number</span>
                     Check In a Guest
                   </button>
                 )}
@@ -106,11 +107,11 @@ const Profile: React.FC = () => {
             )}
          </Section>
 
-         <Section title="Appearance">
+         <Section title="Appearance" isDark={isDark}>
             <div className="p-4">
               <div className="flex items-center gap-3 mb-3">
-                <span className="material-symbols-outlined text-lg opacity-60">palette</span>
-                <span className="text-sm font-medium">Theme</span>
+                <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>palette</span>
+                <span className={`text-sm font-medium ${isDark ? '' : 'text-primary'}`}>Theme</span>
               </div>
               <div className="flex gap-2">
                 {(['light', 'dark', 'system'] as const).map((mode) => (
@@ -120,7 +121,7 @@ const Profile: React.FC = () => {
                     className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
                       themeMode === mode 
                         ? 'bg-accent text-brand-green shadow-glow' 
-                        : 'bg-white/10 text-white/60 hover:bg-white/15'
+                        : (isDark ? 'bg-white/10 text-white/60 hover:bg-white/15' : 'bg-black/5 text-primary/60 hover:bg-black/10')
                     }`}
                   >
                     {mode === 'system' ? 'Auto' : mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -130,12 +131,12 @@ const Profile: React.FC = () => {
             </div>
          </Section>
 
-         <Section title="Settings">
-            <Row icon="notifications" label="Notifications" toggle />
-            <Row icon="lock" label="Privacy" arrow />
+         <Section title="Settings" isDark={isDark}>
+            <Row icon="notifications" label="Notifications" toggle isDark={isDark} />
+            <Row icon="lock" label="Privacy" arrow isDark={isDark} />
          </Section>
 
-         <button onClick={() => { logout(); navigate('/login'); }} className="w-full py-4 glass-button rounded-xl text-red-400 font-bold text-sm hover:bg-red-500/10 transition-colors">
+         <button onClick={() => { logout(); navigate('/login'); }} className={`w-full py-4 rounded-xl text-red-400 font-bold text-sm transition-colors ${isDark ? 'glass-button hover:bg-red-500/10' : 'bg-white border border-black/5 hover:bg-red-50'}`}>
             Sign Out
          </button>
       </div>
@@ -200,29 +201,29 @@ const Profile: React.FC = () => {
   );
 };
 
-const Section: React.FC<{title: string; children: React.ReactNode}> = ({ title, children }) => (
+const Section: React.FC<{title: string; children: React.ReactNode; isDark?: boolean}> = ({ title, children, isDark = true }) => (
   <div>
-     <h3 className="text-xs font-bold uppercase tracking-wider opacity-50 ml-2 mb-3">{title}</h3>
-     <div className="glass-card rounded-2xl overflow-hidden divide-y divide-white/5">
+     <h3 className={`text-xs font-bold uppercase tracking-wider ml-2 mb-3 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>{title}</h3>
+     <div className={`rounded-2xl overflow-hidden ${isDark ? 'glass-card divide-y divide-white/5' : 'bg-white border border-black/5 shadow-sm divide-y divide-black/5'}`}>
         {children}
      </div>
   </div>
 );
 
-const Row: React.FC<{icon: string; label: string; value?: string; toggle?: boolean; arrow?: boolean}> = ({ icon, label, value, toggle, arrow }) => (
-   <div className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer">
+const Row: React.FC<{icon: string; label: string; value?: string; toggle?: boolean; arrow?: boolean; isDark?: boolean}> = ({ icon, label, value, toggle, arrow, isDark = true }) => (
+   <div className={`p-4 flex items-center justify-between transition-colors cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
       <div className="flex items-center gap-4">
-         <span className="material-symbols-outlined opacity-70">{icon}</span>
-         <span className="font-medium text-sm">{label}</span>
+         <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>{icon}</span>
+         <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>{label}</span>
       </div>
       <div className="flex items-center gap-2">
-         {value && <span className="text-sm opacity-50">{value}</span>}
+         {value && <span className={`text-sm ${isDark ? 'opacity-50' : 'text-primary/50'}`}>{value}</span>}
          {toggle && (
             <div className="w-10 h-6 bg-green-500 rounded-full relative">
                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div>
             </div>
          )}
-         {arrow && <span className="material-symbols-outlined text-sm opacity-40">arrow_forward_ios</span>}
+         {arrow && <span className={`material-symbols-outlined text-sm ${isDark ? 'opacity-40' : 'text-primary/40'}`}>arrow_forward_ios</span>}
       </div>
    </div>
 );
