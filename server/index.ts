@@ -312,7 +312,9 @@ app.get('/api/hubspot/contacts', async (req, res) => {
       'phone',
       'company',
       'hs_lead_status',
-      'createdate'
+      'createdate',
+      'membership_tier',
+      'membership_status'
     ]);
     
     const contacts = response.results.map((contact: any) => ({
@@ -322,7 +324,8 @@ app.get('/api/hubspot/contacts', async (req, res) => {
       email: contact.properties.email || '',
       phone: contact.properties.phone || '',
       company: contact.properties.company || '',
-      status: contact.properties.hs_lead_status || 'Active',
+      status: contact.properties.membership_status || contact.properties.hs_lead_status || 'Active',
+      tier: contact.properties.membership_tier || '',
       createdAt: contact.properties.createdate
     }));
     
@@ -345,7 +348,9 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
       'phone',
       'company',
       'hs_lead_status',
-      'createdate'
+      'createdate',
+      'membership_tier',
+      'membership_status'
     ]);
     
     res.json({
@@ -355,7 +360,8 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
       email: contact.properties.email || '',
       phone: contact.properties.phone || '',
       company: contact.properties.company || '',
-      status: contact.properties.hs_lead_status || 'Active',
+      status: contact.properties.membership_status || contact.properties.hs_lead_status || 'Active',
+      tier: contact.properties.membership_tier || '',
       createdAt: contact.properties.createdate
     });
   } catch (error: any) {

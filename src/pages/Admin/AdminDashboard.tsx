@@ -439,6 +439,18 @@ const MembersAdmin: React.FC = () => {
     const { members, updateMember } = useData();
     const [isEditing, setIsEditing] = useState(false);
     const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredMembers = useMemo(() => {
+        if (!searchQuery.trim()) return members;
+        const query = searchQuery.toLowerCase();
+        return members.filter(m => 
+            m.name.toLowerCase().includes(query) ||
+            m.email.toLowerCase().includes(query) ||
+            (m.tier && m.tier.toLowerCase().includes(query)) ||
+            (m.phone && m.phone.toLowerCase().includes(query))
+        );
+    }, [members, searchQuery]);
 
     const openEdit = (member: MemberProfile) => {
         setSelectedMember(member);
@@ -454,6 +466,30 @@ const MembersAdmin: React.FC = () => {
 
     return (
         <div>
+            <div className="mb-6">
+                <div className="relative">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">search</span>
+                    <input
+                        type="text"
+                        placeholder="Search by name, email, tier, or phone..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                    {searchQuery && (
+                        <button 
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    )}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    {filteredMembers.length} member{filteredMembers.length !== 1 ? 's' : ''} found
+                </p>
+            </div>
+
             {isEditing && selectedMember && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95">
@@ -498,7 +534,7 @@ const MembersAdmin: React.FC = () => {
 
             {/* Mobile View: Cards */}
             <div className="md:hidden space-y-3">
-                {members.map(m => (
+                {filteredMembers.map(m => (
                     <div key={m.id} onClick={() => openEdit(m)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm active:scale-[0.98] transition-transform">
                         <div className="flex justify-between items-start mb-2">
                             <div>
@@ -528,7 +564,7 @@ const MembersAdmin: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {members.map(m => (
+                        {filteredMembers.map(m => (
                             <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
                                 <td className="p-4 font-medium text-primary dark:text-white">{m.name}</td>
                                 <td className="p-4"><span className="bg-primary/10 dark:bg-white/10 text-primary dark:text-white px-2 py-1 rounded text-xs font-bold">{m.tier}</span></td>
