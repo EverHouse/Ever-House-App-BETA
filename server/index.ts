@@ -539,7 +539,7 @@ app.get('/api/hubspot/contacts', async (req, res) => {
   try {
     const hubspot = await getHubSpotClient();
     
-    const response = await hubspot.crm.contacts.basicApi.getPage(100, undefined, [
+    const properties = [
       'firstname',
       'lastname',
       'email',
@@ -549,19 +549,32 @@ app.get('/api/hubspot/contacts', async (req, res) => {
       'createdate',
       'membership_tier',
       'membership_status'
-    ]);
+    ];
     
-    const contacts = response.results.map((contact: any) => ({
-      id: contact.id,
-      firstName: contact.properties.firstname || '',
-      lastName: contact.properties.lastname || '',
-      email: contact.properties.email || '',
-      phone: contact.properties.phone || '',
-      company: contact.properties.company || '',
-      status: contact.properties.membership_status || contact.properties.hs_lead_status || 'Active',
-      tier: contact.properties.membership_tier || '',
-      createdAt: contact.properties.createdate
-    }));
+    // Fetch all pages of contacts
+    let allContacts: any[] = [];
+    let after: string | undefined = undefined;
+    
+    do {
+      const response = await hubspot.crm.contacts.basicApi.getPage(100, after, properties);
+      allContacts = allContacts.concat(response.results);
+      after = response.paging?.next?.after;
+    } while (after);
+    
+    // Map and filter to only Active members
+    const contacts = allContacts
+      .map((contact: any) => ({
+        id: contact.id,
+        firstName: contact.properties.firstname || '',
+        lastName: contact.properties.lastname || '',
+        email: contact.properties.email || '',
+        phone: contact.properties.phone || '',
+        company: contact.properties.company || '',
+        status: contact.properties.membership_status || contact.properties.hs_lead_status || '',
+        tier: contact.properties.membership_tier || '',
+        createdAt: contact.properties.createdate
+      }))
+      .filter((contact: any) => contact.status.toLowerCase() === 'active');
     
     res.json(contacts);
   } catch (error: any) {

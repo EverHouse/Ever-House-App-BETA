@@ -3,7 +3,7 @@ import { Footer } from '../../components/Footer';
 
 const FAQ: React.FC = () => {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#F2F2EC] dark:bg-[#0f120a] overflow-x-hidden">
       <div className="px-6 pt-8 pb-6">
         <h1 className="text-3xl font-bold tracking-tight text-primary dark:text-white mb-2">Frequently Asked Questions</h1>
         <p className="text-gray-600 dark:text-gray-400 text-base font-medium">Common questions about membership, amenities, and policies.</p>
