@@ -206,10 +206,13 @@ A private members club application built with React, Vite, and TypeScript. The a
 - **Corporate Tier Update**: Removed complimentary drink benefit, now features 90min daily sim time + 10-day advance booking
 - **UI Fixes (December 17, 2024)**:
   - Private Hire page: Fixed horizontal scroll overflow
+  - What's On page: Fixed horizontal scroll overflow
   - Menu sidebar: Increased z-index to overlay header properly, solid background
   - Member header: Enhanced visibility in light mode with stronger shadow and border
   - Contact page: Apple Maps embed with real Even House location (replaces placeholder)
   - Staff portal modals: Refreshed styling with better input fields, spacing, and dark mode support
+  - Bottom nav bar: Green background (#293515) in light mode with white selected highlight
+  - Status bar color: Dynamically matches header (dark=#0f120a, light=#293515) via theme-color meta tag
 
 ## Responsive Guidelines
 - Target viewports: iPhone SE (375×667), iPhone 14/15 (390×844), iPhone Pro Max (430×932), iPad (768×1024), Desktop (1440×900)
