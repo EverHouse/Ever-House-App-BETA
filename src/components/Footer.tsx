@@ -19,7 +19,6 @@ export const Footer: React.FC = () => (
         </div>
 
         <div className="relative flex flex-col items-center text-xs">
-            <span className="material-symbols-outlined text-lg absolute -left-8 top-0 text-[#E7E7DC]/70">schedule</span>
             <span className="font-bold uppercase tracking-wider text-[#E7E7DC] mb-2">Hours</span>
             <div className="space-y-1 text-[#E7E7DC]/70 text-center">
                 <p>Mon: Closed</p>
