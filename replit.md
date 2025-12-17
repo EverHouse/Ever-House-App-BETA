@@ -213,6 +213,8 @@ A private members club application built with React, Vite, and TypeScript. The a
   - Staff portal modals: Refreshed styling with better input fields, spacing, and dark mode support
   - Bottom nav bar: Green background (#293515) in light mode with white selected highlight
   - Status bar color: Dynamically matches header (dark=#0f120a, light=#293515) via theme-color meta tag
+  - FAQ page: Added dark mode background and fixed horizontal scroll
+  - HubSpot contacts: Now fetches all pages (was limited to 100) and filters to Active members only
 
 ## Responsive Guidelines
 - Target viewports: iPhone SE (375×667), iPhone 14/15 (390×844), iPhone Pro Max (430×932), iPad (768×1024), Desktop (1440×900)
