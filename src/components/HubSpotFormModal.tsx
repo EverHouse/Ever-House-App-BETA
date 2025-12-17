@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { triggerHaptic } from '../utils/haptics';
 
-const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
 const getHubspotCookie = (): string | null => {
   const cookies = document.cookie.split(';');
@@ -79,7 +78,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
         context.hutk = hutk;
       }
 
-      const response = await fetch(`${API_BASE}/api/hubspot/forms/${formType}`, {
+      const response = await fetch(`/api/hubspot/forms/${formType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

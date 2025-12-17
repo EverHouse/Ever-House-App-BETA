@@ -4,7 +4,6 @@ import { useData } from '../../contexts/DataContext';
 import { getTierPermissions } from '../../utils/permissions';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 
-const API_BASE = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001';
 
 const GUEST_CHECKIN_FIELDS = [
   { name: 'guest_firstname', label: 'Guest First Name', type: 'text' as const, required: true, placeholder: 'John' },
@@ -24,7 +23,7 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     if (user?.email) {
-      fetch(`${API_BASE}/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`)
+      fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`)
         .then(res => res.json())
         .then(data => setGuestPasses(data))
         .catch(err => console.error('Error fetching guest passes:', err));
@@ -130,7 +129,7 @@ const Profile: React.FC = () => {
         }}
         onSuccess={async () => {
           try {
-            const res = await fetch(`${API_BASE}/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`);
+            const res = await fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`);
             const data = await res.json();
             setGuestPasses(data);
           } catch (err) {

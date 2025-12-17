@@ -5,7 +5,6 @@ import { useData, Booking } from '../../contexts/DataContext';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 
-const API_BASE = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001';
 
 interface DBBooking {
   id: number;
@@ -76,8 +75,8 @@ const Dashboard: React.FC = () => {
       
       try {
         const [bookingsRes, rsvpsRes] = await Promise.all([
-          fetch(`${API_BASE}/api/bookings?user_email=${encodeURIComponent(user.email)}`),
-          fetch(`${API_BASE}/api/rsvps?user_email=${encodeURIComponent(user.email)}`)
+          fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
+          fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`)
         ]);
         
         if (bookingsRes.ok) {
@@ -156,7 +155,7 @@ const Dashboard: React.FC = () => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
     
     try {
-      const res = await fetch(`${API_BASE}/api/bookings/${bookingId}`, {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
         method: 'DELETE'
       });
       
@@ -174,7 +173,7 @@ const Dashboard: React.FC = () => {
     if (!user?.email) return;
     
     try {
-      const res = await fetch(`${API_BASE}/api/rsvps/${eventId}/${encodeURIComponent(user.email)}`, {
+      const res = await fetch(`/api/rsvps/${eventId}/${encodeURIComponent(user.email)}`, {
         method: 'DELETE'
       });
       

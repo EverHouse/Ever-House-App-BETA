@@ -6,7 +6,6 @@ import SwipeablePage from '../../components/SwipeablePage';
 import { haptic } from '../../utils/haptics';
 import { getTierPermissions, canAccessResource } from '../../utils/permissions';
 
-const API_BASE = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001';
 
 interface APIResource {
   id: number;
@@ -93,7 +92,7 @@ const BookGolf: React.FC = () => {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/resources`);
+        const res = await fetch(`/api/resources`);
         if (!res.ok) throw new Error('Failed to fetch resources');
         const data: APIResource[] = await res.json();
         
@@ -138,7 +137,7 @@ const BookGolf: React.FC = () => {
         
         await Promise.all(resources.map(async (resource) => {
           const res = await fetch(
-            `${API_BASE}/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
+            `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
           );
           if (!res.ok) return;
           const slots: APISlot[] = await res.json();
@@ -198,7 +197,7 @@ const BookGolf: React.FC = () => {
     setError(null);
     
     try {
-      const res = await fetch(`${API_BASE}/api/bookings`, {
+      const res = await fetch(`/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
