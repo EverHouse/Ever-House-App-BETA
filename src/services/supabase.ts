@@ -3,23 +3,44 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-const isConfigured = Boolean(supabaseUrl && supabaseUrl.length > 0 && supabaseAnonKey && supabaseAnonKey.length > 0);
+const isValidUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+};
+
+const isConfigured = Boolean(
+  isValidUrl(supabaseUrl) && 
+  supabaseAnonKey && 
+  supabaseAnonKey.length > 10
+);
 
 const dummyClient = {
   auth: {
-    signInWithOtp: async () => ({ error: new Error('Supabase not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment.') }),
+    signInWithOtp: async () => ({ error: new Error('Supabase not configured. Please check your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.') }),
     signOut: async () => {},
     getSession: async () => ({ data: { session: null }, error: null }),
     getUser: async () => ({ data: { user: null }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
     exchangeCodeForSession: async () => ({ data: { session: null }, error: null }),
+    setSession: async () => ({ data: { session: null }, error: null }),
   },
 } as unknown as SupabaseClient;
 
-export const supabase: SupabaseClient = isConfigured 
-  ? createClient(supabaseUrl!, supabaseAnonKey!)
-  : dummyClient;
+let supabaseClient: SupabaseClient;
+try {
+  supabaseClient = isConfigured 
+    ? createClient(supabaseUrl!, supabaseAnonKey!)
+    : dummyClient;
+} catch {
+  supabaseClient = dummyClient;
+}
 
+export const supabase: SupabaseClient = supabaseClient;
 export const isSupabaseConfigured = isConfigured;
 
 export async function signInWithMagicLink(email: string): Promise<{ error: Error | null }> {
