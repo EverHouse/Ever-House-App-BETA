@@ -635,7 +635,7 @@ const AnnouncementsAdmin: React.FC = () => {
 
 // --- DIRECTORY ADMIN (Members + Staff Tabs) ---
 
-const TIER_OPTIONS = ['All', 'Social', 'Core', 'Premium', 'Corporate', 'Founding'] as const;
+const TIER_OPTIONS = ['All', 'Social', 'Core', 'Premium', 'Corporate', 'VIP', 'Founding'] as const;
 
 const MembersAdmin: React.FC = () => {
     const { members, updateMember, setViewAsUser, actualUser } = useData();
