@@ -334,6 +334,33 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     checkAuth();
   }, []);
 
+  // Fetch members from HubSpot for admin/staff users
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!user || (user.role !== 'admin' && user.role !== 'staff')) return;
+      
+      try {
+        const res = await fetch('/api/hubspot/contacts');
+        if (res.ok) {
+          const contacts = await res.json();
+          const formatted: MemberProfile[] = contacts.map((contact: any) => ({
+            id: contact.id,
+            name: [contact.firstName, contact.lastName].filter(Boolean).join(' ') || contact.email || 'Unknown',
+            tier: contact.tier || 'Core',
+            status: contact.status || 'Active',
+            email: contact.email || '',
+            phone: contact.phone || '',
+            role: 'member'
+          }));
+          setMembers(formatted);
+        }
+      } catch (err) {
+        console.error('Failed to fetch HubSpot contacts:', err);
+      }
+    };
+    fetchMembers();
+  }, [user]);
+
   // Fetch cafe menu
   useEffect(() => {
     const fetchCafeMenu = async () => {
