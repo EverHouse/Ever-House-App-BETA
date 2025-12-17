@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../../contexts/DataContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
@@ -72,6 +73,8 @@ const generateDates = (advanceDays: number = 7): { label: string; date: string; 
 
 const BookGolf: React.FC = () => {
   const { addBooking, user } = useData();
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
   const [activeTab, setActiveTab] = useState<'simulator' | 'lessons' | 'conference'>('simulator');
   const [duration, setDuration] = useState<number>(60);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
@@ -246,23 +249,23 @@ const BookGolf: React.FC = () => {
   return (
     <SwipeablePage className="px-6 pt-4 relative min-h-screen pb-32">
       <section className="mb-6 pt-2">
-        <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-md">Book</h1>
-        <p className="text-white/70 text-sm font-medium mt-1">Reserve simulators, lessons, or rooms.</p>
+        <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Book</h1>
+        <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Reserve simulators, lessons, or rooms.</p>
       </section>
 
-      <section className="mb-8 border-b border-white/10 -mx-6 px-6">
+      <section className={`mb-8 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide" role="tablist">
-          <TabButton label="Golf Simulator" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
-          <TabButton label="Private Lessons" active={activeTab === 'lessons'} onClick={() => setActiveTab('lessons')} />
-          <TabButton label="Conference Room" active={activeTab === 'conference'} onClick={() => setActiveTab('conference')} />
+          <TabButton label="Golf Simulator" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} isDark={isDark} />
+          <TabButton label="Private Lessons" active={activeTab === 'lessons'} onClick={() => setActiveTab('lessons')} isDark={isDark} />
+          <TabButton label="Conference Room" active={activeTab === 'conference'} onClick={() => setActiveTab('conference')} isDark={isDark} />
         </div>
       </section>
 
       {activeTab === 'simulator' && !canBookSimulators ? (
-        <section className="glass-card rounded-2xl p-6 border border-white/10 text-center">
+        <section className={`rounded-2xl p-6 border text-center ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
           <span className="material-symbols-outlined text-4xl text-accent mb-4">lock</span>
-          <h3 className="text-lg font-bold text-white mb-2">Upgrade to Book Simulators</h3>
-          <p className="text-white/60 text-sm mb-4">
+          <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Upgrade to Book Simulators</h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
             Golf simulator access is available for Core, Premium, and Corporate members. Upgrade your membership to start booking.
           </p>
           <a 
@@ -274,10 +277,10 @@ const BookGolf: React.FC = () => {
           </a>
         </section>
       ) : activeTab === 'lessons' ? (
-        <section className="glass-card rounded-2xl p-6 border border-white/10 text-center">
+        <section className={`rounded-2xl p-6 border text-center ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
           <span className="material-symbols-outlined text-4xl text-accent mb-4">school</span>
-          <h3 className="text-lg font-bold text-white mb-2">Private Lessons</h3>
-          <p className="text-white/60 text-sm mb-4">
+          <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Private Lessons</h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
             Contact the club directly to schedule a private lesson with one of our PGA/LPGA instructors.
           </p>
           <a 
@@ -290,9 +293,9 @@ const BookGolf: React.FC = () => {
         </section>
       ) : (
         <div className="relative z-10 animate-pop-in space-y-6">
-          <section className="glass-card rounded-2xl p-4 border border-white/10">
+          <section className={`rounded-2xl p-4 border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase text-white/60 tracking-wider">Date & Duration</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Date & Duration</span>
             </div>
             <div className="space-y-4">
               <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -303,10 +306,11 @@ const BookGolf: React.FC = () => {
                     date={d.dateNum} 
                     active={selectedDateObj.date === d.date} 
                     onClick={() => setSelectedDateObj(d)} 
+                    isDark={isDark}
                   />
                 ))}
               </div>
-              <div className="flex gap-2 p-1 bg-black/20 rounded-xl border border-white/5">
+              <div className={`flex gap-2 p-1 rounded-xl border ${isDark ? 'bg-black/20 border-white/5' : 'bg-black/5 border-black/5'}`}>
                 {[30, 60, 90, 120].map(mins => (
                   <button 
                     key={mins}
@@ -315,7 +319,7 @@ const BookGolf: React.FC = () => {
                     className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-accent focus:outline-none ${
                       duration === mins 
                       ? 'bg-accent text-brand-green shadow-glow'
-                      : 'text-white/60 hover:bg-white/5 hover:text-white'
+                      : (isDark ? 'text-white/60 hover:bg-white/5 hover:text-white' : 'text-primary/60 hover:bg-black/5 hover:text-primary')
                     }`}
                   >
                     {mins}m
@@ -333,10 +337,10 @@ const BookGolf: React.FC = () => {
           )}
 
           <section className="min-h-[120px]">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white/80 mb-3 pl-1">Available Times</h3>
+            <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Available Times</h3>
             
             {isLoading ? (
-              <div className="flex justify-center items-center py-12 opacity-50 text-white">
+              <div className={`flex justify-center items-center py-12 opacity-50 ${isDark ? 'text-white' : 'text-primary'}`}>
                 <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
               </div>
             ) : (
@@ -353,7 +357,7 @@ const BookGolf: React.FC = () => {
                     className={`p-4 rounded-xl border text-left transition-all active:scale-[0.98] relative overflow-hidden flex flex-col justify-center animate-pop-in focus:ring-2 focus:ring-accent focus:outline-none ${
                       selectedSlot?.id === slot.id
                       ? 'bg-accent text-brand-green border-accent shadow-glow'
-                      : 'glass-card text-white hover:bg-white/10 border-white/10'
+                      : (isDark ? 'glass-card text-white hover:bg-white/10 border-white/10' : 'bg-white text-primary hover:bg-black/5 border-black/10 shadow-sm')
                     }`}
                     style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
                   >
@@ -364,7 +368,7 @@ const BookGolf: React.FC = () => {
                   </button>
                 ))}
                 {availableSlots.length === 0 && !isLoading && (
-                  <div className="col-span-2 text-center py-8 text-sm text-white/60 glass-card rounded-xl border border-dashed border-white/20">
+                  <div className={`col-span-2 text-center py-8 text-sm rounded-xl border border-dashed ${isDark ? 'text-white/60 glass-card border-white/20' : 'text-primary/60 bg-white border-black/20'}`}>
                     No slots available for this date.
                   </div>
                 )}
@@ -374,7 +378,7 @@ const BookGolf: React.FC = () => {
 
           {selectedSlot && (
             <section className="animate-pop-in pb-24">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white/80 mb-3 pl-1">
+              <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
                 Select {activeTab === 'simulator' ? 'Bay' : 'Room'}
               </h3>
               <div className="space-y-3">
@@ -384,6 +388,7 @@ const BookGolf: React.FC = () => {
                       resource={resource}
                       selected={selectedResource?.id === resource.id}
                       onClick={() => { haptic.medium(); setSelectedResource(resource); }}
+                      isDark={isDark}
                     />
                   </div>
                 ))}
@@ -417,8 +422,8 @@ const BookGolf: React.FC = () => {
 
       {showConfirmation && (
         <div className="fixed bottom-32 left-0 right-0 z-[60] flex justify-center pointer-events-none">
-          <div className="bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] border border-white/10 pointer-events-auto">
-            <span className="material-symbols-outlined text-xl text-green-400">check_circle</span>
+          <div className={`backdrop-blur-md px-6 py-3 rounded-full shadow-2xl text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] border pointer-events-auto ${isDark ? 'bg-black/80 text-white border-white/10' : 'bg-white/95 text-primary border-black/10'}`}>
+            <span className="material-symbols-outlined text-xl text-green-500">check_circle</span>
             <div>
               <p>Booking confirmed!</p>
               <p className="text-[10px] font-normal opacity-80 mt-0.5">Added to your dashboard.</p>
@@ -430,30 +435,30 @@ const BookGolf: React.FC = () => {
   );
 };
 
-const ResourceCard: React.FC<{resource: Resource; selected: boolean; onClick: () => void}> = ({ resource, selected, onClick }) => (
+const ResourceCard: React.FC<{resource: Resource; selected: boolean; onClick: () => void; isDark?: boolean}> = ({ resource, selected, onClick, isDark = true }) => (
   <button 
     onClick={onClick}
     aria-pressed={selected}
     className={`w-full flex items-center p-4 rounded-xl cursor-pointer transition-all active:scale-[0.98] border text-left focus:ring-2 focus:ring-accent focus:outline-none ${
       selected 
       ? 'bg-accent/10 border-accent ring-1 ring-accent' 
-      : 'glass-card hover:bg-white/5 border-white/10'
+      : (isDark ? 'glass-card hover:bg-white/5 border-white/10' : 'bg-white hover:bg-black/5 border-black/10 shadow-sm')
     }`}
   >
-    <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center mr-4 overflow-hidden ${selected ? 'bg-accent text-brand-green' : 'bg-white/5 text-white/40'}`}>
+    <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center mr-4 overflow-hidden ${selected ? 'bg-accent text-brand-green' : (isDark ? 'bg-white/5 text-white/40' : 'bg-black/5 text-primary/40')}`}>
       <span className="material-symbols-outlined text-2xl">{resource.icon || 'meeting_room'}</span>
     </div>
     
     <div className="flex-1">
       <div className="flex justify-between items-center mb-0.5">
-        <span className="font-bold text-base text-white">{resource.name}</span>
+        <span className={`font-bold text-base ${isDark ? 'text-white' : 'text-primary'}`}>{resource.name}</span>
         {resource.badge && (
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${selected ? 'bg-accent text-brand-green' : 'bg-white/10 text-white/70'}`}>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${selected ? 'bg-accent text-brand-green' : (isDark ? 'bg-white/10 text-white/70' : 'bg-black/10 text-primary/70')}`}>
             {resource.badge}
           </span>
         )}
       </div>
-      <p className="text-xs text-white/60">{resource.meta}</p>
+      <p className={`text-xs ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{resource.meta}</p>
     </div>
   </button>
 );
