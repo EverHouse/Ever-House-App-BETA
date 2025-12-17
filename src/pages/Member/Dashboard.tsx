@@ -194,7 +194,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="px-6 pt-4 pb-32 font-sans relative min-h-full">
+    <div className="px-6 pt-4 pb-32 font-sans relative min-h-full bg-[#0f120a]">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight animate-pop-in">
