@@ -113,6 +113,19 @@ const Landing: React.FC = () => {
                 </ul>
                 <button onClick={() => navigate('/membership')} className="w-full py-3 rounded-xl bg-white text-[#293515] font-bold text-xs hover:bg-gray-100 relative z-10">View Details</button>
             </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-black/5 shadow-sm">
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-xl font-bold text-[#293515]">Corporate</h3>
+                    <span className="text-lg font-bold text-[#293515]">$350<span className="text-xs font-medium opacity-60">/mo</span></span>
+                </div>
+                <p className="text-sm text-[#293515]/70 mb-4">Elevate your team with premium amenities.</p>
+                <ul className="space-y-2 mb-6">
+                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 90min Daily Sim Time</li>
+                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Free Coffee/Beer/Drink Daily</li>
+                </ul>
+                <button onClick={() => navigate('/membership/corporate')} className="w-full py-3 rounded-xl border border-[#293515]/10 text-[#293515] font-bold text-xs hover:bg-[#293515]/5">View Details</button>
+            </div>
          </div>
       </div>
 
