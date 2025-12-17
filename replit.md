@@ -57,3 +57,12 @@ src/
 - Added HubSpot CRM integration service
 - Created dynamic branding system with Logo component
 - Final polish QA: Standardized fonts, icons, selection states, and glass effects
+- **Responsive Layout Audit**: Added global CSS fixes (box-sizing, responsive media, overflow prevention)
+- **iOS Safe Areas**: Added safe-area-inset support for bottom navigation and modals
+- **Debug Layout Mode**: Add `?debugLayout=1` to URL to visualize container boundaries and detect overflow
+
+## Responsive Guidelines
+- Target viewports: iPhone SE (375×667), iPhone 14/15 (390×844), iPhone Pro Max (430×932), iPad (768×1024), Desktop (1440×900)
+- Use `safe-area-bottom` class for fixed bottom elements (adds 1rem + iOS inset)
+- Use `tap-target` class to ensure 44px minimum touch targets
+- All images have `max-width: 100%` and `height: auto` globally
