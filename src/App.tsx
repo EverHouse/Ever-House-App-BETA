@@ -64,6 +64,7 @@ import MenuOverlay from './components/MenuOverlay';
 import ViewAsBanner from './components/ViewAsBanner';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import { ToastProvider } from './components/Toast';
+import MemberPortal from './components/MemberPortal';
 
 // Error Boundary Component
 interface ErrorBoundaryProps {
@@ -352,34 +353,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Main Content - No top padding needed due to flex layout */}
             <main 
                 id="main-content"
-                className={`flex-1 overflow-y-auto overscroll-contain relative scrollbar-hide ${isMemberRoute && !isAdminRoute ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
+                className={`flex-1 overflow-hidden relative scrollbar-hide ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : 'overflow-y-auto overscroll-contain'}`}
             >
                 <div key={location.pathname} className={`${shouldAnimate ? 'animate-page-enter' : ''} min-h-full`}>
                     {children}
                 </div>
             </main>
 
-            {/* Member Dock - Full Width with iOS Safe Area */}
-            {isMemberRoute && !isAdminRoute && user && (
-              <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30 px-4 pb-4 safe-area-bottom">
-                 <nav 
-                   className={`w-full max-w-md rounded-2xl p-1.5 flex items-stretch justify-between h-16 ${
-                     isDarkTheme 
-                       ? 'glass-card bg-[#0f120a]/80 border border-white/10 shadow-glass backdrop-blur-2xl' 
-                       : 'bg-[#293515] shadow-lg'
-                   }`} 
-                   role="navigation" 
-                   aria-label="Member navigation"
-                 >
-                    <NavItem to="/dashboard" icon="dashboard" isActive={location.pathname === '/dashboard'} label="Dashboard" isDarkTheme={isDarkTheme} />
-                    <NavItem to="/book" icon="sports_golf" isActive={location.pathname === '/book'} label="Book Golf" isDarkTheme={isDarkTheme} />
-                    <NavItem to="/member-wellness" icon="spa" isActive={location.pathname === '/member-wellness'} label="Wellness" isDarkTheme={isDarkTheme} />
-                    <NavItem to="/member-events" icon="calendar_month" isActive={location.pathname === '/member-events'} label="Events" isDarkTheme={isDarkTheme} />
-                    <NavItem to="/cafe" icon="local_cafe" isActive={location.pathname === '/cafe'} label="Cafe" isDarkTheme={isDarkTheme} />
-                 </nav>
-              </div>
-            )}
-
+            
             <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
             
             {/* Notifications Modal */}
@@ -531,35 +512,35 @@ const App: React.FC = () => {
                 </AdminProtectedRoute>
               } />
 
-              {/* Member Routes */}
+              {/* Member Portal - Swipeable tabs */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <MemberPortal />
                 </ProtectedRoute>
               } />
               <Route path="/book" element={
                 <ProtectedRoute>
-                  <BookGolf />
+                  <MemberPortal />
                 </ProtectedRoute>
               } />
               <Route path="/member-events" element={
                 <ProtectedRoute>
-                  <MemberEvents />
+                  <MemberPortal />
                 </ProtectedRoute>
               } />
               <Route path="/member-wellness" element={
                 <ProtectedRoute>
-                  <MemberWellness />
+                  <MemberPortal />
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
                 <ProtectedRoute>
-                  <Profile />
+                  <MemberPortal />
                 </ProtectedRoute>
               } />
               <Route path="/cafe" element={
                 <ProtectedRoute>
-                  <Cafe />
+                  <MemberPortal />
                 </ProtectedRoute>
               } />
               <Route path="/sims" element={
