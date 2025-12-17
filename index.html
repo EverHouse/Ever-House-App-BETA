@@ -84,6 +84,11 @@
       }
     </script>
     <style>
+      /* Global box-sizing reset */
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      
       html, body {
         height: 100%;
         width: 100%;
@@ -93,6 +98,45 @@
         background-color: #F2F2EC;
         color: #293515;
         font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      /* Responsive images and media */
+      img, video, svg {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      
+      /* iOS safe area support - adds to existing padding, doesn't replace */
+      .safe-area-bottom {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+      }
+      
+      .safe-area-top {
+        padding-top: calc(env(safe-area-inset-top, 0));
+      }
+      
+      .safe-area-inset {
+        padding-top: env(safe-area-inset-top, 0);
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+        padding-left: env(safe-area-inset-left, 0);
+        padding-right: env(safe-area-inset-right, 0);
+      }
+      
+      /* Prevent horizontal overflow */
+      #root {
+        width: 100%;
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+      
+      /* Minimum tap target size helper */
+      .tap-target {
+        min-width: 44px;
+        min-height: 44px;
       }
       
       html.dark body {
@@ -152,6 +196,29 @@
       ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
       .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       .scrollbar-hide::-webkit-scrollbar { display: none; }
+      
+      /* Debug Layout Mode - activate with ?debugLayout=1 */
+      .debug-layout * {
+        outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+      }
+      .debug-layout *:hover {
+        outline: 2px solid red !important;
+        background: rgba(255, 0, 0, 0.1) !important;
+      }
+      .debug-layout [class*="overflow"] {
+        outline: 2px solid orange !important;
+      }
+      .debug-layout .debug-overflow-warning {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: red;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        z-index: 99999;
+      }
 
       .material-symbols-outlined {
         font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;

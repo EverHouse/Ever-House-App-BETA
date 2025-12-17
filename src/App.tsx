@@ -1,7 +1,46 @@
 
-import React, { useState, useEffect, useContext, createContext, ErrorInfo } from 'react';
+import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './contexts/DataContext';
+
+// Debug layout mode - activate with ?debugLayout=1
+const useDebugLayout = () => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const debugMode = params.get('debugLayout') === '1';
+    
+    if (debugMode) {
+      document.documentElement.classList.add('debug-layout');
+      
+      const checkOverflow = () => {
+        const existing = document.querySelector('.debug-overflow-warning');
+        if (document.documentElement.scrollWidth > window.innerWidth) {
+          if (!existing) {
+            const warning = document.createElement('div');
+            warning.className = 'debug-overflow-warning';
+            warning.textContent = `Overflow! ${document.documentElement.scrollWidth}px > ${window.innerWidth}px`;
+            document.body.appendChild(warning);
+          }
+        } else if (existing) {
+          existing.remove();
+        }
+      };
+      
+      checkOverflow();
+      window.addEventListener('resize', checkOverflow);
+      
+      return () => {
+        window.removeEventListener('resize', checkOverflow);
+        document.documentElement.classList.remove('debug-layout');
+        const warning = document.querySelector('.debug-overflow-warning');
+        if (warning) warning.remove();
+      };
+    }
+    
+    return undefined;
+  }, []);
+};
+
 import Logo from './components/Logo';
 import Dashboard from './pages/Member/Dashboard';
 import BookGolf from './pages/Member/BookGolf';
@@ -104,6 +143,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifTab, setNotifTab] = useState<'updates' | 'announcements'>('updates');
+  
+  // Activate debug layout mode
+  useDebugLayout();
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -220,9 +262,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
             </main>
 
-            {/* Member Dock - Full Width & Height Buttons */}
+            {/* Member Dock - Full Width with iOS Safe Area */}
             {isMemberRoute && !isAdminRoute && user && (
-              <div className="absolute bottom-6 left-0 right-0 flex justify-center z-30 px-4">
+              <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30 px-4 pb-4 safe-area-bottom">
                  <nav className="w-full max-w-md glass-card rounded-2xl p-1.5 flex items-stretch justify-between shadow-glass backdrop-blur-2xl bg-[#0f120a]/80 border border-white/10 h-16">
                     <NavItem to="/book" icon="sports_golf" isActive={location.pathname === '/book'} />
                     <NavItem to="/member-wellness" icon="spa" isActive={location.pathname === '/member-wellness'} />

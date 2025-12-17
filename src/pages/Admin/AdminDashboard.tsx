@@ -68,8 +68,8 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'simulator' && <SimulatorAdmin />}
       </main>
 
-      {/* Bottom Nav - Fixed High Contrast */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pb-6 pt-3 px-6 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl">
+      {/* Bottom Nav - Fixed with iOS Safe Area */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-6 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
         <ul className="flex justify-between items-center text-white/50 w-full max-w-md mx-auto">
             <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />

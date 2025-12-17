@@ -47,8 +47,8 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
         {/* Subtle Grain Texture */}
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-multiply"></div>
 
-        {/* Content Container */}
-        <div className="relative z-10 flex flex-col h-full px-8 py-8 text-[#293515]">
+        {/* Content Container with iOS Safe Area */}
+        <div className="relative z-10 flex flex-col h-full px-8 py-8 text-[#293515] safe-area-inset">
             
             {/* Header: Close Button */}
             <div className="flex items-center justify-end mb-8">
