@@ -138,6 +138,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+interface UserNotification {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  related_id?: number;
+}
+
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -145,6 +155,49 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifTab, setNotifTab] = useState<'updates' | 'announcements'>('updates');
+  const [userNotifications, setUserNotifications] = useState<UserNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.email) {
+      const fetchNotifications = async () => {
+        try {
+          const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}`);
+          if (res.ok) {
+            const data = await res.json();
+            setUserNotifications(data);
+            setUnreadCount(data.filter((n: UserNotification) => !n.is_read).length);
+          }
+        } catch (err) {
+          console.error('Failed to fetch notifications:', err);
+        }
+      };
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.email]);
+
+  const markAsRead = async (notifId: number) => {
+    try {
+      await fetch(`/api/notifications/${notifId}/read`, { method: 'PUT' });
+      setUserNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!user?.email) return;
+    try {
+      await fetch(`/api/notifications/mark-all-read?user_email=${encodeURIComponent(user.email)}`, { method: 'PUT' });
+      setUserNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
+  };
   
   // Activate debug layout mode
   useDebugLayout();
@@ -247,15 +300,31 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   />
                 </button>
 
-                <button 
-                  onClick={handleTopRightClick}
-                  className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
-                  aria-label={user ? (isMemberRoute ? 'View profile' : 'Go to dashboard') : 'Login'}
-                >
-                  <span className="material-symbols-outlined text-[24px]">
-                     {getTopRightIcon()}
-                  </span>
-                </button>
+                <div className="flex items-center gap-1">
+                  {isMemberRoute && user && (
+                    <button 
+                      onClick={() => setIsNotificationsOpen(true)}
+                      className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg relative`}
+                      aria-label="Notifications"
+                    >
+                      <span className="material-symbols-outlined text-[24px]">notifications</span>
+                      {unreadCount > 0 && (
+                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                  <button 
+                    onClick={handleTopRightClick}
+                    className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
+                    aria-label={user ? (isMemberRoute ? 'View profile' : 'Go to dashboard') : 'Login'}
+                  >
+                    <span className="material-symbols-outlined text-[24px]">
+                       {getTopRightIcon()}
+                    </span>
+                  </button>
+                </div>
               </header>
             )}
 
@@ -289,23 +358,70 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4">
                  <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" onClick={() => setIsNotificationsOpen(false)}></div>
                  <div className="relative w-full max-w-sm glass-card rounded-2xl p-6 animate-in slide-in-from-top-5 duration-300 border border-white/10">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex justify-between items-center mb-4">
                        <h3 className="font-bold text-xl text-white">Notifications</h3>
-                       <button onClick={() => setIsNotificationsOpen(false)} className="w-8 h-8 rounded-lg glass-button flex items-center justify-center">
-                          <span className="material-symbols-outlined text-sm">close</span>
-                       </button>
+                       <div className="flex items-center gap-2">
+                         {unreadCount > 0 && (
+                           <button 
+                             onClick={markAllAsRead}
+                             className="text-xs text-white/70 hover:text-white transition-colors"
+                           >
+                             Mark all read
+                           </button>
+                         )}
+                         <button onClick={() => setIsNotificationsOpen(false)} className="w-8 h-8 rounded-lg glass-button flex items-center justify-center">
+                            <span className="material-symbols-outlined text-sm">close</span>
+                         </button>
+                       </div>
                     </div>
                     
-                    <div className="h-[300px] overflow-y-auto space-y-3 scrollbar-hide">
-                      {notifTab === 'updates' ? (
-                         <>
-                            <NotifItem icon="check_circle" title="Booking Confirmed" desc="Bay 2 • Tomorrow, 9:00 AM" time="2h ago" />
-                            <NotifItem icon="local_cafe" title="Order Ready" desc="Pickup at counter" time="5h ago" />
-                         </>
+                    <div className="h-[350px] overflow-y-auto space-y-3 scrollbar-hide">
+                      {userNotifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-white/50">
+                          <span className="material-symbols-outlined text-4xl mb-2">notifications_off</span>
+                          <p className="text-sm">No notifications yet</p>
+                        </div>
                       ) : (
-                         announcements.map((ann) => (
-                            <NotifItem key={ann.id} icon="campaign" title={ann.title} desc={ann.desc} time={ann.date} />
-                         ))
+                        userNotifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            onClick={() => !notif.is_read && markAsRead(notif.id)}
+                            className={`flex gap-3 p-3 rounded-xl transition-colors cursor-pointer ${
+                              notif.is_read 
+                                ? 'bg-white/5 hover:bg-white/10' 
+                                : 'bg-accent/20 hover:bg-accent/30 border border-accent/30'
+                            }`}
+                          >
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                              notif.type === 'booking_approved' ? 'bg-green-500/20' :
+                              notif.type === 'booking_declined' ? 'bg-red-500/20' :
+                              'bg-accent/20'
+                            }`}>
+                              <span className={`material-symbols-outlined text-[20px] ${
+                                notif.type === 'booking_approved' ? 'text-green-400' :
+                                notif.type === 'booking_declined' ? 'text-red-400' :
+                                'text-white'
+                              }`}>
+                                {notif.type === 'booking_approved' ? 'check_circle' :
+                                 notif.type === 'booking_declined' ? 'cancel' :
+                                 'notifications'}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start">
+                                <h4 className={`font-bold text-sm ${notif.is_read ? 'text-white/70' : 'text-white'}`}>
+                                  {notif.title}
+                                </h4>
+                                <span className="text-[10px] text-white/50 ml-2 shrink-0">
+                                  {new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                              <p className={`text-xs mt-0.5 ${notif.is_read ? 'text-white/50' : 'text-white/70'}`}>
+                                {notif.message}
+                              </p>
+                            </div>
+                          </div>
+                        ))
                       )}
                     </div>
                  </div>
