@@ -31,7 +31,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const actionBtn = getActionButtonConfig();
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-start md:justify-center w-full max-w-md mx-auto overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex justify-start md:justify-center w-full max-w-md mx-auto overflow-hidden">
       {/* Clickable backdrop - no dimming, no blur */}
       <div 
         className="absolute inset-0 transition-opacity duration-500" 
@@ -42,7 +42,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
           Menu Panel - Opaque Glass Pane
           High opacity bone background with blur applied only to the panel itself
       */}
-      <div className="relative w-[85%] md:w-full h-full flex flex-col animate-slide-in-left shadow-[20px_0_50px_rgba(0,0,0,0.15)] overflow-hidden bg-[#F2F2EC]/95 backdrop-blur-xl border-r border-black/5">
+      <div className="relative w-[85%] md:w-full h-full flex flex-col animate-slide-in-left shadow-[20px_0_50px_rgba(0,0,0,0.15)] overflow-hidden bg-[#F2F2EC] backdrop-blur-xl border-r border-black/5">
         
         {/* Subtle Grain Texture */}
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-multiply"></div>

@@ -21,7 +21,7 @@ const PrivateHire: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F2F2EC]">
+    <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
        <div className="relative w-full h-[420px] bg-primary flex flex-col justify-end overflow-hidden group rounded-b-[2rem]">
          <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" 
               style={{backgroundImage: 'url("/images/venue-wide.jpg")'}}></div>

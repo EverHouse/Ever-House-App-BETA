@@ -263,8 +263,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const headerClasses = isMemberRoute 
     ? (isDarkTheme 
         ? "bg-[#0f120a] text-[#F2F2EC] shadow-md relative z-40 border-b border-white/5"
-        : "bg-[#293515] text-[#F2F2EC] shadow-md relative z-40")
-    : "bg-[#293515] text-[#F2F2EC] shadow-md relative z-40";
+        : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 relative z-40 border-b border-[#1e2810]")
+    : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 relative z-40";
   // Icon-only buttons with simple hover state, no background shapes
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
 

@@ -197,20 +197,26 @@ const Contact: React.FC = () => {
          </div>
       </section>
 
-      {/* Map Section */}
+      {/* Map Section - Apple Maps Embed */}
       <section className="px-4 mb-12">
-        <div className="w-full h-48 rounded-[2rem] overflow-hidden relative bg-[#E5EADf] border border-black/5">
-            <div className="absolute inset-0 opacity-50 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=33.7090,-117.8272&zoom=14&size=600x300&style=feature:all|saturation:-100&sensor=false')] bg-cover bg-center"></div>
-            {/* Mock Map Markers/Grid */}
-            <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
-            <div className="absolute top-1/2 left-1/2 text-[#F05537] transform -translate-x-1/2 -translate-y-1/2">
-                <span className="material-symbols-outlined text-3xl drop-shadow-md">location_on</span>
-            </div>
-            
+        <div className="w-full h-64 rounded-[2rem] overflow-hidden relative border border-black/5">
+            <iframe
+              src="https://embed.apple.com/maps/place?address=15771%20Red%20Hill%20Ave%20Ste%20500%2C%20Tustin%2C%20CA%2092780&ll=33.7090%2C-117.8272&q=Even%20House"
+              className="w-full h-full border-0"
+              title="Even House Location"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allow="geolocation"
+            ></iframe>
             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                 <a href="https://maps.google.com/?q=15771+Red+Hill+Ave+Ste+500,+Tustin,+CA+92780" target="_blank" rel="noreferrer" className="bg-white text-primary px-4 py-2 rounded-lg shadow-md font-bold text-xs flex items-center gap-2">
+                 <a 
+                   href="https://maps.apple.com/?address=15771%20Red%20Hill%20Ave%20Ste%20500,%20Tustin,%20CA%2092780&ll=33.7090,-117.8272&q=Even%20House" 
+                   target="_blank" 
+                   rel="noreferrer" 
+                   className="bg-white text-primary px-4 py-2 rounded-lg shadow-md font-bold text-xs flex items-center gap-2 hover:shadow-lg transition-shadow"
+                 >
                     <span className="material-symbols-outlined text-sm">map</span>
-                    Open in Maps
+                    Open in Apple Maps
                  </a>
             </div>
         </div>
