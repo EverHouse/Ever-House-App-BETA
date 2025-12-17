@@ -370,6 +370,35 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
   }
 });
 
+app.put('/api/members/:id/role', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    
+    if (!['member', 'staff', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    
+    const result = await pool.query(
+      'UPDATE users SET role = $1 WHERE id = $2 RETURNING *',
+      [role, id]
+    );
+    
+    if (result.rows.length === 0) {
+      const insertResult = await pool.query(
+        'INSERT INTO users (id, role) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET role = $2 RETURNING *',
+        [id, role]
+      );
+      return res.json(insertResult.rows[0]);
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Failed to update role' });
+  }
+});
+
 const TIER_GUEST_PASSES: Record<string, number> = {
   'Social': 2,
   'Core': 4,

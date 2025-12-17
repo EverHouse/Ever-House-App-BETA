@@ -17,7 +17,7 @@ const Landing: React.FC = () => {
   const [showTourForm, setShowTourForm] = useState(false);
 
   return (
-    <div className="bg-[#F2F2EC] min-h-screen pb-0">
+    <div className="bg-[#F2F2EC] min-h-screen pb-0 overflow-x-hidden">
       {/* Hero Section */}
       <div className="relative h-[85vh] flex flex-col justify-end p-6 pb-16 overflow-hidden rounded-b-[2.5rem] shadow-sm">
         {/* Hero Background Image - Updated to premium interior */}
@@ -126,6 +126,11 @@ const Landing: React.FC = () => {
                 </ul>
                 <button onClick={() => navigate('/membership/corporate')} className="w-full py-3 rounded-xl border border-[#293515]/10 text-[#293515] font-bold text-xs hover:bg-[#293515]/5">View Details</button>
             </div>
+
+            <button onClick={() => navigate('/membership/compare')} className="w-full mt-2 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-[#293515]/60 hover:text-[#293515] transition-colors py-2">
+              Compare all tiers
+              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </button>
          </div>
       </div>
 

@@ -94,6 +94,24 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `getMaxBookingDate(tier)` - Returns max bookable date based on advance days
 
 ## Recent Changes (December 2024)
+- **Theme System**: Light/Dark/System theme toggle in Profile settings
+  - ThemeContext manages theme state and persists to localStorage
+  - System mode follows OS preference automatically
+- **Role Management**: Admin dashboard can assign member/staff/admin roles
+  - Role dropdown in member edit modal
+  - API endpoint PUT /api/members/:id/role
+  - Role badges shown in member cards and table
+- **UI/UX Improvements**:
+  - Swipe-back gesture zone covers left half of screen (improved from edge-only)
+  - Notification icon properly sized with consistent dimensions
+  - Quick access buttons reordered: Golf, Wellness, Events, Cafe (matches nav)
+  - Check-in button connected with haptic feedback and confirmation
+  - "Compare All" link moved below Corporate card on landing/membership pages
+  - Cafe admin add button inline with page title above filters
+  - Footer gap fixed on public pages
+  - Global horizontal overflow prevention
+  - Consistent page enter animations across public and member pages
+- **Member Portal Header**: Black background (#0f120a) matching bottom nav
 - **HubSpot Forms Integration**: Native forms submit to HubSpot
   - Tour Request, Membership Application, Private Hire Inquiry forms connected
   - Guest Check-In form with atomic pass consumption

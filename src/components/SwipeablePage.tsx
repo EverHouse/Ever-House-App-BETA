@@ -17,12 +17,22 @@ const SwipeablePage: React.FC<SwipeablePageProps> = ({ children, className = "" 
 
   // Constants
   const SWIPE_THRESHOLD = 120; // px to trigger back
-  const EDGE_ZONE = 50; // px from left to start swipe
+  const [screenHalf, setScreenHalf] = useState(() => typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
+
+  useEffect(() => {
+    const handleResize = () => setScreenHalf(window.innerWidth / 2);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const x = e.touches[0].clientX;
-    // Only allow swipe to start from the left edge of the screen
-    if (x <= EDGE_ZONE) {
+    // Allow swipe to start from the left half of the screen
+    if (x <= screenHalf) {
       setTouchStart(x);
       setIsSwiping(true);
     }

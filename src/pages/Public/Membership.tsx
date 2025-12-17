@@ -28,7 +28,7 @@ const MembershipOverview: React.FC = () => {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
 
   return (
-    <div className="px-4 pt-6 pb-12 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen">
+    <div className="px-4 pt-6 pb-0 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen overflow-x-hidden">
       <div className="text-center px-2 pt-4">
         <h2 className="text-3xl font-medium tracking-tight text-primary mb-3">Membership Overview</h2>
         <p className="text-primary/70 text-base font-light leading-relaxed max-w-[320px] mx-auto">
@@ -160,12 +160,10 @@ const MembershipOverview: React.FC = () => {
         />
       </div>
       
-      <div className="text-center mt-4">
-        <button onClick={() => navigate('compare')} className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-primary transition-colors">
-          Compare full feature table
-          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-        </button>
-      </div>
+      <button onClick={() => navigate('compare')} className="w-full mt-4 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-primary transition-colors py-2">
+        Compare full feature table
+        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+      </button>
 
       <Footer />
 

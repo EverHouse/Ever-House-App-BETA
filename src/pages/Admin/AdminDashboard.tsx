@@ -140,21 +140,22 @@ const CafeAdmin: React.FC = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide max-w-[70%]">
-                    {categories.map(cat => (
-                        <button
-                            key={cat}
-                            onClick={() => setActiveCategory(cat)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${activeCategory === cat ? 'bg-primary text-white' : 'bg-white dark:bg-white/10 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/5'}`}
-                        >
-                            {cat}
-                        </button>
-                    ))}
-                </div>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-primary dark:text-white">Menu Items</h2>
                 <button onClick={openCreate} className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap">
                     <span className="material-symbols-outlined text-sm">add</span> Add
                 </button>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-1 px-1 mb-4">
+                {categories.map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${activeCategory === cat ? 'bg-primary text-white' : 'bg-white dark:bg-white/10 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/5'}`}
+                    >
+                        {cat}
+                    </button>
+                ))}
             </div>
 
             {isEditing && (
@@ -457,9 +458,20 @@ const MembersAdmin: React.FC = () => {
         setIsEditing(true);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (selectedMember) {
             updateMember(selectedMember);
+            if (selectedMember.role) {
+                try {
+                    await fetch(`/api/members/${selectedMember.id}/role`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: selectedMember.role })
+                    });
+                } catch (e) {
+                    console.error('Failed to update role:', e);
+                }
+            }
         }
         setIsEditing(false);
     };
@@ -523,6 +535,19 @@ const MembersAdmin: React.FC = () => {
                                     </select>
                                 </div>
                             </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500">Role</label>
+                                <select 
+                                    className="w-full border p-2 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" 
+                                    value={selectedMember.role || 'member'} 
+                                    onChange={e => setSelectedMember({...selectedMember, role: e.target.value as any})}
+                                >
+                                    <option value="member">Member</option>
+                                    <option value="staff">Staff</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                <p className="text-[10px] text-gray-400 mt-1">Staff and Admin can access the staff portal</p>
+                            </div>
                         </div>
                         <div className="flex gap-3 justify-end">
                             <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
@@ -543,9 +568,16 @@ const MembersAdmin: React.FC = () => {
                             </div>
                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${m.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{m.status}</span>
                         </div>
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tier</span>
-                            <span className="bg-primary/5 dark:bg-white/10 text-primary dark:text-white px-2 py-0.5 rounded text-xs font-bold">{m.tier}</span>
+                        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tier</span>
+                                <span className="bg-primary/5 dark:bg-white/10 text-primary dark:text-white px-2 py-0.5 rounded text-xs font-bold">{m.tier}</span>
+                            </div>
+                            {m.role && m.role !== 'member' && (
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>
+                                    {m.role}
+                                </span>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -558,6 +590,7 @@ const MembersAdmin: React.FC = () => {
                         <tr>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Name</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Tier</th>
+                            <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Role</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Status</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Email</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Action</th>
@@ -568,6 +601,15 @@ const MembersAdmin: React.FC = () => {
                             <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
                                 <td className="p-4 font-medium text-primary dark:text-white">{m.name}</td>
                                 <td className="p-4"><span className="bg-primary/10 dark:bg-white/10 text-primary dark:text-white px-2 py-1 rounded text-xs font-bold">{m.tier}</span></td>
+                                <td className="p-4">
+                                    <span className={`px-2 py-1 rounded text-xs font-bold ${
+                                        m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 
+                                        m.role === 'staff' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' : 
+                                        'bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400'
+                                    }`}>
+                                        {m.role || 'member'}
+                                    </span>
+                                </td>
                                 <td className="p-4 text-sm font-bold text-gray-700 dark:text-gray-300">{m.status}</td>
                                 <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{m.email}</td>
                                 <td className="p-4">

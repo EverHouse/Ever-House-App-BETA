@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { getTierPermissions } from '../../utils/permissions';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 
@@ -15,6 +16,7 @@ const GUEST_CHECKIN_FIELDS = [
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useData();
+  const { themeMode, setThemeMode } = useTheme();
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [showGuestCheckin, setShowGuestCheckin] = useState(false);
   const [guestPasses, setGuestPasses] = useState<{ passes_used: number; passes_total: number; passes_remaining: number } | null>(null);
@@ -102,6 +104,30 @@ const Profile: React.FC = () => {
                 )}
               </div>
             )}
+         </Section>
+
+         <Section title="Appearance">
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-lg opacity-60">palette</span>
+                <span className="text-sm font-medium">Theme</span>
+              </div>
+              <div className="flex gap-2">
+                {(['light', 'dark', 'system'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setThemeMode(mode)}
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
+                      themeMode === mode 
+                        ? 'bg-accent text-brand-green shadow-glow' 
+                        : 'bg-white/10 text-white/60 hover:bg-white/15'
+                    }`}
+                  >
+                    {mode === 'system' ? 'Auto' : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
          </Section>
 
          <Section title="Settings">

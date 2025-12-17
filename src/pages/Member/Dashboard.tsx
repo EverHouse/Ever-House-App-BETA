@@ -62,7 +62,8 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   const [selectedBooking, setSelectedBooking] = useState<DBBooking | null>(null);
-  const [newDate, setNewDate] = useState<string>(''); 
+  const [newDate, setNewDate] = useState<string>('');
+  const [checkInConfirmed, setCheckInConfirmed] = useState(false); 
   const [newTime, setNewTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
@@ -205,11 +206,11 @@ const Dashboard: React.FC = () => {
         </div>
         <button 
           onClick={() => openNotifications('announcements')} 
-          className="relative p-2 rounded-full glass-button text-white hover:bg-white/10 active:scale-95 transition-all focus:ring-2 focus:ring-accent focus:outline-none"
+          className="relative w-10 h-10 flex items-center justify-center rounded-full glass-button text-white hover:bg-white/10 active:scale-95 transition-all focus:ring-2 focus:ring-accent focus:outline-none"
           aria-label="View notifications"
         >
-          <span className="material-symbols-outlined">notifications</span>
-          {announcements.length > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-[#0f120a]"></span>}
+          <span className="material-symbols-outlined text-[24px]">notifications</span>
+          {announcements.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-[#0f120a]"></span>}
         </button>
       </div>
 
@@ -239,10 +240,20 @@ const Dashboard: React.FC = () => {
                   
                   <div className="flex gap-2">
                     <button 
+                      onClick={() => {
+                        if (navigator.vibrate) navigator.vibrate(10);
+                        setCheckInConfirmed(true);
+                        setTimeout(() => setCheckInConfirmed(false), 3000);
+                      }}
                       className="flex-1 bg-brand-green text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none"
                       aria-label="Check in to booking"
                     >
-                      Check In
+                      {checkInConfirmed ? (
+                        <>
+                          <span className="material-symbols-outlined text-lg">check_circle</span>
+                          Checked In
+                        </>
+                      ) : 'Check In'}
                     </button>
                     {nextItem.type === 'booking' && (
                       <button 
@@ -274,10 +285,10 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="mb-8 -mx-6 px-6 overflow-x-auto scrollbar-hide flex gap-4 animate-slide-in-right" style={{animationDelay: '0.2s'}}>
-            <QuickAction icon="sports_golf" label="Book Golf" onClick={() => navigate('/book')} delay="0s" />
-            <QuickAction icon="local_cafe" label="Cafe" onClick={() => navigate('/cafe')} delay="0.05s" />
-            <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.1s" />
-            <QuickAction icon="event" label="Events" onClick={() => navigate('/member-events')} delay="0.15s" />
+            <QuickAction icon="sports_golf" label="Golf" onClick={() => navigate('/book')} delay="0s" />
+            <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.05s" />
+            <QuickAction icon="calendar_month" label="Events" onClick={() => navigate('/member-events')} delay="0.1s" />
+            <QuickAction icon="local_cafe" label="Cafe" onClick={() => navigate('/cafe')} delay="0.15s" />
           </div>
 
           <div className="space-y-8 animate-pop-in" style={{animationDelay: '0.3s'}}>

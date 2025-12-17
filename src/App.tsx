@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './contexts/DataContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Debug layout mode - activate with ?debugLayout=1
 const useDebugLayout = () => {
@@ -190,8 +191,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     setIsNotificationsOpen(true);
   };
   
-  // Header is now always Brand Green (#293515) with Light Text
-  const headerClasses = "bg-[#293515] text-[#F2F2EC] shadow-md relative z-40";
+  // Header: Black for member routes, Brand Green for public
+  const headerClasses = isMemberRoute 
+    ? "bg-[#0f120a] text-[#F2F2EC] shadow-md relative z-40 border-b border-white/5"
+    : "bg-[#293515] text-[#F2F2EC] shadow-md relative z-40";
   // Icon-only buttons with simple hover state, no background shapes
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
 
@@ -348,11 +351,12 @@ const NavItem: React.FC<{ to: string; icon: string; isActive: boolean; label: st
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      <DataProvider>
-        <HashRouter>
-          <ScrollToTop />
-          <Layout>
-            <Routes>
+      <ThemeProvider>
+        <DataProvider>
+          <HashRouter>
+            <ScrollToTop />
+            <Layout>
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Landing />} />
               <Route path="/membership/*" element={<Membership />} />
@@ -405,10 +409,11 @@ const App: React.FC = () => {
               } />
               
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Layout>
-        </HashRouter>
-      </DataProvider>
+              </Routes>
+            </Layout>
+          </HashRouter>
+        </DataProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 };

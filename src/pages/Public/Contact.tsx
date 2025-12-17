@@ -18,8 +18,8 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F2F2EC]">
-      <div className="px-6 pt-6 pb-6 text-center">
+    <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
+      <div className="px-6 pt-6 pb-6 text-center animate-pop-in">
         <span className="font-bold text-xl tracking-tight text-primary">EH</span>
         <h1 className="mt-8 text-3xl font-bold tracking-tight text-primary mb-3">Get in Touch</h1>
         <p className="text-primary/70 text-sm leading-relaxed max-w-xs mx-auto">
@@ -27,7 +27,7 @@ const Contact: React.FC = () => {
         </p>
       </div>
 
-      <section className="px-4 mb-8 space-y-3">
+      <section className="px-4 mb-8 space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
            <ContactCard icon="location_on" title="VISIT US" value="15771 Red Hill Ave, Ste 500" />
            <ContactCard icon="call" title="CALL US" value="(949) 545-5855" href="tel:9495455855" />
            <ContactCard icon="mail" title="EMAIL US" value="hello@evenhouse.club" href="mailto:hello@evenhouse.club" />
