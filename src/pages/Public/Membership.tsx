@@ -80,47 +80,33 @@ const MembershipOverview: React.FC = () => {
           ]}
           onClick={() => navigate('/contact')} 
         />
-        <MembershipCard 
-          title="Core Membership"
-          price="$250"
-          desc="Your all-access pass to the Even House experience."
-          features={[
-            "Café, Lounges, Putting course",
-            "60 mins/day Golf Simulators",
-            "60 mins/day Conf Room",
-            "Daily guest passes",
-            "Concierge for bookings & support"
-          ]}
-          onClick={() => navigate('/contact')}
-        />
-        
-        {/* Premium Card - Dark Green */}
+        {/* Core Card - Dark Green (Popular) */}
         <div className="relative flex flex-col p-6 bg-primary rounded-3xl shadow-xl overflow-hidden text-white border border-white/10">
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none"></div>
           <div className="flex justify-between items-start mb-4 relative z-10">
             <div className="pr-2">
-              <h3 className="text-xl font-semibold mb-2">Premium Membership</h3>
-              <p className="text-sm text-white/70 leading-relaxed font-light">Everything from Core plus priority access.</p>
+              <h3 className="text-xl font-semibold mb-2">Core Membership</h3>
+              <p className="text-sm text-white/70 leading-relaxed font-light">Your all-access pass to the Even House experience.</p>
             </div>
             <span className="shrink-0 px-3 py-1 bg-accent text-primary text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm mt-1">
               Popular
             </span>
           </div>
           <div className="flex items-baseline gap-1 mb-6 relative z-10">
-            <span className="text-4xl font-semibold tracking-tight">$450</span>
+            <span className="text-4xl font-semibold tracking-tight">$250</span>
             <span className="text-sm font-medium text-white/60">/mo</span>
           </div>
           <ul className="flex flex-col gap-3 mb-8 relative z-10">
             {[
-              "Everything from Core",
-              "90 mins/day Golf Simulator",
-              "Priority booking of amenities",
-              "Group lessons package",
-              "Daily comp. coffee/beer/wine"
+              "Café, Lounges, Putting course",
+              "60 mins/day Golf Simulators",
+              "60 mins/day Conf Room",
+              "4 guest passes per year",
+              "Concierge for bookings & support"
             ].map((f, i) => (
               <li key={i} className="flex gap-3 text-sm text-white/90 font-light">
                 <span className="material-symbols-outlined text-[18px] text-accent shrink-0 font-light">check_circle</span>
-                <span className={i === 0 ? "font-medium" : ""}>{f}</span>
+                <span>{f}</span>
               </li>
             ))}
           </ul>
@@ -131,17 +117,32 @@ const MembershipOverview: React.FC = () => {
             Apply
           </button>
         </div>
+        
+        <MembershipCard 
+          title="Premium Membership"
+          price="$450"
+          desc="Everything from Core plus priority access and extra perks."
+          features={[
+            "Everything from Core",
+            "90 mins/day Golf Simulator",
+            "Priority booking of amenities",
+            "8 guest passes per year",
+            "Daily comp. coffee/beer/wine"
+          ]}
+          onClick={() => navigate('/contact')}
+        />
 
         <MembershipCard 
           title="Corporate Membership"
           price="$350"
-          suffix="/mo per employee"
-          desc="Unlock a powerful business asset."
+          suffix="/mo per seat"
+          desc="Elevate your team with premium amenities and client entertainment."
           features={[
-            "Daily workspaces & lounge",
-            "90 min/day Golf Simulator",
-            "Priority bookings",
-            "15 full-access guest passes/yr"
+            "All Premium benefits per seat",
+            "10-day advance booking window",
+            "15 guest passes per year",
+            "Dedicated account manager",
+            "Private event hosting"
           ]}
           onClick={() => navigate('corporate')}
           btnText="View Details"

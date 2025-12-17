@@ -36,6 +36,7 @@ A private members club application built with React, Vite, and TypeScript. The a
 - **bookings**: id, resource_id, user_email, booking_date, start_time, end_time, notes, status
 - **events**: id, title, description, event_date, start_time, end_time, location, category, max_attendees
 - **event_rsvps**: id, event_id, user_email, status
+- **guest_passes**: id, member_email, passes_used, passes_total, last_reset_date
 
 ## API Endpoints
 - `GET /api/resources` - List all bookable resources
@@ -48,6 +49,9 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `POST /api/rsvps` - RSVP to an event
 - `DELETE /api/rsvps/:event_id/:user_email` - Cancel RSVP
 - `GET /api/hubspot/contacts` - Fetch contacts from HubSpot CRM
+- `GET /api/guest-passes/:email?tier=X` - Get member's guest pass usage
+- `POST /api/guest-passes/:email/use` - Use a guest pass
+- `PUT /api/guest-passes/:email` - Update guest pass total
 
 ## Integrations
 - **HubSpot CRM**: Connected via OAuth for managing contacts/members
@@ -68,10 +72,32 @@ A private members club application built with React, Vite, and TypeScript. The a
 ## Branding
 - **Logo Component**: `src/components/Logo.tsx` with dynamic variant selection
 - **Config**: `src/config/branding.ts` for centralized logo paths
-- Mascot logo for member pages, Monogram logo for public pages
+- **Member Portal**: Walking golfer (EH-guy logo) in black/white
+- **Public Pages**: EH monogram logo
 - Auto dark/white variant based on background
 
+## Membership Tiers
+- **Social** ($180/mo): Events, wellness, conference rooms only. No golf simulator access. 2 guest passes/year.
+- **Core** ($250/mo): Full access including simulators (60 min/day). 7-day advance booking. 4 guest passes/year.
+- **Premium** ($450/mo): Priority access, 90 min/day simulators. 10-day advance booking. 8 guest passes/year.
+- **Corporate** ($350/mo per seat): All Premium benefits. 10-day advance booking. 15 guest passes/year. Dedicated account manager.
+
+## Tier Permissions Utility
+- `src/utils/permissions.ts` - Centralized tier permission checks
+- `getTierPermissions(tier)` - Returns permissions object
+- `canAccessResource(tier, resourceType)` - Boolean check for resource access
+- `getMaxBookingDate(tier)` - Returns max bookable date based on advance days
+
 ## Recent Changes (December 2024)
+- **Membership Tier Gating**: Booking permissions based on tier
+  - Social members see upgrade prompt when trying to book simulators
+  - Advance booking days limited by tier (7 or 10 days)
+  - Guest pass tracking per member with tier-based allowances
+- **Guest Pass System**: Database-backed guest pass tracking
+  - Profile page shows remaining passes
+  - API endpoints to track/use passes
+- **Branding Update**: Member portal uses walking golfer logo
+- **Membership Page Redesign**: Core is now the featured "Popular" tier with dark green standout card
 - **Real-Time Booking System**: Database-backed booking with shared availability
   - BookGolf page fetches resources and availability from API
   - Duration-aware slot generation (30/60/90/120 min)
@@ -79,7 +105,8 @@ A private members club application built with React, Vite, and TypeScript. The a
 - **Member Dashboard**: Fetches real bookings/RSVPs from database
 - **Admin Member Directory**: Fetches contacts from HubSpot CRM API
 - **Express Backend**: Full REST API for booking operations
-- **PostgreSQL Database**: Tables for resources, bookings, events, RSVPs
+- **PostgreSQL Database**: Tables for resources, bookings, events, RSVPs, guest_passes
+- **Haptic Feedback**: Mobile interactions provide tactile feedback
 
 ## Responsive Guidelines
 - Target viewports: iPhone SE (375×667), iPhone 14/15 (390×844), iPhone Pro Max (430×932), iPad (768×1024), Desktop (1440×900)

@@ -4,6 +4,7 @@ import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { haptic } from '../../utils/haptics';
+import { getTierPermissions, canAccessResource } from '../../utils/permissions';
 
 const API_BASE = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001';
 
@@ -49,12 +50,12 @@ const formatTime12 = (time24: string): string => {
   return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
-const generateDates = (): { label: string; date: string; day: string; dateNum: string }[] => {
+const generateDates = (advanceDays: number = 7): { label: string; date: string; day: string; dateNum: string }[] => {
   const dates = [];
   const today = new Date();
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < advanceDays; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     const dayName = days[d.getDay()];
@@ -83,7 +84,10 @@ const BookGolf: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
 
-  const dates = useMemo(() => generateDates(), []);
+  const tierPermissions = getTierPermissions(user?.tier || 'Social');
+  const canBookSimulators = canAccessResource(user?.tier || 'Social', 'simulator');
+  
+  const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
   const [selectedDateObj, setSelectedDateObj] = useState(dates[0]);
 
   useEffect(() => {
@@ -255,7 +259,22 @@ const BookGolf: React.FC = () => {
         </div>
       </section>
 
-      {activeTab === 'lessons' ? (
+      {activeTab === 'simulator' && !canBookSimulators ? (
+        <section className="glass-card rounded-2xl p-6 border border-white/10 text-center">
+          <span className="material-symbols-outlined text-4xl text-accent mb-4">lock</span>
+          <h3 className="text-lg font-bold text-white mb-2">Upgrade to Book Simulators</h3>
+          <p className="text-white/60 text-sm mb-4">
+            Golf simulator access is available for Core, Premium, and Corporate members. Upgrade your membership to start booking.
+          </p>
+          <a 
+            href="/membership" 
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-brand-green rounded-xl font-bold text-sm"
+          >
+            <span className="material-symbols-outlined text-lg">upgrade</span>
+            View Membership Options
+          </a>
+        </section>
+      ) : activeTab === 'lessons' ? (
         <section className="glass-card rounded-2xl p-6 border border-white/10 text-center">
           <span className="material-symbols-outlined text-4xl text-accent mb-4">school</span>
           <h3 className="text-lg font-bold text-white mb-2">Private Lessons</h3>

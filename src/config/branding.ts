@@ -8,8 +8,8 @@ export const BRAND = {
       white: '/assets/logos/monogram-white.png',
     },
     mascot: {
-      dark: '/assets/logos/mascot-dark.png',
-      white: '/assets/logos/mascot-white.png',
+      dark: '/assets/logos/EH-guy logo black.png',
+      white: '/assets/logos/EH-guy logo white.png',
     },
   },
   

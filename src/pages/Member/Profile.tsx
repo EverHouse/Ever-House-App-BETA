@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
+import { getTierPermissions } from '../../utils/permissions';
+
+const API_BASE = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useData();
   const [isCardOpen, setIsCardOpen] = useState(false);
+  const [guestPasses, setGuestPasses] = useState<{ passes_used: number; passes_total: number; passes_remaining: number } | null>(null);
+
+  const tierPermissions = getTierPermissions(user?.tier || 'Social');
+
+  useEffect(() => {
+    if (user?.email) {
+      fetch(`${API_BASE}/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`)
+        .then(res => res.json())
+        .then(data => setGuestPasses(data))
+        .catch(err => console.error('Error fetching guest passes:', err));
+    }
+  }, [user?.email, user?.tier]);
 
   if (!user) return null;
 
@@ -49,6 +64,25 @@ const Profile: React.FC = () => {
          <Section title="Account">
             <Row icon="mail" label="Email" value={user.email} />
             <Row icon="call" label="Phone" value={user.phone} />
+         </Section>
+
+         <Section title="Membership Benefits">
+            <Row icon="calendar_month" label="Advance Booking" value={`${tierPermissions.advanceBookingDays} days`} />
+            {tierPermissions.canBookSimulators && (
+              <Row icon="sports_golf" label="Daily Simulator Time" value={`${tierPermissions.dailySimulatorMinutes} min`} />
+            )}
+            {guestPasses && (
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-lg opacity-60">group_add</span>
+                  <span className="text-sm">Guest Passes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-accent">{guestPasses.passes_remaining}</span>
+                  <span className="text-xs opacity-50">/ {guestPasses.passes_total} remaining</span>
+                </div>
+              </div>
+            )}
          </Section>
 
          <Section title="Settings">
