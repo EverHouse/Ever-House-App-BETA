@@ -35,7 +35,7 @@ const MemberPortal: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto safe-area-top">
         {renderPage()}
       </div>
       <BottomTabBar activeIndex={activeIndex} onTabChange={handleTabChange} />
