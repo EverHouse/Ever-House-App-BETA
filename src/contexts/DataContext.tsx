@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { supabase } from '../services/supabase';
 
 // --- Types ---
 
@@ -314,11 +313,10 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     'afogel@evenhouse.club'
   ];
 
-  // Check auth status on mount (Replit Auth + Supabase)
+  // Check auth status on mount (Replit Auth)
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // First check Replit Auth
         const res = await fetch('/api/auth/user', { credentials: 'include' });
         if (res.ok) {
           const authUser = await res.json();
@@ -336,31 +334,6 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             role: authUser.role || (isAdmin ? 'admin' : 'member')
           };
           setActualUser(memberProfile);
-          return;
-        }
-        
-        // If no Replit Auth, check Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const supabaseUser = session.user;
-          const email = supabaseUser.email?.toLowerCase() || '';
-          const isAdmin = ADMIN_EMAILS.includes(email);
-          
-          // Fetch user data from database
-          const dbRes = await fetch(`/api/users/${encodeURIComponent(email)}`);
-          const dbUser = dbRes.ok ? await dbRes.json() : null;
-          
-          const memberProfile: MemberProfile = {
-            id: supabaseUser.id,
-            name: [dbUser?.first_name || supabaseUser.user_metadata?.first_name, dbUser?.last_name || supabaseUser.user_metadata?.last_name].filter(Boolean).join(' ') || email.split('@')[0] || 'Member',
-            tier: dbUser?.tier || (isAdmin ? 'Premium' : 'Core'),
-            status: 'Active',
-            email: email,
-            phone: dbUser?.phone || '',
-            avatar: supabaseUser.user_metadata?.avatar_url,
-            role: dbUser?.role || (isAdmin ? 'admin' : 'member')
-          };
-          setActualUser(memberProfile);
         }
       } catch (err) {
         console.error('Auth check failed:', err);
@@ -369,33 +342,6 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       }
     };
     checkAuth();
-
-    // Listen for Supabase auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const email = session.user.email?.toLowerCase() || '';
-        const isAdmin = ADMIN_EMAILS.includes(email);
-        
-        const dbRes = await fetch(`/api/users/${encodeURIComponent(email)}`);
-        const dbUser = dbRes.ok ? await dbRes.json() : null;
-        
-        const memberProfile: MemberProfile = {
-          id: session.user.id,
-          name: [dbUser?.first_name, dbUser?.last_name].filter(Boolean).join(' ') || email.split('@')[0] || 'Member',
-          tier: dbUser?.tier || (isAdmin ? 'Premium' : 'Core'),
-          status: 'Active',
-          email: email,
-          phone: dbUser?.phone || '',
-          avatar: session.user.user_metadata?.avatar_url,
-          role: dbUser?.role || (isAdmin ? 'admin' : 'member')
-        };
-        setActualUser(memberProfile);
-      } else if (event === 'SIGNED_OUT') {
-        setActualUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
   
   // View As Functions - only for admins

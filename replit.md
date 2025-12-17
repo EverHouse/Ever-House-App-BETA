@@ -16,10 +16,10 @@ The Even House Members App is a private members club application designed to man
 The application is built with a React 19 frontend using Vite, styled with Tailwind CSS, and powered by an Express.js backend with a PostgreSQL database.
 
 ### Recent Updates (December 17, 2025)
-- **Swipeable Member Portal**: Implemented native app-style horizontal swipe navigation with 6 tabs (Home, Golf, Events, Wellness, Cafe, Profile). Features momentum-based swipe detection, thumb-following peek, and synchronized tab bar.
+- **Member Portal Navigation**: Standard tab-based navigation with 6 tabs (Home, Golf, Events, Wellness, Cafe, Profile) and bottom tab bar.
+- **Authentication**: Simplified to Replit Auth only (Google, Apple, GitHub, email/password). Removed Supabase magic link integration.
 - **Database Schema**: Added `role` (member/staff/admin) and `tier` (membership level) columns to users table.
 - **Admin User**: Created adam@evenhouse.club as admin user with VIP tier (ID: 147fb45f-3747-4c61-b45a-2808a93a0bbf).
-- **Type Fixes**: Resolved TypeScript errors in Toast.tsx and WelcomeBanner.tsx component references.
 
 ### UI/UX Decisions
 - **Typography**: Exclusive use of Inter (sans-serif).

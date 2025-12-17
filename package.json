@@ -16,7 +16,6 @@
   "dependencies": {
     "@google/genai": "^1.33.0",
     "@hubspot/api-client": "^13.4.0",
-    "@supabase/supabase-js": "^2.88.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/cors": "^2.8.19",
