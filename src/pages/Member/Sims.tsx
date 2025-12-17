@@ -3,6 +3,7 @@ import { useData } from '../../contexts/DataContext';
 import DateButton from '../../components/DateButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { triggerHaptic } from '../../utils/haptics';
+import { getTierPermissions, canAccessResource } from '../../utils/permissions';
 
 interface Bay {
   id: number;
@@ -76,7 +77,9 @@ const getStatusColor = (status: string): string => {
 
 const Sims: React.FC = () => {
   const { user } = useData();
-  const dates = useMemo(() => generateDates(14), []);
+  const tierPermissions = getTierPermissions(user?.tier || 'Social');
+  const canBookSimulators = canAccessResource(user?.tier || 'Social', 'simulator');
+  const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
   
   const [activeTab, setActiveTab] = useState<'request' | 'my-requests'>('request');
   const [selectedDate, setSelectedDate] = useState(dates[0]);
@@ -291,6 +294,22 @@ const Sims: React.FC = () => {
         
         {activeTab === 'request' && (
           <div className="px-4">
+            {!canBookSimulators ? (
+              <div className="py-12 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-3xl text-brand-green">lock</span>
+                </div>
+                <h3 className="text-lg font-bold text-brand-green mb-2">Simulator Access Not Available</h3>
+                <p className="text-brand-green/60 text-sm mb-6">Your current membership tier doesn't include simulator booking. Upgrade to Core, Premium, or Corporate to access TrackMan simulators.</p>
+                <a 
+                  href="/membership" 
+                  className="inline-block px-6 py-3 bg-brand-green text-white rounded-xl font-medium text-sm"
+                >
+                  View Membership Options
+                </a>
+              </div>
+            ) : (
+              <>
             {showSuccess && (
               <div className="mb-4 p-4 bg-green-500/20 border border-green-500/30 rounded-xl flex items-center gap-3">
                 <span className="material-symbols-outlined text-green-600">check_circle</span>
@@ -449,6 +468,8 @@ const Sims: React.FC = () => {
               <p className="text-center text-sm text-brand-green/60 mt-3">
                 {formatDate(selectedDate.date)} at {formatTime12(selectedTime)} for {duration} minutes
               </p>
+            )}
+              </>
             )}
           </div>
         )}

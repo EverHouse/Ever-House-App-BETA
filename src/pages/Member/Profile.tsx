@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { getTierPermissions } from '../../utils/permissions';
+import { getTierPermissions, isFoundingMember, isVIPMember, getBaseTier } from '../../utils/permissions';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import { isPushSupported, isSubscribedToPush, subscribeToPush, unsubscribeFromPush } from '../../services/pushNotifications';
 
@@ -76,7 +76,13 @@ const Profile: React.FC = () => {
          </div>
          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user.name}</h1>
          <div className="flex items-center gap-2 mt-2">
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-brand-green text-[#F2F2EC]">{user.tier} Member</span>
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-brand-green text-[#F2F2EC]">{getBaseTier(user.tier || '')} Member</span>
+            {isFoundingMember(user.tier || '') && (
+               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding</span>
+            )}
+            {isVIPMember(user.tier || '') && (
+               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-yellow-400 text-black">VIP</span>
+            )}
             <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>#{user.id}</span>
          </div>
       </div>
@@ -91,10 +97,18 @@ const Profile: React.FC = () => {
          <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
             <div className="flex justify-between items-start">
                <img src="/assets/logos/monogram-white.png" className="w-8 h-8 opacity-90" alt="" />
-               <span className="text-[10px] font-bold uppercase tracking-widest text-[#F2F2EC]/60">Even House</span>
+               <div className="flex flex-col items-end gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#F2F2EC]/60">Even House</span>
+                  {isFoundingMember(user.tier || '') && (
+                     <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding Member</span>
+                  )}
+                  {isVIPMember(user.tier || '') && (
+                     <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-yellow-400 text-black">VIP</span>
+                  )}
+               </div>
             </div>
             <div>
-               <p className="text-xs text-[#F2F2EC]/60 uppercase tracking-wider mb-1">Member</p>
+               <p className="text-xs text-[#F2F2EC]/60 uppercase tracking-wider mb-1">{getBaseTier(user.tier || '')} Member</p>
                <h3 className="text-xl font-bold tracking-wide text-[#F2F2EC]">{user.name}</h3>
             </div>
          </div>
@@ -111,9 +125,9 @@ const Profile: React.FC = () => {
          </Section>
 
          <Section title="Membership Benefits" isDark={isDark}>
-            <Row icon="calendar_month" label="Advance Booking" value={`${tierPermissions.advanceBookingDays} days`} isDark={isDark} />
+            <Row icon="calendar_month" label="Advance Booking" value={tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.advanceBookingDays} days`} isDark={isDark} />
             {tierPermissions.canBookSimulators && (
-              <Row icon="sports_golf" label="Daily Simulator Time" value={`${tierPermissions.dailySimulatorMinutes} min`} isDark={isDark} />
+              <Row icon="sports_golf" label="Daily Simulator Time" value={tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.dailySimulatorMinutes} min`} isDark={isDark} />
             )}
             {guestPasses && (
               <div className="p-4">
@@ -234,7 +248,15 @@ const Profile: React.FC = () => {
                     </div>
                     <div>
                         <h2 className="text-2xl font-bold mb-1 text-[#F2F2EC]">{user.name}</h2>
-                        <p className="text-[#F2F2EC]/50 text-sm uppercase tracking-widest">{user.tier} Member</p>
+                        <p className="text-[#F2F2EC]/50 text-sm uppercase tracking-widest">{getBaseTier(user.tier || '')} Member</p>
+                        <div className="flex items-center justify-center gap-2 mt-2">
+                           {isFoundingMember(user.tier || '') && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding Member</span>
+                           )}
+                           {isVIPMember(user.tier || '') && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-yellow-400 text-black">VIP</span>
+                           )}
+                        </div>
                     </div>
                 </div>
 
