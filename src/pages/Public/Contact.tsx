@@ -5,16 +5,50 @@ import Input from '../../components/Input';
 const Contact: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    topic: 'Membership Inquiry',
+    fullName: '',
+    email: '',
+    message: ''
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-        setLoading(false);
-        setIsSubmitted(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/hubspot/forms/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: [
+            { name: 'topic', value: formData.topic },
+            { name: 'firstname', value: formData.fullName.split(' ')[0] || '' },
+            { name: 'lastname', value: formData.fullName.split(' ').slice(1).join(' ') || '' },
+            { name: 'email', value: formData.email },
+            { name: 'message', value: formData.message }
+          ],
+          context: {
+            pageUri: window.location.href,
+            pageName: 'Contact'
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit form');
+      }
+
+      setIsSubmitted(true);
+      setFormData({ topic: 'Membership Inquiry', fullName: '', email: '', message: '' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      setError('Something went wrong. Please try again or contact us directly.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -99,10 +133,19 @@ const Contact: React.FC = () => {
                 </div>
             ) : (
                 <form className="space-y-5" onSubmit={handleSubmit}>
+                {error && (
+                  <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
                 <div className="relative">
                     <label className="block text-sm font-medium text-primary mb-1.5 pl-1">Topic</label>
                     <div className="relative">
-                        <select className="w-full bg-[#F9F9F7] border-0 rounded-lg py-3 pl-4 pr-10 text-primary ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6 appearance-none">
+                        <select 
+                          value={formData.topic}
+                          onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
+                          className="w-full bg-[#F9F9F7] border-0 rounded-lg py-3 pl-4 pr-10 text-primary ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6 appearance-none"
+                        >
                             <option>Membership Inquiry</option>
                             <option>Private Events</option>
                             <option>General Information</option>
@@ -112,11 +155,31 @@ const Contact: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <Input label="Full Name" placeholder="Jane Doe" required />
-                <Input label="Email Address" type="email" placeholder="jane@example.com" required />
+                <Input 
+                  label="Full Name" 
+                  placeholder="Jane Doe" 
+                  value={formData.fullName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                  required 
+                />
+                <Input 
+                  label="Email Address" 
+                  type="email" 
+                  placeholder="jane@example.com" 
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  required 
+                />
                 <div>
                     <label className="block text-sm font-medium text-primary mb-1.5 pl-1">Message</label>
-                    <textarea rows={4} className="w-full bg-[#F9F9F7] border-0 rounded-lg py-3 px-4 text-primary ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6 resize-none" placeholder="How can we help you?" required></textarea>
+                    <textarea 
+                      rows={4} 
+                      value={formData.message}
+                      onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                      className="w-full bg-[#F9F9F7] border-0 rounded-lg py-3 px-4 text-primary ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6 resize-none" 
+                      placeholder="How can we help you?" 
+                      required
+                    ></textarea>
                 </div>
                 <button 
                     type="submit" 

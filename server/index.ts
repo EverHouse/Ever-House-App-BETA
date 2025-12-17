@@ -720,7 +720,8 @@ const HUBSPOT_FORMS: Record<string, string> = {
   'tour-request': process.env.HUBSPOT_FORM_TOUR_REQUEST || '',
   'membership': process.env.HUBSPOT_FORM_MEMBERSHIP || '',
   'private-hire': process.env.HUBSPOT_FORM_PRIVATE_HIRE || '',
-  'guest-checkin': process.env.HUBSPOT_FORM_GUEST_CHECKIN || ''
+  'guest-checkin': process.env.HUBSPOT_FORM_GUEST_CHECKIN || '',
+  'contact': process.env.HUBSPOT_FORM_CONTACT || ''
 };
 
 app.post('/api/hubspot/forms/:formType', async (req, res) => {

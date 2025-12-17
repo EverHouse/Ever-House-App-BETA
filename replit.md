@@ -77,9 +77,9 @@ A private members club application built with React, Vite, and TypeScript. The a
   - Admin dashboard fetches real contacts from HubSpot
   - Access token automatically refreshed via Replit Connectors
 - **HubSpot Forms**: Native app forms submit to existing HubSpot forms
-  - Forms: Tour Request, Membership Application, Private Hire Inquiry, Guest Check-In
+  - Forms: Tour Request, Membership Application, Private Hire Inquiry, Guest Check-In, Contact
   - Uses HubSpot Forms API with hutk cookie tracking for analytics
-  - Environment variables: HUBSPOT_PORTAL_ID, HUBSPOT_FORM_TOUR_REQUEST, HUBSPOT_FORM_MEMBERSHIP, HUBSPOT_FORM_PRIVATE_HIRE, HUBSPOT_FORM_GUEST_CHECKIN
+  - Environment variables: HUBSPOT_PORTAL_ID, HUBSPOT_FORM_TOUR_REQUEST, HUBSPOT_FORM_MEMBERSHIP, HUBSPOT_FORM_PRIVATE_HIRE, HUBSPOT_FORM_GUEST_CHECKIN, HUBSPOT_FORM_CONTACT
 - **Eventbrite**: Event sync integration
   - POST /api/eventbrite/sync - Syncs events from Eventbrite organization to database
   - Events marked with eventbrite_id and eventbrite_url for linking back to ticketing
