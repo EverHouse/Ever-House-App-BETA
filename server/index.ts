@@ -8,11 +8,22 @@ import { Client } from '@hubspot/api-client';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
 const isProduction = process.env.NODE_ENV === 'production';
+
+const app = express();
+
+const corsOptions = {
+  origin: isProduction 
+    ? process.env.ALLOWED_ORIGINS?.split(',') || true
+    : true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb' }));
 
 if (isProduction) {
   app.use(express.static(path.join(__dirname, '../dist')));
@@ -68,7 +79,8 @@ app.get('/api/resources', async (req, res) => {
     const result = await pool.query('SELECT * FROM resources ORDER BY type, name');
     res.json(result.rows);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('Resources error:', error);
+    res.status(500).json({ error: 'Failed to fetch resources' });
   }
 });
 
@@ -96,7 +108,8 @@ app.get('/api/bookings', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('Bookings error:', error);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 });
 
@@ -128,7 +141,8 @@ app.post('/api/bookings', async (req, res) => {
     
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('Booking creation error:', error);
+    res.status(500).json({ error: 'Failed to create booking' });
   }
 });
 
@@ -138,7 +152,8 @@ app.delete('/api/bookings/:id', async (req, res) => {
     await pool.query("UPDATE bookings SET status = 'cancelled' WHERE id = $1", [id]);
     res.json({ success: true });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -183,7 +198,8 @@ app.get('/api/availability', async (req, res) => {
     
     res.json(slots);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -205,7 +221,8 @@ app.get('/api/events', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -221,7 +238,8 @@ app.post('/api/events', async (req, res) => {
     
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('Booking creation error:', error);
+    res.status(500).json({ error: 'Failed to create booking' });
   }
 });
 
@@ -245,7 +263,8 @@ app.get('/api/rsvps', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -263,7 +282,8 @@ app.post('/api/rsvps', async (req, res) => {
     
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('Booking creation error:', error);
+    res.status(500).json({ error: 'Failed to create booking' });
   }
 });
 
@@ -276,7 +296,8 @@ app.delete('/api/rsvps/:event_id/:user_email', async (req, res) => {
     );
     res.json({ success: true });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -307,8 +328,8 @@ app.get('/api/hubspot/contacts', async (req, res) => {
     
     res.json(contacts);
   } catch (error: any) {
-    console.error('HubSpot error:', error);
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('HubSpot error:', error);
+    res.status(500).json({ error: 'Failed to fetch contacts' });
   }
 });
 
@@ -338,7 +359,8 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
       createdAt: contact.properties.createdate
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -384,7 +406,8 @@ app.get('/api/guest-passes/:email', async (req, res) => {
       passes_remaining: data.passes_total - data.passes_used
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -407,7 +430,8 @@ app.post('/api/guest-passes/:email/use', async (req, res) => {
       passes_remaining: data.passes_total - data.passes_used
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -432,7 +456,8 @@ app.put('/api/guest-passes/:email', async (req, res) => {
       passes_remaining: data.passes_total - data.passes_used
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Request failed' });
   }
 });
 
@@ -509,15 +534,15 @@ app.post('/api/hubspot/forms/:formType', async (req, res) => {
     
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('HubSpot form error:', errorData);
-      return res.status(response.status).json({ error: 'Form submission failed', details: errorData });
+      if (!isProduction) console.error('HubSpot form error:', errorData);
+      return res.status(response.status).json({ error: 'Form submission failed' });
     }
     
     const result: any = await response.json();
     res.json({ success: true, message: result.inlineMessage || 'Form submitted successfully' });
   } catch (error: any) {
-    console.error('HubSpot form submission error:', error);
-    res.status(500).json({ error: error.message });
+    if (!isProduction) console.error('HubSpot form submission error:', error);
+    res.status(500).json({ error: 'Form submission failed' });
   }
 });
 
