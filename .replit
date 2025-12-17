@@ -67,3 +67,8 @@ HUBSPOT_FORM_TOUR_REQUEST = "686db5e2-c17e-4c45-9ab9-21b466fd105c"
 HUBSPOT_FORM_MEMBERSHIP = "6973a2ea-f8a5-4925-9898-2fcc373512f0"
 HUBSPOT_FORM_PRIVATE_HIRE = "7b2eca31-2f78-40bc-9a67-e25ecd140047"
 HUBSPOT_FORM_GUEST_CHECKIN = "ba04af2b-b1d5-435b-9e3e-bfd9086d2fa9"
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["npm", "run", "start"]
+build = ["npm", "run", "build"]
