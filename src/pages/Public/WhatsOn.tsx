@@ -1,10 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 
 const WhatsOn: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="flex flex-col min-h-screen bg-[#EAEBE6]">
       <section className="px-6 pt-10 pb-8 bg-[#EAEBE6] rounded-b-3xl">
@@ -31,10 +28,9 @@ const WhatsOn: React.FC = () => {
                      <h3 className="text-2xl font-bold text-primary mb-2">Summer Solstice Jazz</h3>
                      <p className="text-primary/70 text-sm leading-relaxed mb-4">An evening of live jazz, curated cocktails, and seasonal bites under the stars to celebrate the longest day of the year.</p>
                      
-                     <button onClick={() => navigate('/login')} className="w-full bg-[#F2F2EC] py-3 rounded-xl flex items-center justify-between px-4 hover:bg-white transition-colors">
-                        <span className="text-xs font-bold text-primary">Members RSVP</span>
-                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                     </button>
+                     <div className="w-full bg-[#F2F2EC] py-3 rounded-xl flex items-center justify-center px-4">
+                        <span className="text-xs font-medium text-primary/60">Members Only Event</span>
+                     </div>
                  </div>
              </div>
          </div>
@@ -67,7 +63,6 @@ const WhatsOn: React.FC = () => {
             category="Community" 
             title="Independence Day BBQ" 
             desc="Family-friendly celebration on The Lawn. Gourmet BBQ stations, games, and music." 
-            onClick={() => navigate('/login')}
         />
          <ListItem 
             day="12" 
@@ -75,7 +70,6 @@ const WhatsOn: React.FC = () => {
             category="Art" 
             title="Private Art Viewing" 
             desc="Exclusive preview of local modern art collection. Wine and cheese pairing included." 
-            onClick={() => navigate('/login')}
             dark
         />
       </div>
@@ -85,7 +79,7 @@ const WhatsOn: React.FC = () => {
   );
 };
 
-const ListItem: React.FC<any> = ({ day, month, category, title, desc, onClick, dark }) => (
+const ListItem: React.FC<any> = ({ day, month, category, title, desc, dark }) => (
   <article className={`group p-6 rounded-[2rem] mx-2 ${dark ? 'bg-[#293515] text-white' : 'bg-[#F2F2EC] text-primary'}`}>
      <div className="flex justify-between items-start mb-4">
         <div className={`w-16 h-20 flex-shrink-0 flex flex-col items-center justify-center rounded-xl ${dark ? 'bg-white/10 text-white' : 'bg-[#EAEBE6] text-primary'}`}>
@@ -96,11 +90,7 @@ const ListItem: React.FC<any> = ({ day, month, category, title, desc, onClick, d
      </div>
      
      <h3 className="text-xl font-bold mb-2">{title}</h3>
-     <p className={`text-sm leading-relaxed mb-4 ${dark ? 'text-white/60' : 'text-primary/70'}`}>{desc}</p>
-     
-     <button onClick={onClick} className={`text-xs font-bold flex items-center gap-1 ${dark ? 'text-white' : 'text-primary'}`}>
-        Member Login to RSVP <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-     </button>
+     <p className={`text-sm leading-relaxed ${dark ? 'text-white/60' : 'text-primary/70'}`}>{desc}</p>
   </article>
 );
 

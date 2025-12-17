@@ -7,7 +7,7 @@ import Logo from '../../components/Logo';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'members' | 'simulator'>('cafe');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'members' | 'simulator'>('members');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route
@@ -71,11 +71,11 @@ const AdminDashboard: React.FC = () => {
       {/* Bottom Nav - Fixed with iOS Safe Area */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-6 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
         <ul className="flex justify-between items-center text-white/50 w-full max-w-md mx-auto">
-            <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
-            <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
-            <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
-            <NavItem icon="campaign" label="Updates" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
             <NavItem icon="groups" label="Members" active={activeTab === 'members'} onClick={() => setActiveTab('members')} />
+            <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
+            <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
+            <NavItem icon="campaign" label="Updates" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
+            <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
         </ul>
       </nav>
 
@@ -213,61 +213,168 @@ const CafeAdmin: React.FC = () => {
 
 // --- EVENTS ADMIN ---
 
-const EventsAdmin: React.FC = () => {
-    const { events, addEvent, updateEvent, deleteEvent, syncEventbrite } = useData();
-    const [isEditing, setIsEditing] = useState(false);
-    const [editId, setEditId] = useState<string | null>(null);
-    const [isSyncing, setIsSyncing] = useState(false);
-    const [newItem, setNewItem] = useState<Partial<EventData>>({ category: 'Social' });
+interface DBEvent {
+    id: number;
+    title: string;
+    description: string;
+    event_date: string;
+    start_time: string;
+    end_time: string;
+    location: string;
+    category: string;
+    image_url: string | null;
+    max_attendees: number | null;
+}
 
-    const openEdit = (event: EventData) => {
+const CATEGORY_TABS = [
+    { id: 'all', label: 'All', icon: 'calendar_month' },
+    { id: 'Social', label: 'Events', icon: 'celebration' },
+    { id: 'Wellness', label: 'Classes', icon: 'fitness_center' },
+    { id: 'MedSpa', label: 'MedSpa', icon: 'spa' },
+    { id: 'Dining', label: 'Dining', icon: 'restaurant' },
+];
+
+const EventsAdmin: React.FC = () => {
+    const [events, setEvents] = useState<DBEvent[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [activeCategory, setActiveCategory] = useState('all');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
+    const [newItem, setNewItem] = useState<Partial<DBEvent>>({ category: 'Social' });
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchEvents = async () => {
+        try {
+            const res = await fetch('/api/events');
+            const data = await res.json();
+            setEvents(data);
+        } catch (err) {
+            console.error('Failed to fetch events:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchEvents();
+    }, []);
+
+    const filteredEvents = activeCategory === 'all' 
+        ? events 
+        : events.filter(e => e.category === activeCategory);
+
+    const openEdit = (event: DBEvent) => {
         setNewItem(event);
         setEditId(event.id);
         setIsEditing(true);
     };
 
     const openCreate = () => {
-        setNewItem({ category: 'Social' });
+        setNewItem({ category: activeCategory === 'all' ? 'Social' : activeCategory });
         setEditId(null);
         setIsEditing(true);
     };
 
-    const handleSave = () => {
-        if (!newItem.title) return;
+    const handleSave = async () => {
+        setError(null);
         
-        const event: EventData = {
-            id: editId || Math.random().toString(36).substr(2, 9),
-            source: newItem.source || 'internal',
-            title: newItem.title,
-            category: newItem.category || 'Social',
-            date: newItem.date || 'TBD',
-            time: newItem.time || 'TBD',
-            location: newItem.location || 'The Lounge',
-            image: newItem.image || 'https://via.placeholder.com/400',
+        if (!newItem.title?.trim()) {
+            setError('Title is required');
+            return;
+        }
+        if (!newItem.event_date) {
+            setError('Date is required');
+            return;
+        }
+        if (!newItem.start_time) {
+            setError('Start time is required');
+            return;
+        }
+        
+        const payload = {
+            title: newItem.title.trim(),
             description: newItem.description || '',
-            attendees: newItem.attendees || []
+            event_date: newItem.event_date,
+            start_time: newItem.start_time,
+            end_time: newItem.end_time || newItem.start_time,
+            location: newItem.location || 'The Lounge',
+            category: newItem.category || 'Social',
+            image_url: newItem.image_url || null,
+            max_attendees: newItem.max_attendees || null,
         };
 
-        if (editId) {
-            updateEvent(event);
-        } else {
-            addEvent(event);
+        setIsSaving(true);
+        try {
+            const res = editId 
+                ? await fetch(`/api/events/${editId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                })
+                : await fetch('/api/events', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+            
+            if (!res.ok) {
+                throw new Error('Failed to save');
+            }
+            
+            await fetchEvents();
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Failed to save event:', err);
+            setError('Failed to save event. Please try again.');
+        } finally {
+            setIsSaving(false);
         }
-        setIsEditing(false);
     };
 
-    const handleSync = async () => {
-        setIsSyncing(true);
-        await syncEventbrite();
-        setIsSyncing(false);
+    const handleDelete = async (id: number) => {
+        try {
+            await fetch(`/api/events/${id}`, { method: 'DELETE' });
+            fetchEvents();
+        } catch (err) {
+            console.error('Failed to delete event:', err);
+        }
+    };
+
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return 'TBD';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    };
+
+    const formatTime = (timeStr: string) => {
+        if (!timeStr) return '';
+        const [hours, mins] = timeStr.split(':').map(Number);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const h12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+        return `${h12}:${mins.toString().padStart(2, '0')} ${period}`;
     };
 
     return (
         <div>
-             <div className="flex justify-end gap-2 mb-4">
-                <button onClick={handleSync} disabled={isSyncing} className="bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white px-3 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm hover:bg-gray-50 disabled:opacity-50 text-xs uppercase tracking-wide">
-                    <span className={`material-symbols-outlined text-[16px] ${isSyncing ? 'animate-spin' : ''}`}>sync</span> {isSyncing ? 'Syncing...' : 'Sync Eventbrite'}
-                </button>
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4">
+                {CATEGORY_TABS.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveCategory(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-all ${
+                            activeCategory === tab.id 
+                                ? 'bg-primary text-white shadow-md' 
+                                : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            <div className="flex justify-end mb-4">
                 <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md">
                     <span className="material-symbols-outlined">add</span> Create
                 </button>
@@ -277,51 +384,80 @@ const EventsAdmin: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
                         <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">{editId ? 'Edit Event' : 'Create Event'}</h3>
+                        {error && (
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg text-sm mb-4">
+                                {error}
+                            </div>
+                        )}
                         <div className="space-y-3 mb-6">
-                            <input className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Event Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
+                            <input className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
                             <select className="w-full border p-3 rounded-lg bg-white dark:bg-black/20 dark:border-white/10 dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
-                                <option>Social</option>
-                                <option>Dining</option>
-                                <option>Wellness</option>
-                                <option>Sport</option>
+                                <option value="Social">Event</option>
+                                <option value="Wellness">Class</option>
+                                <option value="MedSpa">MedSpa</option>
+                                <option value="Dining">Dining</option>
+                                <option value="Sport">Sport</option>
                             </select>
-                            <div className="grid grid-cols-2 gap-3">
-                                <input className="border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Date" value={newItem.date || ''} onChange={e => setNewItem({...newItem, date: e.target.value})} />
-                                <input className="border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Time" value={newItem.time || ''} onChange={e => setNewItem({...newItem, time: e.target.value})} />
+                            <div className="grid grid-cols-1 gap-3">
+                                <input type="date" className="border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" value={newItem.event_date || ''} onChange={e => setNewItem({...newItem, event_date: e.target.value})} />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <input type="time" className="border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Start Time" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} />
+                                    <input type="time" className="border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="End Time" value={newItem.end_time || ''} onChange={e => setNewItem({...newItem, end_time: e.target.value})} />
+                                </div>
                             </div>
                             <input className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Location" value={newItem.location || ''} onChange={e => setNewItem({...newItem, location: e.target.value})} />
-                            <input className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Image URL" value={newItem.image || ''} onChange={e => setNewItem({...newItem, image: e.target.value})} />
+                            <input className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Image URL (optional)" value={newItem.image_url || ''} onChange={e => setNewItem({...newItem, image_url: e.target.value})} />
+                            <input type="number" className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Max Attendees (optional)" value={newItem.max_attendees || ''} onChange={e => setNewItem({...newItem, max_attendees: parseInt(e.target.value) || null})} />
                             <textarea className="w-full border p-3 rounded-lg dark:bg-black/20 dark:border-white/10 dark:text-white" placeholder="Description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                         </div>
                         <div className="flex gap-3 justify-end">
-                            <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
-                            <button onClick={handleSave} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md">Save</button>
+                            <button onClick={() => { setIsEditing(false); setError(null); }} className="px-4 py-2 text-gray-500 font-bold" disabled={isSaving}>Cancel</button>
+                            <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md disabled:opacity-50 flex items-center gap-2">
+                                {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {events.map(event => (
-                    <div key={event.id} onClick={() => openEdit(event)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all">
-                        {event.source === 'eventbrite' && (
-                             <div className="absolute top-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase px-2 py-1 rounded-bl-lg z-10">Eventbrite</div>
-                        )}
-                        <div className="flex gap-4">
-                            <img src={event.image} alt="" className="w-20 h-20 object-cover rounded-lg bg-gray-100 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-lg text-primary dark:text-white leading-tight mb-1 truncate">{event.title}</h4>
-                                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-accent/20 text-primary px-1.5 py-0.5 rounded mb-2">{event.category}</span>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{event.date} • {event.time}</p>
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                    <span className="material-symbols-outlined animate-spin text-2xl text-gray-400">progress_activity</span>
+                </div>
+            ) : filteredEvents.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                    <span className="material-symbols-outlined text-4xl mb-2 block">event_busy</span>
+                    <p>No {activeCategory === 'all' ? 'events' : activeCategory.toLowerCase()} found</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredEvents.map(event => (
+                        <div key={event.id} onClick={() => openEdit(event)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all">
+                            <div className="flex gap-4">
+                                <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-white/5 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                    {event.image_url ? (
+                                        <img src={event.image_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-white/20">
+                                            {event.category === 'Wellness' ? 'fitness_center' : event.category === 'MedSpa' ? 'spa' : event.category === 'Dining' ? 'restaurant' : 'celebration'}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-lg text-primary dark:text-white leading-tight mb-1 truncate">{event.title}</h4>
+                                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-accent/20 text-primary px-1.5 py-0.5 rounded mb-2">{event.category}</span>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.event_date)} • {formatTime(event.start_time)}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
+                                <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="text-red-500 text-xs font-bold uppercase tracking-wider hover:bg-red-50 px-2 py-1 rounded">Delete</button>
                             </div>
                         </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
-                            <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
-                            <button onClick={(e) => { e.stopPropagation(); deleteEvent(event.id); }} className="text-red-500 text-xs font-bold uppercase tracking-wider hover:bg-red-50 px-2 py-1 rounded">Delete</button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

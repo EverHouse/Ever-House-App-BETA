@@ -43,7 +43,7 @@ const Profile: React.FC = () => {
          </div>
          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user.name}</h1>
          <div className="flex items-center gap-2 mt-2">
-            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${isDark ? 'glass-button' : 'bg-brand-green/10 text-brand-green'}`}>{user.tier} Member</span>
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-brand-green text-[#F2F2EC]">{user.tier} Member</span>
             <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>#{user.id}</span>
          </div>
       </div>

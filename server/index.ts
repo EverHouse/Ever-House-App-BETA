@@ -334,6 +334,40 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
+app.put('/api/events/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, end_time = $5, 
+       location = $6, category = $7, image_url = $8, max_attendees = $9
+       WHERE id = $10 RETURNING *`,
+      [title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Event update error:', error);
+    res.status(500).json({ error: 'Failed to update event' });
+  }
+});
+
+app.delete('/api/events/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM events WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Event delete error:', error);
+    res.status(500).json({ error: 'Failed to delete event' });
+  }
+});
+
 app.get('/api/rsvps', async (req, res) => {
   try {
     const { user_email } = req.query;
