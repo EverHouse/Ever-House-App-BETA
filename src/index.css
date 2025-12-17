@@ -204,3 +204,23 @@ html.dark body {
 .text-accessible-muted {
   color: rgba(255, 255, 255, 0.7);
 }
+
+/* Scroll fade indicators for horizontal scroll areas */
+.scroll-fade-right {
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
+
+.scroll-fade-both {
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
