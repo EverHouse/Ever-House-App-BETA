@@ -79,7 +79,8 @@ const Sims: React.FC = () => {
   const { user } = useData();
   const tierPermissions = getTierPermissions(user?.tier || 'Social');
   const canBookSimulators = canAccessResource(user?.tier || 'Social', 'simulator');
-  const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
+  const advanceDays = Math.min(tierPermissions.advanceBookingDays, 14);
+  const dates = useMemo(() => generateDates(advanceDays), [advanceDays]);
   
   const [activeTab, setActiveTab] = useState<'request' | 'my-requests'>('request');
   const [selectedDate, setSelectedDate] = useState(dates[0]);
@@ -294,22 +295,15 @@ const Sims: React.FC = () => {
         
         {activeTab === 'request' && (
           <div className="px-4">
-            {!canBookSimulators ? (
-              <div className="py-12 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-3xl text-brand-green">lock</span>
+            {!canBookSimulators && (
+              <div className="mb-4 p-4 bg-accent/20 border border-accent/30 rounded-xl flex items-center gap-3">
+                <span className="material-symbols-outlined text-brand-green">info</span>
+                <div>
+                  <p className="font-medium text-brand-green">Simulator Access Unavailable</p>
+                  <p className="text-sm text-brand-green/70">Your tier doesn't include simulator booking. <a href="/membership" className="underline">View upgrade options</a></p>
                 </div>
-                <h3 className="text-lg font-bold text-brand-green mb-2">Simulator Access Not Available</h3>
-                <p className="text-brand-green/60 text-sm mb-6">Your current membership tier doesn't include simulator booking. Upgrade to Core, Premium, or Corporate to access TrackMan simulators.</p>
-                <a 
-                  href="/membership" 
-                  className="inline-block px-6 py-3 bg-brand-green text-white rounded-xl font-medium text-sm"
-                >
-                  View Membership Options
-                </a>
               </div>
-            ) : (
-              <>
+            )}
             {showSuccess && (
               <div className="mb-4 p-4 bg-green-500/20 border border-green-500/30 rounded-xl flex items-center gap-3">
                 <span className="material-symbols-outlined text-green-600">check_circle</span>
@@ -444,9 +438,9 @@ const Sims: React.FC = () => {
             
             <button
               onClick={handleSubmitRequest}
-              disabled={!selectedTime || isSubmitting}
+              disabled={!selectedTime || isSubmitting || !canBookSimulators}
               className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 ${
-                selectedTime && !isSubmitting
+                selectedTime && !isSubmitting && canBookSimulators
                   ? 'bg-brand-green text-white shadow-lg active:scale-95'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
@@ -468,8 +462,6 @@ const Sims: React.FC = () => {
               <p className="text-center text-sm text-brand-green/60 mt-3">
                 {formatDate(selectedDate.date)} at {formatTime12(selectedTime)} for {duration} minutes
               </p>
-            )}
-              </>
             )}
           </div>
         )}

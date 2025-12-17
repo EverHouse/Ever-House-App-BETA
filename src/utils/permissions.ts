@@ -35,7 +35,7 @@ export const TIER_PERMISSIONS: Record<BaseTier, TierPermissions> = {
   },
   VIP: {
     canBookSimulators: true,
-    advanceBookingDays: 365,
+    advanceBookingDays: 14,
     guestPassesPerYear: 999,
     dailySimulatorMinutes: 999,
     unlimitedAccess: true,
