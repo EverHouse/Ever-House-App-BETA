@@ -115,9 +115,12 @@ export function getBaseTier(tierName: string): BaseTier {
   return 'Social';
 }
 
-export function isFoundingMember(tierName: string): boolean {
+export function isFoundingMember(tierName: string, isFounding?: boolean): boolean {
+  if (isFounding !== undefined) {
+    return isFounding;
+  }
   if (!tierName) return false;
-  return tierName.toLowerCase().startsWith('founding');
+  return tierName.toLowerCase().startsWith('founding') || tierName.toLowerCase().includes('founding');
 }
 
 export function isVIPMember(tierName: string): boolean {

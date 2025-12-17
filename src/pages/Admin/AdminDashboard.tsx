@@ -669,19 +669,24 @@ const MembersAdmin: React.FC = () => {
         if (subTab === 'members' && tierFilter !== 'All') {
             filtered = filtered.filter(m => {
                 const tier = m.tier || '';
-                // Handle tier variants like "Founding Core" -> check if tier contains the filter
+                // Handle "Founding" filter using isFounding property
+                if (tierFilter === 'Founding') {
+                    return m.isFounding === true;
+                }
+                // For other tiers, check exact match or tier includes the filter
                 return tier === tierFilter || tier.includes(tierFilter);
             });
         }
         
-        // Apply search
+        // Apply search (also search for "founding" in isFounding members)
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(m => 
                 m.name.toLowerCase().includes(query) ||
                 m.email.toLowerCase().includes(query) ||
                 (m.tier && m.tier.toLowerCase().includes(query)) ||
-                (m.phone && m.phone.toLowerCase().includes(query))
+                (m.phone && m.phone.toLowerCase().includes(query)) ||
+                (query === 'founding' && m.isFounding === true)
             );
         }
         
@@ -845,7 +850,7 @@ const MembersAdmin: React.FC = () => {
                                         <option>Core</option>
                                         <option>Premium</option>
                                         <option>Corporate</option>
-                                        <option>Founding</option>
+                                        <option>VIP</option>
                                     </select>
                                 </div>
                                 <div className="flex-1">
@@ -856,6 +861,19 @@ const MembersAdmin: React.FC = () => {
                                         <option>Suspended</option>
                                     </select>
                                 </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-2 rounded-lg bg-accent/10 border border-accent/20">
+                                <input 
+                                    type="checkbox" 
+                                    id="isFounding" 
+                                    checked={selectedMember.isFounding || false} 
+                                    onChange={e => setSelectedMember({...selectedMember, isFounding: e.target.checked})}
+                                    className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <label htmlFor="isFounding" className="flex-1">
+                                    <span className="text-sm font-bold text-primary dark:text-white">Founding Member</span>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Charter member who joined during launch</p>
+                                </label>
                             </div>
                             {/* Role selector - only for admins */}
                             {isAdmin && (
@@ -963,6 +981,9 @@ const MembersAdmin: React.FC = () => {
                         <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className="bg-primary/5 dark:bg-white/10 text-primary dark:text-white px-2 py-0.5 rounded text-xs font-bold">{m.tier}</span>
+                                {m.isFounding && (
+                                    <span className="bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent px-2 py-0.5 rounded text-[10px] font-bold uppercase">Founding</span>
+                                )}
                                 {m.role && m.role !== 'member' && (
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>
                                         {m.role}
@@ -1008,7 +1029,14 @@ const MembersAdmin: React.FC = () => {
                         {filteredList.map(m => (
                             <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
                                 <td className="p-4 font-medium text-primary dark:text-white">{m.name}</td>
-                                <td className="p-4"><span className="bg-primary/10 dark:bg-white/10 text-primary dark:text-white px-2 py-1 rounded text-xs font-bold">{m.tier}</span></td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-1">
+                                        <span className="bg-primary/10 dark:bg-white/10 text-primary dark:text-white px-2 py-1 rounded text-xs font-bold">{m.tier}</span>
+                                        {m.isFounding && (
+                                            <span className="bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent px-2 py-1 rounded text-[10px] font-bold uppercase">Founding</span>
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded text-xs font-bold ${
                                         m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 

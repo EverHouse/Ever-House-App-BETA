@@ -44,6 +44,7 @@ export interface MemberProfile {
   id: string;
   name: string;
   tier: string;
+  isFounding?: boolean;
   status: 'Active' | 'Pending';
   email: string;
   phone: string;
@@ -222,7 +223,8 @@ const INITIAL_MEMBERS: MemberProfile[] = [
   { 
     id: '8821', 
     name: "Alexander James", 
-    tier: "Founding", 
+    tier: "Core", 
+    isFounding: true,
     status: "Active", 
     email: "alex@example.com", 
     phone: "+1 (949) 555-0101",
@@ -233,6 +235,7 @@ const INITIAL_MEMBERS: MemberProfile[] = [
     id: '8822', 
     name: "Sarah Connor", 
     tier: "Core", 
+    isFounding: false,
     status: "Active", 
     email: "sarah@example.com", 
     phone: "+1 (949) 555-0102",
@@ -243,6 +246,7 @@ const INITIAL_MEMBERS: MemberProfile[] = [
     id: '8823', 
     name: "James Bond", 
     tier: "Premium", 
+    isFounding: false,
     status: "Active", 
     email: "jb@example.com", 
     phone: "+1 (949) 555-0007",
@@ -253,6 +257,7 @@ const INITIAL_MEMBERS: MemberProfile[] = [
     id: '8824', 
     name: "Ellen Ripley", 
     tier: "Social", 
+    isFounding: false,
     status: "Pending", 
     email: "ellen@example.com", 
     phone: "+1 (949) 555-0104",

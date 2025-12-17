@@ -77,7 +77,7 @@ const Profile: React.FC = () => {
          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user.name}</h1>
          <div className="flex items-center gap-2 mt-2">
             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-brand-green text-[#F2F2EC]">{getBaseTier(user.tier || '')} Member</span>
-            {isFoundingMember(user.tier || '') && (
+            {isFoundingMember(user.tier || '', user.isFounding) && (
                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding</span>
             )}
             {isVIPMember(user.tier || '') && (
@@ -99,7 +99,7 @@ const Profile: React.FC = () => {
                <img src="/assets/logos/monogram-white.png" className="w-8 h-8 opacity-90" alt="" />
                <div className="flex flex-col items-end gap-1">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#F2F2EC]/60">Even House</span>
-                  {isFoundingMember(user.tier || '') && (
+                  {isFoundingMember(user.tier || '', user.isFounding) && (
                      <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding Member</span>
                   )}
                   {isVIPMember(user.tier || '') && (
@@ -250,7 +250,7 @@ const Profile: React.FC = () => {
                         <h2 className="text-2xl font-bold mb-1 text-[#F2F2EC]">{user.name}</h2>
                         <p className="text-[#F2F2EC]/50 text-sm uppercase tracking-widest">{getBaseTier(user.tier || '')} Member</p>
                         <div className="flex items-center justify-center gap-2 mt-2">
-                           {isFoundingMember(user.tier || '') && (
+                           {isFoundingMember(user.tier || '', user.isFounding) && (
                               <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding Member</span>
                            )}
                            {isVIPMember(user.tier || '') && (
