@@ -37,6 +37,9 @@ A private members club application built with React, Vite, and TypeScript. The a
 - **events**: id, title, description, event_date, start_time, end_time, location, category, max_attendees
 - **event_rsvps**: id, event_id, user_email, status
 - **guest_passes**: id, member_email, passes_used, passes_total, last_reset_date
+- **bays**: id, name, description, is_active - TrackMan simulator bays
+- **booking_requests**: id, user_email, user_name, bay_id, bay_preference, request_date, start_time, end_time, duration_minutes, notes, status (pending/approved/declined/cancelled), staff_notes, suggested_time, reviewed_by, reviewed_at
+- **notifications**: id, user_email, title, message, type, related_id, related_type, is_read, created_at
 
 ## API Endpoints
 - `GET /api/resources` - List all bookable resources
@@ -53,6 +56,14 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `GET /api/guest-passes/:email?tier=X` - Get member's guest pass usage
 - `POST /api/guest-passes/:email/use` - Use a guest pass
 - `PUT /api/guest-passes/:email` - Update guest pass total
+- `GET /api/bays` - List all simulator bays
+- `GET /api/booking-requests?user_email=X` - Get user's booking requests (or all with include_all=true for staff)
+- `POST /api/booking-requests` - Create a new booking request
+- `PUT /api/booking-requests/:id` - Update request status (approve/decline with conflict detection)
+- `GET /api/approved-bookings?start_date=X&end_date=Y` - Get approved bookings for calendar view
+- `GET /api/notifications?user_email=X` - Get user's notifications
+- `PUT /api/notifications/:id/read` - Mark notification as read
+- `PUT /api/notifications/mark-all-read?user_email=X` - Mark all notifications as read
 
 ## Integrations
 - **HubSpot CRM**: Connected via OAuth for managing contacts/members
@@ -94,6 +105,19 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `getMaxBookingDate(tier)` - Returns max bookable date based on advance days
 
 ## Recent Changes (December 2024)
+- **Simulator Booking Request System**: Members request slots, staff approve/decline
+  - Member Sims page at /sims with 14-day availability calendar
+  - Request form with date, time slot, duration (30/60/90 min), optional bay preference
+  - My Requests tab shows pending/approved/declined/cancelled status
+  - Staff Sims tab in Admin Dashboard with pending requests queue
+  - Approve workflow requires bay assignment with conflict detection
+  - Decline workflow with optional alternative time suggestion
+  - Calendar view showing bays as lanes with approved bookings
+- **In-App Notifications**: Real-time notification system
+  - Bell icon with unread badge in member portal header
+  - Notification panel shows booking status updates
+  - Mark as read and mark all read functionality
+  - Auto-fetches every 30 seconds
 - **Theme System**: Light/Dark/System theme toggle in Profile settings
   - ThemeContext manages theme state and persists to localStorage
   - System mode follows OS preference automatically
