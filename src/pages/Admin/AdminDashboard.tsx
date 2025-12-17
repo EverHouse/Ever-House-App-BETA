@@ -23,7 +23,7 @@ const AdminDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col">
       
       {/* Header */}
-      <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40">
+      <header className="sticky top-0 flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40">
         <button 
           onClick={() => setIsMenuOpen(true)}
           className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
@@ -194,16 +194,16 @@ const CafeAdmin: React.FC = () => {
                              {item.image ? <img src={item.image} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center"><span className="material-symbols-outlined text-gray-400">restaurant</span></div>}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start gap-2">
-                                <h4 className="font-bold text-gray-900 dark:text-white truncate">{item.name}</h4>
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-gray-900 dark:text-white truncate flex-1">{item.name}</h4>
                                 <span className="font-bold text-primary dark:text-white whitespace-nowrap">${item.price}</span>
+                                <button onClick={(e) => { e.stopPropagation(); deleteCafeItem(item.id); }} className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                                    <span className="material-symbols-outlined">delete</span>
+                                </button>
                             </div>
                             <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60 px-1.5 py-0.5 rounded mt-1 mb-1">{item.category}</span>
                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.desc}</p>
                         </div>
-                        <button onClick={(e) => { e.stopPropagation(); deleteCafeItem(item.id); }} className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
-                            <span className="material-symbols-outlined">delete</span>
-                        </button>
                     </div>
                 ))}
             </div>
