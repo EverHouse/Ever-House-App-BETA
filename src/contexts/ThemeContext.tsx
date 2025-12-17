@@ -57,6 +57,13 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } else {
       document.documentElement.classList.remove('dark');
     }
+    
+    // Update theme-color meta tag to match header bar color
+    const themeColor = effectiveTheme === 'dark' ? '#0f120a' : '#293515';
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeColor);
+    }
   }, [effectiveTheme]);
 
   const setThemeMode = (mode: ThemeMode) => {
