@@ -62,10 +62,10 @@ img, video, svg {
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
 }
 
-/* Menu-specific safe area that preserves base horizontal padding */
+/* Menu-specific safe area that preserves base padding */
 .safe-area-inset-menu {
-  padding-top: env(safe-area-inset-top, 0);
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+  padding-top: max(1.5rem, env(safe-area-inset-top, 0));
+  padding-bottom: max(2rem, calc(1rem + env(safe-area-inset-bottom, 0)));
   padding-left: max(2rem, env(safe-area-inset-left, 0));
   padding-right: max(2rem, env(safe-area-inset-right, 0));
 }
