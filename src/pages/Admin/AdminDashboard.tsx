@@ -33,9 +33,9 @@ const AdminDashboard: React.FC = () => {
         
         <div className="cursor-pointer flex items-center justify-center" onClick={() => navigate('/')}>
           <img 
-            src="/assets/logos/monogram-white.png" 
+            src="/assets/logos/mascot-white.png" 
             alt="Even House" 
-            className="h-10 w-auto"
+            className="h-12 w-auto"
           />
         </div>
 

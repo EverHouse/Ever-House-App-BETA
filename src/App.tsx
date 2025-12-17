@@ -189,13 +189,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </button>
                 
                 <div 
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer" 
+                  className="cursor-pointer flex items-center justify-center" 
                   onClick={() => navigate('/')}
                 >
                   <Logo 
                     isMemberRoute={isMemberRoute} 
                     isDarkBackground={true} 
-                    className="h-8 w-auto"
+                    className="h-10 w-auto"
                   />
                 </div>
 
