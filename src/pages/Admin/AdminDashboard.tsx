@@ -626,32 +626,479 @@ const MembersAdmin: React.FC = () => {
 
 // --- SIMULATOR ADMIN ---
 
+interface BookingRequest {
+    id: number;
+    user_email: string;
+    user_name: string;
+    bay_id: number | null;
+    bay_name: string | null;
+    bay_preference: string | null;
+    request_date: string;
+    start_time: string;
+    end_time: string;
+    duration_minutes: number;
+    notes: string | null;
+    status: 'pending' | 'approved' | 'declined' | 'cancelled';
+    staff_notes: string | null;
+    suggested_time: string | null;
+    created_at: string;
+}
+
+interface Bay {
+    id: number;
+    name: string;
+    description: string;
+}
+
+const formatTime12 = (time24: string): string => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return `${hours12}:${minutes?.toString().padStart(2, '0') || '00'} ${period}`;
+};
+
+const formatDateShort = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
 const SimulatorAdmin: React.FC = () => {
-    const { bookings } = useData();
-    const simBookings = bookings.filter(b => b.type === 'golf');
+    const { user } = useData();
+    const [activeView, setActiveView] = useState<'requests' | 'calendar'>('requests');
+    const [requests, setRequests] = useState<BookingRequest[]>([]);
+    const [bays, setBays] = useState<Bay[]>([]);
+    const [approvedBookings, setApprovedBookings] = useState<BookingRequest[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedRequest, setSelectedRequest] = useState<BookingRequest | null>(null);
+    const [actionModal, setActionModal] = useState<'approve' | 'decline' | null>(null);
+    const [selectedBayId, setSelectedBayId] = useState<number | null>(null);
+    const [staffNotes, setStaffNotes] = useState('');
+    const [suggestedTime, setSuggestedTime] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    
+    const [calendarDate, setCalendarDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const [reqRes, bayRes] = await Promise.all([
+                    fetch('/api/booking-requests?include_all=true'),
+                    fetch('/api/bays')
+                ]);
+                
+                if (reqRes.ok) {
+                    const data = await reqRes.json();
+                    setRequests(data);
+                }
+                if (bayRes.ok) {
+                    const data = await bayRes.json();
+                    setBays(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch data:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        const fetchApprovedBookings = async () => {
+            const startDate = calendarDate;
+            const endDate = new Date(new Date(calendarDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            try {
+                const res = await fetch(`/api/approved-bookings?start_date=${startDate}&end_date=${endDate}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setApprovedBookings(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch approved bookings:', err);
+            }
+        };
+        if (activeView === 'calendar') {
+            fetchApprovedBookings();
+        }
+    }, [activeView, calendarDate]);
+
+    const pendingRequests = requests.filter(r => r.status === 'pending');
+    const processedRequests = requests.filter(r => r.status !== 'pending');
+
+    const handleApprove = async () => {
+        if (!selectedRequest || !selectedBayId) {
+            setError('Please select a bay');
+            return;
+        }
+        
+        setIsProcessing(true);
+        setError(null);
+        
+        try {
+            const res = await fetch(`/api/booking-requests/${selectedRequest.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: 'approved',
+                    bay_id: selectedBayId,
+                    staff_notes: staffNotes || null,
+                    reviewed_by: user?.email
+                })
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to approve');
+            }
+            
+            const updated = await res.json();
+            setRequests(prev => prev.map(r => r.id === updated.id ? { ...r, ...updated } : r));
+            setActionModal(null);
+            setSelectedRequest(null);
+            setSelectedBayId(null);
+            setStaffNotes('');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleDecline = async () => {
+        if (!selectedRequest) return;
+        
+        setIsProcessing(true);
+        setError(null);
+        
+        try {
+            const res = await fetch(`/api/booking-requests/${selectedRequest.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: 'declined',
+                    staff_notes: staffNotes || null,
+                    suggested_time: suggestedTime ? suggestedTime + ':00' : null,
+                    reviewed_by: user?.email
+                })
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to decline');
+            }
+            
+            const updated = await res.json();
+            setRequests(prev => prev.map(r => r.id === updated.id ? { ...r, ...updated } : r));
+            setActionModal(null);
+            setSelectedRequest(null);
+            setStaffNotes('');
+            setSuggestedTime('');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300';
+            case 'approved': return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300';
+            case 'declined': return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
+            default: return 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400';
+        }
+    };
+
+    const hours = Array.from({ length: 14 }, (_, i) => 8 + i);
 
     return (
         <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {simBookings.length > 0 ? simBookings.map(b => (
-                    <div key={b.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-200 dark:border-white/5 flex justify-between items-center">
-                        <div className="flex gap-4 items-center">
-                            <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">
-                                <span className="text-xs font-bold uppercase">{b.date}</span>
+            <div className="flex gap-2 mb-6">
+                <button
+                    onClick={() => setActiveView('requests')}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
+                        activeView === 'requests'
+                            ? 'bg-primary text-white dark:bg-white dark:text-primary'
+                            : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10'
+                    }`}
+                >
+                    Requests Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                </button>
+                <button
+                    onClick={() => setActiveView('calendar')}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
+                        activeView === 'calendar'
+                            ? 'bg-primary text-white dark:bg-white dark:text-primary'
+                            : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10'
+                    }`}
+                >
+                    Calendar View
+                </button>
+            </div>
+
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                    <span className="material-symbols-outlined animate-spin text-primary dark:text-white">progress_activity</span>
+                </div>
+            ) : activeView === 'requests' ? (
+                <div className="space-y-6">
+                    <div>
+                        <h3 className="font-bold text-primary dark:text-white mb-3 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-yellow-500">pending</span>
+                            Pending Requests ({pendingRequests.length})
+                        </h3>
+                        {pendingRequests.length === 0 ? (
+                            <div className="py-8 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
+                                <p className="text-gray-400">No pending requests</p>
                             </div>
-                            <div>
-                                <h4 className="font-bold text-primary dark:text-white">{b.title}</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">{b.time} • {b.details}</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {pendingRequests.map(req => (
+                                    <div key={req.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-200 dark:border-white/5">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p className="font-bold text-primary dark:text-white">{req.user_name || req.user_email}</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                </p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">{req.duration_minutes} min</p>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                {req.status}
+                                            </span>
+                                        </div>
+                                        
+                                        {req.bay_preference && (
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                                <span className="font-medium">Bay preference:</span> {req.bay_preference}
+                                            </p>
+                                        )}
+                                        {req.notes && (
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 italic mb-3">"{req.notes}"</p>
+                                        )}
+                                        
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => { setSelectedRequest(req); setActionModal('approve'); setSelectedBayId(req.bay_id); }}
+                                                className="flex-1 py-2 px-3 bg-green-500 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 hover:bg-green-600 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">check</span>
+                                                Approve
+                                            </button>
+                                            <button
+                                                onClick={() => { setSelectedRequest(req); setActionModal('decline'); }}
+                                                className="flex-1 py-2 px-3 bg-red-500 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 hover:bg-red-600 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">close</span>
+                                                Decline
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div>
+                        <h3 className="font-bold text-primary dark:text-white mb-3 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-gray-400">history</span>
+                            Recent Processed ({processedRequests.length})
+                        </h3>
+                        {processedRequests.length === 0 ? (
+                            <div className="py-8 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
+                                <p className="text-gray-400">No processed requests yet</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {processedRequests.slice(0, 10).map(req => (
+                                    <div key={req.id} className="bg-white dark:bg-surface-dark p-3 rounded-lg shadow-sm border border-gray-200 dark:border-white/5 flex justify-between items-center">
+                                        <div>
+                                            <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {formatDateShort(req.request_date)} • {formatTime12(req.start_time)}
+                                            </p>
+                                        </div>
+                                        <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                            {req.status}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ) : (
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <button
+                            onClick={() => {
+                                const d = new Date(calendarDate);
+                                d.setDate(d.getDate() - 1);
+                                setCalendarDate(d.toISOString().split('T')[0]);
+                            }}
+                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10"
+                        >
+                            <span className="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <h3 className="font-bold text-primary dark:text-white">
+                            {formatDateShort(calendarDate)}
+                        </h3>
+                        <button
+                            onClick={() => {
+                                const d = new Date(calendarDate);
+                                d.setDate(d.getDate() + 1);
+                                setCalendarDate(d.toISOString().split('T')[0]);
+                            }}
+                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10"
+                        >
+                            <span className="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+                    
+                    <div className="overflow-x-auto">
+                        <div className="min-w-[600px]">
+                            <div className="grid gap-1" style={{ gridTemplateColumns: `80px repeat(${bays.length}, 1fr)` }}>
+                                <div className="h-10"></div>
+                                {bays.map(bay => (
+                                    <div key={bay.id} className="h-10 flex items-center justify-center font-bold text-sm text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10">
+                                        {bay.name}
+                                    </div>
+                                ))}
+                                
+                                {hours.map(hour => (
+                                    <React.Fragment key={hour}>
+                                        <div className="h-12 flex items-center justify-end pr-2 text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                            {formatTime12(`${hour.toString().padStart(2, '0')}:00`)}
+                                        </div>
+                                        {bays.map(bay => {
+                                            const booking = approvedBookings.find(b => {
+                                                if (b.bay_id !== bay.id || b.request_date !== calendarDate) return false;
+                                                const [bh] = b.start_time.split(':').map(Number);
+                                                return bh === hour;
+                                            });
+                                            
+                                            return (
+                                                <div
+                                                    key={`${bay.id}-${hour}`}
+                                                    className={`h-12 border border-gray-100 dark:border-white/5 ${
+                                                        booking 
+                                                            ? 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30' 
+                                                            : 'bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-white/5'
+                                                    }`}
+                                                >
+                                                    {booking && (
+                                                        <div className="p-1 h-full flex flex-col justify-center">
+                                                            <p className="text-xs font-medium text-green-700 dark:text-green-300 truncate">
+                                                                {booking.user_name || 'Booked'}
+                                                            </p>
+                                                            <p className="text-[10px] text-green-600 dark:text-green-400">
+                                                                {booking.duration_minutes}min
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </React.Fragment>
+                                ))}
                             </div>
                         </div>
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-white/10 text-xs font-bold rounded text-gray-500 dark:text-gray-300">Confirmed</span>
                     </div>
-                )) : (
-                    <div className="col-span-full py-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
-                        <p className="text-gray-400">No simulator bookings yet.</p>
+                </div>
+            )}
+
+            {actionModal && selectedRequest && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl">
+                        <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
+                            {actionModal === 'approve' ? 'Approve Request' : 'Decline Request'}
+                        </h3>
+                        
+                        <div className="mb-4 p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                            <p className="font-medium text-primary dark:text-white">{selectedRequest.user_name || selectedRequest.user_email}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {formatDateShort(selectedRequest.request_date)} • {formatTime12(selectedRequest.start_time)} - {formatTime12(selectedRequest.end_time)}
+                            </p>
+                        </div>
+                        
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
+                                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                            </div>
+                        )}
+                        
+                        {actionModal === 'approve' && (
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign Bay *</label>
+                                <select
+                                    value={selectedBayId || ''}
+                                    onChange={(e) => setSelectedBayId(Number(e.target.value))}
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                >
+                                    <option value="">Select a bay...</option>
+                                    {bays.map(bay => (
+                                        <option key={bay.id} value={bay.id}>{bay.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        
+                        {actionModal === 'decline' && (
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Suggest Alternative Time (Optional)</label>
+                                <input
+                                    type="time"
+                                    value={suggestedTime}
+                                    onChange={(e) => setSuggestedTime(e.target.value)}
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                />
+                            </div>
+                        )}
+                        
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Staff Notes (Optional)</label>
+                            <textarea
+                                value={staffNotes}
+                                onChange={(e) => setStaffNotes(e.target.value)}
+                                placeholder="Add a note for the member..."
+                                rows={2}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white resize-none"
+                            />
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); }}
+                                className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                                disabled={isProcessing}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={actionModal === 'approve' ? handleApprove : handleDecline}
+                                disabled={isProcessing || (actionModal === 'approve' && !selectedBayId)}
+                                className={`flex-1 py-3 px-4 rounded-lg text-white font-medium flex items-center justify-center gap-2 ${
+                                    actionModal === 'approve' 
+                                        ? 'bg-green-500 hover:bg-green-600' 
+                                        : 'bg-red-500 hover:bg-red-600'
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                                {isProcessing ? (
+                                    <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                                ) : (
+                                    <span className="material-symbols-outlined text-sm">
+                                        {actionModal === 'approve' ? 'check' : 'close'}
+                                    </span>
+                                )}
+                                {actionModal === 'approve' ? 'Approve' : 'Decline'}
+                            </button>
+                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };
