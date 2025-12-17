@@ -347,7 +347,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Main Content - No top padding needed due to flex layout */}
             <main 
                 id="main-content"
-                className={`flex-1 overflow-y-auto overscroll-contain relative scrollbar-hide ${showHeader ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
+                className={`flex-1 overflow-y-auto overscroll-contain relative scrollbar-hide ${isMemberRoute && !isAdminRoute ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
             >
                 <div key={location.pathname} className={`${shouldAnimate ? 'animate-page-enter' : ''} min-h-full`}>
                     {children}

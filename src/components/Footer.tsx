@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const Footer: React.FC = () => (
-  <footer className="bg-[#293515] text-[#E7E7DC] py-16 px-6 text-center rounded-t-[2.5rem] mt-8 w-full max-w-full overflow-hidden">
+  <footer className="bg-[#293515] text-[#E7E7DC] py-16 px-6 text-center rounded-t-[2.5rem] mt-8 -mx-4 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)]">
      <div className="flex justify-center mb-8">
        <img src="/assets/logos/EH-guy logo white.png" alt="Even House" className="h-16 w-auto" />
      </div>
