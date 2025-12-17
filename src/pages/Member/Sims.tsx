@@ -122,7 +122,7 @@ const Sims: React.FC = () => {
     }
     
     for (const block of availability.blocks) {
-      if (block.block_type === 'blocked' || block.block_type === 'maintenance') {
+      if (block.block_type === 'blocked' || block.block_type === 'maintenance' || block.block_type === 'calendar') {
         const [bh, bm] = block.start_time.split(':').map(Number);
         const [eh, em] = block.end_time.split(':').map(Number);
         const blockStart = bh * 60 + bm;

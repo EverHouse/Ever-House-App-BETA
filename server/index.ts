@@ -840,9 +840,45 @@ app.get('/api/bays/:bayId/availability', async (req, res) => {
       [bayId, date]
     );
     
+    // Also fetch Google Calendar busy times for this date
+    let calendarBlocks: any[] = [];
+    try {
+      const calendar = await getGoogleCalendarClient();
+      const startTime = new Date(date as string);
+      startTime.setHours(0, 0, 0, 0);
+      const endTime = new Date(date as string);
+      endTime.setHours(23, 59, 59, 999);
+      
+      const response = await calendar.freebusy.query({
+        requestBody: {
+          timeMin: startTime.toISOString(),
+          timeMax: endTime.toISOString(),
+          items: [{ id: 'primary' }],
+        },
+      });
+      
+      const busySlots = response.data.calendars?.primary?.busy || [];
+      calendarBlocks = busySlots.map((slot: any) => {
+        // Convert to Pacific timezone for correct local time display
+        const start = new Date(slot.start);
+        const end = new Date(slot.end);
+        const startPT = start.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hour12: false });
+        const endPT = end.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hour12: false });
+        return {
+          start_time: startPT,
+          end_time: endPT,
+          block_type: 'calendar',
+          notes: 'Google Calendar event'
+        };
+      });
+    } catch (calError) {
+      // Calendar fetch is non-blocking - continue without calendar data
+      if (!isProduction) console.log('Calendar availability fetch skipped:', (calError as Error).message);
+    }
+    
     res.json({
       bookings: bookings.rows,
-      blocks: blocks.rows
+      blocks: [...blocks.rows, ...calendarBlocks]
     });
   } catch (error: any) {
     if (!isProduction) console.error('Availability error:', error);
@@ -1221,6 +1257,179 @@ app.delete('/api/availability-blocks/:id', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Delete block error:', error);
     res.status(500).json({ error: 'Failed to delete availability block' });
+  }
+});
+
+// --- CAFE MENU API ---
+
+// Get all active cafe items
+app.get('/api/cafe-menu', async (req, res) => {
+  try {
+    const { category, include_inactive } = req.query;
+    const conditions: string[] = [];
+    const params: any[] = [];
+    
+    if (include_inactive !== 'true') {
+      conditions.push('is_active = true');
+    }
+    
+    if (category) {
+      params.push(category);
+      conditions.push(`category = $${params.length}`);
+    }
+    
+    let query = 'SELECT * FROM cafe_items';
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    query += ' ORDER BY sort_order, category, name';
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Cafe menu error:', error);
+    res.status(500).json({ error: 'Failed to fetch cafe menu' });
+  }
+});
+
+// Create cafe item (staff only)
+app.post('/api/cafe-menu', async (req, res) => {
+  try {
+    const { category, name, price, description, icon, image_url, is_active, sort_order } = req.body;
+    
+    if (!name || !category) {
+      return res.status(400).json({ error: 'Name and category are required' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO cafe_items (category, name, price, description, icon, image_url, is_active, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [category, name, price || 0, description || '', icon || '', image_url || '', is_active !== false, sort_order || 0]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Cafe item creation error:', error);
+    res.status(500).json({ error: 'Failed to create cafe item' });
+  }
+});
+
+// Update cafe item
+app.put('/api/cafe-menu/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { category, name, price, description, icon, image_url, is_active, sort_order } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE cafe_items 
+       SET category = COALESCE($1, category),
+           name = COALESCE($2, name),
+           price = COALESCE($3, price),
+           description = COALESCE($4, description),
+           icon = COALESCE($5, icon),
+           image_url = COALESCE($6, image_url),
+           is_active = COALESCE($7, is_active),
+           sort_order = COALESCE($8, sort_order)
+       WHERE id = $9 RETURNING *`,
+      [category, name, price, description, icon, image_url, is_active, sort_order, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Cafe item not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Cafe item update error:', error);
+    res.status(500).json({ error: 'Failed to update cafe item' });
+  }
+});
+
+// Delete cafe item
+app.delete('/api/cafe-menu/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM cafe_items WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Cafe item delete error:', error);
+    res.status(500).json({ error: 'Failed to delete cafe item' });
+  }
+});
+
+// --- GOOGLE CALENDAR AVAILABILITY API ---
+
+// Get calendar free/busy for date range
+app.get('/api/calendar/availability', async (req, res) => {
+  try {
+    const { start_date, end_date } = req.query;
+    
+    if (!start_date || !end_date) {
+      return res.status(400).json({ error: 'start_date and end_date are required' });
+    }
+    
+    const calendar = await getGoogleCalendarClient();
+    
+    const startTime = new Date(start_date as string);
+    startTime.setHours(0, 0, 0, 0);
+    
+    const endTime = new Date(end_date as string);
+    endTime.setHours(23, 59, 59, 999);
+    
+    const response = await calendar.freebusy.query({
+      requestBody: {
+        timeMin: startTime.toISOString(),
+        timeMax: endTime.toISOString(),
+        items: [{ id: 'primary' }],
+      },
+    });
+    
+    const busySlots = response.data.calendars?.primary?.busy || [];
+    
+    res.json({
+      busy: busySlots.map((slot: any) => ({
+        start: slot.start,
+        end: slot.end,
+      })),
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Calendar availability error:', error);
+    res.status(500).json({ error: 'Failed to fetch calendar availability', details: error.message });
+  }
+});
+
+// Get calendar events for date range (detailed view for staff)
+app.get('/api/calendar/events', async (req, res) => {
+  try {
+    const { start_date, end_date } = req.query;
+    
+    if (!start_date || !end_date) {
+      return res.status(400).json({ error: 'start_date and end_date are required' });
+    }
+    
+    const calendar = await getGoogleCalendarClient();
+    
+    const response = await calendar.events.list({
+      calendarId: 'primary',
+      timeMin: new Date(start_date as string).toISOString(),
+      timeMax: new Date(end_date as string).toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+    
+    const events = (response.data.items || []).map((event: any) => ({
+      id: event.id,
+      title: event.summary,
+      description: event.description,
+      start: event.start?.dateTime || event.start?.date,
+      end: event.end?.dateTime || event.end?.date,
+      location: event.location,
+    }));
+    
+    res.json(events);
+  } catch (error: any) {
+    if (!isProduction) console.error('Calendar events error:', error);
+    res.status(500).json({ error: 'Failed to fetch calendar events', details: error.message });
   }
 });
 

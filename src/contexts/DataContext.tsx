@@ -76,9 +76,9 @@ interface DataContextType {
   logout: () => void;
 
   // Data Actions
-  addCafeItem: (item: CafeItem) => void;
-  updateCafeItem: (item: CafeItem) => void;
-  deleteCafeItem: (id: string) => void;
+  addCafeItem: (item: CafeItem) => Promise<void>;
+  updateCafeItem: (item: CafeItem) => Promise<void>;
+  deleteCafeItem: (id: string) => Promise<void>;
   
   addEvent: (event: EventData) => void;
   updateEvent: (event: EventData) => void;
@@ -299,18 +299,39 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   });
 
   const [isLoading, setIsLoading] = useState(true);
-  const [cafeMenu, setCafeMenu] = useState<CafeItem[]>(INITIAL_CAFE);
+  const [cafeMenu, setCafeMenu] = useState<CafeItem[]>([]);
   const [events, setEvents] = useState<EventData[]>(INITIAL_EVENTS);
   const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
   const [members, setMembers] = useState<MemberProfile[]>(INITIAL_MEMBERS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
 
   useEffect(() => {
-    // Simulate initial data fetch
-    const timer = setTimeout(() => {
+    const fetchCafeMenu = async () => {
+      try {
+        const res = await fetch('/api/cafe-menu');
+        if (res.ok) {
+          const data = await res.json();
+          const formatted = data.map((item: any) => ({
+            id: item.id.toString(),
+            category: item.category,
+            name: item.name,
+            price: parseFloat(item.price) || 0,
+            desc: item.description || '',
+            icon: item.icon || '',
+            image: item.image_url || ''
+          }));
+          setCafeMenu(formatted);
+        } else {
+          setCafeMenu(INITIAL_CAFE);
+        }
+      } catch (err) {
+        console.error('Failed to fetch cafe menu:', err);
+        setCafeMenu(INITIAL_CAFE);
+      } finally {
         setIsLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+      }
+    };
+    fetchCafeMenu();
   }, []);
 
   // Auth Logic
@@ -343,10 +364,70 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     localStorage.removeItem('eh_member_session');
   };
 
-  // Cafe Actions
-  const addCafeItem = (item: CafeItem) => setCafeMenu(prev => [...prev, item]);
-  const updateCafeItem = (item: CafeItem) => setCafeMenu(prev => prev.map(i => i.id === item.id ? item : i));
-  const deleteCafeItem = (id: string) => setCafeMenu(prev => prev.filter(i => i.id !== id));
+  // Cafe Actions (now using API)
+  const addCafeItem = async (item: CafeItem) => {
+    try {
+      const res = await fetch('/api/cafe-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: item.category,
+          name: item.name,
+          price: item.price,
+          description: item.desc,
+          icon: item.icon,
+          image_url: item.image
+        })
+      });
+      if (res.ok) {
+        const newItem = await res.json();
+        setCafeMenu(prev => [...prev, {
+          id: newItem.id.toString(),
+          category: newItem.category,
+          name: newItem.name,
+          price: parseFloat(newItem.price) || 0,
+          desc: newItem.description || '',
+          icon: newItem.icon || '',
+          image: newItem.image_url || ''
+        }]);
+      }
+    } catch (err) {
+      console.error('Failed to add cafe item:', err);
+    }
+  };
+  
+  const updateCafeItem = async (item: CafeItem) => {
+    try {
+      const res = await fetch(`/api/cafe-menu/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: item.category,
+          name: item.name,
+          price: item.price,
+          description: item.desc,
+          icon: item.icon,
+          image_url: item.image
+        })
+      });
+      if (res.ok) {
+        setCafeMenu(prev => prev.map(i => i.id === item.id ? item : i));
+      }
+    } catch (err) {
+      console.error('Failed to update cafe item:', err);
+    }
+  };
+  
+  const deleteCafeItem = async (id: string) => {
+    try {
+      const res = await fetch(`/api/cafe-menu/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCafeMenu(prev => prev.filter(i => i.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete cafe item:', err);
+    }
+  };
 
   // Event Actions
   const addEvent = (item: EventData) => setEvents(prev => [...prev, item]);

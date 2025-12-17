@@ -54,6 +54,10 @@ A private members club application built with React, Vite, and TypeScript. The a
 - `GET /api/rsvps?user_email=X` - Get user's RSVPs
 - `POST /api/rsvps` - RSVP to an event
 - `DELETE /api/rsvps/:event_id/:user_email` - Cancel RSVP
+- `GET /api/cafe-menu` - List all cafe menu items
+- `POST /api/cafe-menu` - Create a cafe menu item
+- `PUT /api/cafe-menu/:id` - Update a cafe menu item
+- `DELETE /api/cafe-menu/:id` - Delete a cafe menu item
 - `GET /api/hubspot/contacts` - Fetch contacts from HubSpot CRM
 - `POST /api/hubspot/forms/:formType` - Submit to HubSpot forms (tour-request, membership, private-hire, guest-checkin)
 - `GET /api/guest-passes/:email?tier=X` - Get member's guest pass usage
@@ -81,6 +85,14 @@ A private members club application built with React, Vite, and TypeScript. The a
   - Events marked with eventbrite_id and eventbrite_url for linking back to ticketing
   - Orange "Eventbrite" badge on synced events with direct link to ticket page
   - Environment variables: EVENTBRITE_PRIVATE_TOKEN
+- **Google Calendar**: Booking calendar integration
+  - Approved simulator bookings automatically create calendar events
+  - Calendar free/busy times shown as blocked slots in bay availability
+  - GET /api/calendar/availability - Fetch free/busy times for date range
+  - GET /api/calendar/events - List calendar events for date range (staff)
+- **Apple Messages for Business**: Direct messaging support
+  - Black "Apple Messages" button on Contact page
+  - Links to Apple Business Chat with business ID: 91355ac7-f202-440d-a19e-f5a1cca16848
 
 ## Design System
 - **Typography**: Inter (sans-serif) exclusively across all pages
