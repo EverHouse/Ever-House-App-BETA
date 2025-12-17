@@ -581,6 +581,405 @@ app.post('/api/hubspot/forms/:formType', async (req, res) => {
   }
 });
 
+// ============== SIMULATOR BOOKING REQUEST SYSTEM ==============
+
+// Get all active bays
+app.get('/api/bays', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM bays WHERE is_active = true ORDER BY name');
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Bays error:', error);
+    res.status(500).json({ error: 'Failed to fetch bays' });
+  }
+});
+
+// Get availability for a bay on a specific date
+app.get('/api/bays/:bayId/availability', async (req, res) => {
+  try {
+    const { bayId } = req.params;
+    const { date } = req.query;
+    
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
+    
+    // Get approved bookings for this bay on this date
+    const bookings = await pool.query(
+      `SELECT start_time, end_time, user_name FROM booking_requests 
+       WHERE bay_id = $1 AND request_date = $2 AND status = 'approved'
+       ORDER BY start_time`,
+      [bayId, date]
+    );
+    
+    // Get availability blocks for this bay on this date
+    const blocks = await pool.query(
+      `SELECT start_time, end_time, block_type, notes FROM availability_blocks 
+       WHERE bay_id = $1 AND block_date = $2
+       ORDER BY start_time`,
+      [bayId, date]
+    );
+    
+    res.json({
+      bookings: bookings.rows,
+      blocks: blocks.rows
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Availability error:', error);
+    res.status(500).json({ error: 'Failed to fetch availability' });
+  }
+});
+
+// Get all booking requests (for staff) or user's requests (for members)
+app.get('/api/booking-requests', async (req, res) => {
+  try {
+    const { user_email, status, include_all } = req.query;
+    
+    let query = `SELECT br.*, b.name as bay_name 
+                 FROM booking_requests br 
+                 LEFT JOIN bays b ON br.bay_id = b.id`;
+    const params: any[] = [];
+    const conditions: string[] = [];
+    
+    if (user_email && !include_all) {
+      params.push(user_email);
+      conditions.push(`br.user_email = $${params.length}`);
+    }
+    
+    if (status) {
+      params.push(status);
+      conditions.push(`br.status = $${params.length}`);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    query += ' ORDER BY br.created_at DESC';
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Booking requests error:', error);
+    res.status(500).json({ error: 'Failed to fetch booking requests' });
+  }
+});
+
+// Create a new booking request
+app.post('/api/booking-requests', async (req, res) => {
+  try {
+    const { user_email, user_name, bay_id, bay_preference, request_date, start_time, duration_minutes, notes } = req.body;
+    
+    if (!user_email || !request_date || !start_time || !duration_minutes) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Calculate end time
+    const [hours, mins] = start_time.split(':').map(Number);
+    const totalMins = hours * 60 + mins + duration_minutes;
+    const endHours = Math.floor(totalMins / 60);
+    const endMins = totalMins % 60;
+    const end_time = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
+    
+    const result = await pool.query(
+      `INSERT INTO booking_requests 
+       (user_email, user_name, bay_id, bay_preference, request_date, start_time, duration_minutes, end_time, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [user_email, user_name, bay_id || null, bay_preference, request_date, start_time, duration_minutes, end_time, notes]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Booking request creation error:', error);
+    res.status(500).json({ error: 'Failed to create booking request' });
+  }
+});
+
+// Update booking request status (approve/decline)
+app.put('/api/booking-requests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, staff_notes, suggested_time, reviewed_by, bay_id } = req.body;
+    
+    if (!['pending', 'approved', 'declined', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    // If approving, check for conflicts
+    if (status === 'approved') {
+      const request = await pool.query('SELECT * FROM booking_requests WHERE id = $1', [id]);
+      if (request.rows.length === 0) {
+        return res.status(404).json({ error: 'Request not found' });
+      }
+      
+      const req_data = request.rows[0];
+      const assignedBayId = bay_id || req_data.bay_id;
+      
+      if (!assignedBayId) {
+        return res.status(400).json({ error: 'Bay must be assigned before approval' });
+      }
+      
+      // Check for overlapping approved bookings
+      const conflicts = await pool.query(
+        `SELECT * FROM booking_requests 
+         WHERE bay_id = $1 AND request_date = $2 AND status = 'approved' AND id != $3
+         AND (
+           (start_time <= $4 AND end_time > $4) OR
+           (start_time < $5 AND end_time >= $5) OR
+           (start_time >= $4 AND end_time <= $5)
+         )`,
+        [assignedBayId, req_data.request_date, id, req_data.start_time, req_data.end_time]
+      );
+      
+      if (conflicts.rows.length > 0) {
+        return res.status(409).json({ error: 'Time slot conflicts with existing booking' });
+      }
+      
+      // Update with bay assignment
+      const result = await pool.query(
+        `UPDATE booking_requests 
+         SET status = $1, staff_notes = $2, suggested_time = $3, reviewed_by = $4, reviewed_at = CURRENT_TIMESTAMP, bay_id = $5, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $6 RETURNING *`,
+        [status, staff_notes, suggested_time, reviewed_by, assignedBayId, id]
+      );
+      
+      // Create notification for member
+      const updated = result.rows[0];
+      await pool.query(
+        `INSERT INTO notifications (user_email, title, message, type, related_id, related_type)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          updated.user_email,
+          'Booking Request Approved',
+          `Your simulator booking for ${updated.request_date} at ${updated.start_time.substring(0, 5)} has been approved.`,
+          'booking_approved',
+          updated.id,
+          'booking_request'
+        ]
+      );
+      
+      return res.json(result.rows[0]);
+    }
+    
+    // For decline
+    if (status === 'declined') {
+      const result = await pool.query(
+        `UPDATE booking_requests 
+         SET status = $1, staff_notes = $2, suggested_time = $3, reviewed_by = $4, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $5 RETURNING *`,
+        [status, staff_notes, suggested_time, reviewed_by, id]
+      );
+      
+      const updated = result.rows[0];
+      const message = suggested_time 
+        ? `Your simulator booking request for ${updated.request_date} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
+        : `Your simulator booking request for ${updated.request_date} was declined.${staff_notes ? ' Note: ' + staff_notes : ''}`;
+      
+      await pool.query(
+        `INSERT INTO notifications (user_email, title, message, type, related_id, related_type)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [updated.user_email, 'Booking Request Declined', message, 'booking_declined', updated.id, 'booking_request']
+      );
+      
+      return res.json(result.rows[0]);
+    }
+    
+    // Generic update
+    const result = await pool.query(
+      `UPDATE booking_requests SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
+      [status, id]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Booking request update error:', error);
+    res.status(500).json({ error: 'Failed to update booking request' });
+  }
+});
+
+// Get approved bookings for calendar view (all bays, date range)
+app.get('/api/approved-bookings', async (req, res) => {
+  try {
+    const { start_date, end_date } = req.query;
+    
+    let query = `SELECT br.*, b.name as bay_name 
+                 FROM booking_requests br 
+                 JOIN bays b ON br.bay_id = b.id
+                 WHERE br.status = 'approved'`;
+    const params: any[] = [];
+    
+    if (start_date) {
+      params.push(start_date);
+      query += ` AND br.request_date >= $${params.length}`;
+    }
+    if (end_date) {
+      params.push(end_date);
+      query += ` AND br.request_date <= $${params.length}`;
+    }
+    
+    query += ' ORDER BY br.request_date, br.start_time';
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Approved bookings error:', error);
+    res.status(500).json({ error: 'Failed to fetch approved bookings' });
+  }
+});
+
+// ============== NOTIFICATIONS ==============
+
+// Get notifications for a user
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { user_email, unread_only } = req.query;
+    
+    if (!user_email) {
+      return res.status(400).json({ error: 'user_email is required' });
+    }
+    
+    let query = 'SELECT * FROM notifications WHERE user_email = $1';
+    const params: any[] = [user_email];
+    
+    if (unread_only === 'true') {
+      query += ' AND is_read = false';
+    }
+    
+    query += ' ORDER BY created_at DESC LIMIT 50';
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Notifications error:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// Get unread notification count
+app.get('/api/notifications/count', async (req, res) => {
+  try {
+    const { user_email } = req.query;
+    
+    if (!user_email) {
+      return res.status(400).json({ error: 'user_email is required' });
+    }
+    
+    const result = await pool.query(
+      'SELECT COUNT(*) as count FROM notifications WHERE user_email = $1 AND is_read = false',
+      [user_email]
+    );
+    
+    res.json({ count: parseInt(result.rows[0].count) });
+  } catch (error: any) {
+    if (!isProduction) console.error('Notification count error:', error);
+    res.status(500).json({ error: 'Failed to fetch notification count' });
+  }
+});
+
+// Mark notification as read
+app.put('/api/notifications/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      'UPDATE notifications SET is_read = true WHERE id = $1 RETURNING *',
+      [id]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Notification update error:', error);
+    res.status(500).json({ error: 'Failed to update notification' });
+  }
+});
+
+// Mark all notifications as read for a user
+app.put('/api/notifications/mark-all-read', async (req, res) => {
+  try {
+    const { user_email } = req.body;
+    
+    if (!user_email) {
+      return res.status(400).json({ error: 'user_email is required' });
+    }
+    
+    await pool.query(
+      'UPDATE notifications SET is_read = true WHERE user_email = $1 AND is_read = false',
+      [user_email]
+    );
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Mark all read error:', error);
+    res.status(500).json({ error: 'Failed to mark notifications as read' });
+  }
+});
+
+// Staff: Create availability block
+app.post('/api/availability-blocks', async (req, res) => {
+  try {
+    const { bay_id, block_date, start_time, end_time, block_type, notes, created_by } = req.body;
+    
+    if (!bay_id || !block_date || !start_time || !end_time || !block_type) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO availability_blocks (bay_id, block_date, start_time, end_time, block_type, notes, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [bay_id, block_date, start_time, end_time, block_type, notes, created_by]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Availability block creation error:', error);
+    res.status(500).json({ error: 'Failed to create availability block' });
+  }
+});
+
+// Staff: Get availability blocks for date range
+app.get('/api/availability-blocks', async (req, res) => {
+  try {
+    const { start_date, end_date, bay_id } = req.query;
+    
+    let query = `SELECT ab.*, b.name as bay_name FROM availability_blocks ab
+                 JOIN bays b ON ab.bay_id = b.id WHERE 1=1`;
+    const params: any[] = [];
+    
+    if (start_date) {
+      params.push(start_date);
+      query += ` AND ab.block_date >= $${params.length}`;
+    }
+    if (end_date) {
+      params.push(end_date);
+      query += ` AND ab.block_date <= $${params.length}`;
+    }
+    if (bay_id) {
+      params.push(bay_id);
+      query += ` AND ab.bay_id = $${params.length}`;
+    }
+    
+    query += ' ORDER BY ab.block_date, ab.start_time';
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Availability blocks error:', error);
+    res.status(500).json({ error: 'Failed to fetch availability blocks' });
+  }
+});
+
+// Staff: Delete availability block
+app.delete('/api/availability-blocks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM availability_blocks WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Delete block error:', error);
+    res.status(500).json({ error: 'Failed to delete availability block' });
+  }
+});
+
 if (isProduction) {
   app.use((req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/api/')) {
