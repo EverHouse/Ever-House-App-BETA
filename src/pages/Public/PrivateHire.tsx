@@ -67,7 +67,7 @@ const PrivateHire: React.FC = () => {
        </div>
 
        <div className="mt-4 bg-white rounded-t-[2.5rem] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
-          <div className="px-6 py-12 flex flex-col items-center text-center">
+          <div className="px-6 py-8 flex flex-col items-center text-center">
              <div className="p-3 bg-[#F2F2EC] rounded-xl mb-4">
                 <span className="material-symbols-outlined text-primary text-3xl">calendar_today</span>
              </div>
