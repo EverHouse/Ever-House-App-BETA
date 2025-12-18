@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar, serial, boolean, text, date } from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, timestamp, varchar, serial, boolean, text, date, time, integer, numeric } from "drizzle-orm/pg-core";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -60,6 +60,160 @@ export const wellnessClasses = pgTable("wellness_classes", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Magic links table - for passwordless authentication
+export const magicLinks = pgTable("magic_links", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").notNull(),
+  token: varchar("token").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Bays table - golf simulator bays
+export const bays = pgTable("bays", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Availability blocks table - blocked time slots
+export const availabilityBlocks = pgTable("availability_blocks", {
+  id: serial("id").primaryKey(),
+  bayId: integer("bay_id"),
+  blockDate: date("block_date").notNull(),
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
+  blockType: varchar("block_type").notNull(),
+  notes: text("notes"),
+  createdBy: varchar("created_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Booking requests table - pending booking requests
+export const bookingRequests = pgTable("booking_requests", {
+  id: serial("id").primaryKey(),
+  userEmail: varchar("user_email").notNull(),
+  userName: varchar("user_name"),
+  bayId: integer("bay_id"),
+  bayPreference: varchar("bay_preference"),
+  requestDate: date("request_date").notNull(),
+  startTime: time("start_time").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  endTime: time("end_time").notNull(),
+  notes: text("notes"),
+  status: varchar("status").default("pending"),
+  staffNotes: text("staff_notes"),
+  suggestedTime: time("suggested_time"),
+  reviewedBy: varchar("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  calendarEventId: varchar("calendar_event_id"),
+});
+
+// Resources table - bookable resources
+export const resources = pgTable("resources", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  type: varchar("type").notNull(),
+  description: text("description"),
+  capacity: integer("capacity").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Bookings table - confirmed bookings
+export const bookings = pgTable("bookings", {
+  id: serial("id").primaryKey(),
+  resourceId: integer("resource_id"),
+  userEmail: varchar("user_email").notNull(),
+  bookingDate: date("booking_date").notNull(),
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
+  status: varchar("status").default("confirmed"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Cafe items table - menu items
+export const cafeItems = pgTable("cafe_items", {
+  id: serial("id").primaryKey(),
+  category: varchar("category").notNull(),
+  name: varchar("name").notNull(),
+  price: numeric("price").notNull().default("0"),
+  description: text("description"),
+  icon: varchar("icon"),
+  imageUrl: text("image_url"),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Events table - club events
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  eventDate: date("event_date").notNull(),
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time"),
+  location: varchar("location"),
+  category: varchar("category"),
+  imageUrl: text("image_url"),
+  maxAttendees: integer("max_attendees"),
+  createdAt: timestamp("created_at").defaultNow(),
+  eventbriteId: varchar("eventbrite_id"),
+  eventbriteUrl: text("eventbrite_url"),
+  source: varchar("source").default("manual"),
+  visibility: varchar("visibility").default("public"),
+  googleCalendarId: varchar("google_calendar_id"),
+  requiresRsvp: boolean("requires_rsvp").default(false),
+});
+
+// Event RSVPs table - event registrations
+export const eventRsvps = pgTable("event_rsvps", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id"),
+  userEmail: varchar("user_email").notNull(),
+  status: varchar("status").default("confirmed"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Guest passes table - member guest pass tracking
+export const guestPasses = pgTable("guest_passes", {
+  id: serial("id").primaryKey(),
+  memberEmail: varchar("member_email").notNull(),
+  passesUsed: integer("passes_used").notNull().default(0),
+  passesTotal: integer("passes_total").notNull().default(4),
+  lastResetDate: date("last_reset_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Notifications table - in-app notifications
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userEmail: varchar("user_email").notNull(),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  type: varchar("type").default("info"),
+  relatedId: integer("related_id"),
+  relatedType: varchar("related_type"),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Push subscriptions table - web push notification subscriptions
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  userEmail: varchar("user_email").notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
