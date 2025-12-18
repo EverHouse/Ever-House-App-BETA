@@ -8,7 +8,7 @@ import { google } from 'googleapis';
 import webpush from 'web-push';
 import crypto from 'crypto';
 import { Resend } from 'resend';
-import { setupAuth, registerAuthRoutes, isAdmin, isStaffOrAdmin, isAdminEmail } from './replit_integrations/auth';
+import { getSession, isAdmin, isStaffOrAdmin, isAdminEmail, registerAuthRoutes } from './replit_integrations/auth';
 import { setupSupabaseAuthRoutes } from './supabase/auth';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -44,6 +44,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb' }));
+app.use(getSession());
 
 if (isProduction) {
   app.use(express.static(path.join(__dirname, '../dist')));
@@ -1168,6 +1169,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
     
     const adminStatus = await isAdminEmail(magicLink.email.toLowerCase());
     
+    const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
     const member = {
       id: contact.id,
       firstName: contact.properties.firstname || '',
@@ -1176,14 +1178,34 @@ app.post('/api/auth/verify-token', async (req, res) => {
       phone: contact.properties.phone || '',
       tier: contact.properties.membership_tier || 'Core',
       status: 'Active',
-      role: adminStatus ? 'admin' : 'member'
+      role: adminStatus ? 'admin' : 'member',
+      expires_at: Date.now() + sessionTtl
     };
     
-    res.json({ success: true, member });
+    (req.session as any).user = member;
+    
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Failed to create session' });
+      }
+      res.json({ success: true, member });
+    });
   } catch (error: any) {
     if (!isProduction) console.error('Token verification error:', error);
     res.status(500).json({ error: 'Failed to verify token' });
   }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Session destroy error:', err);
+      return res.status(500).json({ error: 'Failed to logout' });
+    }
+    res.clearCookie('connect.sid');
+    res.json({ success: true, message: 'Logged out successfully' });
+  });
 });
 
 app.get('/api/hubspot/contacts', async (req, res) => {
@@ -2557,8 +2579,7 @@ async function startServer() {
   // Setup Supabase authentication (primary auth method)
   setupSupabaseAuthRoutes(app);
   
-  // Setup Replit authentication (secondary/fallback auth method)
-  await setupAuth(app);
+  // Register auth routes for session-based authentication
   registerAuthRoutes(app);
 
   // Auto-seed cafe menu if empty

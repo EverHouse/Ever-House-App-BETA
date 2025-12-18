@@ -1,25 +1,9 @@
-import * as client from "openid-client";
-import { Strategy, type VerifyFunction } from "openid-client/passport";
-
-import passport from "passport";
 import session from "express-session";
-import type { Express, RequestHandler } from "express";
-import memoize from "memoizee";
+import type { RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { Pool } from "pg";
-import { authStorage } from "./storage";
 
 const authPool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-const getOidcConfig = memoize(
-  async () => {
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
-    );
-  },
-  { maxAge: 3600 * 1000 }
-);
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -43,126 +27,6 @@ export function getSession() {
   });
 }
 
-function updateUserSession(
-  user: any,
-  tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
-) {
-  user.claims = tokens.claims();
-  user.access_token = tokens.access_token;
-  user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
-}
-
-async function upsertUser(claims: any) {
-  await authStorage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
-}
-
-export async function setupAuth(app: Express) {
-  app.set("trust proxy", 1);
-  app.use(getSession());
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  const config = await getOidcConfig();
-
-  const verify: VerifyFunction = async (
-    tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-    verified: passport.AuthenticateCallback
-  ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
-  };
-
-  // Keep track of registered strategies
-  const registeredStrategies = new Set<string>();
-
-  // Helper function to ensure strategy exists for a domain
-  const ensureStrategy = (domain: string) => {
-    const strategyName = `replitauth:${domain}`;
-    if (!registeredStrategies.has(strategyName)) {
-      const strategy = new Strategy(
-        {
-          name: strategyName,
-          config,
-          scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/callback`,
-        },
-        verify
-      );
-      passport.use(strategy);
-      registeredStrategies.add(strategyName);
-    }
-  };
-
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
-
-  app.get("/api/login", (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
-  });
-
-  app.get("/api/callback", (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
-    })(req, res, next);
-  });
-
-  app.get("/api/logout", (req, res) => {
-    req.logout(() => {
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
-      );
-    });
-  });
-}
-
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-};
-
-// Helper function to check if email is an admin in database
 export async function isAdminEmail(email: string): Promise<boolean> {
   try {
     const result = await authPool.query(
@@ -176,15 +40,26 @@ export async function isAdminEmail(email: string): Promise<boolean> {
   }
 }
 
-// Middleware to require admin role
-export const isAdmin: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
+export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  const user = (req.session as any)?.user;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const email = user.claims?.email?.toLowerCase() || '';
+  // Session expiry is handled by express-session cookie maxAge
+  // No need to check expires_at since the session store handles TTL
+  return next();
+};
+
+export const isAdmin: RequestHandler = async (req, res, next) => {
+  const user = (req.session as any)?.user;
+
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const email = user.email?.toLowerCase() || '';
   const adminStatus = await isAdminEmail(email);
   
   if (!adminStatus) {
@@ -194,23 +69,20 @@ export const isAdmin: RequestHandler = async (req, res, next) => {
   return next();
 };
 
-// Middleware to require staff or admin role
 export const isStaffOrAdmin: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
+  const user = (req.session as any)?.user;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const email = user.claims?.email?.toLowerCase() || '';
+  const email = user.email?.toLowerCase() || '';
   
-  // Check if admin in database
   const adminStatus = await isAdminEmail(email);
   if (adminStatus) {
     return next();
   }
 
-  // Check if staff in database
   try {
     const result = await authPool.query(
       'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
