@@ -7,7 +7,7 @@ import Logo from '../../components/Logo';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'staff' | 'wellness'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'staff' | 'wellness' | 'admins'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -60,6 +60,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'simulator' && 'Simulator Bookings'}
                {activeTab === 'staff' && 'Manage Staff Access'}
                {activeTab === 'wellness' && 'Manage Wellness Classes'}
+               {activeTab === 'admins' && 'Manage Admin Access'}
            </h1>
         </div>
         
@@ -70,6 +71,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'simulator' && <SimulatorAdmin />}
         {activeTab === 'staff' && actualUser?.role === 'admin' && <StaffAdmin />}
         {activeTab === 'wellness' && <WellnessAdmin />}
+        {activeTab === 'admins' && actualUser?.role === 'admin' && <AdminsAdmin />}
       </main>
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
@@ -80,6 +82,7 @@ const AdminDashboard: React.FC = () => {
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
             <NavItem icon="spa" label="Wellness" active={activeTab === 'wellness'} onClick={() => setActiveTab('wellness')} />
             {actualUser?.role === 'admin' && <NavItem icon="badge" label="Staff" active={activeTab === 'staff'} onClick={() => setActiveTab('staff')} />}
+            {actualUser?.role === 'admin' && <NavItem icon="shield_person" label="Admins" active={activeTab === 'admins'} onClick={() => setActiveTab('admins')} />}
         </ul>
       </nav>
 
@@ -2136,6 +2139,283 @@ const StaffAdmin: React.FC = () => {
                                 className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
                             >
                                 Add Staff
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- ADMINS ADMIN (Admin only) ---
+
+interface AdminUser {
+  id: number;
+  email: string;
+  name: string | null;
+  is_active: boolean;
+  created_at: string;
+  created_by: string | null;
+}
+
+const AdminsAdmin: React.FC = () => {
+    const { actualUser } = useData();
+    const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAdding, setIsAdding] = useState(false);
+    const [newEmail, setNewEmail] = useState('');
+    const [newName, setNewName] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchAdminUsers();
+    }, []);
+
+    const fetchAdminUsers = async () => {
+        try {
+            setIsLoading(true);
+            const res = await fetch('/api/admin-users');
+            if (res.ok) {
+                const data = await res.json();
+                setAdminUsers(data);
+            }
+        } catch (err) {
+            console.error('Error fetching admin users:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAddAdmin = async () => {
+        if (!newEmail.trim()) {
+            setError('Email is required');
+            return;
+        }
+
+        try {
+            setError(null);
+            const res = await fetch('/api/admin-users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: newEmail.trim(),
+                    name: newName.trim() || null,
+                    created_by: actualUser?.email
+                })
+            });
+
+            if (res.ok) {
+                const newAdmin = await res.json();
+                setAdminUsers(prev => [newAdmin, ...prev]);
+                setNewEmail('');
+                setNewName('');
+                setIsAdding(false);
+                setSuccess('Admin added successfully');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                const data = await res.json();
+                setError(data.error || 'Failed to add admin');
+            }
+        } catch (err) {
+            setError('Failed to add admin');
+        }
+    };
+
+    const handleToggleActive = async (admin: AdminUser) => {
+        const activeCount = adminUsers.filter(a => a.is_active).length;
+        if (admin.is_active && activeCount <= 1) {
+            setError('Cannot deactivate the last active admin');
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/admin-users/${admin.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_active: !admin.is_active })
+            });
+
+            if (res.ok) {
+                setAdminUsers(prev => prev.map(a => 
+                    a.id === admin.id ? { ...a, is_active: !a.is_active } : a
+                ));
+            }
+        } catch (err) {
+            console.error('Error toggling admin status:', err);
+        }
+    };
+
+    const handleRemoveAdmin = async (admin: AdminUser) => {
+        const activeCount = adminUsers.filter(a => a.is_active).length;
+        if (admin.is_active && activeCount <= 1) {
+            setError('Cannot remove the last active admin');
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
+
+        if (!window.confirm(`Remove ${admin.email} from admins?`)) return;
+
+        try {
+            const res = await fetch(`/api/admin-users/${admin.id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                setAdminUsers(prev => prev.filter(a => a.id !== admin.id));
+                setSuccess('Admin removed');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                const data = await res.json();
+                setError(data.error || 'Failed to remove admin');
+                setTimeout(() => setError(null), 3000);
+            }
+        } catch (err) {
+            console.error('Error removing admin:', err);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-primary dark:text-white">Admin Access List</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Add email addresses to grant admin portal access
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsAdding(true)}
+                        className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                    >
+                        <span className="material-symbols-outlined text-lg">person_add</span>
+                        Add Admin
+                    </button>
+                </div>
+
+                {success && (
+                    <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
+                        {success}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                        {error}
+                    </div>
+                )}
+
+                {isLoading ? (
+                    <div className="py-8 text-center text-gray-500">Loading...</div>
+                ) : adminUsers.length === 0 ? (
+                    <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                        No admins configured. Add an email to grant admin access.
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {adminUsers.map(admin => (
+                            <div 
+                                key={admin.id}
+                                className={`flex items-center justify-between p-4 rounded-xl border ${
+                                    admin.is_active 
+                                        ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
+                                        : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                        admin.is_active ? 'bg-amber-500/10 text-amber-600' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                                    }`}>
+                                        <span className="material-symbols-outlined">shield_person</span>
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-primary dark:text-white">{admin.name || admin.email}</p>
+                                        {admin.name && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.email}</p>}
+                                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                                            {admin.is_active ? 'Active' : 'Inactive'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleToggleActive(admin)}
+                                        className={`p-2 rounded-lg transition-colors ${
+                                            admin.is_active 
+                                                ? 'text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' 
+                                                : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                        }`}
+                                        title={admin.is_active ? 'Deactivate' : 'Activate'}
+                                    >
+                                        <span className="material-symbols-outlined text-xl">
+                                            {admin.is_active ? 'toggle_on' : 'toggle_off'}
+                                        </span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleRemoveAdmin(admin)}
+                                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        title="Remove"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {isAdding && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Admin</h3>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Email Address *
+                                </label>
+                                <input
+                                    type="email"
+                                    value={newEmail}
+                                    onChange={(e) => setNewEmail(e.target.value)}
+                                    placeholder="admin@example.com"
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Name (optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    placeholder="John Doe"
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                />
+                            </div>
+
+                            {error && (
+                                <p className="text-red-600 text-sm">{error}</p>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }}
+                                className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddAdmin}
+                                className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                            >
+                                Add Admin
                             </button>
                         </div>
                     </div>

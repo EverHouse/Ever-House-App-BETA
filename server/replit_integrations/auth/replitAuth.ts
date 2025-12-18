@@ -6,7 +6,10 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import { Pool } from "pg";
 import { authStorage } from "./storage";
+
+const authPool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const getOidcConfig = memoize(
   async () => {
@@ -161,10 +164,8 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
 // Helper function to check if email is an admin in database
 export async function isAdminEmail(email: string): Promise<boolean> {
-  const { Pool } = require('pg');
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   try {
-    const result = await pool.query(
+    const result = await authPool.query(
       'SELECT id FROM admin_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
       [email]
     );
@@ -210,10 +211,8 @@ export const isStaffOrAdmin: RequestHandler = async (req, res, next) => {
   }
 
   // Check if staff in database
-  const { Pool } = require('pg');
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   try {
-    const result = await pool.query(
+    const result = await authPool.query(
       'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
       [email]
     );
