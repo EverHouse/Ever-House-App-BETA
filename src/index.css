@@ -24,7 +24,13 @@
   box-sizing: border-box;
 }
 
-html, body {
+html {
+  height: 100%;
+  width: 100%;
+  background-color: #293515;
+}
+
+body {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -90,8 +96,12 @@ html, body {
 }
 
 html.dark body {
-  background-color: #293515;
+  background-color: #0f120a;
   color: white;
+}
+
+html.dark {
+  background-color: #0f120a;
 }
 
 .liquid-bg {
