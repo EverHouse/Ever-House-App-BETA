@@ -35,7 +35,19 @@ export const staffUsers = pgTable("staff_users", {
   createdBy: varchar("created_by"),
 });
 
+// Admin users table - emails that get admin access
+export const adminUsers = pgTable("admin_users", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").notNull().unique(),
+  name: varchar("name"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type StaffUser = typeof staffUsers.$inferSelect;
 export type InsertStaffUser = typeof staffUsers.$inferInsert;
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = typeof adminUsers.$inferInsert;
