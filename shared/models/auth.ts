@@ -216,6 +216,65 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Announcements table - club announcements
+export const announcements = pgTable("announcements", {
+  id: serial("id").primaryKey(),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  priority: varchar("priority").default("normal"),
+  isActive: boolean("is_active").default(true),
+  startsAt: timestamp("starts_at"),
+  endsAt: timestamp("ends_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
+// Gallery images table - venue photos
+export const galleryImages = pgTable("gallery_images", {
+  id: serial("id").primaryKey(),
+  title: varchar("title"),
+  description: text("description"),
+  imageUrl: text("image_url").notNull(),
+  category: varchar("category"),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Member referrals table - referral tracking
+export const memberReferrals = pgTable("member_referrals", {
+  id: serial("id").primaryKey(),
+  referrerEmail: varchar("referrer_email").notNull(),
+  referredEmail: varchar("referred_email").notNull(),
+  status: varchar("status").default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+// Booking partners table - external booking integrations
+export const bookingPartners = pgTable("booking_partners", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  type: varchar("type").notNull(),
+  apiKey: varchar("api_key"),
+  webhookUrl: text("webhook_url"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Facility closures table - scheduled closures
+export const facilityClosures = pgTable("facility_closures", {
+  id: serial("id").primaryKey(),
+  title: varchar("title").notNull(),
+  reason: text("reason"),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  affectedAreas: varchar("affected_areas"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type StaffUser = typeof staffUsers.$inferSelect;
