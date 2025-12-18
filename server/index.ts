@@ -6,7 +6,7 @@ import { Pool } from 'pg';
 import { Client } from '@hubspot/api-client';
 import { google } from 'googleapis';
 import webpush from 'web-push';
-import { setupAuth, registerAuthRoutes } from './replit_integrations/auth';
+import { setupAuth, registerAuthRoutes, isAdmin, isStaffOrAdmin } from './replit_integrations/auth';
 import { setupSupabaseAuthRoutes } from './supabase/auth';
 
 // Configure web push
@@ -1068,8 +1068,8 @@ app.put('/api/members/:id/role', async (req, res) => {
   }
 });
 
-// Staff Users Management API
-app.get('/api/staff-users', async (req, res) => {
+// Staff Users Management API (Admin only)
+app.get('/api/staff-users', isAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT id, email, name, is_active, created_at, created_by FROM staff_users ORDER BY created_at DESC'
@@ -1081,7 +1081,7 @@ app.get('/api/staff-users', async (req, res) => {
   }
 });
 
-app.post('/api/staff-users', async (req, res) => {
+app.post('/api/staff-users', isAdmin, async (req, res) => {
   try {
     const { email, name, created_by } = req.body;
     
@@ -1104,7 +1104,7 @@ app.post('/api/staff-users', async (req, res) => {
   }
 });
 
-app.put('/api/staff-users/:id', async (req, res) => {
+app.put('/api/staff-users/:id', isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { email, name, is_active } = req.body;
@@ -1125,7 +1125,7 @@ app.put('/api/staff-users/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/staff-users/:id', async (req, res) => {
+app.delete('/api/staff-users/:id', isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -1145,7 +1145,7 @@ app.delete('/api/staff-users/:id', async (req, res) => {
   }
 });
 
-// Wellness Classes API
+// Wellness Classes API (Staff or Admin access for mutations, public read for members)
 app.get('/api/wellness-classes', async (req, res) => {
   try {
     const { active_only } = req.query;
@@ -1162,7 +1162,7 @@ app.get('/api/wellness-classes', async (req, res) => {
   }
 });
 
-app.post('/api/wellness-classes', async (req, res) => {
+app.post('/api/wellness-classes', isStaffOrAdmin, async (req, res) => {
   try {
     const { title, time, instructor, duration, category, spots, status, description, date } = req.body;
     
@@ -1183,7 +1183,7 @@ app.post('/api/wellness-classes', async (req, res) => {
   }
 });
 
-app.put('/api/wellness-classes/:id', async (req, res) => {
+app.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, time, instructor, duration, category, spots, status, description, date, is_active } = req.body;
@@ -1216,7 +1216,7 @@ app.put('/api/wellness-classes/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/wellness-classes/:id', async (req, res) => {
+app.delete('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     

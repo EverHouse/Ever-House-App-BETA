@@ -158,3 +158,59 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+// Admin emails list for admin-only access
+const ADMIN_EMAILS = [
+  'nick@evenhouse.club',
+  'adam@evenhouse.club',
+  'afogel@evenhouse.club'
+];
+
+// Middleware to require admin role
+export const isAdmin: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+
+  if (!req.isAuthenticated() || !user.expires_at) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const email = user.claims?.email?.toLowerCase() || '';
+  if (!ADMIN_EMAILS.includes(email)) {
+    return res.status(403).json({ message: "Forbidden: Admin access required" });
+  }
+
+  return next();
+};
+
+// Middleware to require staff or admin role
+export const isStaffOrAdmin: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+
+  if (!req.isAuthenticated() || !user.expires_at) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const email = user.claims?.email?.toLowerCase() || '';
+  
+  // Check if admin
+  if (ADMIN_EMAILS.includes(email)) {
+    return next();
+  }
+
+  // Check if staff in database
+  const { Pool } = require('pg');
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    const result = await pool.query(
+      'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+      [email]
+    );
+    if (result.rows.length > 0) {
+      return next();
+    }
+  } catch (error) {
+    console.error('Error checking staff status:', error);
+  }
+
+  return res.status(403).json({ message: "Forbidden: Staff access required" });
+};

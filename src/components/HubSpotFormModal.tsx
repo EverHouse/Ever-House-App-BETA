@@ -115,38 +115,38 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
       
-      <div className="relative bg-[#F2F2EC] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="relative bg-[#F2F2EC] dark:bg-surface-dark rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors"
         >
-          <span className="material-symbols-outlined text-xl text-primary">close</span>
+          <span className="material-symbols-outlined text-xl text-primary dark:text-white">close</span>
         </button>
 
         <div className="p-6">
           {success ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="material-symbols-outlined text-3xl text-green-600">check_circle</span>
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-3xl text-green-600 dark:text-green-400">check_circle</span>
               </div>
-              <h3 className="text-xl font-bold text-primary mb-2">Thank You!</h3>
-              <p className="text-primary/60 mb-6">We've received your submission and will be in touch soon.</p>
+              <h3 className="text-xl font-bold text-primary dark:text-white mb-2">Thank You!</h3>
+              <p className="text-primary/60 dark:text-white/60 mb-6">We've received your submission and will be in touch soon.</p>
               <button
                 onClick={handleClose}
-                className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-opacity"
+                className="px-6 py-3 bg-primary dark:bg-accent text-white dark:text-brand-green rounded-xl font-semibold hover:opacity-90 transition-opacity"
               >
                 Close
               </button>
             </div>
           ) : (
             <>
-              <h2 className="text-2xl font-bold text-primary mb-1">{title}</h2>
-              {subtitle && <p className="text-primary/60 text-sm mb-6">{subtitle}</p>}
+              <h2 className="text-2xl font-bold text-primary dark:text-white mb-1">{title}</h2>
+              {subtitle && <p className="text-primary/60 dark:text-white/60 text-sm mb-6">{subtitle}</p>}
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {fields.map(field => (
                   <div key={field.name}>
-                    <label className="block text-sm font-semibold text-primary mb-1.5 pl-1">
+                    <label className="block text-sm font-semibold text-primary dark:text-white mb-1.5 pl-1">
                       {field.label} {field.required && <span className="text-red-500">*</span>}
                     </label>
                     
@@ -158,7 +158,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                         value={formData[field.name] || ''}
                         onChange={(e) => handleChange(field.name, e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 bg-white focus:ring-2 focus:ring-primary text-primary placeholder:text-gray-400 resize-none"
+                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-primary dark:focus:ring-accent text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none"
                       />
                     ) : field.type === 'select' ? (
                       <select
@@ -166,7 +166,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                         required={field.required}
                         value={formData[field.name] || ''}
                         onChange={(e) => handleChange(field.name, e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 bg-white focus:ring-2 focus:ring-primary text-primary"
+                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-primary dark:focus:ring-accent text-primary dark:text-white"
                       >
                         <option value="">Select...</option>
                         {field.options?.map(opt => (
@@ -181,23 +181,23 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                         placeholder={field.placeholder}
                         value={formData[field.name] || ''}
                         onChange={(e) => handleChange(field.name, e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 bg-white focus:ring-2 focus:ring-primary text-primary placeholder:text-gray-400"
+                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-primary dark:focus:ring-accent text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       />
                     )}
                   </div>
                 ))}
 
                 {error && (
-                  <div className="p-3 rounded-lg bg-red-50 border border-red-100 flex items-start gap-2">
-                    <span className="material-symbols-outlined text-red-600 text-sm mt-0.5">error</span>
-                    <span className="text-sm text-red-600">{error}</span>
+                  <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-700 flex items-start gap-2">
+                    <span className="material-symbols-outlined text-red-600 dark:text-red-400 text-sm mt-0.5">error</span>
+                    <span className="text-sm text-red-600 dark:text-red-400">{error}</span>
                   </div>
                 )}
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-primary dark:bg-accent text-white dark:text-brand-green rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
