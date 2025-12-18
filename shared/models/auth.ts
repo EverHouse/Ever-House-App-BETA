@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar, boolean } from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -27,28 +27,3 @@ export const users = pgTable("users", {
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
-
-// Staff users table - emails that get staff role on login
-export const staffUsers = pgTable("staff_users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique().notNull(),
-  name: varchar("name"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  createdBy: varchar("created_by"),
-});
-
-export type StaffUser = typeof staffUsers.$inferSelect;
-export type InsertStaffUser = typeof staffUsers.$inferInsert;
-
-// Admin users table - emails that get admin role on login
-export const adminUsers = pgTable("admin_users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique().notNull(),
-  name: varchar("name"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export type AdminUser = typeof adminUsers.$inferSelect;
-export type InsertAdminUser = typeof adminUsers.$inferInsert;

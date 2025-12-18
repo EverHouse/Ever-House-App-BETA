@@ -13,19 +13,15 @@ export interface CafeItem {
   image: string;
 }
 
-export type EventSource = 'internal' | 'eventbrite' | 'google_calendar';
-export type EventVisibility = 'public' | 'members_only';
+export type EventSource = 'internal' | 'eventbrite';
 
 export interface EventData {
   id: string;
   source: EventSource;
-  visibility: EventVisibility;
-  requiresRsvp: boolean;
   externalLink?: string;
   title: string;
   category: string;
   date: string;
-  rawDate: string;
   time: string;
   location: string;
   image: string;
@@ -325,7 +321,14 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const isViewingAs = viewAsUser !== null;
   const user = viewAsUser || actualUser;
 
-  // Check auth status on mount - roles are now determined by database tables
+  // Admin emails get admin role and Premium tier
+  const ADMIN_EMAILS = [
+    'nick@evenhouse.club',
+    'adam@evenhouse.club',
+    'afogel@evenhouse.club'
+  ];
+
+  // Check auth status on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -333,32 +336,18 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
         if (res.ok) {
           const authUser = await res.json();
           const email = authUser.email?.toLowerCase() || '';
-          
-          // Check role from database via API
-          let role: 'admin' | 'staff' | 'member' = 'member';
-          let tier = 'Core';
-          
-          try {
-            const roleRes = await fetch(`/api/auth/role?email=${encodeURIComponent(email)}`);
-            if (roleRes.ok) {
-              const roleData = await roleRes.json();
-              role = roleData.role || 'member';
-              tier = roleData.tier || 'Core';
-            }
-          } catch (roleErr) {
-            console.error('Role check failed:', roleErr);
-          }
+          const isAdmin = ADMIN_EMAILS.includes(email);
           
           // Map Replit Auth user to MemberProfile
           const memberProfile: MemberProfile = {
             id: authUser.id,
             name: [authUser.firstName, authUser.lastName].filter(Boolean).join(' ') || authUser.email || 'Member',
-            tier: tier,
+            tier: isAdmin ? 'Premium' : 'Core',
             status: 'Active',
             email: authUser.email || '',
             phone: '',
             avatar: authUser.profileImageUrl,
-            role: role
+            role: isAdmin ? 'admin' : 'member'
           };
           setActualUser(memberProfile);
         }
@@ -446,14 +435,11 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           const data = await res.json();
           const formatted: EventData[] = data.map((event: any) => ({
             id: event.id.toString(),
-            source: event.source || 'internal',
-            visibility: event.visibility || 'public',
-            requiresRsvp: event.requires_rsvp ?? true,
+            source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
             externalLink: event.eventbrite_url || undefined,
             title: event.title,
             category: event.category || 'Social',
             date: formatDateShort(event.event_date),
-            rawDate: event.event_date,
             time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
             location: event.location || 'Even House',
             image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',

@@ -1039,125 +1039,32 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
   }
 });
 
-// Get user role from database tables (admin_users, staff_users)
-app.get('/api/auth/role', async (req, res) => {
+app.put('/api/members/:id/role', async (req, res) => {
   try {
-    const email = (req.query.email as string)?.toLowerCase();
-    if (!email) {
-      return res.json({ role: 'member', tier: 'Core' });
-    }
+    const { id } = req.params;
+    const { role } = req.body;
     
-    // Check if admin
-    const adminResult = await pool.query(
-      'SELECT * FROM admin_users WHERE LOWER(email) = $1 AND is_active = true',
-      [email]
-    );
-    if (adminResult.rows.length > 0) {
-      return res.json({ role: 'admin', tier: 'Premium' });
-    }
-    
-    // Check if staff
-    const staffResult = await pool.query(
-      'SELECT * FROM staff_users WHERE LOWER(email) = $1 AND is_active = true',
-      [email]
-    );
-    if (staffResult.rows.length > 0) {
-      return res.json({ role: 'staff', tier: 'Premium' });
-    }
-    
-    // Default: member
-    return res.json({ role: 'member', tier: 'Core' });
-  } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.json({ role: 'member', tier: 'Core' });
-  }
-});
-
-// Get all staff users (admin only)
-app.get('/api/staff-users', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT id, email, name, is_active, created_at FROM staff_users ORDER BY created_at DESC'
-    );
-    res.json(result.rows);
-  } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Failed to fetch staff users' });
-  }
-});
-
-// Add staff user (admin only)
-app.post('/api/staff-users', async (req, res) => {
-  try {
-    const { email, name } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    if (!['member', 'staff', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
     }
     
     const result = await pool.query(
-      'INSERT INTO staff_users (email, name, is_active) VALUES ($1, $2, true) ON CONFLICT (email) DO UPDATE SET name = $2, is_active = true RETURNING *',
-      [email.toLowerCase(), name || null]
+      'UPDATE users SET role = $1 WHERE id = $2 RETURNING *',
+      [role, id]
     );
+    
+    if (result.rows.length === 0) {
+      const insertResult = await pool.query(
+        'INSERT INTO users (id, role) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET role = $2 RETURNING *',
+        [id, role]
+      );
+      return res.json(insertResult.rows[0]);
+    }
+    
     res.json(result.rows[0]);
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Failed to add staff user' });
-  }
-});
-
-// Remove staff user (admin only)
-app.delete('/api/staff-users/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pool.query('DELETE FROM staff_users WHERE id = $1', [id]);
-    res.json({ success: true });
-  } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Failed to remove staff user' });
-  }
-});
-
-// Get all admin users (admin only)
-app.get('/api/admin-users', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT id, email, name, is_active, created_at FROM admin_users ORDER BY created_at DESC'
-    );
-    res.json(result.rows);
-  } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Failed to fetch admin users' });
-  }
-});
-
-// Add admin user (admin only)
-app.post('/api/admin-users', async (req, res) => {
-  try {
-    const { email, name } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
-    }
-    
-    const result = await pool.query(
-      'INSERT INTO admin_users (email, name, is_active) VALUES ($1, $2, true) ON CONFLICT (email) DO UPDATE SET name = $2, is_active = true RETURNING *',
-      [email.toLowerCase(), name || null]
-    );
-    res.json(result.rows[0]);
-  } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Failed to add admin user' });
-  }
-});
-
-// Remove admin user (admin only)
-app.delete('/api/admin-users/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pool.query('DELETE FROM admin_users WHERE id = $1', [id]);
-    res.json({ success: true });
-  } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Failed to remove admin user' });
+    res.status(500).json({ error: 'Failed to update role' });
   }
 });
 
