@@ -6,6 +6,7 @@ import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { haptic } from '../../utils/haptics';
 import { getTierPermissions, canAccessResource } from '../../utils/permissions';
+import { getDateString } from '../../utils/dateUtils';
 
 
 interface APIResource {
@@ -60,10 +61,9 @@ const generateDates = (advanceDays: number = 7): { label: string; date: string; 
     d.setDate(today.getDate() + i);
     const dayName = days[d.getDay()];
     const dateNum = d.getDate().toString();
-    const isoDate = d.toISOString().split('T')[0];
     dates.push({
       label: `${dayName} ${dateNum}`,
-      date: isoDate,
+      date: getDateString(d),
       day: dayName,
       dateNum: dateNum
     });

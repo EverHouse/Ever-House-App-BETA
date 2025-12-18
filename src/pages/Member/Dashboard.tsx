@@ -5,6 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
+import { formatDateShort, getTodayString } from '../../utils/dateUtils';
 
 
 interface DBBooking {
@@ -47,8 +48,7 @@ const formatTime12 = (time24: string): string => {
 };
 
 const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return formatDateShort(dateStr);
 };
 
 const Dashboard: React.FC = () => {
@@ -130,8 +130,7 @@ const Dashboard: React.FC = () => {
     }))
   ].sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getTodayString();
   
   const upcomingItems = allItems.filter(item => {
     const itemDate = item.type === 'booking' 

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { formatDateShort } from '../utils/dateUtils';
 
 // --- Types ---
 
@@ -438,7 +439,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             externalLink: event.eventbrite_url || undefined,
             title: event.title,
             category: event.category || 'Social',
-            date: new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            date: formatDateShort(event.event_date),
             time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
             location: event.location || 'Even House',
             image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',

@@ -4,6 +4,7 @@ import DateButton from '../../components/DateButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { triggerHaptic } from '../../utils/haptics';
 import { getTierPermissions, canAccessResource } from '../../utils/permissions';
+import { formatDateShort, getDateString } from '../../utils/dateUtils';
 
 interface Bay {
   id: number;
@@ -44,7 +45,7 @@ const generateDates = (days: number = 14): { label: string; date: string; day: s
     d.setDate(today.getDate() + i);
     dates.push({
       label: `${dayNames[d.getDay()]} ${d.getDate()}`,
-      date: d.toISOString().split('T')[0],
+      date: getDateString(d),
       day: dayNames[d.getDay()],
       dateNum: d.getDate().toString()
     });
@@ -61,8 +62,7 @@ const formatTime12 = (time24: string): string => {
 };
 
 const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return formatDateShort(dateStr);
 };
 
 const getStatusColor = (status: string): string => {
