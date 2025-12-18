@@ -8,7 +8,7 @@ import { formatDate as formatDateUtil, formatDateShort as formatDateShortUtil, f
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'closures' | 'directory' | 'simulator' | 'gallery' | 'guests' | 'push' | 'announcements'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'closures' | 'directory' | 'simulator' | 'gallery' | 'guests' | 'push' | 'announcements'>('simulator');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -23,8 +23,8 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col">
       
-      {/* Header */}
-      <header className="sticky top-0 flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40">
+      {/* Header with safe area for notch */}
+      <header className="sticky top-0 flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
         <button 
           onClick={() => setIsMenuOpen(true)}
           className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
@@ -77,22 +77,18 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'gallery' && <GalleryAdmin />}
       </main>
 
-      {/* Bottom Nav - Fixed with iOS Safe Area */}
+      {/* Bottom Nav - Fixed with iOS Safe Area - Limited to 5 tabs */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-4 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-        <ul className="flex justify-between items-center text-white/50 w-full max-w-xl mx-auto overflow-x-auto scrollbar-hide gap-1">
-            <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
+        <ul className="flex justify-around items-center text-white/50 w-full max-w-md mx-auto">
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
-            <NavItem icon="badge" label="Guests" active={activeTab === 'guests'} onClick={() => setActiveTab('guests')} />
             <NavItem icon="notifications" label="Push" active={activeTab === 'push'} onClick={() => setActiveTab('push')} />
             <NavItem icon="campaign" label="News" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
             <NavItem icon="event_busy" label="Closures" active={activeTab === 'closures'} onClick={() => setActiveTab('closures')} />
-            <NavItem icon="photo_library" label="Gallery" active={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
-            <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
         </ul>
       </nav>
 
-      <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isStaffPortal={true} onStaffNavChange={setActiveTab} />
     </div>
   );
 };
