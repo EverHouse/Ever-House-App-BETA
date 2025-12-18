@@ -321,14 +321,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const isViewingAs = viewAsUser !== null;
   const user = viewAsUser || actualUser;
 
-  // Admin emails get admin role and Premium tier
-  const ADMIN_EMAILS = [
-    'nick@evenhouse.club',
-    'adam@evenhouse.club',
-    'afogel@evenhouse.club'
-  ];
-
-  // Check auth status on mount
+  // Check auth status on mount - roles are now determined by database tables
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -336,18 +329,32 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
         if (res.ok) {
           const authUser = await res.json();
           const email = authUser.email?.toLowerCase() || '';
-          const isAdmin = ADMIN_EMAILS.includes(email);
+          
+          // Check role from database via API
+          let role: 'admin' | 'staff' | 'member' = 'member';
+          let tier = 'Core';
+          
+          try {
+            const roleRes = await fetch(`/api/auth/role?email=${encodeURIComponent(email)}`);
+            if (roleRes.ok) {
+              const roleData = await roleRes.json();
+              role = roleData.role || 'member';
+              tier = roleData.tier || 'Core';
+            }
+          } catch (roleErr) {
+            console.error('Role check failed:', roleErr);
+          }
           
           // Map Replit Auth user to MemberProfile
           const memberProfile: MemberProfile = {
             id: authUser.id,
             name: [authUser.firstName, authUser.lastName].filter(Boolean).join(' ') || authUser.email || 'Member',
-            tier: isAdmin ? 'Premium' : 'Core',
+            tier: tier,
             status: 'Active',
             email: authUser.email || '',
             phone: '',
             avatar: authUser.profileImageUrl,
-            role: isAdmin ? 'admin' : 'member'
+            role: role
           };
           setActualUser(memberProfile);
         }
