@@ -63,7 +63,12 @@ const Login: React.FC = () => {
     setLoading(false);
   };
 
-  const handleOAuthLogin = async (provider: 'google' | 'apple' | 'github') => {
+  const handleGoogleLogin = () => {
+    setLoading(true);
+    window.location.href = '/api/auth/google';
+  };
+
+  const handleOAuthLogin = async (provider: 'apple' | 'github') => {
     setLoading(true);
     setError('');
     
