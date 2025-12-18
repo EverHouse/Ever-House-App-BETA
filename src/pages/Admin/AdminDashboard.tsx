@@ -63,7 +63,7 @@ const AdminDashboard: React.FC = () => {
         
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsAdmin />}
-        {activeTab === 'announcements' && <AnnouncementsAdmin />}
+        {activeTab === 'announcements' && <UpdatesAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
         {activeTab === 'team' && actualUser?.role === 'admin' && <TeamAdmin />}
@@ -528,7 +528,7 @@ const EventsAdmin: React.FC = () => {
 
 // --- ANNOUNCEMENTS ADMIN ---
 
-const AnnouncementsAdmin: React.FC = () => {
+const UpdatesAdmin: React.FC = () => {
     const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useData();
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
