@@ -957,6 +957,72 @@ app.delete('/api/rsvps/:event_id/:user_email', async (req, res) => {
   }
 });
 
+app.post('/api/auth/verify-member', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    const hubspot = await getHubSpotClient();
+    
+    const searchResponse = await hubspot.crm.contacts.searchApi.doSearch({
+      filterGroups: [{
+        filters: [{
+          propertyName: 'email',
+          operator: 'EQ' as any,
+          value: email.toLowerCase()
+        }]
+      }],
+      properties: [
+        'firstname',
+        'lastname',
+        'email',
+        'phone',
+        'membership_tier',
+        'membership_status'
+      ],
+      limit: 1
+    });
+    
+    if (searchResponse.results.length === 0) {
+      return res.status(404).json({ error: 'No member found with this email address' });
+    }
+    
+    const contact = searchResponse.results[0];
+    const status = (contact.properties.membership_status || '').toLowerCase();
+    
+    if (status !== 'active') {
+      return res.status(403).json({ error: 'Your membership is not active. Please contact us for assistance.' });
+    }
+    
+    const ADMIN_EMAILS = [
+      'nick@evenhouse.club',
+      'adam@evenhouse.club',
+      'afogel@evenhouse.club'
+    ];
+    
+    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+    
+    const member = {
+      id: contact.id,
+      firstName: contact.properties.firstname || '',
+      lastName: contact.properties.lastname || '',
+      email: contact.properties.email || email,
+      phone: contact.properties.phone || '',
+      tier: contact.properties.membership_tier || 'Core',
+      status: 'Active',
+      role: isAdmin ? 'admin' : 'member'
+    };
+    
+    res.json({ success: true, member });
+  } catch (error: any) {
+    if (!isProduction) console.error('Member verification error:', error);
+    res.status(500).json({ error: 'Failed to verify membership' });
+  }
+});
+
 app.get('/api/hubspot/contacts', async (req, res) => {
   try {
     const hubspot = await getHubSpotClient();

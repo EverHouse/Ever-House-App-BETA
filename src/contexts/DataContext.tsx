@@ -321,52 +321,18 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const isViewingAs = viewAsUser !== null;
   const user = viewAsUser || actualUser;
 
-  // Admin emails get admin role and Premium tier
-  const ADMIN_EMAILS = [
-    'nick@evenhouse.club',
-    'adam@evenhouse.club',
-    'afogel@evenhouse.club'
-  ];
-
-  // Check auth status on mount
+  // Check for saved member session on mount
   useEffect(() => {
-    const checkAuth = async () => {
+    const savedMember = localStorage.getItem('eh_member');
+    if (savedMember) {
       try {
-        const res = await fetch('/api/auth/user', { credentials: 'include' });
-        if (res.ok) {
-          const authUser = await res.json();
-          const email = authUser.email?.toLowerCase() || '';
-          const isAdmin = ADMIN_EMAILS.includes(email);
-          const isStaff = authUser.isStaff === true;
-          
-          // Determine role: admin > staff > member
-          let role: 'admin' | 'staff' | 'member' = 'member';
-          if (isAdmin) {
-            role = 'admin';
-          } else if (isStaff) {
-            role = 'staff';
-          }
-          
-          // Map Replit Auth user to MemberProfile
-          const memberProfile: MemberProfile = {
-            id: authUser.id,
-            name: [authUser.firstName, authUser.lastName].filter(Boolean).join(' ') || authUser.email || 'Member',
-            tier: isAdmin ? 'Premium' : 'Core',
-            status: 'Active',
-            email: authUser.email || '',
-            phone: '',
-            avatar: authUser.profileImageUrl,
-            role: role
-          };
-          setActualUser(memberProfile);
-        }
+        const member = JSON.parse(savedMember);
+        setActualUser(member);
       } catch (err) {
-        console.error('Auth check failed:', err);
-      } finally {
-        setIsLoading(false);
+        localStorage.removeItem('eh_member');
       }
-    };
-    checkAuth();
+    }
+    setIsLoading(false);
   }, []);
   
   // View As Functions - only for admins
@@ -466,17 +432,39 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     fetchEvents();
   }, []);
 
-  // Auth Logic - redirects to Replit Auth
-  const login = async (_email: string) => {
-    // Redirect to Replit Auth login
-    window.location.href = '/api/login';
+  // Auth Logic - verify member email
+  const login = async (email: string) => {
+    const res = await fetch('/api/auth/verify-member', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to verify membership');
+    }
+    
+    const { member } = await res.json();
+    
+    const memberProfile: MemberProfile = {
+      id: member.id,
+      name: [member.firstName, member.lastName].filter(Boolean).join(' ') || member.email || 'Member',
+      tier: member.tier || 'Core',
+      status: 'Active',
+      email: member.email,
+      phone: member.phone || '',
+      role: member.role || 'member'
+    };
+    
+    localStorage.setItem('eh_member', JSON.stringify(memberProfile));
+    setActualUser(memberProfile);
   };
 
   const logout = () => {
+    localStorage.removeItem('eh_member');
     setActualUser(null);
     setViewAsUserState(null);
-    // Redirect to Replit Auth logout
-    window.location.href = '/api/logout';
   };
 
   // Cafe Actions (now using API)
