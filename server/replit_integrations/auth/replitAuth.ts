@@ -197,5 +197,20 @@ export const isStaffOrAdmin: RequestHandler = async (req, res, next) => {
     return next();
   }
 
-  return res.status(403).json({ message: "Forbidden: Admin access required" });
+  // Check if staff in database
+  const { Pool } = require('pg');
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    const result = await pool.query(
+      'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+      [email]
+    );
+    if (result.rows.length > 0) {
+      return next();
+    }
+  } catch (error) {
+    console.error('Error checking staff status:', error);
+  }
+
+  return res.status(403).json({ message: "Forbidden: Staff access required" });
 };
