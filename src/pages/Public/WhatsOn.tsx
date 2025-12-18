@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
+import { parseLocalDate, formatTime12 } from '../../utils/dateUtils';
 
 interface Event {
   id: number;
@@ -45,7 +46,7 @@ const WhatsOn: React.FC = () => {
   }, []);
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     return {
       day: date.getDate().toString().padStart(2, '0'),
       month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
@@ -56,11 +57,7 @@ const WhatsOn: React.FC = () => {
 
   const formatTime = (timeString: string | null | undefined) => {
     if (!timeString) return 'TBD';
-    const [hours, minutes] = timeString.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
+    return formatTime12(timeString);
   };
 
   return (

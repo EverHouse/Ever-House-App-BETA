@@ -5,6 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
+import { formatDate, formatTime12 } from '../../utils/dateUtils';
 
 
 interface DBBooking {
@@ -38,18 +39,6 @@ interface DBRSVP {
   event?: DBEvent;
 }
 
-const formatTime12 = (time24: string): string => {
-  if (!time24) return '';
-  const [hours, minutes] = time24.split(':').map(Number);
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-  return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-};
-
-const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-};
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
