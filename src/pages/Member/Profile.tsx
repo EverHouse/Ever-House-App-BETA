@@ -25,8 +25,6 @@ const Profile: React.FC = () => {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
-  const [referralData, setReferralData] = useState<{ referralCode: string; stats: { total_referrals: string; converted: string; pending: string } } | null>(null);
-  const [copiedCode, setCopiedCode] = useState(false);
 
   const tierPermissions = getTierPermissions(user?.tier || 'Social');
 
@@ -36,11 +34,6 @@ const Profile: React.FC = () => {
         .then(res => res.json())
         .then(data => setGuestPasses(data))
         .catch(err => console.error('Error fetching guest passes:', err));
-        
-      fetch(`/api/referrals/my?email=${encodeURIComponent(user.email)}`)
-        .then(res => res.json())
-        .then(data => setReferralData(data))
-        .catch(err => console.error('Error fetching referral data:', err));
     }
   }, [user?.email, user?.tier]);
 
@@ -160,45 +153,6 @@ const Profile: React.FC = () => {
               </div>
             )}
          </Section>
-
-         {referralData && (
-           <Section title="Refer a Friend" isDark={isDark}>
-             <div className="p-4">
-               <p className={`text-sm mb-4 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>
-                 Share your referral code with friends and earn rewards when they join!
-               </p>
-               <div className={`flex items-center gap-3 p-3 rounded-xl mb-4 ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
-                 <span className={`flex-1 font-mono text-lg font-bold tracking-widest ${isDark ? 'text-accent' : 'text-brand-green'}`}>
-                   {referralData.referralCode}
-                 </span>
-                 <button
-                   onClick={() => {
-                     navigator.clipboard.writeText(referralData.referralCode);
-                     setCopiedCode(true);
-                     setTimeout(() => setCopiedCode(false), 2000);
-                   }}
-                   className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${copiedCode ? 'bg-green-500 text-white' : (isDark ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-black/10 text-primary hover:bg-black/20')}`}
-                 >
-                   {copiedCode ? 'Copied!' : 'Copy'}
-                 </button>
-               </div>
-               <div className="grid grid-cols-3 gap-3 text-center">
-                 <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                   <span className={`block text-2xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{referralData.stats.total_referrals || 0}</span>
-                   <span className={`text-[10px] uppercase tracking-wide ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Total</span>
-                 </div>
-                 <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                   <span className={`block text-2xl font-bold text-green-500`}>{referralData.stats.converted || 0}</span>
-                   <span className={`text-[10px] uppercase tracking-wide ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Joined</span>
-                 </div>
-                 <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                   <span className={`block text-2xl font-bold text-amber-500`}>{referralData.stats.pending || 0}</span>
-                   <span className={`text-[10px] uppercase tracking-wide ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Pending</span>
-                 </div>
-               </div>
-             </div>
-           </Section>
-         )}
 
          <Section title="Appearance" isDark={isDark}>
             <div className="p-4">

@@ -33,7 +33,6 @@ export interface EventData {
   attendees: string[];
   capacity?: number;
   ticketsSold?: number;
-  galleryUrl?: string;
 }
 
 export interface Announcement {
@@ -104,7 +103,6 @@ interface DataContextType {
   deleteAnnouncement: (id: string) => void;
 
   updateMember: (member: MemberProfile) => void;
-  addMember: (member: MemberProfile) => void;
 
   addBooking: (booking: Booking) => void;
   deleteBooking: (id: string) => void;
@@ -455,8 +453,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             description: event.description || '',
             attendees: [],
             capacity: event.max_attendees || undefined,
-            ticketsSold: undefined,
-            galleryUrl: event.gallery_url || undefined
+            ticketsSold: undefined
           }));
           setEvents(formatted);
         }
@@ -581,13 +578,6 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
 
   // Member Actions
   const updateMember = (item: MemberProfile) => setMembers(prev => prev.map(m => m.id === item.id ? item : m));
-  const addMember = (member: MemberProfile) => setMembers(prev => {
-    const exists = prev.some(m => m.id === member.id);
-    if (exists) {
-      return prev.map(m => m.id === member.id ? member : m);
-    }
-    return [...prev, member];
-  });
 
   // Booking Actions
   const addBooking = (booking: Booking) => setBookings(prev => [booking, ...prev]);
@@ -601,7 +591,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       addCafeItem, updateCafeItem, deleteCafeItem,
       addEvent, updateEvent, deleteEvent, syncEventbrite,
       addAnnouncement, updateAnnouncement, deleteAnnouncement,
-      updateMember, addMember, addBooking, deleteBooking
+      updateMember, addBooking, deleteBooking
     }}>
       {children}
     </DataContext.Provider>

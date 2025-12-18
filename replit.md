@@ -23,7 +23,7 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Selection States**: Lavender background with Deep Green text (`bg-accent text-brand-green`).
 - **Branding**: Dynamic logo selection (`EH-guy` for member portal, `EH monogram` for public) based on context and automatic dark/white variants.
 - **Responsive Design**: Targets various iPhone, iPad, and Desktop viewports, utilizing `safe-area-bottom` and `tap-target` classes.
-- **Theme System**: Supports Light, Dark, and System themes, persisted via `localStorage` with full dark mode support across all pages.
+- **Theme System**: Supports Light, Dark, and System themes, persisted via `localStorage`.
 
 ### Technical Implementations
 - **Frontend**: React 19 with React Router DOM, Vite (port 5000).
@@ -39,34 +39,12 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Haptic Feedback**: Integrated for mobile interactions.
 - **Photography**: All placeholder images replaced with real venue photography.
 - **Date Utilities**: Centralized date handling in `src/utils/dateUtils.ts` with `parseLocalDate()` for timezone-safe ISO date parsing (prevents off-by-one day errors) and `formatDate()` for consistent display formatting.
-- **Announcements System**: Club-wide announcements with priority levels (low/normal/high/urgent), visibility toggle, and date-based scheduling for member dashboard.
-- **Playing Partners**: Members can add playing partners (names) to golf simulator bookings for session coordination.
-- **Event Photo Galleries**: Events can link to external photo galleries displayed in event details modal.
-- **Referral Tracking**: Unique referral codes per member, referral statistics (total/converted/pending), and history tracking.
-- **Birthday Recognition**: Automatic birthday detection on dashboard with special greeting and personalized message.
 
 ### Feature Specifications
 - **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details.
-- **Member-Only Pages**: Dashboard (with announcements, next-up booking, playing partners), Book Golf, Cafe, Events (with gallery links), Profile (with referral section), Wellness.
-- **Admin Functionality**: Admin dashboard for managing members, events, cafe menu, booking requests, gallery images, and announcements.
-- **Staff Portal Tabs**: 9-tab scrollable navigation: Directory, Sims, Events, Guests, Push, News, Closures, Gallery, Cafe.
-  - **Directory**: View and manage member roles (member/staff/admin).
-  - **Sims**: Approve/decline simulator booking requests with conflict detection.
-  - **Events**: Create/edit/delete internal events, sync from Google Calendar and Eventbrite.
-  - **Guests**: View all guest pass records, reset passes, adjust pass totals per member.
-  - **Push**: Send push notifications to all subscribed members or select specific recipients.
-  - **News (Announcements)**: Create/edit/delete club announcements with priority levels, scheduling, and visibility toggle.
-  - **Closures**: Schedule facility closure scheduling for golf, conference, wellness, cafe, or entire club.
-  - **Gallery**: Add/edit/delete gallery images with categories, captions, display order, and visibility.
-  - **Cafe**: Manage cafe menu items by category with prices and availability.
-- **API Endpoints**: Comprehensive REST API for managing resources, bookings, events, RSVPs, cafe menu, HubSpot contacts, guest passes, simulator bay requests, notifications, push notifications, gallery images, announcements, facility closures, booking partners, and referrals.
-
-## Recent Features (Latest Session)
-- **Announcements on Dashboard**: Members see active club announcements with priority-based styling (urgent/high/normal/low) on their dashboard.
-- **Playing Partners Management**: Members can add/remove playing partners to golf bookings via modal interface in dashboard.
-- **Event Photo Galleries**: Event detail modals display "View Photos" link when gallery_url is set for an event.
-- **Referral System**: Members have unique referral codes, can share with friends, track referral status and conversion metrics.
-- **Birthday Greetings**: Dashboard detects member birthdays and displays special greeting with cake emoji 🎂.
+- **Member-Only Pages**: Dashboard, Book Golf, Cafe, Events, Profile, Wellness.
+- **Admin Functionality**: Admin dashboard for managing members, events, cafe menu, and booking requests.
+- **API Endpoints**: Comprehensive REST API for managing resources, bookings, events, RSVPs, cafe menu, HubSpot contacts, guest passes, simulator bay requests, notifications, and push notifications.
 
 ## External Dependencies
 

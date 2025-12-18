@@ -8,7 +8,7 @@ import { formatDate as formatDateUtil, formatDateShort as formatDateShortUtil, f
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'closures' | 'directory' | 'simulator' | 'gallery' | 'guests' | 'push' | 'announcements'>('simulator');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -23,8 +23,8 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col">
       
-      {/* Header with safe area for notch */}
-      <header className="sticky top-0 flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+      {/* Header */}
+      <header className="sticky top-0 flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40">
         <button 
           onClick={() => setIsMenuOpen(true)}
           className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
@@ -56,39 +56,31 @@ const AdminDashboard: React.FC = () => {
            <h1 className="text-2xl font-bold text-primary dark:text-white">
                {activeTab === 'cafe' && 'Manage Cafe Menu'}
                {activeTab === 'events' && 'Manage Events'}
-               {activeTab === 'closures' && 'Facility Closures'}
-               {activeTab === 'guests' && 'Guest Passes'}
-               {activeTab === 'push' && 'Push Notifications'}
-               {activeTab === 'announcements' && 'Announcements'}
+               {activeTab === 'announcements' && 'Manage Updates'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
-               {activeTab === 'gallery' && 'Manage Gallery'}
            </h1>
         </div>
         
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsAdmin />}
-        {activeTab === 'closures' && <FacilityClosuresAdmin />}
-        {activeTab === 'guests' && <GuestPassAdmin />}
-        {activeTab === 'push' && <PushNotificationAdmin />}
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
-        {activeTab === 'gallery' && <GalleryAdmin />}
       </main>
 
-      {/* Bottom Nav - Fixed with iOS Safe Area - Limited to 5 tabs */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-4 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-        <ul className="flex justify-around items-center text-white/50 w-full max-w-md mx-auto">
+      {/* Bottom Nav - Fixed with iOS Safe Area */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-6 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        <ul className="flex justify-between items-center text-white/50 w-full max-w-md mx-auto">
+            <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
-            <NavItem icon="notifications" label="Push" active={activeTab === 'push'} onClick={() => setActiveTab('push')} />
-            <NavItem icon="campaign" label="News" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
-            <NavItem icon="event_busy" label="Closures" active={activeTab === 'closures'} onClick={() => setActiveTab('closures')} />
+            <NavItem icon="campaign" label="Updates" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
+            <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
         </ul>
       </nav>
 
-      <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isStaffPortal={true} onStaffNavChange={setActiveTab} />
+      <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </div>
   );
 };
@@ -530,12 +522,120 @@ const EventsAdmin: React.FC = () => {
     );
 };
 
+// --- ANNOUNCEMENTS ADMIN ---
+
+const AnnouncementsAdmin: React.FC = () => {
+    const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useData();
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<string | null>(null);
+    const [newItem, setNewItem] = useState<Partial<Announcement>>({ type: 'update' });
+
+    const openCreate = () => {
+        setNewItem({ type: 'update' });
+        setEditId(null);
+        setIsEditing(true);
+    };
+
+    const openEdit = (item: Announcement) => {
+        setNewItem(item);
+        setEditId(item.id);
+        setIsEditing(true);
+    };
+
+    const handleSave = () => {
+        if(!newItem.title) return;
+        const ann: Announcement = {
+            id: editId || Date.now().toString(),
+            title: newItem.title,
+            desc: newItem.desc || '',
+            type: newItem.type || 'update',
+            date: newItem.date || 'Just now',
+            startDate: newItem.startDate,
+            endDate: newItem.endDate
+        };
+
+        if (editId) {
+            updateAnnouncement(ann);
+        } else {
+            addAnnouncement(ann);
+        }
+        setIsEditing(false);
+    };
+
+    return (
+        <div>
+            <div className="flex justify-end mb-4">
+                <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md">
+                    <span className="material-symbols-outlined">add</span> Post Update
+                </button>
+            </div>
+            
+            {isEditing && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10">
+                        <h3 className="font-bold text-lg mb-5 text-primary dark:text-white">{editId ? 'Edit Post' : 'New Post'}</h3>
+                        <div className="space-y-4 mb-6">
+                            <div className="flex gap-2">
+                                <button onClick={() => setNewItem({...newItem, type: 'update'})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'update' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Update</button>
+                                <button onClick={() => setNewItem({...newItem, type: 'announcement'})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'announcement' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Announcement</button>
+                            </div>
+                            <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
+                            <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
+                            
+                            {/* Date Durations */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Start Date</label>
+                                    <input type="date" className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.startDate || ''} onChange={e => setNewItem({...newItem, startDate: e.target.value})} />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">End Date</label>
+                                    <input type="date" className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.endDate || ''} onChange={e => setNewItem({...newItem, endDate: e.target.value})} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 justify-end">
+                            <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                            <button onClick={handleSave} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors">Post</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="space-y-4">
+                {announcements.map(item => (
+                    <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm flex justify-between items-start cursor-pointer hover:border-primary/30 transition-all">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <span className={`w-2 h-2 rounded-full ${item.type === 'update' ? 'bg-blue-500' : 'bg-red-500'}`}></span>
+                                <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500">{item.type}</span>
+                                <span className="text-[10px] text-gray-300 dark:text-gray-600">• {item.date}</span>
+                            </div>
+                            <h4 className="font-bold text-gray-900 dark:text-white mb-1">{item.title}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2">{item.desc}</p>
+                            {(item.startDate || item.endDate) && (
+                                <div className="inline-flex items-center gap-1 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded text-xs text-gray-500 dark:text-gray-400">
+                                    <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                                    <span>{item.startDate} {item.endDate ? `- ${item.endDate}` : ''}</span>
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={(e) => { e.stopPropagation(); deleteAnnouncement(item.id); }} className="text-gray-300 hover:text-red-500 p-1 -mr-2">
+                            <span className="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 // --- DIRECTORY ADMIN (Members + Staff Tabs) ---
 
 const TIER_OPTIONS = ['All', 'Social', 'Core', 'Premium', 'Corporate', 'VIP', 'Founding'] as const;
 
 const MembersAdmin: React.FC = () => {
-    const { members, updateMember, addMember, setViewAsUser, actualUser } = useData();
+    const { members, updateMember, setViewAsUser, actualUser } = useData();
     const navigate = useNavigate();
     const [subTab, setSubTab] = useState<'members' | 'staff'>('members');
     const [isEditing, setIsEditing] = useState(false);
@@ -543,10 +643,6 @@ const MembersAdmin: React.FC = () => {
     const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<string>('All');
-    const [newStaff, setNewStaff] = useState({ name: '', email: '', phone: '' });
-    const [addStaffError, setAddStaffError] = useState('');
-    const [addStaffSuccess, setAddStaffSuccess] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const isAdmin = actualUser?.role === 'admin';
 
@@ -600,14 +696,12 @@ const MembersAdmin: React.FC = () => {
     };
     
     const openAddStaff = () => {
-        setNewStaff({ name: '', email: '', phone: '' });
-        setAddStaffError('');
-        setAddStaffSuccess('');
+        // Create a new staff entry - admin will select from existing members
         setIsAddingStaff(true);
     };
     
     const handleViewAs = (member: MemberProfile) => {
-        if (!isAdmin) return;
+        if (!isAdmin) return; // Only admins can View As
         setViewAsUser(member);
         navigate('/dashboard');
     };
@@ -615,6 +709,7 @@ const MembersAdmin: React.FC = () => {
     const handleSave = async () => {
         if (selectedMember) {
             updateMember(selectedMember);
+            // Only update role if admin
             if (isAdmin && selectedMember.role) {
                 try {
                     await fetch(`/api/members/${selectedMember.id}/role`, {
@@ -630,64 +725,19 @@ const MembersAdmin: React.FC = () => {
         setIsEditing(false);
     };
     
-    const handleAddStaff = async () => {
+    const handlePromoteToStaff = async (member: MemberProfile) => {
         if (!isAdmin) return;
-        if (!newStaff.name.trim() || !newStaff.email.trim()) {
-            setAddStaffError('Name and email are required');
-            return;
-        }
-        
-        setIsSubmitting(true);
-        setAddStaffError('');
-        setAddStaffSuccess('');
-        
         try {
-            const response = await fetch('/api/staff', {
-                method: 'POST',
+            await fetch(`/api/members/${member.id}/role`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newStaff)
+                body: JSON.stringify({ role: 'staff' })
             });
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                setAddStaffError(data.error || 'Failed to add staff member');
-                setIsSubmitting(false);
-                return;
-            }
-            
-            const staffMember: MemberProfile = {
-                id: data.id,
-                name: data.name,
-                email: data.email,
-                phone: data.phone || '',
-                tier: data.tier || '',
-                status: 'Active',
-                role: 'staff',
-                isFounding: data.isFounding || false
-            };
-            
-            if (data.imported) {
-                updateMember(staffMember);
-                setAddStaffSuccess(`${data.name} was promoted to staff. Membership tier (${data.tier || 'N/A'}) was imported.`);
-            } else {
-                addMember(staffMember);
-                setAddStaffSuccess(`${data.name} was added as a new staff member.`);
-            }
-            
-            setNewStaff({ name: '', email: '', phone: '' });
-            
-            setTimeout(() => {
-                setIsAddingStaff(false);
-                setAddStaffSuccess('');
-                setSubTab('staff');
-            }, 1500);
+            updateMember({ ...member, role: 'staff' });
         } catch (e) {
-            console.error('Failed to add staff:', e);
-            setAddStaffError('An error occurred while adding staff member');
+            console.error('Failed to promote to staff:', e);
         }
-        
-        setIsSubmitting(false);
+        setIsAddingStaff(false);
     };
 
     return (
@@ -857,94 +907,27 @@ const MembersAdmin: React.FC = () => {
                 </div>
             )}
             
-            {/* Add Staff Modal - manual entry form */}
+            {/* Add Staff Modal - select from existing members */}
             {isAddingStaff && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95">
-                        <h3 className="font-bold text-lg mb-2 text-primary dark:text-white">Add Staff Member</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Enter staff details. If the email matches an existing member, their tier info will be imported.
-                        </p>
-                        
-                        {addStaffError && (
-                            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                                <p className="text-sm text-red-600 dark:text-red-400">{addStaffError}</p>
-                            </div>
-                        )}
-                        
-                        {addStaffSuccess && (
-                            <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                                <p className="text-sm text-green-600 dark:text-green-400">{addStaffSuccess}</p>
-                            </div>
-                        )}
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1 block">
-                                    Full Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={newStaff.name}
-                                    onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
-                                    placeholder="John Smith"
-                                    className="w-full border border-gray-300 dark:border-white/20 p-3 rounded-lg bg-white dark:bg-black/20 text-primary dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1 block">
-                                    Email Address *
-                                </label>
-                                <input
-                                    type="email"
-                                    value={newStaff.email}
-                                    onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
-                                    placeholder="john@example.com"
-                                    className="w-full border border-gray-300 dark:border-white/20 p-3 rounded-lg bg-white dark:bg-black/20 text-primary dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1 block">
-                                    Phone (optional)
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={newStaff.phone}
-                                    onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
-                                    placeholder="(555) 123-4567"
-                                    className="w-full border border-gray-300 dark:border-white/20 p-3 rounded-lg bg-white dark:bg-black/20 text-primary dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                    disabled={isSubmitting}
-                                />
-                            </div>
+                    <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden animate-in zoom-in-95">
+                        <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">Add Staff Member</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select a member to promote to staff:</p>
+                        <div className="overflow-y-auto max-h-[50vh] space-y-2">
+                            {regularMembers.map(m => (
+                                <button
+                                    key={m.id}
+                                    onClick={() => handlePromoteToStaff(m)}
+                                    className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                                >
+                                    <div className="font-bold text-primary dark:text-white">{m.name}</div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">{m.email}</div>
+                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Tier: {m.tier}</div>
+                                </button>
+                            ))}
                         </div>
-                        
-                        <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
-                            <button 
-                                onClick={() => setIsAddingStaff(false)} 
-                                className="px-4 py-2 text-gray-500 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                                disabled={isSubmitting}
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                onClick={handleAddStaff} 
-                                disabled={isSubmitting || !newStaff.name.trim() || !newStaff.email.trim()}
-                                className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                                        Adding...
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="material-symbols-outlined text-[18px]">person_add</span>
-                                        Add Staff
-                                    </>
-                                )}
-                            </button>
+                        <div className="flex gap-3 justify-end mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+                            <button onClick={() => setIsAddingStaff(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -1554,1197 +1537,6 @@ const SimulatorAdmin: React.FC = () => {
             )}
         </div>
     );
-};
-
-// --- PUSH NOTIFICATION ADMIN ---
-
-interface PushSubscription {
-  user_email: string;
-  device_count: number;
-  last_subscribed: string;
-}
-
-const PushNotificationAdmin: React.FC = () => {
-  const [subscriptions, setSubscriptions] = useState<PushSubscription[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false);
-  const [message, setMessage] = useState<{ title: string; body: string; url: string }>({
-    title: '',
-    body: '',
-    url: '/#/dashboard'
-  });
-  const [sendTo, setSendTo] = useState<'all' | 'selected'>('all');
-  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
-  const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null);
-
-  const fetchSubscriptions = async () => {
-    try {
-      const res = await fetch('/api/push/subscriptions');
-      if (res.ok) {
-        setSubscriptions(await res.json());
-      }
-    } catch (err) {
-      console.error('Failed to fetch subscriptions:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchSubscriptions(); }, []);
-
-  const toggleEmail = (email: string) => {
-    setSelectedEmails(prev => 
-      prev.includes(email) 
-        ? prev.filter(e => e !== email) 
-        : [...prev, email]
-    );
-  };
-
-  const handleSend = async () => {
-    if (!message.title || !message.body) {
-      setSendResult({ success: false, message: 'Title and message are required' });
-      return;
-    }
-    
-    setIsSending(true);
-    setSendResult(null);
-    
-    try {
-      const res = await fetch('/api/push/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: message.title,
-          body: message.body,
-          url: message.url,
-          recipients: sendTo === 'all' ? 'all' : selectedEmails
-        })
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        setSendResult({ success: true, message: `Notification sent to ${data.sent_to} member(s)` });
-        setMessage({ title: '', body: '', url: '/#/dashboard' });
-      } else {
-        setSendResult({ success: false, message: data.error || 'Failed to send' });
-      }
-    } catch (err) {
-      setSendResult({ success: false, message: 'Network error' });
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="material-symbols-outlined text-primary dark:text-white">notifications_active</span>
-          <h3 className="font-bold text-primary dark:text-white">Send Push Notification</h3>
-        </div>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Title</label>
-            <input
-              type="text"
-              value={message.title}
-              onChange={(e) => setMessage(m => ({ ...m, title: e.target.value }))}
-              placeholder="e.g., New Event Added!"
-              className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Message</label>
-            <textarea
-              value={message.body}
-              onChange={(e) => setMessage(m => ({ ...m, body: e.target.value }))}
-              placeholder="e.g., Join us for a special members-only event this Saturday..."
-              rows={3}
-              className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40 resize-none"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Link (optional)</label>
-            <input
-              type="text"
-              value={message.url}
-              onChange={(e) => setMessage(m => ({ ...m, url: e.target.value }))}
-              placeholder="e.g., /#/events"
-              className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-2">Recipients</label>
-            <div className="flex gap-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={sendTo === 'all'}
-                  onChange={() => setSendTo('all')}
-                  className="accent-primary"
-                />
-                <span className="text-sm text-primary dark:text-white">All Subscribed ({subscriptions.length})</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={sendTo === 'selected'}
-                  onChange={() => setSendTo('selected')}
-                  className="accent-primary"
-                />
-                <span className="text-sm text-primary dark:text-white">Select Members</span>
-              </label>
-            </div>
-          </div>
-          
-          {sendResult && (
-            <div className={`p-3 rounded-lg text-sm ${sendResult.success ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>
-              {sendResult.message}
-            </div>
-          )}
-          
-          <button
-            onClick={handleSend}
-            disabled={isSending || (sendTo === 'selected' && selectedEmails.length === 0)}
-            className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isSending ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <>
-                <span className="material-symbols-outlined text-lg">send</span>
-                Send Notification
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-      
-      {sendTo === 'selected' && (
-        <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
-          <h3 className="font-bold text-primary dark:text-white mb-3">
-            Select Recipients ({selectedEmails.length} selected)
-          </h3>
-          {subscriptions.length === 0 ? (
-            <p className="text-black/50 dark:text-white/50 text-sm">No members have enabled push notifications yet.</p>
-          ) : (
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {subscriptions.map(sub => (
-                <label key={sub.user_email} className="flex items-center gap-3 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedEmails.includes(sub.user_email)}
-                    onChange={() => toggleEmail(sub.user_email)}
-                    className="accent-primary w-4 h-4"
-                  />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-primary dark:text-white">{sub.user_email}</div>
-                    <div className="text-xs text-black/50 dark:text-white/50">{sub.device_count} device(s)</div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      
-      <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
-        <h3 className="font-bold text-primary dark:text-white mb-3">Subscribed Members ({subscriptions.length})</h3>
-        {subscriptions.length === 0 ? (
-          <p className="text-black/50 dark:text-white/50 text-sm">No members have enabled push notifications yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {subscriptions.map(sub => (
-              <div key={sub.user_email} className="flex items-center justify-between py-2 border-b border-black/5 dark:border-white/5 last:border-0">
-                <div>
-                  <div className="text-sm font-medium text-primary dark:text-white">{sub.user_email}</div>
-                  <div className="text-xs text-black/50 dark:text-white/50">
-                    {sub.device_count} device(s) · Last subscribed {new Date(sub.last_subscribed).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// --- ANNOUNCEMENTS ADMIN ---
-
-interface AnnouncementRecord {
-  id: number;
-  title: string;
-  content: string;
-  priority: string;
-  is_active: boolean;
-  start_date?: string;
-  end_date?: string;
-  created_at: string;
-}
-
-const AnnouncementsAdmin: React.FC = () => {
-  const [announcements, setAnnouncements] = useState<AnnouncementRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [newAnnouncement, setNewAnnouncement] = useState<Partial<AnnouncementRecord>>({ 
-    priority: 'normal', 
-    is_active: true 
-  });
-
-  const priorities = [
-    { value: 'low', label: 'Low', color: 'text-gray-500' },
-    { value: 'normal', label: 'Normal', color: 'text-blue-500' },
-    { value: 'high', label: 'High', color: 'text-amber-500' },
-    { value: 'urgent', label: 'Urgent', color: 'text-red-500' }
-  ];
-
-  const fetchAnnouncements = async () => {
-    try {
-      const res = await fetch('/api/announcements');
-      if (res.ok) {
-        setAnnouncements(await res.json());
-      }
-    } catch (err) {
-      console.error('Failed to fetch announcements:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchAnnouncements(); }, []);
-
-  const openEdit = (item: AnnouncementRecord) => {
-    setNewAnnouncement(item);
-    setEditId(item.id);
-    setIsEditing(true);
-  };
-
-  const handleSave = async () => {
-    if (!newAnnouncement.title || !newAnnouncement.content) return;
-
-    try {
-      const url = editId ? `/api/announcements/${editId}` : '/api/announcements';
-      const method = editId ? 'PUT' : 'POST';
-      
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAnnouncement)
-      });
-      
-      if (res.ok) {
-        fetchAnnouncements();
-        setIsEditing(false);
-        setEditId(null);
-        setNewAnnouncement({ priority: 'normal', is_active: true });
-      }
-    } catch (err) {
-      console.error('Failed to save announcement:', err);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await fetch(`/api/announcements/${id}`, { method: 'DELETE' });
-      fetchAnnouncements();
-    } catch (err) {
-      console.error('Failed to delete announcement:', err);
-    }
-  };
-
-  const toggleActive = async (item: AnnouncementRecord) => {
-    try {
-      await fetch(`/api/announcements/${item.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: !item.is_active })
-      });
-      fetchAnnouncements();
-    } catch (err) {
-      console.error('Failed to toggle announcement:', err);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <button
-        onClick={() => { setIsEditing(true); setEditId(null); setNewAnnouncement({ priority: 'normal', is_active: true }); }}
-        className="w-full py-3 bg-primary text-white rounded-xl font-medium flex items-center justify-center gap-2"
-      >
-        <span className="material-symbols-outlined">add</span>
-        Create Announcement
-      </button>
-
-      {announcements.length === 0 ? (
-        <div className="text-center py-12 text-black/50 dark:text-white/50">
-          <span className="material-symbols-outlined text-4xl mb-2 block">campaign</span>
-          <p>No announcements yet</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {announcements.map(item => {
-            const priorityInfo = priorities.find(p => p.value === item.priority) || priorities[1];
-            return (
-              <div key={item.id} className={`bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10 ${!item.is_active ? 'opacity-50' : ''}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-bold uppercase ${priorityInfo.color}`}>{priorityInfo.label}</span>
-                      {!item.is_active && <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">Inactive</span>}
-                    </div>
-                    <h3 className="font-bold text-primary dark:text-white">{item.title}</h3>
-                    <p className="text-sm text-black/70 dark:text-white/70 mt-1 line-clamp-2">{item.content}</p>
-                    <div className="text-xs text-black/40 dark:text-white/40 mt-2">
-                      {new Date(item.created_at).toLocaleDateString()}
-                      {item.start_date && ` · Starts ${new Date(item.start_date).toLocaleDateString()}`}
-                      {item.end_date && ` · Ends ${new Date(item.end_date).toLocaleDateString()}`}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <button onClick={() => openEdit(item)} className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
-                      <span className="material-symbols-outlined text-lg text-primary dark:text-white">edit</span>
-                    </button>
-                    <button onClick={() => toggleActive(item)} className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
-                      <span className="material-symbols-outlined text-lg text-primary dark:text-white">
-                        {item.is_active ? 'visibility_off' : 'visibility'}
-                      </span>
-                    </button>
-                    <button onClick={() => handleDelete(item.id)} className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30">
-                      <span className="material-symbols-outlined text-lg text-red-500">delete</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {isEditing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-[#1a1d12] rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-primary dark:text-white mb-4">
-              {editId ? 'Edit Announcement' : 'Create Announcement'}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Title *</label>
-                <input
-                  type="text"
-                  value={newAnnouncement.title || ''}
-                  onChange={(e) => setNewAnnouncement(a => ({ ...a, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Content *</label>
-                <textarea
-                  value={newAnnouncement.content || ''}
-                  onChange={(e) => setNewAnnouncement(a => ({ ...a, content: e.target.value }))}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white resize-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Priority</label>
-                <select
-                  value={newAnnouncement.priority || 'normal'}
-                  onChange={(e) => setNewAnnouncement(a => ({ ...a, priority: e.target.value }))}
-                  className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white"
-                >
-                  {priorities.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    value={newAnnouncement.start_date?.split('T')[0] || ''}
-                    onChange={(e) => setNewAnnouncement(a => ({ ...a, start_date: e.target.value }))}
-                    className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    value={newAnnouncement.end_date?.split('T')[0] || ''}
-                    onChange={(e) => setNewAnnouncement(a => ({ ...a, end_date: e.target.value }))}
-                    className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white"
-                  />
-                </div>
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={newAnnouncement.is_active !== false}
-                  onChange={(e) => setNewAnnouncement(a => ({ ...a, is_active: e.target.checked }))}
-                  className="accent-primary w-4 h-4"
-                />
-                <span className="text-sm text-primary dark:text-white">Active</span>
-              </label>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => { setIsEditing(false); setEditId(null); }} className="flex-1 py-3 border border-black/10 dark:border-white/10 rounded-xl font-medium text-primary dark:text-white">
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!newAnnouncement.title || !newAnnouncement.content}
-                className="flex-1 py-3 bg-primary text-white rounded-xl font-medium disabled:opacity-50"
-              >
-                {editId ? 'Save Changes' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// --- GUEST PASS ADMIN ---
-
-interface GuestPassRecord {
-  id: number;
-  member_email: string;
-  first_name: string;
-  last_name: string;
-  passes_used: number;
-  passes_total: number;
-  passes_remaining: number;
-  last_reset_date?: string;
-}
-
-const GuestPassAdmin: React.FC = () => {
-  const [passes, setPasses] = useState<GuestPassRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [resettingEmail, setResettingEmail] = useState<string | null>(null);
-
-  const fetchPasses = async () => {
-    try {
-      const res = await fetch('/api/guest-passes');
-      if (res.ok) {
-        setPasses(await res.json());
-      }
-    } catch (err) {
-      console.error('Failed to fetch guest passes:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchPasses(); }, []);
-
-  const handleReset = async (email: string) => {
-    setResettingEmail(email);
-    try {
-      const res = await fetch(`/api/guest-passes/${encodeURIComponent(email)}/reset`, {
-        method: 'POST'
-      });
-      if (res.ok) {
-        fetchPasses();
-      }
-    } catch (err) {
-      console.error('Failed to reset passes:', err);
-    } finally {
-      setResettingEmail(null);
-    }
-  };
-
-  const handleUpdateTotal = async (email: string, newTotal: number) => {
-    try {
-      await fetch(`/api/guest-passes/${encodeURIComponent(email)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passes_total: newTotal })
-      });
-      fetchPasses();
-    } catch (err) {
-      console.error('Failed to update passes:', err);
-    }
-  };
-
-  const filteredPasses = passes.filter(p =>
-    p.member_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const stats = {
-    totalMembers: passes.length,
-    totalUsed: passes.reduce((sum, p) => sum + p.passes_used, 0),
-    membersAtLimit: passes.filter(p => p.passes_remaining === 0).length
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
-          <div className="text-2xl font-bold text-primary dark:text-white">{stats.totalMembers}</div>
-          <div className="text-xs text-black/50 dark:text-white/50">Members with Passes</div>
-        </div>
-        <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
-          <div className="text-2xl font-bold text-primary dark:text-white">{stats.totalUsed}</div>
-          <div className="text-xs text-black/50 dark:text-white/50">Passes Used</div>
-        </div>
-        <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
-          <div className="text-2xl font-bold text-amber-500">{stats.membersAtLimit}</div>
-          <div className="text-xs text-black/50 dark:text-white/50">At Limit</div>
-        </div>
-      </div>
-
-      <div className="relative">
-        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30">search</span>
-        <input
-          type="text"
-          placeholder="Search members..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl text-primary dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40"
-        />
-      </div>
-
-      {filteredPasses.length === 0 ? (
-        <div className="text-center py-12 text-black/50 dark:text-white/50">
-          <span className="material-symbols-outlined text-4xl mb-2 block">badge</span>
-          <p>No guest pass records found</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filteredPasses.map(pass => (
-            <div key={pass.id} className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="font-medium text-primary dark:text-white">
-                    {pass.first_name && pass.last_name 
-                      ? `${pass.first_name} ${pass.last_name}`
-                      : pass.member_email}
-                  </div>
-                  {pass.first_name && <div className="text-xs text-black/50 dark:text-white/50">{pass.member_email}</div>}
-                  {pass.last_reset_date && (
-                    <div className="text-xs text-black/40 dark:text-white/40 mt-1">
-                      Last reset: {new Date(pass.last_reset_date).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className={`text-lg font-bold ${pass.passes_remaining === 0 ? 'text-red-500' : 'text-primary dark:text-white'}`}>
-                      {pass.passes_remaining}/{pass.passes_total}
-                    </div>
-                    <div className="text-xs text-black/50 dark:text-white/50">remaining</div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <select
-                      value={pass.passes_total}
-                      onChange={(e) => handleUpdateTotal(pass.member_email, parseInt(e.target.value))}
-                      className="bg-transparent border border-black/10 dark:border-white/10 rounded-lg px-2 py-1 text-sm text-primary dark:text-white"
-                    >
-                      {[2, 4, 6, 8, 10, 12, 15, 20].map(n => (
-                        <option key={n} value={n}>{n} total</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => handleReset(pass.member_email)}
-                      disabled={resettingEmail === pass.member_email || pass.passes_used === 0}
-                      className="p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Reset passes"
-                    >
-                      {resettingEmail === pass.member_email ? (
-                        <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                      ) : (
-                        <span className="material-symbols-outlined text-lg">refresh</span>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// --- FACILITY CLOSURES ADMIN ---
-
-interface FacilityClosure {
-  id: number;
-  title: string;
-  facility_type: string;
-  start_date: string;
-  end_date: string;
-  start_time?: string;
-  end_time?: string;
-  is_full_day: boolean;
-  reason?: string;
-}
-
-const FacilityClosuresAdmin: React.FC = () => {
-  const [closures, setClosures] = useState<FacilityClosure[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [newClosure, setNewClosure] = useState<Partial<FacilityClosure>>({ 
-    facility_type: 'golf', 
-    is_full_day: true 
-  });
-
-  const facilityTypes = [
-    { value: 'golf', label: 'Golf Simulators' },
-    { value: 'conference', label: 'Conference Room' },
-    { value: 'wellness', label: 'Wellness Studio' },
-    { value: 'cafe', label: 'Cafe & Bar' },
-    { value: 'all', label: 'Entire Club' }
-  ];
-
-  const fetchClosures = async () => {
-    try {
-      const res = await fetch('/api/facility-closures');
-      if (res.ok) {
-        setClosures(await res.json());
-      }
-    } catch (err) {
-      console.error('Failed to fetch closures:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchClosures(); }, []);
-
-  const handleSave = async () => {
-    if (!newClosure.title || !newClosure.start_date || !newClosure.end_date) return;
-
-    try {
-      if (editId) {
-        const res = await fetch(`/api/facility-closures/${editId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newClosure)
-        });
-        if (res.ok) {
-          const updated = await res.json();
-          setClosures(closures.map(c => c.id === editId ? updated : c));
-        }
-      } else {
-        const res = await fetch('/api/facility-closures', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newClosure)
-        });
-        if (res.ok) {
-          const created = await res.json();
-          setClosures([...closures, created]);
-        }
-      }
-      resetForm();
-    } catch (err) {
-      console.error('Failed to save closure:', err);
-    }
-  };
-
-  const handleEdit = (closure: FacilityClosure) => {
-    setEditId(closure.id);
-    setNewClosure({
-      ...closure,
-      start_date: closure.start_date.split('T')[0],
-      end_date: closure.end_date.split('T')[0]
-    });
-    setIsEditing(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('Delete this closure?')) return;
-    try {
-      await fetch(`/api/facility-closures/${id}`, { method: 'DELETE' });
-      setClosures(closures.filter(c => c.id !== id));
-    } catch (err) {
-      console.error('Failed to delete closure:', err);
-    }
-  };
-
-  const resetForm = () => {
-    setIsEditing(false);
-    setEditId(null);
-    setNewClosure({ facility_type: 'golf', is_full_day: true });
-  };
-
-  const formatDateRange = (start: string, end: string) => {
-    const s = new Date(start);
-    const e = new Date(end);
-    if (s.toDateString() === e.toDateString()) {
-      return s.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <span className="material-symbols-outlined animate-spin text-3xl text-primary/30 dark:text-white/30">progress_activity</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <button
-        onClick={() => setIsEditing(true)}
-        className="w-full py-3 px-4 bg-primary dark:bg-accent text-white dark:text-primary rounded-xl font-medium flex items-center justify-center gap-2"
-      >
-        <span className="material-symbols-outlined text-lg">event_busy</span>
-        Add Closure
-      </button>
-
-      <div className="space-y-3">
-        {closures.map(closure => (
-          <div key={closure.id} className="bg-white dark:bg-surface-dark rounded-xl p-4 border border-gray-100 dark:border-white/10">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h4 className="font-semibold text-primary dark:text-white">{closure.title}</h4>
-                <p className="text-sm text-primary/60 dark:text-white/60 mt-1">
-                  {facilityTypes.find(f => f.value === closure.facility_type)?.label || closure.facility_type}
-                </p>
-                <p className="text-sm text-primary/80 dark:text-white/80 mt-1">
-                  {formatDateRange(closure.start_date, closure.end_date)}
-                  {!closure.is_full_day && closure.start_time && closure.end_time && (
-                    <span className="ml-2 text-primary/50 dark:text-white/50">
-                      ({closure.start_time} - {closure.end_time})
-                    </span>
-                  )}
-                </p>
-                {closure.reason && (
-                  <p className="text-xs text-primary/50 dark:text-white/50 mt-1">{closure.reason}</p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => handleEdit(closure)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg">
-                  <span className="material-symbols-outlined text-sm text-primary/60 dark:text-white/60">edit</span>
-                </button>
-                <button onClick={() => handleDelete(closure.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
-                  <span className="material-symbols-outlined text-sm text-red-500">delete</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {closures.length === 0 && (
-        <div className="text-center py-12">
-          <span className="material-symbols-outlined text-4xl text-primary/20 dark:text-white/20 mb-2">event_available</span>
-          <p className="text-primary/50 dark:text-white/50">No scheduled closures.</p>
-        </div>
-      )}
-
-      {isEditing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-primary dark:text-white mb-4">{editId ? 'Edit Closure' : 'Add Closure'}</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Title *</label>
-                <input
-                  type="text"
-                  value={newClosure.title || ''}
-                  onChange={(e) => setNewClosure({ ...newClosure, title: e.target.value })}
-                  placeholder="Holiday Closure, Maintenance, etc."
-                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Facility *</label>
-                <select
-                  value={newClosure.facility_type}
-                  onChange={(e) => setNewClosure({ ...newClosure, facility_type: e.target.value })}
-                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                >
-                  {facilityTypes.map(ft => (
-                    <option key={ft.value} value={ft.value}>{ft.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Start Date *</label>
-                  <input
-                    type="date"
-                    value={newClosure.start_date || ''}
-                    onChange={(e) => setNewClosure({ ...newClosure, start_date: e.target.value })}
-                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">End Date *</label>
-                  <input
-                    type="date"
-                    value={newClosure.end_date || ''}
-                    onChange={(e) => setNewClosure({ ...newClosure, end_date: e.target.value })}
-                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="is_full_day"
-                  checked={newClosure.is_full_day !== false}
-                  onChange={(e) => setNewClosure({ ...newClosure, is_full_day: e.target.checked })}
-                  className="w-5 h-5 rounded"
-                />
-                <label htmlFor="is_full_day" className="text-sm text-primary/70 dark:text-white/70">Full day closure</label>
-              </div>
-
-              {!newClosure.is_full_day && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Start Time</label>
-                    <input
-                      type="time"
-                      value={newClosure.start_time || ''}
-                      onChange={(e) => setNewClosure({ ...newClosure, start_time: e.target.value })}
-                      className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">End Time</label>
-                    <input
-                      type="time"
-                      value={newClosure.end_time || ''}
-                      onChange={(e) => setNewClosure({ ...newClosure, end_time: e.target.value })}
-                      className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Reason (Optional)</label>
-                <textarea
-                  value={newClosure.reason || ''}
-                  onChange={(e) => setNewClosure({ ...newClosure, reason: e.target.value })}
-                  placeholder="Explain why this closure is scheduled..."
-                  rows={2}
-                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white resize-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button onClick={resetForm} className="flex-1 py-3 rounded-lg border border-gray-200 dark:border-white/10 text-primary/70 dark:text-white/70 font-medium">
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!newClosure.title || !newClosure.start_date || !newClosure.end_date}
-                className="flex-1 py-3 rounded-lg bg-primary dark:bg-accent text-white dark:text-primary font-medium disabled:opacity-50"
-              >
-                {editId ? 'Save Changes' : 'Add Closure'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// --- GALLERY ADMIN ---
-
-interface GalleryImage {
-  id: number;
-  image_url: string;
-  category: string;
-  caption?: string;
-  display_order: number;
-  is_active: boolean;
-}
-
-const GalleryAdmin: React.FC = () => {
-  const [images, setImages] = useState<GalleryImage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [newImage, setNewImage] = useState<Partial<GalleryImage>>({ category: 'Lounge', is_active: true, display_order: 0 });
-  const [activeCategory, setActiveCategory] = useState('All');
-
-  const categories = ['Golf Bays', 'Lounge', 'Wellness', 'Events'];
-  const allCategories = ['All', ...categories];
-
-  const fetchImages = async () => {
-    try {
-      const res = await fetch('/api/gallery');
-      if (res.ok) {
-        setImages(await res.json());
-      }
-    } catch (err) {
-      console.error('Failed to fetch gallery:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchImages(); }, []);
-
-  const filteredImages = activeCategory === 'All' ? images : images.filter(img => img.category === activeCategory);
-
-  const handleSave = async () => {
-    if (!newImage.image_url || !newImage.category) return;
-
-    try {
-      if (editId) {
-        const res = await fetch(`/api/gallery/${editId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newImage)
-        });
-        if (res.ok) {
-          const updated = await res.json();
-          setImages(images.map(img => img.id === editId ? updated : img));
-        }
-      } else {
-        const res = await fetch('/api/gallery', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newImage)
-        });
-        if (res.ok) {
-          const created = await res.json();
-          setImages([...images, created]);
-        }
-      }
-      resetForm();
-    } catch (err) {
-      console.error('Failed to save gallery image:', err);
-    }
-  };
-
-  const handleEdit = (img: GalleryImage) => {
-    setEditId(img.id);
-    setNewImage(img);
-    setIsEditing(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('Remove this image from the gallery?')) return;
-    try {
-      await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
-      setImages(images.filter(img => img.id !== id));
-    } catch (err) {
-      console.error('Failed to delete gallery image:', err);
-    }
-  };
-
-  const toggleActive = async (img: GalleryImage) => {
-    try {
-      const res = await fetch(`/api/gallery/${img.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...img, is_active: !img.is_active })
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setImages(images.map(i => i.id === img.id ? updated : i));
-      }
-    } catch (err) {
-      console.error('Failed to toggle image status:', err);
-    }
-  };
-
-  const resetForm = () => {
-    setIsEditing(false);
-    setEditId(null);
-    setNewImage({ category: 'Lounge', is_active: true, display_order: 0 });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <span className="material-symbols-outlined animate-spin text-3xl text-primary/30 dark:text-white/30">progress_activity</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-        {allCategories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              activeCategory === cat
-                ? 'bg-primary text-white dark:bg-accent dark:text-primary'
-                : 'bg-white dark:bg-surface-dark text-primary/70 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/5'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      <button
-        onClick={() => setIsEditing(true)}
-        className="w-full py-3 px-4 bg-primary dark:bg-accent text-white dark:text-primary rounded-xl font-medium flex items-center justify-center gap-2"
-      >
-        <span className="material-symbols-outlined text-lg">add_photo_alternate</span>
-        Add Image
-      </button>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {filteredImages.map(img => (
-          <div key={img.id} className={`relative rounded-xl overflow-hidden border ${img.is_active ? 'border-gray-200 dark:border-white/10' : 'border-red-300 dark:border-red-500/30 opacity-50'}`}>
-            <img src={img.image_url} alt={img.caption || 'Gallery'} className="w-full aspect-square object-cover" />
-            <div className="absolute top-2 left-2">
-              <span className="px-2 py-1 bg-black/50 text-white text-xs rounded-full">{img.category}</span>
-            </div>
-            <div className="absolute top-2 right-2 flex gap-1">
-              <button
-                onClick={() => toggleActive(img)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${img.is_active ? 'bg-green-500' : 'bg-gray-400'} text-white`}
-              >
-                <span className="material-symbols-outlined text-sm">{img.is_active ? 'visibility' : 'visibility_off'}</span>
-              </button>
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent flex justify-end gap-2">
-              <button onClick={() => handleEdit(img)} className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
-                <span className="material-symbols-outlined text-sm">edit</span>
-              </button>
-              <button onClick={() => handleDelete(img.id)} className="w-8 h-8 bg-red-500/80 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
-                <span className="material-symbols-outlined text-sm">delete</span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredImages.length === 0 && (
-        <div className="text-center py-12">
-          <span className="material-symbols-outlined text-4xl text-primary/20 dark:text-white/20 mb-2">photo_library</span>
-          <p className="text-primary/50 dark:text-white/50">No images in this category.</p>
-        </div>
-      )}
-
-      {isEditing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold text-primary dark:text-white mb-4">{editId ? 'Edit Image' : 'Add Image'}</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Image URL *</label>
-                <input
-                  type="text"
-                  value={newImage.image_url || ''}
-                  onChange={(e) => setNewImage({ ...newImage, image_url: e.target.value })}
-                  placeholder="/images/photo.jpg or https://..."
-                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Category *</label>
-                <select
-                  value={newImage.category}
-                  onChange={(e) => setNewImage({ ...newImage, category: e.target.value })}
-                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Caption (Optional)</label>
-                <input
-                  type="text"
-                  value={newImage.caption || ''}
-                  onChange={(e) => setNewImage({ ...newImage, caption: e.target.value })}
-                  placeholder="Describe the image..."
-                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Display Order</label>
-                <input
-                  type="number"
-                  value={newImage.display_order || 0}
-                  onChange={(e) => setNewImage({ ...newImage, display_order: parseInt(e.target.value) || 0 })}
-                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={newImage.is_active !== false}
-                  onChange={(e) => setNewImage({ ...newImage, is_active: e.target.checked })}
-                  className="w-5 h-5 rounded"
-                />
-                <label htmlFor="is_active" className="text-sm text-primary/70 dark:text-white/70">Visible on public gallery</label>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button onClick={resetForm} className="flex-1 py-3 rounded-lg border border-gray-200 dark:border-white/10 text-primary/70 dark:text-white/70 font-medium">
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!newImage.image_url || !newImage.category}
-                className="flex-1 py-3 rounded-lg bg-primary dark:bg-accent text-white dark:text-primary font-medium disabled:opacity-50"
-              >
-                {editId ? 'Save Changes' : 'Add Image'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 };
 
 export default AdminDashboard;

@@ -39,22 +39,6 @@ interface DBRSVP {
   event?: DBEvent;
 }
 
-interface DBAnnouncement {
-  id: number;
-  title: string;
-  content: string;
-  priority: string;
-  created_at: string;
-}
-
-interface DBPartner {
-  id: number;
-  booking_id: number;
-  partner_name: string;
-  partner_email?: string;
-  is_member: boolean;
-}
-
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -64,7 +48,6 @@ const Dashboard: React.FC = () => {
   
   const [dbBookings, setDbBookings] = useState<DBBooking[]>([]);
   const [dbRSVPs, setDbRSVPs] = useState<DBRSVP[]>([]);
-  const [announcements, setAnnouncements] = useState<DBAnnouncement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -73,13 +56,6 @@ const Dashboard: React.FC = () => {
   const [checkInConfirmed, setCheckInConfirmed] = useState(false); 
   const [newTime, setNewTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
-  
-  const [showPartnerModal, setShowPartnerModal] = useState(false);
-  const [partnerBooking, setPartnerBooking] = useState<DBBooking | null>(null);
-  const [partners, setPartners] = useState<DBPartner[]>([]);
-  const [newPartnerName, setNewPartnerName] = useState('');
-  const [isLoadingPartners, setIsLoadingPartners] = useState(false);
-  const [isBirthday, setIsBirthday] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -89,10 +65,9 @@ const Dashboard: React.FC = () => {
       setError(null);
       
       try {
-        const [bookingsRes, rsvpsRes, announcementsRes] = await Promise.all([
+        const [bookingsRes, rsvpsRes] = await Promise.all([
           fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
-          fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`),
-          fetch('/api/announcements?active_only=true')
+          fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`)
         ]);
         
         if (bookingsRes.ok) {
@@ -103,17 +78,6 @@ const Dashboard: React.FC = () => {
         if (rsvpsRes.ok) {
           const rsvps = await rsvpsRes.json();
           setDbRSVPs(rsvps);
-        }
-        
-        if (announcementsRes.ok) {
-          const anns = await announcementsRes.json();
-          setAnnouncements(anns);
-        }
-        
-        const birthdayRes = await fetch(`/api/birthday-check?email=${encodeURIComponent(user.email)}`);
-        if (birthdayRes.ok) {
-          const data = await birthdayRes.json();
-          setIsBirthday(data.isBirthday);
         }
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -219,113 +183,19 @@ const Dashboard: React.FC = () => {
     return 'Good evening';
   };
 
-  const openPartnerModal = async (booking: DBBooking) => {
-    setPartnerBooking(booking);
-    setShowPartnerModal(true);
-    setIsLoadingPartners(true);
-    try {
-      const res = await fetch(`/api/bookings/${booking.id}/partners`);
-      if (res.ok) {
-        setPartners(await res.json());
-      }
-    } catch (err) {
-      console.error('Error fetching partners:', err);
-    } finally {
-      setIsLoadingPartners(false);
-    }
-  };
-
-  const addPartner = async () => {
-    if (!partnerBooking || !newPartnerName.trim()) return;
-    try {
-      const res = await fetch(`/api/bookings/${partnerBooking.id}/partners`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ partner_name: newPartnerName.trim() })
-      });
-      if (res.ok) {
-        const partner = await res.json();
-        setPartners(prev => [...prev, partner]);
-        setNewPartnerName('');
-      }
-    } catch (err) {
-      console.error('Error adding partner:', err);
-    }
-  };
-
-  const removePartner = async (partnerId: number) => {
-    if (!partnerBooking) return;
-    try {
-      await fetch(`/api/bookings/${partnerBooking.id}/partners/${partnerId}`, {
-        method: 'DELETE'
-      });
-      setPartners(prev => prev.filter(p => p.id !== partnerId));
-    } catch (err) {
-      console.error('Error removing partner:', err);
-    }
-  };
-
   return (
     <div className="px-6 pt-4 pb-32 font-sans relative min-h-full">
       {/* Welcome banner for new members */}
       <WelcomeBanner />
       
       <div className="mb-6">
-        {isBirthday ? (
-          <>
-            <h1 className={`text-3xl font-bold tracking-tight animate-pop-in ${isDark ? 'text-white' : 'text-primary'}`}>
-              Happy Birthday, {user?.name.split(' ')[0]}! 🎂
-            </h1>
-            <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-accent' : 'text-brand-green'}`} style={{animationDelay: '0.1s'}}>
-              Wishing you a wonderful day from all of us at Even House!
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className={`text-3xl font-bold tracking-tight animate-pop-in ${isDark ? 'text-white' : 'text-primary'}`}>
-              {getGreeting()}, {user?.name.split(' ')[0]}
-            </h1>
-            <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/60' : 'text-primary/60'}`} style={{animationDelay: '0.1s'}}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </p>
-          </>
-        )}
+        <h1 className={`text-3xl font-bold tracking-tight animate-pop-in ${isDark ? 'text-white' : 'text-primary'}`}>
+          {getGreeting()}, {user?.name.split(' ')[0]}
+        </h1>
+        <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/60' : 'text-primary/60'}`} style={{animationDelay: '0.1s'}}>
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </p>
       </div>
-
-      {announcements.length > 0 && (
-        <div className="mb-6 space-y-3 animate-pop-in" style={{animationDelay: '0.12s'}}>
-          {announcements.map((ann) => {
-            const priorityStyles: Record<string, string> = {
-              urgent: isDark ? 'bg-red-500/20 border-red-500/40 text-red-300' : 'bg-red-50 border-red-200 text-red-700',
-              high: isDark ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-700',
-              normal: isDark ? 'bg-accent/20 border-accent/40 text-white' : 'bg-accent/20 border-accent/40 text-brand-green',
-              low: isDark ? 'bg-white/10 border-white/20 text-white/70' : 'bg-gray-50 border-gray-200 text-gray-600'
-            };
-            const priorityIcons: Record<string, string> = {
-              urgent: 'error',
-              high: 'warning',
-              normal: 'campaign',
-              low: 'info'
-            };
-            return (
-              <div 
-                key={ann.id} 
-                className={`p-4 rounded-2xl border ${priorityStyles[ann.priority] || priorityStyles.normal}`}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-xl mt-0.5">
-                    {priorityIcons[ann.priority] || 'campaign'}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm">{ann.title}</h4>
-                    <p className="text-sm opacity-80 mt-1">{ann.content}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {isLoading ? (
         <div className={`flex flex-col items-center justify-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
@@ -368,15 +238,6 @@ const Dashboard: React.FC = () => {
                         </>
                       ) : 'Check In'}
                     </button>
-                    {nextItem.type === 'booking' && nextItem.resourceType === 'simulator' && (
-                      <button 
-                        onClick={() => openPartnerModal(nextItem.raw as DBBooking)}
-                        className="w-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-xl transition-colors text-brand-green border border-brand-green/10 focus:ring-2 focus:ring-accent focus:outline-none"
-                        aria-label="Manage playing partners"
-                      >
-                        <span className="material-symbols-outlined">group_add</span>
-                      </button>
-                    )}
                     {nextItem.type === 'booking' && (
                       <button 
                         onClick={() => handleCancelBooking(nextItem.dbId)}
@@ -427,7 +288,6 @@ const Dashboard: React.FC = () => {
                     icon={getIconForType(item.resourceType)} 
                     color={isDark ? "text-[#E7E7DC]" : "text-primary"}
                     actions={item.type === 'booking' ? [
-                      ...(item.resourceType === 'simulator' ? [{ icon: 'group_add', label: 'Partners', onClick: () => openPartnerModal(item.raw as DBBooking) }] : []),
                       { icon: 'close', label: 'Cancel', onClick: () => handleCancelBooking(item.dbId) }
                     ] : [
                       { icon: 'close', label: 'Cancel RSVP', onClick: () => handleCancelRSVP((item.raw as DBRSVP).event_id) }
@@ -449,73 +309,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </>
-      )}
-
-      {showPartnerModal && partnerBooking && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPartnerModal(false)} />
-          <div className={`relative w-full max-w-md mx-4 rounded-t-3xl sm:rounded-3xl p-6 max-h-[80vh] overflow-y-auto ${isDark ? 'bg-[#1a1f12]' : 'bg-white'}`}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>Playing Partners</h2>
-              <button onClick={() => setShowPartnerModal(false)} className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10 text-white' : 'bg-black/5 text-primary'}`}>
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-            
-            <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
-              {partnerBooking.resource_name} • {formatDate(partnerBooking.booking_date)}
-            </p>
-
-            <div className="mb-6">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newPartnerName}
-                  onChange={(e) => setNewPartnerName(e.target.value)}
-                  placeholder="Partner's name"
-                  className={`flex-1 px-4 py-3 rounded-xl text-sm border ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/40' : 'bg-black/5 border-black/10 text-primary placeholder:text-primary/40'}`}
-                  onKeyDown={(e) => e.key === 'Enter' && addPartner()}
-                />
-                <button
-                  onClick={addPartner}
-                  disabled={!newPartnerName.trim()}
-                  className="px-4 py-3 rounded-xl bg-accent text-brand-green font-bold text-sm disabled:opacity-50"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-
-            {isLoadingPartners ? (
-              <div className={`flex justify-center py-8 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
-                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-              </div>
-            ) : partners.length > 0 ? (
-              <div className="space-y-2">
-                {partners.map((partner) => (
-                  <div key={partner.id} className={`flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10' : 'bg-black/10'}`}>
-                        <span className="material-symbols-outlined text-sm">person</span>
-                      </div>
-                      <span className={`font-medium ${isDark ? 'text-white' : 'text-primary'}`}>{partner.partner_name}</span>
-                    </div>
-                    <button
-                      onClick={() => removePartner(partner.id)}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'hover:bg-white/10 text-white/60' : 'hover:bg-black/10 text-primary/60'}`}
-                    >
-                      <span className="material-symbols-outlined text-sm">close</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className={`text-center py-8 text-sm ${isDark ? 'text-white/40' : 'text-primary/40'}`}>
-                No partners added yet
-              </p>
-            )}
-          </div>
-        </div>
       )}
     </div>
   );
