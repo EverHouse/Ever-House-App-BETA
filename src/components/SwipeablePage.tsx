@@ -33,12 +33,8 @@ const SwipeablePage: React.FC<SwipeablePageProps> = ({ children, className = "" 
   }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    const x = e.touches[0].clientX;
-    // Allow swipe to start from the left half of the screen
-    if (x <= screenHalf) {
-      setTouchStart(x);
-      setIsSwiping(true);
-    }
+    // Swipe-to-go-back disabled for simpler UX
+    return;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
