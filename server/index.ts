@@ -16,7 +16,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 // Configure web push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
-    'mailto:hello@evenhouse.club',
+    'mailto:hello@evenhouse.app',
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );
@@ -1084,7 +1084,7 @@ app.post('/api/auth/magic-link', async (req, res) => {
     const magicLink = `${baseUrl}/#/verify?token=${token}`;
     
     await resend.emails.send({
-      from: 'Even House <noreply@evenhouse.club>',
+      from: 'Even House <noreply@evenhouse.app>',
       to: normalizedEmail,
       subject: 'Your Even House Login Link',
       html: `
