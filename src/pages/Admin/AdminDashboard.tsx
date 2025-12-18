@@ -8,7 +8,7 @@ import { formatDate as formatDateUtil, formatDateShort as formatDateShortUtil, f
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'closures' | 'directory' | 'simulator' | 'gallery' | 'guests' | 'push'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'closures' | 'directory' | 'simulator' | 'gallery' | 'guests' | 'push' | 'announcements'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -59,6 +59,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'closures' && 'Facility Closures'}
                {activeTab === 'guests' && 'Guest Passes'}
                {activeTab === 'push' && 'Push Notifications'}
+               {activeTab === 'announcements' && 'Announcements'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
                {activeTab === 'gallery' && 'Manage Gallery'}
@@ -70,6 +71,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'closures' && <FacilityClosuresAdmin />}
         {activeTab === 'guests' && <GuestPassAdmin />}
         {activeTab === 'push' && <PushNotificationAdmin />}
+        {activeTab === 'announcements' && <AnnouncementsAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
         {activeTab === 'gallery' && <GalleryAdmin />}
@@ -83,6 +85,7 @@ const AdminDashboard: React.FC = () => {
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
             <NavItem icon="badge" label="Guests" active={activeTab === 'guests'} onClick={() => setActiveTab('guests')} />
             <NavItem icon="notifications" label="Push" active={activeTab === 'push'} onClick={() => setActiveTab('push')} />
+            <NavItem icon="campaign" label="News" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
             <NavItem icon="event_busy" label="Closures" active={activeTab === 'closures'} onClick={() => setActiveTab('closures')} />
             <NavItem icon="photo_library" label="Gallery" active={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
             <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
@@ -1772,6 +1775,250 @@ const PushNotificationAdmin: React.FC = () => {
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+// --- ANNOUNCEMENTS ADMIN ---
+
+interface AnnouncementRecord {
+  id: number;
+  title: string;
+  content: string;
+  priority: string;
+  is_active: boolean;
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+}
+
+const AnnouncementsAdmin: React.FC = () => {
+  const [announcements, setAnnouncements] = useState<AnnouncementRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [newAnnouncement, setNewAnnouncement] = useState<Partial<AnnouncementRecord>>({ 
+    priority: 'normal', 
+    is_active: true 
+  });
+
+  const priorities = [
+    { value: 'low', label: 'Low', color: 'text-gray-500' },
+    { value: 'normal', label: 'Normal', color: 'text-blue-500' },
+    { value: 'high', label: 'High', color: 'text-amber-500' },
+    { value: 'urgent', label: 'Urgent', color: 'text-red-500' }
+  ];
+
+  const fetchAnnouncements = async () => {
+    try {
+      const res = await fetch('/api/announcements');
+      if (res.ok) {
+        setAnnouncements(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch announcements:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchAnnouncements(); }, []);
+
+  const openEdit = (item: AnnouncementRecord) => {
+    setNewAnnouncement(item);
+    setEditId(item.id);
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!newAnnouncement.title || !newAnnouncement.content) return;
+
+    try {
+      const url = editId ? `/api/announcements/${editId}` : '/api/announcements';
+      const method = editId ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAnnouncement)
+      });
+      
+      if (res.ok) {
+        fetchAnnouncements();
+        setIsEditing(false);
+        setEditId(null);
+        setNewAnnouncement({ priority: 'normal', is_active: true });
+      }
+    } catch (err) {
+      console.error('Failed to save announcement:', err);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await fetch(`/api/announcements/${id}`, { method: 'DELETE' });
+      fetchAnnouncements();
+    } catch (err) {
+      console.error('Failed to delete announcement:', err);
+    }
+  };
+
+  const toggleActive = async (item: AnnouncementRecord) => {
+    try {
+      await fetch(`/api/announcements/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !item.is_active })
+      });
+      fetchAnnouncements();
+    } catch (err) {
+      console.error('Failed to toggle announcement:', err);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <button
+        onClick={() => { setIsEditing(true); setEditId(null); setNewAnnouncement({ priority: 'normal', is_active: true }); }}
+        className="w-full py-3 bg-primary text-white rounded-xl font-medium flex items-center justify-center gap-2"
+      >
+        <span className="material-symbols-outlined">add</span>
+        Create Announcement
+      </button>
+
+      {announcements.length === 0 ? (
+        <div className="text-center py-12 text-black/50 dark:text-white/50">
+          <span className="material-symbols-outlined text-4xl mb-2 block">campaign</span>
+          <p>No announcements yet</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {announcements.map(item => {
+            const priorityInfo = priorities.find(p => p.value === item.priority) || priorities[1];
+            return (
+              <div key={item.id} className={`bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10 ${!item.is_active ? 'opacity-50' : ''}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-bold uppercase ${priorityInfo.color}`}>{priorityInfo.label}</span>
+                      {!item.is_active && <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">Inactive</span>}
+                    </div>
+                    <h3 className="font-bold text-primary dark:text-white">{item.title}</h3>
+                    <p className="text-sm text-black/70 dark:text-white/70 mt-1 line-clamp-2">{item.content}</p>
+                    <div className="text-xs text-black/40 dark:text-white/40 mt-2">
+                      {new Date(item.created_at).toLocaleDateString()}
+                      {item.start_date && ` · Starts ${new Date(item.start_date).toLocaleDateString()}`}
+                      {item.end_date && ` · Ends ${new Date(item.end_date).toLocaleDateString()}`}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <button onClick={() => openEdit(item)} className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                      <span className="material-symbols-outlined text-lg text-primary dark:text-white">edit</span>
+                    </button>
+                    <button onClick={() => toggleActive(item)} className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                      <span className="material-symbols-outlined text-lg text-primary dark:text-white">
+                        {item.is_active ? 'visibility_off' : 'visibility'}
+                      </span>
+                    </button>
+                    <button onClick={() => handleDelete(item.id)} className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30">
+                      <span className="material-symbols-outlined text-lg text-red-500">delete</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-[#1a1d12] rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-primary dark:text-white mb-4">
+              {editId ? 'Edit Announcement' : 'Create Announcement'}
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Title *</label>
+                <input
+                  type="text"
+                  value={newAnnouncement.title || ''}
+                  onChange={(e) => setNewAnnouncement(a => ({ ...a, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Content *</label>
+                <textarea
+                  value={newAnnouncement.content || ''}
+                  onChange={(e) => setNewAnnouncement(a => ({ ...a, content: e.target.value }))}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Priority</label>
+                <select
+                  value={newAnnouncement.priority || 'normal'}
+                  onChange={(e) => setNewAnnouncement(a => ({ ...a, priority: e.target.value }))}
+                  className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white"
+                >
+                  {priorities.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={newAnnouncement.start_date?.split('T')[0] || ''}
+                    onChange={(e) => setNewAnnouncement(a => ({ ...a, start_date: e.target.value }))}
+                    className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={newAnnouncement.end_date?.split('T')[0] || ''}
+                    onChange={(e) => setNewAnnouncement(a => ({ ...a, end_date: e.target.value }))}
+                    className="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-primary dark:text-white"
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newAnnouncement.is_active !== false}
+                  onChange={(e) => setNewAnnouncement(a => ({ ...a, is_active: e.target.checked }))}
+                  className="accent-primary w-4 h-4"
+                />
+                <span className="text-sm text-primary dark:text-white">Active</span>
+              </label>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => { setIsEditing(false); setEditId(null); }} className="flex-1 py-3 border border-black/10 dark:border-white/10 rounded-xl font-medium text-primary dark:text-white">
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!newAnnouncement.title || !newAnnouncement.content}
+                className="flex-1 py-3 bg-primary text-white rounded-xl font-medium disabled:opacity-50"
+              >
+                {editId ? 'Save Changes' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

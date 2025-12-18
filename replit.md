@@ -44,8 +44,17 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details.
 - **Member-Only Pages**: Dashboard, Book Golf, Cafe, Events, Profile, Wellness.
 - **Admin Functionality**: Admin dashboard for managing members, events, cafe menu, booking requests, and gallery images.
-- **Gallery Management**: Staff can add/edit/delete gallery images with categories (Golf Bays, Lounge, Wellness, Events), captions, display order, and visibility toggle. Public Gallery page fetches from database.
-- **API Endpoints**: Comprehensive REST API for managing resources, bookings, events, RSVPs, cafe menu, HubSpot contacts, guest passes, simulator bay requests, notifications, push notifications, and gallery images.
+- **Staff Portal Tabs**: 9-tab scrollable navigation: Directory, Sims, Events, Guests, Push, News, Closures, Gallery, Cafe.
+  - **Directory**: View and manage member roles (member/staff/admin).
+  - **Sims**: Approve/decline simulator booking requests with conflict detection.
+  - **Events**: Create/edit/delete internal events, sync from Google Calendar and Eventbrite.
+  - **Guests**: View all guest pass records, reset passes, adjust pass totals per member.
+  - **Push**: Send push notifications to all subscribed members or select specific recipients.
+  - **News (Announcements)**: Create/edit/delete club announcements with priority levels, scheduling, and visibility toggle.
+  - **Closures**: Schedule facility closures/special hours for golf, conference, wellness, cafe, or entire club.
+  - **Gallery**: Add/edit/delete gallery images with categories, captions, display order, and visibility.
+  - **Cafe**: Manage cafe menu items by category with prices and availability.
+- **API Endpoints**: Comprehensive REST API for managing resources, bookings, events, RSVPs, cafe menu, HubSpot contacts, guest passes, simulator bay requests, notifications, push notifications, gallery images, announcements, and facility closures.
 
 ## External Dependencies
 

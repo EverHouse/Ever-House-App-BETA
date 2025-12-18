@@ -888,6 +888,89 @@ app.delete('/api/gallery/:id', async (req, res) => {
   }
 });
 
+// Announcements Endpoints
+app.get('/api/announcements', async (req, res) => {
+  try {
+    const { active_only } = req.query;
+    let query = 'SELECT * FROM announcements';
+    
+    if (active_only === 'true') {
+      query += ` WHERE is_active = true 
+                 AND (start_date IS NULL OR start_date <= CURRENT_DATE) 
+                 AND (end_date IS NULL OR end_date >= CURRENT_DATE)`;
+    }
+    
+    query += ' ORDER BY priority DESC, created_at DESC';
+    
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Announcements fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch announcements' });
+  }
+});
+
+app.post('/api/announcements', async (req, res) => {
+  try {
+    const { title, content, priority, is_active, start_date, end_date, created_by } = req.body;
+    
+    if (!title || !content) {
+      return res.status(400).json({ error: 'Title and content are required' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO announcements (title, content, priority, is_active, start_date, end_date, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [title, content, priority || 'normal', is_active !== false, start_date || null, end_date || null, created_by || null]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Announcement add error:', error);
+    res.status(500).json({ error: 'Failed to add announcement' });
+  }
+});
+
+app.put('/api/announcements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, content, priority, is_active, start_date, end_date } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE announcements SET 
+       title = COALESCE($1, title),
+       content = COALESCE($2, content),
+       priority = COALESCE($3, priority),
+       is_active = COALESCE($4, is_active),
+       start_date = $5,
+       end_date = $6,
+       updated_at = CURRENT_TIMESTAMP
+       WHERE id = $7 RETURNING *`,
+      [title, content, priority, is_active, start_date || null, end_date || null, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Announcement not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Announcement update error:', error);
+    res.status(500).json({ error: 'Failed to update announcement' });
+  }
+});
+
+app.delete('/api/announcements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM announcements WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Announcement delete error:', error);
+    res.status(500).json({ error: 'Failed to delete announcement' });
+  }
+});
+
 // Facility Closures Endpoints
 app.get('/api/facility-closures', async (req, res) => {
   try {
