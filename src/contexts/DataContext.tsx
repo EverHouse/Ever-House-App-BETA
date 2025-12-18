@@ -409,12 +409,25 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
         const res = await fetch('/api/events');
         if (res.ok) {
           const data = await res.json();
+          const normalizeCategory = (cat: string | null | undefined): string => {
+            if (!cat) return 'Social';
+            const lower = cat.toLowerCase();
+            const categoryMap: Record<string, string> = {
+              'wellness': 'Wellness',
+              'social': 'Social',
+              'dining': 'Dining',
+              'sport': 'Sport',
+              'sports': 'Sport',
+            };
+            return categoryMap[lower] || cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+          };
+          
           const formatted: EventData[] = data.map((event: any) => ({
             id: event.id.toString(),
             source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
             externalLink: event.eventbrite_url || undefined,
             title: event.title,
-            category: event.category || 'Social',
+            category: normalizeCategory(event.category),
             date: formatDateShort(event.event_date),
             time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
             location: event.location || 'Even House',

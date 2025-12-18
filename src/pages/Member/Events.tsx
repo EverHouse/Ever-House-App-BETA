@@ -42,7 +42,7 @@ const MemberEvents: React.FC = () => {
     let result = events;
     
     if (filter !== 'All') {
-      result = result.filter(e => e.category === filter);
+      result = result.filter(e => e.category.toLowerCase() === filter.toLowerCase());
     }
     
     if (selectedDateIndex !== null) {

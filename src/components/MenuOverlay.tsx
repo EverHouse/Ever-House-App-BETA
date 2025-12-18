@@ -9,7 +9,7 @@ interface MenuOverlayProps {
 
 const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { user } = useData();
+  const { user, actualUser } = useData();
 
   const handleNav = (path: string) => {
     navigate(path);
@@ -18,8 +18,9 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  // Use actualUser for role checking (not user, which could be a "view-as" user)
   const getActionButtonConfig = () => {
-    if (user?.role === 'admin' || user?.role === 'staff') {
+    if (actualUser?.role === 'admin' || actualUser?.role === 'staff') {
         return { label: "STAFF PORTAL", icon: "admin_panel_settings", action: () => handleNav('/admin') };
     }
     if (user) {
