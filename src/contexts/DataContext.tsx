@@ -78,6 +78,7 @@ interface DataContextType {
   
   // Auth Actions
   login: (email: string) => Promise<void>;
+  loginWithMember: (member: any) => void;
   logout: () => void;
   
   // View As Actions
@@ -461,6 +462,21 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     setActualUser(memberProfile);
   };
 
+  const loginWithMember = (member: any) => {
+    const memberProfile: MemberProfile = {
+      id: member.id,
+      name: [member.firstName, member.lastName].filter(Boolean).join(' ') || member.email || 'Member',
+      tier: member.tier || 'Core',
+      status: 'Active',
+      email: member.email,
+      phone: member.phone || '',
+      role: member.role || 'member'
+    };
+    
+    localStorage.setItem('eh_member', JSON.stringify(memberProfile));
+    setActualUser(memberProfile);
+  };
+
   const logout = () => {
     localStorage.removeItem('eh_member');
     setActualUser(null);
@@ -576,7 +592,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   return (
     <DataContext.Provider value={{
       user, actualUser, viewAsUser, isViewingAs,
-      login, logout, setViewAsUser, clearViewAsUser,
+      login, loginWithMember, logout, setViewAsUser, clearViewAsUser,
       cafeMenu, events, announcements, members, bookings, isLoading,
       addCafeItem, updateCafeItem, deleteCafeItem,
       addEvent, updateEvent, deleteEvent, syncEventbrite,
