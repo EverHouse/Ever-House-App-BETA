@@ -8,7 +8,7 @@ import { formatDate as formatDateUtil, formatDateShort as formatDateShortUtil, f
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'gallery'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'closures' | 'directory' | 'simulator' | 'gallery'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -56,7 +56,7 @@ const AdminDashboard: React.FC = () => {
            <h1 className="text-2xl font-bold text-primary dark:text-white">
                {activeTab === 'cafe' && 'Manage Cafe Menu'}
                {activeTab === 'events' && 'Manage Events'}
-               {activeTab === 'announcements' && 'Manage Updates'}
+               {activeTab === 'closures' && 'Facility Closures'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
                {activeTab === 'gallery' && 'Manage Gallery'}
@@ -65,18 +65,19 @@ const AdminDashboard: React.FC = () => {
         
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsAdmin />}
-        {activeTab === 'announcements' && <AnnouncementsAdmin />}
+        {activeTab === 'closures' && <FacilityClosuresAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
         {activeTab === 'gallery' && <GalleryAdmin />}
       </main>
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-6 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-        <ul className="flex justify-between items-center text-white/50 w-full max-w-md mx-auto">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-4 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        <ul className="flex justify-between items-center text-white/50 w-full max-w-lg mx-auto overflow-x-auto scrollbar-hide">
             <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
+            <NavItem icon="event_busy" label="Closures" active={activeTab === 'closures'} onClick={() => setActiveTab('closures')} />
             <NavItem icon="photo_library" label="Gallery" active={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
             <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
         </ul>
@@ -1539,6 +1540,294 @@ const SimulatorAdmin: React.FC = () => {
             )}
         </div>
     );
+};
+
+// --- FACILITY CLOSURES ADMIN ---
+
+interface FacilityClosure {
+  id: number;
+  title: string;
+  facility_type: string;
+  start_date: string;
+  end_date: string;
+  start_time?: string;
+  end_time?: string;
+  is_full_day: boolean;
+  reason?: string;
+}
+
+const FacilityClosuresAdmin: React.FC = () => {
+  const [closures, setClosures] = useState<FacilityClosure[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [newClosure, setNewClosure] = useState<Partial<FacilityClosure>>({ 
+    facility_type: 'golf', 
+    is_full_day: true 
+  });
+
+  const facilityTypes = [
+    { value: 'golf', label: 'Golf Simulators' },
+    { value: 'conference', label: 'Conference Room' },
+    { value: 'wellness', label: 'Wellness Studio' },
+    { value: 'cafe', label: 'Cafe & Bar' },
+    { value: 'all', label: 'Entire Club' }
+  ];
+
+  const fetchClosures = async () => {
+    try {
+      const res = await fetch('/api/facility-closures');
+      if (res.ok) {
+        setClosures(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch closures:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchClosures(); }, []);
+
+  const handleSave = async () => {
+    if (!newClosure.title || !newClosure.start_date || !newClosure.end_date) return;
+
+    try {
+      if (editId) {
+        const res = await fetch(`/api/facility-closures/${editId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newClosure)
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setClosures(closures.map(c => c.id === editId ? updated : c));
+        }
+      } else {
+        const res = await fetch('/api/facility-closures', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newClosure)
+        });
+        if (res.ok) {
+          const created = await res.json();
+          setClosures([...closures, created]);
+        }
+      }
+      resetForm();
+    } catch (err) {
+      console.error('Failed to save closure:', err);
+    }
+  };
+
+  const handleEdit = (closure: FacilityClosure) => {
+    setEditId(closure.id);
+    setNewClosure({
+      ...closure,
+      start_date: closure.start_date.split('T')[0],
+      end_date: closure.end_date.split('T')[0]
+    });
+    setIsEditing(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this closure?')) return;
+    try {
+      await fetch(`/api/facility-closures/${id}`, { method: 'DELETE' });
+      setClosures(closures.filter(c => c.id !== id));
+    } catch (err) {
+      console.error('Failed to delete closure:', err);
+    }
+  };
+
+  const resetForm = () => {
+    setIsEditing(false);
+    setEditId(null);
+    setNewClosure({ facility_type: 'golf', is_full_day: true });
+  };
+
+  const formatDateRange = (start: string, end: string) => {
+    const s = new Date(start);
+    const e = new Date(end);
+    if (s.toDateString() === e.toDateString()) {
+      return s.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <span className="material-symbols-outlined animate-spin text-3xl text-primary/30 dark:text-white/30">progress_activity</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <button
+        onClick={() => setIsEditing(true)}
+        className="w-full py-3 px-4 bg-primary dark:bg-accent text-white dark:text-primary rounded-xl font-medium flex items-center justify-center gap-2"
+      >
+        <span className="material-symbols-outlined text-lg">event_busy</span>
+        Add Closure
+      </button>
+
+      <div className="space-y-3">
+        {closures.map(closure => (
+          <div key={closure.id} className="bg-white dark:bg-surface-dark rounded-xl p-4 border border-gray-100 dark:border-white/10">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h4 className="font-semibold text-primary dark:text-white">{closure.title}</h4>
+                <p className="text-sm text-primary/60 dark:text-white/60 mt-1">
+                  {facilityTypes.find(f => f.value === closure.facility_type)?.label || closure.facility_type}
+                </p>
+                <p className="text-sm text-primary/80 dark:text-white/80 mt-1">
+                  {formatDateRange(closure.start_date, closure.end_date)}
+                  {!closure.is_full_day && closure.start_time && closure.end_time && (
+                    <span className="ml-2 text-primary/50 dark:text-white/50">
+                      ({closure.start_time} - {closure.end_time})
+                    </span>
+                  )}
+                </p>
+                {closure.reason && (
+                  <p className="text-xs text-primary/50 dark:text-white/50 mt-1">{closure.reason}</p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => handleEdit(closure)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg">
+                  <span className="material-symbols-outlined text-sm text-primary/60 dark:text-white/60">edit</span>
+                </button>
+                <button onClick={() => handleDelete(closure.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
+                  <span className="material-symbols-outlined text-sm text-red-500">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {closures.length === 0 && (
+        <div className="text-center py-12">
+          <span className="material-symbols-outlined text-4xl text-primary/20 dark:text-white/20 mb-2">event_available</span>
+          <p className="text-primary/50 dark:text-white/50">No scheduled closures.</p>
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-primary dark:text-white mb-4">{editId ? 'Edit Closure' : 'Add Closure'}</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Title *</label>
+                <input
+                  type="text"
+                  value={newClosure.title || ''}
+                  onChange={(e) => setNewClosure({ ...newClosure, title: e.target.value })}
+                  placeholder="Holiday Closure, Maintenance, etc."
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Facility *</label>
+                <select
+                  value={newClosure.facility_type}
+                  onChange={(e) => setNewClosure({ ...newClosure, facility_type: e.target.value })}
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                >
+                  {facilityTypes.map(ft => (
+                    <option key={ft.value} value={ft.value}>{ft.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Start Date *</label>
+                  <input
+                    type="date"
+                    value={newClosure.start_date || ''}
+                    onChange={(e) => setNewClosure({ ...newClosure, start_date: e.target.value })}
+                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">End Date *</label>
+                  <input
+                    type="date"
+                    value={newClosure.end_date || ''}
+                    onChange={(e) => setNewClosure({ ...newClosure, end_date: e.target.value })}
+                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_full_day"
+                  checked={newClosure.is_full_day !== false}
+                  onChange={(e) => setNewClosure({ ...newClosure, is_full_day: e.target.checked })}
+                  className="w-5 h-5 rounded"
+                />
+                <label htmlFor="is_full_day" className="text-sm text-primary/70 dark:text-white/70">Full day closure</label>
+              </div>
+
+              {!newClosure.is_full_day && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      value={newClosure.start_time || ''}
+                      onChange={(e) => setNewClosure({ ...newClosure, start_time: e.target.value })}
+                      className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">End Time</label>
+                    <input
+                      type="time"
+                      value={newClosure.end_time || ''}
+                      onChange={(e) => setNewClosure({ ...newClosure, end_time: e.target.value })}
+                      className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Reason (Optional)</label>
+                <textarea
+                  value={newClosure.reason || ''}
+                  onChange={(e) => setNewClosure({ ...newClosure, reason: e.target.value })}
+                  placeholder="Explain why this closure is scheduled..."
+                  rows={2}
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={resetForm} className="flex-1 py-3 rounded-lg border border-gray-200 dark:border-white/10 text-primary/70 dark:text-white/70 font-medium">
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!newClosure.title || !newClosure.start_date || !newClosure.end_date}
+                className="flex-1 py-3 rounded-lg bg-primary dark:bg-accent text-white dark:text-primary font-medium disabled:opacity-50"
+              >
+                {editId ? 'Save Changes' : 'Add Closure'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 // --- GALLERY ADMIN ---

@@ -888,6 +888,92 @@ app.delete('/api/gallery/:id', async (req, res) => {
   }
 });
 
+// Facility Closures Endpoints
+app.get('/api/facility-closures', async (req, res) => {
+  try {
+    const { facility_type, include_past } = req.query;
+    let query = 'SELECT * FROM facility_closures';
+    const params: any[] = [];
+    const conditions: string[] = [];
+    
+    if (include_past !== 'true') {
+      conditions.push('end_date >= CURRENT_DATE');
+    }
+    
+    if (facility_type) {
+      params.push(facility_type);
+      conditions.push(`facility_type = $${params.length}`);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    query += ' ORDER BY start_date';
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Facility closures fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch facility closures' });
+  }
+});
+
+app.post('/api/facility-closures', async (req, res) => {
+  try {
+    const { title, facility_type, start_date, end_date, start_time, end_time, is_full_day, reason } = req.body;
+    
+    if (!title || !facility_type || !start_date || !end_date) {
+      return res.status(400).json({ error: 'Title, facility type, start date, and end date are required' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO facility_closures (title, facility_type, start_date, end_date, start_time, end_time, is_full_day, reason)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [title, facility_type, start_date, end_date, start_time || null, end_time || null, is_full_day !== false, reason || null]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Facility closure add error:', error);
+    res.status(500).json({ error: 'Failed to add facility closure' });
+  }
+});
+
+app.put('/api/facility-closures/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, facility_type, start_date, end_date, start_time, end_time, is_full_day, reason } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE facility_closures SET title = $1, facility_type = $2, start_date = $3, end_date = $4, 
+       start_time = $5, end_time = $6, is_full_day = $7, reason = $8
+       WHERE id = $9 RETURNING *`,
+      [title, facility_type, start_date, end_date, start_time, end_time, is_full_day, reason, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Facility closure not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Facility closure update error:', error);
+    res.status(500).json({ error: 'Failed to update facility closure' });
+  }
+});
+
+app.delete('/api/facility-closures/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM facility_closures WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Facility closure delete error:', error);
+    res.status(500).json({ error: 'Failed to delete facility closure' });
+  }
+});
+
 // Eventbrite Sync Endpoint
 app.post('/api/eventbrite/sync', async (req, res) => {
   try {
