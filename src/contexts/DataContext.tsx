@@ -13,15 +13,19 @@ export interface CafeItem {
   image: string;
 }
 
-export type EventSource = 'internal' | 'eventbrite';
+export type EventSource = 'internal' | 'eventbrite' | 'google_calendar';
+export type EventVisibility = 'public' | 'members_only';
 
 export interface EventData {
   id: string;
   source: EventSource;
+  visibility: EventVisibility;
+  requiresRsvp: boolean;
   externalLink?: string;
   title: string;
   category: string;
   date: string;
+  rawDate: string;
   time: string;
   location: string;
   image: string;
@@ -442,11 +446,14 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           const data = await res.json();
           const formatted: EventData[] = data.map((event: any) => ({
             id: event.id.toString(),
-            source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
+            source: event.source || 'internal',
+            visibility: event.visibility || 'public',
+            requiresRsvp: event.requires_rsvp ?? true,
             externalLink: event.eventbrite_url || undefined,
             title: event.title,
             category: event.category || 'Social',
             date: formatDateShort(event.event_date),
+            rawDate: event.event_date,
             time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
             location: event.location || 'Even House',
             image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',

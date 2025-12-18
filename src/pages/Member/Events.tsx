@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useData, EventData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../components/Toast';
 import Skeleton from '../../components/Skeleton';
-import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
+import { parseLocalDate } from '../../utils/dateUtils';
 
 const MemberEvents: React.FC = () => {
   const { events, addBooking, isLoading } = useData();
@@ -15,31 +15,102 @@ const MemberEvents: React.FC = () => {
   const isDark = effectiveTheme === 'dark';
   const [filter, setFilter] = useState('All');
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const filteredEvents = filter === 'All' 
-    ? events 
-    : events.filter(e => e.category === filter);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dateRange = useMemo(() => {
+    const dates: Date[] = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      dates.push(d);
+    }
+    return dates;
+  }, []);
+
+  const currentMonthYear = useMemo(() => {
+    const targetDate = selectedDate || today;
+    return targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }, [selectedDate]);
+
+  const filteredEvents = useMemo(() => {
+    let result = events;
+    
+    if (filter !== 'All') {
+      result = result.filter(e => e.category === filter);
+    }
+    
+    if (selectedDate) {
+      const selectedStr = selectedDate.toISOString().split('T')[0];
+      result = result.filter(e => {
+        const eventDate = parseLocalDate(e.rawDate);
+        return eventDate.toISOString().split('T')[0] === selectedStr;
+      });
+    } else {
+      result = result.filter(e => {
+        const eventDate = parseLocalDate(e.rawDate);
+        return eventDate >= today;
+      });
+    }
+    
+    return result.sort((a, b) => {
+      const dateA = parseLocalDate(a.rawDate);
+      const dateB = parseLocalDate(b.rawDate);
+      return dateA.getTime() - dateB.getTime();
+    });
+  }, [events, filter, selectedDate]);
+
+  const getEventBadge = (event: EventData) => {
+    if (event.source === 'eventbrite') {
+      return { text: 'Ticketed', bg: 'bg-[#F05537]/20', color: 'text-[#F05537]' };
+    }
+    if (event.visibility === 'members_only') {
+      return { text: 'Members Only', bg: 'bg-accent/30', color: 'text-accent' };
+    }
+    if (event.source === 'google_calendar') {
+      return { text: 'Public', bg: 'bg-blue-500/20', color: 'text-blue-400' };
+    }
+    return { text: 'Open', bg: 'bg-green-500/20', color: 'text-green-300' };
+  };
 
   const handleRSVP = () => {
     if (selectedEvent?.source === 'eventbrite' && selectedEvent.externalLink) {
-        window.open(selectedEvent.externalLink, '_blank');
-        return;
+      window.open(selectedEvent.externalLink, '_blank');
+      return;
     }
 
     if (selectedEvent) {
-        addBooking({
-            id: Date.now().toString(),
-            type: 'event',
-            title: selectedEvent.title,
-            date: selectedEvent.date.split(',')[1].trim(),
-            time: selectedEvent.time,
-            details: selectedEvent.location,
-            color: 'accent'
-        });
+      addBooking({
+        id: Date.now().toString(),
+        type: 'event',
+        title: selectedEvent.title,
+        date: selectedEvent.date.split(',')[1]?.trim() || selectedEvent.date,
+        time: selectedEvent.time,
+        details: selectedEvent.location,
+        color: 'accent'
+      });
     }
 
     setSelectedEvent(null);
     showToast('You are on the list!', 'success');
+  };
+
+  const formatDayShort = (date: Date) => date.toLocaleDateString('en-US', { weekday: 'short' });
+  const formatDateNum = (date: Date) => date.getDate().toString();
+
+  const isDateSelected = (date: Date) => {
+    if (!selectedDate) return false;
+    return date.toDateString() === selectedDate.toDateString();
+  };
+
+  const handleDateClick = (date: Date) => {
+    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+      setSelectedDate(null);
+    } else {
+      setSelectedDate(date);
+    }
   };
 
   return (
@@ -53,87 +124,121 @@ const MemberEvents: React.FC = () => {
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide">
           {['All', 'Social', 'Dining', 'Wellness', 'Sport'].map(cat => (
             <TabButton 
-                key={cat} 
-                label={cat} 
-                active={filter === cat} 
-                onClick={() => setFilter(cat)} 
-                isDark={isDark}
+              key={cat} 
+              label={cat} 
+              active={filter === cat} 
+              onClick={() => setFilter(cat)} 
+              isDark={isDark}
             />
           ))}
         </div>
       </section>
 
       <div className="relative z-10 animate-pop-in">
-         <section className="mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Select Date</h3>
-              <button className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>January 2024</button>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
-              <DateButton day="Fri" date="20" active isDark={isDark} />
-              <DateButton day="Sat" date="21" isDark={isDark} />
-              <DateButton day="Sun" date="22" isDark={isDark} />
-              <DateButton day="Mon" date="23" isDark={isDark} />
-              <DateButton day="Tue" date="24" isDark={isDark} />
-            </div>
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Select Date</h3>
+            <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>{currentMonthYear}</span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+            {dateRange.map((date, i) => (
+              <button
+                key={i}
+                onClick={() => handleDateClick(date)}
+                className={`flex-shrink-0 w-14 py-3 rounded-xl flex flex-col items-center transition-all ${
+                  isDateSelected(date)
+                    ? 'bg-accent text-brand-green'
+                    : isDark
+                      ? 'bg-white/5 text-white hover:bg-white/10'
+                      : 'bg-black/5 text-primary hover:bg-black/10'
+                }`}
+              >
+                <span className={`text-[10px] uppercase font-bold tracking-wider mb-1 ${isDateSelected(date) ? 'text-brand-green' : isDark ? 'text-white/60' : 'text-primary/60'}`}>
+                  {formatDayShort(date)}
+                </span>
+                <span className="text-lg font-bold">{formatDateNum(date)}</span>
+              </button>
+            ))}
+          </div>
+          {selectedDate && (
+            <button
+              onClick={() => setSelectedDate(null)}
+              className={`mt-2 text-xs font-medium flex items-center gap-1 ${isDark ? 'text-white/60 hover:text-white' : 'text-primary/60 hover:text-primary'}`}
+            >
+              <span className="material-symbols-outlined text-sm">close</span>
+              Clear date filter
+            </button>
+          )}
         </section>
 
-         <section className="mb-6">
-            <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Events</h3>
-            <div className="space-y-4">
-                {isLoading ? (
-                    <>
-                       {Array.from({ length: 3 }).map((_, i) => (
-                           <div key={i} className={`flex gap-4 p-4 rounded-xl relative overflow-hidden border ${isDark ? 'glass-card border-white/5' : 'bg-white border-black/5 shadow-sm'}`}>
-                                <Skeleton width={80} height={80} className="flex-shrink-0" />
-                                <div className="flex-1 space-y-2 py-1">
-                                    <Skeleton variant="text" width="80%" height={24} />
-                                    <Skeleton variant="text" width="50%" height={16} />
-                                    <Skeleton variant="text" width="40%" height={14} />
-                                </div>
-                           </div>
-                       ))}
-                    </>
-                ) : filteredEvents.length === 0 ? (
-                    <p className={`text-sm italic ${isDark ? 'text-white/60' : 'text-primary/60'}`}>No events found in this category.</p>
-                ) : (
-                    filteredEvents.map((event, index) => (
-                    <div 
-                        key={event.id} 
-                        onClick={() => setSelectedEvent(event)}
-                        className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all animate-pop-in ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
-                        style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
-                        tabIndex={0}
-                        role="button"
-                        onKeyDown={(e) => { if (e.key === 'Enter') setSelectedEvent(event); }}
-                    >
-                        <div className={`w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden relative ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
-                            <img src={event.image} alt={event.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-90" />
-                            {event.source === 'eventbrite' && (
-                                <div className="absolute bottom-0 left-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase text-center py-0.5">
-                                    Eventbrite
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start mb-1">
-                                <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-primary'}`}>{event.title}</h4>
-                                {event.source === 'eventbrite' ? (
-                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-[#F05537]/20 text-[#F05537] px-1.5 py-0.5 rounded-md whitespace-nowrap">Ticketed</span>
-                                ) : event.id === '3' ? (
-                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded-md whitespace-nowrap">Waitlist</span>
-                                ) : (
-                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-md whitespace-nowrap">Open</span>
-                                )}
-                            </div>
-                            <p className={`text-xs mb-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{event.date} • {event.time}</p>
-                            <p className={`text-xs truncate ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{event.location}</p>
-                        </div>
+        <section className="mb-6">
+          <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+            {selectedDate ? `Events on ${selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}` : 'All Upcoming Events'}
+          </h3>
+          <div className="space-y-4">
+            {isLoading ? (
+              <>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className={`flex gap-4 p-4 rounded-xl relative overflow-hidden border ${isDark ? 'glass-card border-white/5' : 'bg-white border-black/5 shadow-sm'}`}>
+                    <Skeleton width={80} height={80} className="flex-shrink-0" />
+                    <div className="flex-1 space-y-2 py-1">
+                      <Skeleton variant="text" width="80%" height={24} />
+                      <Skeleton variant="text" width="50%" height={16} />
+                      <Skeleton variant="text" width="40%" height={14} />
                     </div>
-                    ))
+                  </div>
+                ))}
+              </>
+            ) : filteredEvents.length === 0 ? (
+              <div className={`text-center py-12 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+                <span className="material-symbols-outlined text-4xl mb-2 block">event_busy</span>
+                <p className="text-sm">{selectedDate ? 'No events on this date' : 'No upcoming events found'}</p>
+                {selectedDate && (
+                  <button
+                    onClick={() => setSelectedDate(null)}
+                    className="mt-3 text-sm font-medium underline"
+                  >
+                    View all upcoming events
+                  </button>
                 )}
-            </div>
-         </section>
+              </div>
+            ) : (
+              filteredEvents.map((event, index) => {
+                const badge = getEventBadge(event);
+                return (
+                  <div 
+                    key={event.id} 
+                    onClick={() => setSelectedEvent(event)}
+                    className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all animate-pop-in ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
+                    style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
+                    tabIndex={0}
+                    role="button"
+                    onKeyDown={(e) => { if (e.key === 'Enter') setSelectedEvent(event); }}
+                  >
+                    <div className={`w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden relative ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
+                      <img src={event.image} alt={event.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-90" />
+                      {event.source === 'eventbrite' && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase text-center py-0.5">
+                          Eventbrite
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-primary'}`}>{event.title}</h4>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${badge.bg} ${badge.color} px-1.5 py-0.5 rounded-md whitespace-nowrap`}>
+                          {badge.text}
+                        </span>
+                      </div>
+                      <p className={`text-xs mb-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{event.date} • {event.time}</p>
+                      <p className={`text-xs truncate ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{event.location}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
       </div>
 
       {selectedEvent && (
@@ -141,101 +246,104 @@ const MemberEvents: React.FC = () => {
           <div className={`absolute inset-0 backdrop-blur-sm transition-opacity ${isDark ? 'bg-black/60' : 'bg-black/40'}`} onClick={() => setSelectedEvent(null)}></div>
           
           <div className={`relative w-full max-w-md h-[90vh] rounded-t-3xl shadow-2xl animate-slide-up flex flex-col overflow-hidden border-t ${isDark ? 'glass-card bg-[#1a210d] border-white/10' : 'bg-white border-black/10'}`}>
-             <div className={`relative h-64 w-full flex-shrink-0 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                <img src={selectedEvent.image} alt={selectedEvent.title} className="w-full h-full object-cover opacity-90" />
-                <button 
-                  onClick={() => setSelectedEvent(null)}
-                  className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors"
-                  aria-label="Close"
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-                <div className="absolute top-4 right-4 bg-accent text-brand-green px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-glow">
-                  {selectedEvent.category}
-                </div>
-             </div>
+            <div className={`relative h-64 w-full flex-shrink-0 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+              <img src={selectedEvent.image} alt={selectedEvent.title} className="w-full h-full object-cover opacity-90" />
+              <button 
+                onClick={() => setSelectedEvent(null)}
+                className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+                aria-label="Close"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+              <div className="absolute top-4 right-4 bg-accent text-brand-green px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-glow">
+                {selectedEvent.category}
+              </div>
+            </div>
 
-             <div className="flex-1 overflow-y-auto px-6 py-8">
-                <div className="flex items-start justify-between">
-                    <div className={`inline-block border rounded-lg px-3 py-2 mb-4 ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
-                        <span className={`block font-bold text-lg leading-none mb-0.5 ${isDark ? 'text-white' : 'text-primary'}`}>{selectedEvent.date.split(',')[0]}</span>
-                        <span className={`block text-xs font-medium uppercase ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{selectedEvent.time}</span>
+            <div className="flex-1 overflow-y-auto px-6 py-8">
+              <div className="flex items-start justify-between">
+                <div className={`inline-block border rounded-lg px-3 py-2 mb-4 ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
+                  <span className={`block font-bold text-lg leading-none mb-0.5 ${isDark ? 'text-white' : 'text-primary'}`}>{selectedEvent.date.split(',')[0]}</span>
+                  <span className={`block text-xs font-medium uppercase ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{selectedEvent.time}</span>
+                </div>
+                {(() => {
+                  const badge = getEventBadge(selectedEvent);
+                  return (
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${badge.bg}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${badge.color.replace('text-', 'bg-')}`}></span>
+                      <span className={`text-[10px] font-bold uppercase ${badge.color}`}>{badge.text}</span>
                     </div>
-                    {selectedEvent.source === 'eventbrite' && (
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F05537]/20 rounded-full">
-                             <span className="w-1.5 h-1.5 rounded-full bg-[#F05537]"></span>
-                             <span className="text-[10px] font-bold uppercase text-[#F05537]">Eventbrite Event</span>
-                        </div>
+                  );
+                })()}
+              </div>
+
+              <h2 className={`text-3xl font-bold mb-2 leading-tight ${isDark ? 'text-white' : 'text-primary'}`}>{selectedEvent.title}</h2>
+              <p className={`text-sm mb-6 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{selectedEvent.location}</p>
+
+              <div className={`w-full h-px mb-6 ${isDark ? 'bg-white/10' : 'bg-black/10'}`}></div>
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className={`text-sm font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>About</h3>
+                  <p className={`text-base leading-relaxed font-light ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+                    {selectedEvent.description || 'No description available.'}
+                  </p>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-primary'}`}>Attendees</h3>
+                    {selectedEvent.ticketsSold && selectedEvent.capacity && (
+                      <span className={`text-xs font-medium ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+                        {selectedEvent.ticketsSold} / {selectedEvent.capacity} Spots Filled
+                      </span>
                     )}
-                </div>
-
-                <h2 className={`text-3xl font-bold mb-2 leading-tight ${isDark ? 'text-white' : 'text-primary'}`}>{selectedEvent.title}</h2>
-                <p className={`text-sm mb-6 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{selectedEvent.location}</p>
-
-                <div className={`w-full h-px mb-6 ${isDark ? 'bg-white/10' : 'bg-black/10'}`}></div>
-
-                <div className="space-y-6">
-                   <div>
-                     <h3 className={`text-sm font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>About</h3>
-                     <p className={`text-base leading-relaxed font-light ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
-                       {selectedEvent.description}
-                     </p>
-                   </div>
-                   
-                   <div>
-                     <div className="flex justify-between items-center mb-3">
-                        <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-primary'}`}>Attendees</h3>
-                        {selectedEvent.ticketsSold && selectedEvent.capacity && (
-                          <span className={`text-xs font-medium ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
-                              {selectedEvent.ticketsSold} / {selectedEvent.capacity} Spots Filled
-                          </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {selectedEvent.attendees.length > 0 ? (
+                      <>
+                        {selectedEvent.attendees.map((src, i) => (
+                          <img key={i} src={src} className={`w-10 h-10 rounded-full border-2 object-cover ${isDark ? 'border-[#1a210d]' : 'border-white'}`} alt="Attendee" />
+                        ))}
+                        {selectedEvent.ticketsSold && selectedEvent.ticketsSold > selectedEvent.attendees.length && (
+                          <div className={`w-10 h-10 rounded-full border border-dashed flex items-center justify-center text-xs font-bold ${isDark ? 'border-white/30 text-white/40' : 'border-black/30 text-primary/40'}`}>
+                            +{selectedEvent.ticketsSold - selectedEvent.attendees.length}
+                          </div>
                         )}
-                     </div>
-                     <div className="flex items-center gap-2">
-                        {selectedEvent.attendees.length > 0 ? (
-                          <>
-                             {selectedEvent.attendees.map((src, i) => (
-                               <img key={i} src={src} className={`w-10 h-10 rounded-full border-2 object-cover ${isDark ? 'border-[#1a210d]' : 'border-white'}`} alt="Attendee" />
-                             ))}
-                             {selectedEvent.ticketsSold && selectedEvent.ticketsSold > selectedEvent.attendees.length && (
-                                <div className={`w-10 h-10 rounded-full border border-dashed flex items-center justify-center text-xs font-bold ${isDark ? 'border-white/30 text-white/40' : 'border-black/30 text-primary/40'}`}>
-                                    +{selectedEvent.ticketsSold - selectedEvent.attendees.length}
-                                </div>
-                             )}
-                          </>
-                        ) : selectedEvent.ticketsSold && selectedEvent.ticketsSold > 0 ? (
-                            <span className={`text-sm italic ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{selectedEvent.ticketsSold} members attending via Eventbrite.</span>
-                        ) : (
-                          <p className={`text-sm italic ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Be the first to RSVP.</p>
-                        )}
-                     </div>
-                   </div>
+                      </>
+                    ) : selectedEvent.ticketsSold && selectedEvent.ticketsSold > 0 ? (
+                      <span className={`text-sm italic ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{selectedEvent.ticketsSold} members attending via Eventbrite.</span>
+                    ) : (
+                      <p className={`text-sm italic ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Be the first to RSVP.</p>
+                    )}
+                  </div>
                 </div>
-             </div>
+              </div>
+            </div>
 
-             <div className={`p-6 border-t pb-8 ${isDark ? 'border-white/10 bg-[#1a210d]' : 'border-black/10 bg-white'}`}>
-                {selectedEvent.id === '3' ? (
+            <div className={`p-6 border-t pb-8 ${isDark ? 'border-white/10 bg-[#1a210d]' : 'border-black/10 bg-white'}`}>
+              {selectedEvent.requiresRsvp ? (
+                <div className="flex gap-3">
+                  <button className={`flex-1 bg-transparent border py-4 rounded-xl font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 ${isDark ? 'border-white/20 text-white hover:bg-white/5' : 'border-black/20 text-primary hover:bg-black/5'}`}>
+                    <span className="material-symbols-outlined text-lg">calendar_add_on</span>
+                    Add to Cal
+                  </button>
                   <button 
                     onClick={handleRSVP}
-                    className={`w-full bg-transparent border py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-colors ${isDark ? 'border-white text-white hover:bg-white/5' : 'border-primary text-primary hover:bg-black/5'}`}
+                    className={`flex-[2] py-4 rounded-xl font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity shadow-lg ${selectedEvent.source === 'eventbrite' ? 'bg-[#F05537] text-white' : 'bg-brand-green text-white'}`}
                   >
-                    Join Waiting List
+                    {selectedEvent.source === 'eventbrite' ? 'Get Tickets' : 'RSVP'}
                   </button>
-                ) : (
-                  <div className="flex gap-3">
-                     <button className={`flex-1 bg-transparent border py-4 rounded-xl font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 ${isDark ? 'border-white/20 text-white hover:bg-white/5' : 'border-black/20 text-primary hover:bg-black/5'}`}>
-                        <span className="material-symbols-outlined text-lg">calendar_add_on</span>
-                        Add to Cal
-                     </button>
-                     <button 
-                        onClick={handleRSVP}
-                        className={`flex-[2] py-4 rounded-xl font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity shadow-lg ${selectedEvent.source === 'eventbrite' ? 'bg-[#F05537] text-white' : 'bg-brand-green text-white'}`}
-                     >
-                        {selectedEvent.source === 'eventbrite' ? 'Get Tickets' : 'RSVP'}
-                     </button>
-                  </div>
-                )}
-             </div>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <button className={`flex-1 bg-transparent border py-4 rounded-xl font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 ${isDark ? 'border-white/20 text-white hover:bg-white/5' : 'border-black/20 text-primary hover:bg-black/5'}`}>
+                    <span className="material-symbols-outlined text-lg">calendar_add_on</span>
+                    Add to Calendar
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
