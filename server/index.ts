@@ -1027,6 +1027,12 @@ app.post('/api/auth/verify-member', async (req, res) => {
   }
 });
 
+const ADMIN_EMAILS_FOR_AUTH = [
+  'nick@evenhouse.club',
+  'adam@evenhouse.club',
+  'afogel@evenhouse.club'
+];
+
 app.post('/api/auth/magic-link', async (req, res) => {
   try {
     const { email } = req.body;
@@ -1039,6 +1045,9 @@ app.post('/api/auth/magic-link', async (req, res) => {
       return res.status(500).json({ error: 'Email service not configured' });
     }
     
+    const normalizedEmail = email.toLowerCase();
+    const isAdminEmail = ADMIN_EMAILS_FOR_AUTH.includes(normalizedEmail);
+    
     const hubspot = await getHubSpotClient();
     
     const searchResponse = await hubspot.crm.contacts.searchApi.doSearch({
@@ -1046,22 +1055,27 @@ app.post('/api/auth/magic-link', async (req, res) => {
         filters: [{
           propertyName: 'email',
           operator: 'EQ' as any,
-          value: email.toLowerCase()
+          value: normalizedEmail
         }]
       }],
       properties: ['firstname', 'lastname', 'email', 'membership_status'],
       limit: 1
     });
     
-    if (searchResponse.results.length === 0) {
+    let contact = searchResponse.results[0];
+    let firstName = 'Admin';
+    
+    if (!contact && !isAdminEmail) {
       return res.status(404).json({ error: 'No member found with this email address' });
     }
     
-    const contact = searchResponse.results[0];
-    const status = (contact.properties.membership_status || '').toLowerCase();
-    
-    if (status !== 'active') {
-      return res.status(403).json({ error: 'Your membership is not active. Please contact us for assistance.' });
+    if (contact) {
+      const status = (contact.properties.membership_status || '').toLowerCase();
+      firstName = contact.properties.firstname || 'Member';
+      
+      if (status !== 'active' && !isAdminEmail) {
+        return res.status(403).json({ error: 'Your membership is not active. Please contact us for assistance.' });
+      }
     }
     
     const token = crypto.randomBytes(32).toString('hex');
@@ -1079,11 +1093,10 @@ app.post('/api/auth/magic-link', async (req, res) => {
         : 'http://localhost:5000';
     
     const magicLink = `${baseUrl}/#/verify?token=${token}`;
-    const firstName = contact.properties.firstname || 'Member';
     
     await resend.emails.send({
       from: 'Even House <noreply@evenhouse.club>',
-      to: email,
+      to: normalizedEmail,
       subject: 'Your Even House Login Link',
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
