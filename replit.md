@@ -38,6 +38,7 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Real-Time Booking**: Database-backed booking with shared availability, duration-aware slot generation, and collision detection.
 - **Haptic Feedback**: Integrated for mobile interactions.
 - **Photography**: All placeholder images replaced with real venue photography.
+- **Date Utilities**: Centralized date handling in `src/utils/dateUtils.ts` with `parseLocalDate()` for timezone-safe ISO date parsing (prevents off-by-one day errors) and `formatDate()` for consistent display formatting.
 
 ### Feature Specifications
 - **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details.
