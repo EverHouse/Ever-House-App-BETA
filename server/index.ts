@@ -1083,7 +1083,7 @@ app.post('/api/auth/magic-link', async (req, res) => {
     
     const magicLink = `${baseUrl}/#/verify?token=${token}`;
     
-    await resend.emails.send({
+    const emailResult = await resend.emails.send({
       from: 'Even House <noreply@everhouse.app>',
       to: normalizedEmail,
       subject: 'Your Even House Login Link',
@@ -1107,6 +1107,13 @@ app.post('/api/auth/magic-link', async (req, res) => {
         </div>
       `
     });
+    
+    console.log('Resend email result:', JSON.stringify(emailResult));
+    
+    if (emailResult.error) {
+      console.error('Resend error:', emailResult.error);
+      return res.status(500).json({ error: 'Failed to send email: ' + emailResult.error.message });
+    }
     
     res.json({ success: true, message: 'Magic link sent to your email' });
   } catch (error: any) {
