@@ -48,7 +48,7 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 
 ## External Dependencies
 
-- **Replit Auth**: User authentication supporting Google, Apple, GitHub, and email/password login. Sessions stored in PostgreSQL.
+- **Magic Link Authentication**: Email-based passwordless authentication via magic links. Sessions stored in PostgreSQL with 1-week TTL.
 - **HubSpot CRM**: Integrated for contact and member management. Access tokens refreshed via Replit Connectors.
 - **HubSpot Forms**: Native application forms (Tour Request, Membership Application, Private Hire Inquiry, Guest Check-In, Contact) submit directly to HubSpot Forms API, utilizing `hutk` cookie for tracking.
 - **Eventbrite**: Syncs members-only events from Eventbrite organization to the application database. Synced events are marked with `source='eventbrite'`, `visibility='members_only'`, and `requires_rsvp=true`. Ticketing links redirect to Eventbrite.
