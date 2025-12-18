@@ -90,5 +90,5 @@ SUPABASE_URL = "https://vramupyxmnzhgegltppg.supabase.co"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["npm", "run", "server"]
+run = ["npm", "run", "start"]
 build = ["npm", "run", "build"]
