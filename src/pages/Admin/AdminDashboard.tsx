@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import MenuOverlay from '../../components/MenuOverlay';
-import Logo from '../../components/Logo';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
