@@ -86,7 +86,7 @@ HUBSPOT_FORM_GUEST_CHECKIN = "ba04af2b-b1d5-435b-9e3e-bfd9086d2fa9"
 HUBSPOT_FORM_CONTACT = "63c397f3-faeb-4582-9176-ae9603188b9a"
 VAPID_PUBLIC_KEY = "BG-oXwIn5dHb93Y6SuyOpkHm7Qu2La9ge5pwQFAx98WRllqI6-zg-n3A5CURITIR_wA6sIo8zEaBVwGhLz3CCFw"
 SUPABASE_URL = "https://vramupyxmnzhgegltppg.supabase.co"
-SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYW11cHl4bW56aGdlZ2x0cHBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NjYwMzQsImV4cCI6MjA4MTU0MjAzNH0.oe8DSrCHFQeD7ZYCyn_9Dvv8vhppIBsq_ix-_74BqzY"
+
 
 [deployment]
 deploymentTarget = "autoscale"

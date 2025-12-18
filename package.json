@@ -27,6 +27,7 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.4.23",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",

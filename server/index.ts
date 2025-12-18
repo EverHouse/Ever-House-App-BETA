@@ -826,7 +826,7 @@ app.post('/api/eventbrite/sync', async (req, res) => {
       return res.status(400).json({ error: 'Failed to fetch Eventbrite organizations' });
     }
     
-    const orgData = await meResponse.json();
+    const orgData = await meResponse.json() as { organizations?: { id: string }[] };
     const organizationId = orgData.organizations?.[0]?.id;
     
     if (!organizationId) {
@@ -845,7 +845,7 @@ app.post('/api/eventbrite/sync', async (req, res) => {
       return res.status(400).json({ error: 'Failed to fetch Eventbrite events' });
     }
 
-    const eventsData = await eventsResponse.json();
+    const eventsData = await eventsResponse.json() as { events?: any[] };
     const eventbriteEvents = eventsData.events || [];
 
     let synced = 0;
