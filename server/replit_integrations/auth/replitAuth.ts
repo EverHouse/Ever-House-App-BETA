@@ -159,12 +159,21 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   }
 };
 
-// Admin emails list for admin-only access
-const ADMIN_EMAILS = [
-  'nick@evenhouse.club',
-  'adam@evenhouse.club',
-  'afogel@evenhouse.club'
-];
+// Helper function to check if email is an admin in database
+export async function isAdminEmail(email: string): Promise<boolean> {
+  const { Pool } = require('pg');
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    const result = await pool.query(
+      'SELECT id FROM admin_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+      [email]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+}
 
 // Middleware to require admin role
 export const isAdmin: RequestHandler = async (req, res, next) => {
@@ -175,7 +184,9 @@ export const isAdmin: RequestHandler = async (req, res, next) => {
   }
 
   const email = user.claims?.email?.toLowerCase() || '';
-  if (!ADMIN_EMAILS.includes(email)) {
+  const adminStatus = await isAdminEmail(email);
+  
+  if (!adminStatus) {
     return res.status(403).json({ message: "Forbidden: Admin access required" });
   }
 
@@ -192,8 +203,9 @@ export const isStaffOrAdmin: RequestHandler = async (req, res, next) => {
 
   const email = user.claims?.email?.toLowerCase() || '';
   
-  // Check if admin
-  if (ADMIN_EMAILS.includes(email)) {
+  // Check if admin in database
+  const adminStatus = await isAdminEmail(email);
+  if (adminStatus) {
     return next();
   }
 

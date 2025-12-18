@@ -8,7 +8,7 @@ import { google } from 'googleapis';
 import webpush from 'web-push';
 import crypto from 'crypto';
 import { Resend } from 'resend';
-import { setupAuth, registerAuthRoutes, isAdmin, isStaffOrAdmin } from './replit_integrations/auth';
+import { setupAuth, registerAuthRoutes, isAdmin, isStaffOrAdmin, isAdminEmail } from './replit_integrations/auth';
 import { setupSupabaseAuthRoutes } from './supabase/auth';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -1001,13 +1001,7 @@ app.post('/api/auth/verify-member', async (req, res) => {
       return res.status(403).json({ error: 'Your membership is not active. Please contact us for assistance.' });
     }
     
-    const ADMIN_EMAILS = [
-      'nick@evenhouse.club',
-      'adam@evenhouse.club',
-      'afogel@evenhouse.club'
-    ];
-    
-    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+    const adminStatus = await isAdminEmail(email.toLowerCase());
     
     const member = {
       id: contact.id,
@@ -1017,7 +1011,7 @@ app.post('/api/auth/verify-member', async (req, res) => {
       phone: contact.properties.phone || '',
       tier: contact.properties.membership_tier || 'Core',
       status: 'Active',
-      role: isAdmin ? 'admin' : 'member'
+      role: adminStatus ? 'admin' : 'member'
     };
     
     res.json({ success: true, member });
@@ -1026,12 +1020,6 @@ app.post('/api/auth/verify-member', async (req, res) => {
     res.status(500).json({ error: 'Failed to verify membership' });
   }
 });
-
-const ADMIN_EMAILS_FOR_AUTH = [
-  'nick@evenhouse.club',
-  'adam@evenhouse.club',
-  'afogel@evenhouse.club'
-];
 
 app.post('/api/auth/magic-link', async (req, res) => {
   try {
@@ -1046,7 +1034,7 @@ app.post('/api/auth/magic-link', async (req, res) => {
     }
     
     const normalizedEmail = email.toLowerCase();
-    const isAdminEmail = ADMIN_EMAILS_FOR_AUTH.includes(normalizedEmail);
+    const isAdmin = await isAdminEmail(normalizedEmail);
     
     const hubspot = await getHubSpotClient();
     
@@ -1065,7 +1053,7 @@ app.post('/api/auth/magic-link', async (req, res) => {
     let contact = searchResponse.results[0];
     let firstName = 'Admin';
     
-    if (!contact && !isAdminEmail) {
+    if (!contact && !isAdmin) {
       return res.status(404).json({ error: 'No member found with this email address' });
     }
     
@@ -1073,7 +1061,7 @@ app.post('/api/auth/magic-link', async (req, res) => {
       const status = (contact.properties.membership_status || '').toLowerCase();
       firstName = contact.properties.firstname || 'Member';
       
-      if (status !== 'active' && !isAdminEmail) {
+      if (status !== 'active' && !isAdmin) {
         return res.status(403).json({ error: 'Your membership is not active. Please contact us for assistance.' });
       }
     }
@@ -1178,13 +1166,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
     
     const contact = searchResponse.results[0];
     
-    const ADMIN_EMAILS = [
-      'nick@evenhouse.club',
-      'adam@evenhouse.club',
-      'afogel@evenhouse.club'
-    ];
-    
-    const isAdmin = ADMIN_EMAILS.includes(magicLink.email.toLowerCase());
+    const adminStatus = await isAdminEmail(magicLink.email.toLowerCase());
     
     const member = {
       id: contact.id,
@@ -1194,7 +1176,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
       phone: contact.properties.phone || '',
       tier: contact.properties.membership_tier || 'Core',
       status: 'Active',
-      role: isAdmin ? 'admin' : 'member'
+      role: adminStatus ? 'admin' : 'member'
     };
     
     res.json({ success: true, member });
