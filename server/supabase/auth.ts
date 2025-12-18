@@ -25,9 +25,16 @@ export function setupSupabaseAuthRoutes(app: Express) {
   if (!client) {
     console.log('Supabase auth routes disabled - credentials not configured');
     
-    app.all('/api/supabase/:path(*)', (req, res) => {
+    const supabaseNotConfigured = (req: any, res: any) => {
       res.status(503).json({ error: 'Supabase authentication is not configured' });
-    });
+    };
+    
+    app.post('/api/supabase/signup', supabaseNotConfigured);
+    app.post('/api/supabase/login', supabaseNotConfigured);
+    app.post('/api/supabase/logout', supabaseNotConfigured);
+    app.post('/api/supabase/forgot-password', supabaseNotConfigured);
+    app.get('/api/supabase/user', supabaseNotConfigured);
+    app.post('/api/supabase/oauth', supabaseNotConfigured);
     return;
   }
 
