@@ -803,6 +803,91 @@ app.delete('/api/events/:id', async (req, res) => {
   }
 });
 
+// Gallery Endpoints
+app.get('/api/gallery', async (req, res) => {
+  try {
+    const { category, active_only } = req.query;
+    let query = 'SELECT id, image_url, category, caption, display_order, is_active, created_at FROM gallery_images';
+    const params: any[] = [];
+    const conditions: string[] = [];
+    
+    if (active_only === 'true') {
+      conditions.push('is_active = true');
+    }
+    
+    if (category && category !== 'All') {
+      params.push(category);
+      conditions.push(`category = $${params.length}`);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    query += ' ORDER BY display_order, created_at DESC';
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Gallery fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch gallery' });
+  }
+});
+
+app.post('/api/gallery', async (req, res) => {
+  try {
+    const { image_url, category, caption, display_order } = req.body;
+    
+    if (!image_url || !category) {
+      return res.status(400).json({ error: 'Image URL and category are required' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO gallery_images (image_url, category, caption, display_order)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [image_url, category, caption || null, display_order || 0]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Gallery add error:', error);
+    res.status(500).json({ error: 'Failed to add gallery image' });
+  }
+});
+
+app.put('/api/gallery/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { image_url, category, caption, display_order, is_active } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE gallery_images SET image_url = $1, category = $2, caption = $3, display_order = $4, is_active = $5
+       WHERE id = $6 RETURNING *`,
+      [image_url, category, caption, display_order, is_active, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Gallery image not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Gallery update error:', error);
+    res.status(500).json({ error: 'Failed to update gallery image' });
+  }
+});
+
+app.delete('/api/gallery/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM gallery_images WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Gallery delete error:', error);
+    res.status(500).json({ error: 'Failed to delete gallery image' });
+  }
+});
+
 // Eventbrite Sync Endpoint
 app.post('/api/eventbrite/sync', async (req, res) => {
   try {

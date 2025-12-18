@@ -8,7 +8,7 @@ import { formatDate as formatDateUtil, formatDateShort as formatDateShortUtil, f
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'gallery'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -59,6 +59,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'announcements' && 'Manage Updates'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
+               {activeTab === 'gallery' && 'Manage Gallery'}
            </h1>
         </div>
         
@@ -67,6 +68,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
+        {activeTab === 'gallery' && <GalleryAdmin />}
       </main>
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
@@ -75,7 +77,7 @@ const AdminDashboard: React.FC = () => {
             <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
-            <NavItem icon="campaign" label="Updates" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
+            <NavItem icon="photo_library" label="Gallery" active={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
             <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
         </ul>
       </nav>
@@ -1537,6 +1539,264 @@ const SimulatorAdmin: React.FC = () => {
             )}
         </div>
     );
+};
+
+// --- GALLERY ADMIN ---
+
+interface GalleryImage {
+  id: number;
+  image_url: string;
+  category: string;
+  caption?: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+const GalleryAdmin: React.FC = () => {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [newImage, setNewImage] = useState<Partial<GalleryImage>>({ category: 'Lounge', is_active: true, display_order: 0 });
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const categories = ['Golf Bays', 'Lounge', 'Wellness', 'Events'];
+  const allCategories = ['All', ...categories];
+
+  const fetchImages = async () => {
+    try {
+      const res = await fetch('/api/gallery');
+      if (res.ok) {
+        setImages(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch gallery:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchImages(); }, []);
+
+  const filteredImages = activeCategory === 'All' ? images : images.filter(img => img.category === activeCategory);
+
+  const handleSave = async () => {
+    if (!newImage.image_url || !newImage.category) return;
+
+    try {
+      if (editId) {
+        const res = await fetch(`/api/gallery/${editId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newImage)
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setImages(images.map(img => img.id === editId ? updated : img));
+        }
+      } else {
+        const res = await fetch('/api/gallery', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newImage)
+        });
+        if (res.ok) {
+          const created = await res.json();
+          setImages([...images, created]);
+        }
+      }
+      resetForm();
+    } catch (err) {
+      console.error('Failed to save gallery image:', err);
+    }
+  };
+
+  const handleEdit = (img: GalleryImage) => {
+    setEditId(img.id);
+    setNewImage(img);
+    setIsEditing(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Remove this image from the gallery?')) return;
+    try {
+      await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
+      setImages(images.filter(img => img.id !== id));
+    } catch (err) {
+      console.error('Failed to delete gallery image:', err);
+    }
+  };
+
+  const toggleActive = async (img: GalleryImage) => {
+    try {
+      const res = await fetch(`/api/gallery/${img.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...img, is_active: !img.is_active })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setImages(images.map(i => i.id === img.id ? updated : i));
+      }
+    } catch (err) {
+      console.error('Failed to toggle image status:', err);
+    }
+  };
+
+  const resetForm = () => {
+    setIsEditing(false);
+    setEditId(null);
+    setNewImage({ category: 'Lounge', is_active: true, display_order: 0 });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <span className="material-symbols-outlined animate-spin text-3xl text-primary/30 dark:text-white/30">progress_activity</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        {allCategories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+              activeCategory === cat
+                ? 'bg-primary text-white dark:bg-accent dark:text-primary'
+                : 'bg-white dark:bg-surface-dark text-primary/70 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/5'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={() => setIsEditing(true)}
+        className="w-full py-3 px-4 bg-primary dark:bg-accent text-white dark:text-primary rounded-xl font-medium flex items-center justify-center gap-2"
+      >
+        <span className="material-symbols-outlined text-lg">add_photo_alternate</span>
+        Add Image
+      </button>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {filteredImages.map(img => (
+          <div key={img.id} className={`relative rounded-xl overflow-hidden border ${img.is_active ? 'border-gray-200 dark:border-white/10' : 'border-red-300 dark:border-red-500/30 opacity-50'}`}>
+            <img src={img.image_url} alt={img.caption || 'Gallery'} className="w-full aspect-square object-cover" />
+            <div className="absolute top-2 left-2">
+              <span className="px-2 py-1 bg-black/50 text-white text-xs rounded-full">{img.category}</span>
+            </div>
+            <div className="absolute top-2 right-2 flex gap-1">
+              <button
+                onClick={() => toggleActive(img)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${img.is_active ? 'bg-green-500' : 'bg-gray-400'} text-white`}
+              >
+                <span className="material-symbols-outlined text-sm">{img.is_active ? 'visibility' : 'visibility_off'}</span>
+              </button>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent flex justify-end gap-2">
+              <button onClick={() => handleEdit(img)} className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+                <span className="material-symbols-outlined text-sm">edit</span>
+              </button>
+              <button onClick={() => handleDelete(img.id)} className="w-8 h-8 bg-red-500/80 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+                <span className="material-symbols-outlined text-sm">delete</span>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filteredImages.length === 0 && (
+        <div className="text-center py-12">
+          <span className="material-symbols-outlined text-4xl text-primary/20 dark:text-white/20 mb-2">photo_library</span>
+          <p className="text-primary/50 dark:text-white/50">No images in this category.</p>
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold text-primary dark:text-white mb-4">{editId ? 'Edit Image' : 'Add Image'}</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Image URL *</label>
+                <input
+                  type="text"
+                  value={newImage.image_url || ''}
+                  onChange={(e) => setNewImage({ ...newImage, image_url: e.target.value })}
+                  placeholder="/images/photo.jpg or https://..."
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Category *</label>
+                <select
+                  value={newImage.category}
+                  onChange={(e) => setNewImage({ ...newImage, category: e.target.value })}
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                >
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Caption (Optional)</label>
+                <input
+                  type="text"
+                  value={newImage.caption || ''}
+                  onChange={(e) => setNewImage({ ...newImage, caption: e.target.value })}
+                  placeholder="Describe the image..."
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-primary/70 dark:text-white/70 mb-1">Display Order</label>
+                <input
+                  type="number"
+                  value={newImage.display_order || 0}
+                  onChange={(e) => setNewImage({ ...newImage, display_order: parseInt(e.target.value) || 0 })}
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a210d] text-primary dark:text-white"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={newImage.is_active !== false}
+                  onChange={(e) => setNewImage({ ...newImage, is_active: e.target.checked })}
+                  className="w-5 h-5 rounded"
+                />
+                <label htmlFor="is_active" className="text-sm text-primary/70 dark:text-white/70">Visible on public gallery</label>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={resetForm} className="flex-1 py-3 rounded-lg border border-gray-200 dark:border-white/10 text-primary/70 dark:text-white/70 font-medium">
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!newImage.image_url || !newImage.category}
+                className="flex-1 py-3 rounded-lg bg-primary dark:bg-accent text-white dark:text-primary font-medium disabled:opacity-50"
+              >
+                {editId ? 'Save Changes' : 'Add Image'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default AdminDashboard;

@@ -1,32 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Footer } from '../../components/Footer';
 
-const INITIAL_DATA = [
-    { img: "/images/golf-sims.jpg", category: "Golf Bays" },
-    { img: "/images/hero-lounge.jpg", category: "Lounge" },
-    { img: "/images/venue-wide.jpg", category: "Golf Bays" },
-    { img: "/images/wellness-yoga.jpg", category: "Wellness" },
-    { img: "/images/events-crowd.jpg", category: "Events" },
-    { img: "/images/terrace.jpg", category: "Lounge" },
-    { img: "/images/private-dining.jpg", category: "Events" },
-    { img: "/images/cowork.jpg", category: "Lounge" },
-    { img: "/images/indoor-outdoor.png", category: "Lounge" },
-    { img: "/images/cafe-bar.png", category: "Lounge" }
-];
+interface GalleryImage {
+  id: number;
+  image_url: string;
+  category: string;
+  caption?: string;
+  display_order: number;
+}
 
 const Gallery: React.FC = () => {
   const [filter, setFilter] = useState('All');
-  const [data, setData] = useState(INITIAL_DATA);
-  const [page, setPage] = useState(1);
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredItems = filter === 'All' ? data : data.filter(item => item.category === filter);
+  useEffect(() => {
+    fetch('/api/gallery?active_only=true')
+      .then(res => res.json())
+      .then(data => {
+        setImages(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
-  const handleLoadMore = () => {
-    // Simulate loading more items by duplicating initial data
-    const moreItems = INITIAL_DATA.map(item => ({ ...item, img: `${item.img}?v=${page}` }));
-    setData(prev => [...prev, ...moreItems]);
-    setPage(prev => prev + 1);
-  };
+  const filteredItems = filter === 'All' ? images : images.filter(item => item.category === filter);
+  const categories = ['All', ...Array.from(new Set(images.map(img => img.category)))];
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
@@ -37,31 +36,35 @@ const Gallery: React.FC = () => {
 
       <div className="pl-5 pr-5 py-2 w-full overflow-x-auto scrollbar-hide mb-6">
         <div className="flex gap-3 min-w-max pr-5">
-           <FilterButton label="All" active={filter === 'All'} onClick={() => setFilter('All')} />
-           <FilterButton label="Golf Bays" active={filter === 'Golf Bays'} onClick={() => setFilter('Golf Bays')} />
-           <FilterButton label="Lounge" active={filter === 'Lounge'} onClick={() => setFilter('Lounge')} />
-           <FilterButton label="Wellness" active={filter === 'Wellness'} onClick={() => setFilter('Wellness')} />
-           <FilterButton label="Events" active={filter === 'Events'} onClick={() => setFilter('Events')} />
+          {categories.map(cat => (
+            <FilterButton key={cat} label={cat} active={filter === cat} onClick={() => setFilter(cat)} />
+          ))}
         </div>
       </div>
 
       <div className="px-5 flex-1">
-        <div className="columns-2 gap-4 space-y-4 animate-in fade-in duration-500">
-           {filteredItems.map((item, index) => (
-               <GalleryItem key={index} img={item.img} />
-           ))}
-        </div>
+        {loading ? (
+          <div className="columns-2 gap-4 space-y-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="break-inside-avoid w-full aspect-[4/3] bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-2xl mb-4" />
+            ))}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center py-12">
+            <span className="material-symbols-outlined text-4xl text-primary/30 mb-2">photo_library</span>
+            <p className="text-primary/50">No images in this category.</p>
+          </div>
+        ) : (
+          <div className="columns-2 gap-4 space-y-4 animate-in fade-in duration-500">
+            {filteredItems.map((item) => (
+              <GalleryItem key={item.id} img={item.image_url} caption={item.caption} />
+            ))}
+          </div>
+        )}
         <div className="mt-12 flex justify-center pb-8">
-            {data.length < 24 ? (
-                <button 
-                    onClick={handleLoadMore}
-                    className="px-6 py-3 rounded-xl bg-white/40 border border-primary/10 text-primary text-sm font-semibold hover:bg-white/60 transition-colors shadow-sm"
-                >
-                    Load More Photos
-                </button>
-            ) : (
-                <p className="text-xs text-primary/40 font-medium">End of Gallery</p>
-            )}
+          <p className="text-xs text-primary/40 font-medium">
+            {filteredItems.length} {filteredItems.length === 1 ? 'photo' : 'photos'}
+          </p>
         </div>
       </div>
 
@@ -83,7 +86,7 @@ const FilterButton: React.FC<{label: string; active?: boolean; onClick?: () => v
   </button>
 );
 
-const GalleryItem: React.FC<{img: string}> = ({ img }) => {
+const GalleryItem: React.FC<{img: string; caption?: string}> = ({ img, caption }) => {
   const [loaded, setLoaded] = React.useState(false);
   const [error, setError] = React.useState(false);
   
@@ -95,7 +98,7 @@ const GalleryItem: React.FC<{img: string}> = ({ img }) => {
       <img 
         src={img} 
         className={`w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out ${loaded ? 'opacity-100' : 'opacity-0 absolute'}`}
-        alt="Gallery"
+        alt={caption || "Gallery"}
         loading="lazy"
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
@@ -106,6 +109,11 @@ const GalleryItem: React.FC<{img: string}> = ({ img }) => {
         </div>
       )}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+      {caption && loaded && (
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          <p className="text-white text-sm font-medium">{caption}</p>
+        </div>
+      )}
     </div>
   );
 };

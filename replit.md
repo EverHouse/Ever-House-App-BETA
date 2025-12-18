@@ -43,8 +43,9 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 ### Feature Specifications
 - **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details.
 - **Member-Only Pages**: Dashboard, Book Golf, Cafe, Events, Profile, Wellness.
-- **Admin Functionality**: Admin dashboard for managing members, events, cafe menu, and booking requests.
-- **API Endpoints**: Comprehensive REST API for managing resources, bookings, events, RSVPs, cafe menu, HubSpot contacts, guest passes, simulator bay requests, notifications, and push notifications.
+- **Admin Functionality**: Admin dashboard for managing members, events, cafe menu, booking requests, and gallery images.
+- **Gallery Management**: Staff can add/edit/delete gallery images with categories (Golf Bays, Lounge, Wellness, Events), captions, display order, and visibility toggle. Public Gallery page fetches from database.
+- **API Endpoints**: Comprehensive REST API for managing resources, bookings, events, RSVPs, cafe menu, HubSpot contacts, guest passes, simulator bay requests, notifications, push notifications, and gallery images.
 
 ## External Dependencies
 
