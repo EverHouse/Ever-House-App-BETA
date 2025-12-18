@@ -94,10 +94,12 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const fetchResources = async () => {
+      console.log('[BookGolf] Fetching resources for tab:', activeTab);
       try {
         const res = await fetch(`/api/resources`);
         if (!res.ok) throw new Error('Failed to fetch resources');
         const data: APIResource[] = await res.json();
+        console.log('[BookGolf] All resources:', data.length, data.map(r => ({ id: r.id, name: r.name, type: r.type })));
         
         const typeMap: Record<string, string> = {
           simulator: 'simulator',
@@ -116,9 +118,10 @@ const BookGolf: React.FC = () => {
             icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
           }));
         
+        console.log('[BookGolf] Filtered resources:', filtered.length, filtered);
         setResources(filtered);
       } catch (err) {
-        console.error('Error fetching resources:', err);
+        console.error('[BookGolf] Error fetching resources:', err);
         setError('Unable to load resources');
       }
     };
@@ -128,7 +131,11 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const fetchAvailability = async () => {
-      if (resources.length === 0) return;
+      console.log('[BookGolf] fetchAvailability called', { resources: resources.length, date: selectedDateObj?.date, duration });
+      if (resources.length === 0) {
+        console.log('[BookGolf] No resources, returning early');
+        return;
+      }
       
       setIsLoading(true);
       setError(null);
@@ -139,11 +146,15 @@ const BookGolf: React.FC = () => {
         const allSlots: Map<string, { slot: TimeSlot; resourceIds: number[] }> = new Map();
         
         await Promise.all(resources.map(async (resource) => {
-          const res = await fetch(
-            `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
-          );
-          if (!res.ok) return;
+          const url = `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`;
+          console.log('[BookGolf] Fetching:', url);
+          const res = await fetch(url);
+          if (!res.ok) {
+            console.log('[BookGolf] Response not ok:', res.status);
+            return;
+          }
           const slots: APISlot[] = await res.json();
+          console.log('[BookGolf] Got slots for resource', resource.dbId, ':', slots.length);
           
           slots.forEach(slot => {
             if (!slot.available) return;
@@ -170,6 +181,7 @@ const BookGolf: React.FC = () => {
           });
         }));
         
+        console.log('[BookGolf] allSlots Map size:', allSlots.size);
         const sortedSlots = Array.from(allSlots.values())
           .map(({ slot, resourceIds }) => ({
             ...slot,
@@ -177,6 +189,10 @@ const BookGolf: React.FC = () => {
           }))
           .sort((a, b) => a.startTime24.localeCompare(b.startTime24));
         
+        console.log('[BookGolf] Setting availableSlots:', sortedSlots.length);
+        if (sortedSlots.length === 0) {
+          console.warn('[BookGolf] WARNING: No slots found! Check if API returned data.');
+        }
         setAvailableSlots(sortedSlots);
       } catch (err) {
         console.error('Error fetching availability:', err);
@@ -338,6 +354,10 @@ const BookGolf: React.FC = () => {
 
           <section className="min-h-[120px]">
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Available Times</h3>
+            {/* Debug info - remove after fixing */}
+            <div className="text-xs text-red-500 mb-2 p-2 bg-red-100 rounded">
+              DEBUG: resources={resources.length}, date={selectedDateObj?.date}, duration={duration}, slots={availableSlots.length}, loading={isLoading ? 'yes' : 'no'}
+            </div>
             
             {isLoading ? (
               <div className={`flex justify-center items-center py-12 opacity-50 ${isDark ? 'text-white' : 'text-primary'}`}>
