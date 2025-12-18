@@ -7,7 +7,7 @@ import Logo from '../../components/Logo';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -58,6 +58,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'announcements' && 'Manage Updates'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
+               {activeTab === 'team' && 'Manage Staff & Admins'}
            </h1>
         </div>
         
@@ -66,6 +67,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
+        {activeTab === 'team' && actualUser?.role === 'admin' && <TeamAdmin />}
       </main>
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
@@ -75,7 +77,7 @@ const AdminDashboard: React.FC = () => {
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
             <NavItem icon="campaign" label="Updates" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
-            <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
+            {actualUser?.role === 'admin' && <NavItem icon="badge" label="Team" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />}
         </ul>
       </nav>
 
@@ -1550,6 +1552,241 @@ const SimulatorAdmin: React.FC = () => {
             )}
         </div>
     );
+};
+
+// --- TEAM ADMIN (Staff & Admin Management) ---
+
+interface StaffUser {
+  id: string;
+  email: string;
+  name: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+const TeamAdmin: React.FC = () => {
+  const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
+  const [adminUsers, setAdminUsers] = useState<StaffUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<'staff' | 'admin'>('staff');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newName, setNewName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const [staffRes, adminRes] = await Promise.all([
+        fetch('/api/staff-users'),
+        fetch('/api/admin-users')
+      ]);
+      if (staffRes.ok) setStaffUsers(await staffRes.json());
+      if (adminRes.ok) setAdminUsers(await adminRes.json());
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+    }
+    setIsLoading(false);
+  };
+
+  const handleAdd = async () => {
+    if (!newEmail.trim()) {
+      setError('Email is required');
+      return;
+    }
+    
+    const endpoint = activeSection === 'staff' ? '/api/staff-users' : '/api/admin-users';
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newEmail.trim(), name: newName.trim() || null })
+      });
+      
+      if (res.ok) {
+        setShowAddModal(false);
+        setNewEmail('');
+        setNewName('');
+        setError(null);
+        fetchUsers();
+      } else {
+        setError('Failed to add user');
+      }
+    } catch (err) {
+      setError('Something went wrong');
+    }
+  };
+
+  const handleRemove = async (id: string, type: 'staff' | 'admin') => {
+    if (!window.confirm(`Are you sure you want to remove this ${type} user?`)) return;
+    
+    const endpoint = type === 'staff' ? `/api/staff-users/${id}` : `/api/admin-users/${id}`;
+    try {
+      const res = await fetch(endpoint, { method: 'DELETE' });
+      if (res.ok) {
+        fetchUsers();
+      }
+    } catch (err) {
+      console.error('Failed to remove user:', err);
+    }
+  };
+
+  const users = activeSection === 'staff' ? staffUsers : adminUsers;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveSection('staff')}
+          className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all ${
+            activeSection === 'staff'
+              ? 'bg-primary text-white'
+              : 'bg-white dark:bg-surface-dark text-primary dark:text-white border border-gray-200 dark:border-white/10'
+          }`}
+        >
+          <span className="material-symbols-outlined text-sm mr-2 align-middle">support_agent</span>
+          Staff Users
+        </button>
+        <button
+          onClick={() => setActiveSection('admin')}
+          className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all ${
+            activeSection === 'admin'
+              ? 'bg-primary text-white'
+              : 'bg-white dark:bg-surface-dark text-primary dark:text-white border border-gray-200 dark:border-white/10'
+          }`}
+        >
+          <span className="material-symbols-outlined text-sm mr-2 align-middle">admin_panel_settings</span>
+          Admin Users
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-gray-100 dark:border-white/5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-bold text-primary dark:text-white">
+              {activeSection === 'staff' ? 'Staff Members' : 'Administrators'}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {activeSection === 'staff' 
+                ? 'Staff can access the Staff Portal and manage day-to-day operations'
+                : 'Admins have full access including staff management'}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            Add {activeSection === 'staff' ? 'Staff' : 'Admin'}
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="py-8 text-center text-gray-400">
+            <span className="material-symbols-outlined animate-spin">progress_activity</span>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="py-8 text-center text-gray-400">
+            <span className="material-symbols-outlined text-4xl mb-2 block">person_off</span>
+            <p className="text-sm">No {activeSection} users yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {users.map(user => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary">person</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-primary dark:text-white text-sm">
+                      {user.name || 'No name'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRemove(user.id, activeSection)}
+                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                  title="Remove"
+                >
+                  <span className="material-symbols-outlined text-sm">delete</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold text-primary dark:text-white mb-4">
+              Add {activeSection === 'staff' ? 'Staff' : 'Admin'} User
+            </h3>
+            
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            )}
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="email@evenhouse.club"
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  This person will get {activeSection} access when they sign in
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowAddModal(false); setError(null); setNewEmail(''); setNewName(''); }}
+                className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAdd}
+                className="flex-1 py-3 px-4 rounded-lg bg-primary text-white font-medium"
+              >
+                Add {activeSection === 'staff' ? 'Staff' : 'Admin'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default AdminDashboard;
