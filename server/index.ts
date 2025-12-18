@@ -1108,8 +1108,19 @@ app.post('/api/auth/magic-link', async (req, res) => {
     
     res.json({ success: true, message: 'Magic link sent to your email' });
   } catch (error: any) {
-    if (!isProduction) console.error('Magic link error:', error);
-    res.status(500).json({ error: 'Failed to send magic link' });
+    console.error('Magic link error:', error?.message || error);
+    
+    if (error?.message?.includes('HubSpot') || error?.message?.includes('hubspot')) {
+      return res.status(500).json({ error: 'Unable to verify membership. Please try again later.' });
+    }
+    if (error?.message?.includes('Resend') || error?.message?.includes('email')) {
+      return res.status(500).json({ error: 'Unable to send email. Please try again later.' });
+    }
+    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
+      return res.status(500).json({ error: 'Service temporarily unavailable. Please try again.' });
+    }
+    
+    res.status(500).json({ error: 'Failed to send magic link. Please try again.' });
   }
 });
 
