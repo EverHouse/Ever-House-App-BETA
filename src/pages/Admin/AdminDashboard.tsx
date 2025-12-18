@@ -539,7 +539,7 @@ const EventsAdmin: React.FC = () => {
 const TIER_OPTIONS = ['All', 'Social', 'Core', 'Premium', 'Corporate', 'VIP', 'Founding'] as const;
 
 const MembersAdmin: React.FC = () => {
-    const { members, updateMember, setViewAsUser, actualUser } = useData();
+    const { members, updateMember, addMember, setViewAsUser, actualUser } = useData();
     const navigate = useNavigate();
     const [subTab, setSubTab] = useState<'members' | 'staff'>('members');
     const [isEditing, setIsEditing] = useState(false);
@@ -547,6 +547,10 @@ const MembersAdmin: React.FC = () => {
     const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<string>('All');
+    const [newStaff, setNewStaff] = useState({ name: '', email: '', phone: '' });
+    const [addStaffError, setAddStaffError] = useState('');
+    const [addStaffSuccess, setAddStaffSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const isAdmin = actualUser?.role === 'admin';
 
@@ -600,12 +604,14 @@ const MembersAdmin: React.FC = () => {
     };
     
     const openAddStaff = () => {
-        // Create a new staff entry - admin will select from existing members
+        setNewStaff({ name: '', email: '', phone: '' });
+        setAddStaffError('');
+        setAddStaffSuccess('');
         setIsAddingStaff(true);
     };
     
     const handleViewAs = (member: MemberProfile) => {
-        if (!isAdmin) return; // Only admins can View As
+        if (!isAdmin) return;
         setViewAsUser(member);
         navigate('/dashboard');
     };
@@ -613,7 +619,6 @@ const MembersAdmin: React.FC = () => {
     const handleSave = async () => {
         if (selectedMember) {
             updateMember(selectedMember);
-            // Only update role if admin
             if (isAdmin && selectedMember.role) {
                 try {
                     await fetch(`/api/members/${selectedMember.id}/role`, {
@@ -629,19 +634,64 @@ const MembersAdmin: React.FC = () => {
         setIsEditing(false);
     };
     
-    const handlePromoteToStaff = async (member: MemberProfile) => {
+    const handleAddStaff = async () => {
         if (!isAdmin) return;
-        try {
-            await fetch(`/api/members/${member.id}/role`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ role: 'staff' })
-            });
-            updateMember({ ...member, role: 'staff' });
-        } catch (e) {
-            console.error('Failed to promote to staff:', e);
+        if (!newStaff.name.trim() || !newStaff.email.trim()) {
+            setAddStaffError('Name and email are required');
+            return;
         }
-        setIsAddingStaff(false);
+        
+        setIsSubmitting(true);
+        setAddStaffError('');
+        setAddStaffSuccess('');
+        
+        try {
+            const response = await fetch('/api/staff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newStaff)
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                setAddStaffError(data.error || 'Failed to add staff member');
+                setIsSubmitting(false);
+                return;
+            }
+            
+            const staffMember: MemberProfile = {
+                id: data.id,
+                name: data.name,
+                email: data.email,
+                phone: data.phone || '',
+                tier: data.tier || '',
+                status: 'Active',
+                role: 'staff',
+                isFounding: data.isFounding || false
+            };
+            
+            if (data.imported) {
+                updateMember(staffMember);
+                setAddStaffSuccess(`${data.name} was promoted to staff. Membership tier (${data.tier || 'N/A'}) was imported.`);
+            } else {
+                addMember(staffMember);
+                setAddStaffSuccess(`${data.name} was added as a new staff member.`);
+            }
+            
+            setNewStaff({ name: '', email: '', phone: '' });
+            
+            setTimeout(() => {
+                setIsAddingStaff(false);
+                setAddStaffSuccess('');
+                setSubTab('staff');
+            }, 1500);
+        } catch (e) {
+            console.error('Failed to add staff:', e);
+            setAddStaffError('An error occurred while adding staff member');
+        }
+        
+        setIsSubmitting(false);
     };
 
     return (
@@ -811,27 +861,94 @@ const MembersAdmin: React.FC = () => {
                 </div>
             )}
             
-            {/* Add Staff Modal - select from existing members */}
+            {/* Add Staff Modal - manual entry form */}
             {isAddingStaff && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden animate-in zoom-in-95">
-                        <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">Add Staff Member</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select a member to promote to staff:</p>
-                        <div className="overflow-y-auto max-h-[50vh] space-y-2">
-                            {regularMembers.map(m => (
-                                <button
-                                    key={m.id}
-                                    onClick={() => handlePromoteToStaff(m)}
-                                    className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                                >
-                                    <div className="font-bold text-primary dark:text-white">{m.name}</div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">{m.email}</div>
-                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Tier: {m.tier}</div>
-                                </button>
-                            ))}
+                    <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95">
+                        <h3 className="font-bold text-lg mb-2 text-primary dark:text-white">Add Staff Member</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Enter staff details. If the email matches an existing member, their tier info will be imported.
+                        </p>
+                        
+                        {addStaffError && (
+                            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                                <p className="text-sm text-red-600 dark:text-red-400">{addStaffError}</p>
+                            </div>
+                        )}
+                        
+                        {addStaffSuccess && (
+                            <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                                <p className="text-sm text-green-600 dark:text-green-400">{addStaffSuccess}</p>
+                            </div>
+                        )}
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1 block">
+                                    Full Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newStaff.name}
+                                    onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                                    placeholder="John Smith"
+                                    className="w-full border border-gray-300 dark:border-white/20 p-3 rounded-lg bg-white dark:bg-black/20 text-primary dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1 block">
+                                    Email Address *
+                                </label>
+                                <input
+                                    type="email"
+                                    value={newStaff.email}
+                                    onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
+                                    placeholder="john@example.com"
+                                    className="w-full border border-gray-300 dark:border-white/20 p-3 rounded-lg bg-white dark:bg-black/20 text-primary dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1 block">
+                                    Phone (optional)
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={newStaff.phone}
+                                    onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
+                                    placeholder="(555) 123-4567"
+                                    className="w-full border border-gray-300 dark:border-white/20 p-3 rounded-lg bg-white dark:bg-black/20 text-primary dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                    disabled={isSubmitting}
+                                />
+                            </div>
                         </div>
-                        <div className="flex gap-3 justify-end mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
-                            <button onClick={() => setIsAddingStaff(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
+                        
+                        <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
+                            <button 
+                                onClick={() => setIsAddingStaff(false)} 
+                                className="px-4 py-2 text-gray-500 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                disabled={isSubmitting}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleAddStaff} 
+                                disabled={isSubmitting || !newStaff.name.trim() || !newStaff.email.trim()}
+                                className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                                        Adding...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-[18px]">person_add</span>
+                                        Add Staff
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

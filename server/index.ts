@@ -1514,6 +1514,79 @@ app.put('/api/members/:id/role', async (req, res) => {
   }
 });
 
+app.post('/api/staff', async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+    
+    const existingMember = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    
+    let tier = null;
+    let isFounding = false;
+    
+    if (existingMember.rows.length > 0) {
+      const member = existingMember.rows[0];
+      tier = member.tier;
+      isFounding = member.is_founding || false;
+      
+      const updateResult = await pool.query(
+        `UPDATE users SET role = 'staff', first_name = COALESCE($2, first_name), last_name = COALESCE($3, last_name), phone = COALESCE($4, phone)
+         WHERE email = $1 RETURNING *`,
+        [email, name.split(' ')[0], name.split(' ').slice(1).join(' '), phone]
+      );
+      
+      const updated = updateResult.rows[0];
+      return res.json({
+        id: updated.id,
+        name: `${updated.first_name || ''} ${updated.last_name || ''}`.trim() || name,
+        email: updated.email,
+        phone: updated.phone,
+        tier: updated.tier,
+        isFounding: updated.is_founding,
+        role: 'staff',
+        status: 'Active',
+        imported: true
+      });
+    }
+    
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ');
+    
+    const insertResult = await pool.query(
+      `INSERT INTO users (id, email, first_name, last_name, phone, role) 
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, 'staff') 
+       RETURNING *`,
+      [email, firstName, lastName, phone]
+    );
+    
+    const newStaff = insertResult.rows[0];
+    res.status(201).json({
+      id: newStaff.id,
+      name: `${newStaff.first_name || ''} ${newStaff.last_name || ''}`.trim(),
+      email: newStaff.email,
+      phone: newStaff.phone,
+      tier: null,
+      isFounding: false,
+      role: 'staff',
+      status: 'Active',
+      imported: false
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('API error:', error);
+    if (error.code === '23505') {
+      return res.status(400).json({ error: 'A user with this email already exists' });
+    }
+    res.status(500).json({ error: 'Failed to create staff member' });
+  }
+});
+
 const TIER_GUEST_PASSES: Record<string, number> = {
   'Social': 2,
   'Core': 4,

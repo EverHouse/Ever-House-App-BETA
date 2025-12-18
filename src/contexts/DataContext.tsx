@@ -104,6 +104,7 @@ interface DataContextType {
   deleteAnnouncement: (id: string) => void;
 
   updateMember: (member: MemberProfile) => void;
+  addMember: (member: MemberProfile) => void;
 
   addBooking: (booking: Booking) => void;
   deleteBooking: (id: string) => void;
@@ -580,6 +581,13 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
 
   // Member Actions
   const updateMember = (item: MemberProfile) => setMembers(prev => prev.map(m => m.id === item.id ? item : m));
+  const addMember = (member: MemberProfile) => setMembers(prev => {
+    const exists = prev.some(m => m.id === member.id);
+    if (exists) {
+      return prev.map(m => m.id === member.id ? member : m);
+    }
+    return [...prev, member];
+  });
 
   // Booking Actions
   const addBooking = (booking: Booking) => setBookings(prev => [booking, ...prev]);
@@ -593,7 +601,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       addCafeItem, updateCafeItem, deleteCafeItem,
       addEvent, updateEvent, deleteEvent, syncEventbrite,
       addAnnouncement, updateAnnouncement, deleteAnnouncement,
-      updateMember, addBooking, deleteBooking
+      updateMember, addMember, addBooking, deleteBooking
     }}>
       {children}
     </DataContext.Provider>
