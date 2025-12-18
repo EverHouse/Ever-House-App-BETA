@@ -7,7 +7,7 @@ import Logo from '../../components/Logo';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'staff'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -58,6 +58,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'announcements' && 'Manage Updates'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
+               {activeTab === 'staff' && 'Manage Staff Access'}
            </h1>
         </div>
         
@@ -66,6 +67,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
+        {activeTab === 'staff' && actualUser?.role === 'admin' && <StaffAdmin />}
       </main>
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
@@ -75,7 +77,7 @@ const AdminDashboard: React.FC = () => {
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
             <NavItem icon="campaign" label="Updates" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
-            <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
+            {actualUser?.role === 'admin' && <NavItem icon="badge" label="Staff" active={activeTab === 'staff'} onClick={() => setActiveTab('staff')} />}
         </ul>
       </nav>
 
@@ -1543,6 +1545,265 @@ const SimulatorAdmin: React.FC = () => {
                                     </span>
                                 )}
                                 {actionModal === 'approve' ? 'Approve' : 'Decline'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- STAFF ADMIN (Admin only) ---
+
+interface StaffUser {
+  id: number;
+  email: string;
+  name: string | null;
+  is_active: boolean;
+  created_at: string;
+  created_by: string | null;
+}
+
+const StaffAdmin: React.FC = () => {
+    const { actualUser } = useData();
+    const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAdding, setIsAdding] = useState(false);
+    const [newEmail, setNewEmail] = useState('');
+    const [newName, setNewName] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchStaffUsers();
+    }, []);
+
+    const fetchStaffUsers = async () => {
+        try {
+            setIsLoading(true);
+            const res = await fetch('/api/staff-users');
+            if (res.ok) {
+                const data = await res.json();
+                setStaffUsers(data);
+            }
+        } catch (err) {
+            console.error('Error fetching staff users:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAddStaff = async () => {
+        if (!newEmail.trim()) {
+            setError('Email is required');
+            return;
+        }
+
+        try {
+            setError(null);
+            const res = await fetch('/api/staff-users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: newEmail.trim(),
+                    name: newName.trim() || null,
+                    created_by: actualUser?.email
+                })
+            });
+
+            if (res.ok) {
+                const newStaff = await res.json();
+                setStaffUsers(prev => [newStaff, ...prev]);
+                setNewEmail('');
+                setNewName('');
+                setIsAdding(false);
+                setSuccess('Staff member added successfully');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                const data = await res.json();
+                setError(data.error || 'Failed to add staff member');
+            }
+        } catch (err) {
+            setError('Failed to add staff member');
+        }
+    };
+
+    const handleToggleActive = async (staff: StaffUser) => {
+        try {
+            const res = await fetch(`/api/staff-users/${staff.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_active: !staff.is_active })
+            });
+
+            if (res.ok) {
+                setStaffUsers(prev => prev.map(s => 
+                    s.id === staff.id ? { ...s, is_active: !s.is_active } : s
+                ));
+            }
+        } catch (err) {
+            console.error('Error toggling staff status:', err);
+        }
+    };
+
+    const handleRemoveStaff = async (staff: StaffUser) => {
+        if (!window.confirm(`Remove ${staff.email} from staff?`)) return;
+
+        try {
+            const res = await fetch(`/api/staff-users/${staff.id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                setStaffUsers(prev => prev.filter(s => s.id !== staff.id));
+                setSuccess('Staff member removed');
+                setTimeout(() => setSuccess(null), 3000);
+            }
+        } catch (err) {
+            console.error('Error removing staff:', err);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-primary dark:text-white">Staff Access List</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Add email addresses to grant staff portal access
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsAdding(true)}
+                        className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                    >
+                        <span className="material-symbols-outlined text-lg">person_add</span>
+                        Add Staff
+                    </button>
+                </div>
+
+                {success && (
+                    <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
+                        {success}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                        {error}
+                    </div>
+                )}
+
+                {isLoading ? (
+                    <div className="py-8 text-center text-gray-500">Loading...</div>
+                ) : staffUsers.length === 0 ? (
+                    <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                        No staff members added yet. Add an email to grant staff access.
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {staffUsers.map(staff => (
+                            <div 
+                                key={staff.id}
+                                className={`flex items-center justify-between p-4 rounded-xl border ${
+                                    staff.is_active 
+                                        ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
+                                        : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                        staff.is_active ? 'bg-brand-green/10 text-brand-green' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                                    }`}>
+                                        <span className="material-symbols-outlined">badge</span>
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-primary dark:text-white">{staff.name || staff.email}</p>
+                                        {staff.name && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.email}</p>}
+                                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                                            {staff.is_active ? 'Active' : 'Inactive'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleToggleActive(staff)}
+                                        className={`p-2 rounded-lg transition-colors ${
+                                            staff.is_active 
+                                                ? 'text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' 
+                                                : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                        }`}
+                                        title={staff.is_active ? 'Deactivate' : 'Activate'}
+                                    >
+                                        <span className="material-symbols-outlined text-xl">
+                                            {staff.is_active ? 'toggle_on' : 'toggle_off'}
+                                        </span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleRemoveStaff(staff)}
+                                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        title="Remove"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {isAdding && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Staff Member</h3>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Email Address *
+                                </label>
+                                <input
+                                    type="email"
+                                    value={newEmail}
+                                    onChange={(e) => setNewEmail(e.target.value)}
+                                    placeholder="staff@example.com"
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Name (optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    placeholder="Jane Doe"
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                />
+                            </div>
+
+                            {error && (
+                                <p className="text-red-600 text-sm">{error}</p>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }}
+                                className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddStaff}
+                                className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                            >
+                                Add Staff
                             </button>
                         </div>
                     </div>

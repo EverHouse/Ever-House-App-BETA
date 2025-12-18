@@ -337,6 +337,15 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           const authUser = await res.json();
           const email = authUser.email?.toLowerCase() || '';
           const isAdmin = ADMIN_EMAILS.includes(email);
+          const isStaff = authUser.isStaff === true;
+          
+          // Determine role: admin > staff > member
+          let role: 'admin' | 'staff' | 'member' = 'member';
+          if (isAdmin) {
+            role = 'admin';
+          } else if (isStaff) {
+            role = 'staff';
+          }
           
           // Map Replit Auth user to MemberProfile
           const memberProfile: MemberProfile = {
@@ -347,7 +356,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             email: authUser.email || '',
             phone: '',
             avatar: authUser.profileImageUrl,
-            role: isAdmin ? 'admin' : 'member'
+            role: role
           };
           setActualUser(memberProfile);
         }

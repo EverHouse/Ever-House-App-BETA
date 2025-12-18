@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useData, EventData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../components/Toast';
@@ -7,6 +7,25 @@ import Skeleton from '../../components/Skeleton';
 import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
+import { getDateString, formatDateShort, parseLocalDate } from '../../utils/dateUtils';
+
+const generateUpcomingDates = (days: number = 14): { day: string; date: string; dateNum: string; fullDate: string }[] => {
+  const dates = [];
+  const today = new Date();
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  for (let i = 0; i < days; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    dates.push({
+      day: dayNames[d.getDay()],
+      dateNum: d.getDate().toString(),
+      date: getDateString(d),
+      fullDate: d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    });
+  }
+  return dates;
+};
 
 const MemberEvents: React.FC = () => {
   const { events, addBooking, isLoading } = useData();
@@ -15,10 +34,36 @@ const MemberEvents: React.FC = () => {
   const isDark = effectiveTheme === 'dark';
   const [filter, setFilter] = useState('All');
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+  
+  const upcomingDates = useMemo(() => generateUpcomingDates(14), []);
+  const [selectedDateIndex, setSelectedDateIndex] = useState<number | null>(null);
 
-  const filteredEvents = filter === 'All' 
-    ? events 
-    : events.filter(e => e.category === filter);
+  const filteredEvents = useMemo(() => {
+    let result = events;
+    
+    if (filter !== 'All') {
+      result = result.filter(e => e.category === filter);
+    }
+    
+    if (selectedDateIndex !== null) {
+      const selectedDateStr = upcomingDates[selectedDateIndex].date;
+      result = result.filter(e => {
+        const eventDateStr = e.date;
+        const formattedSelectedDate = formatDateShort(selectedDateStr);
+        return eventDateStr === formattedSelectedDate;
+      });
+    }
+    
+    return result;
+  }, [events, filter, selectedDateIndex, upcomingDates]);
+  
+  const currentMonthYear = selectedDateIndex !== null 
+    ? upcomingDates[selectedDateIndex].fullDate 
+    : upcomingDates[0]?.fullDate || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  
+  const handleDateSelect = (index: number) => {
+    setSelectedDateIndex(selectedDateIndex === index ? null : index);
+  };
 
   const handleRSVP = () => {
     if (selectedEvent?.source === 'eventbrite' && selectedEvent.externalLink) {
@@ -66,15 +111,32 @@ const MemberEvents: React.FC = () => {
       <div className="relative z-10 animate-pop-in">
          <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Select Date</h3>
-              <button className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>January 2024</button>
+              <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+                {selectedDateIndex !== null ? 'Showing' : 'Filter by Date'}
+              </h3>
+              <div className="flex items-center gap-2">
+                {selectedDateIndex !== null && (
+                  <button 
+                    onClick={() => setSelectedDateIndex(null)}
+                    className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${isDark ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-black/5 text-primary/70 hover:bg-black/10'}`}
+                  >
+                    Clear
+                  </button>
+                )}
+                <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>{currentMonthYear}</span>
+              </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
-              <DateButton day="Fri" date="20" active isDark={isDark} />
-              <DateButton day="Sat" date="21" isDark={isDark} />
-              <DateButton day="Sun" date="22" isDark={isDark} />
-              <DateButton day="Mon" date="23" isDark={isDark} />
-              <DateButton day="Tue" date="24" isDark={isDark} />
+              {upcomingDates.map((dateObj, index) => (
+                <DateButton 
+                  key={dateObj.date}
+                  day={dateObj.day} 
+                  date={dateObj.dateNum} 
+                  active={selectedDateIndex === index}
+                  onClick={() => handleDateSelect(index)}
+                  isDark={isDark} 
+                />
+              ))}
             </div>
         </section>
 
