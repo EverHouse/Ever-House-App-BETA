@@ -43,6 +43,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.10.1",
+    "resend": "^6.6.0",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "web-push": "^3.6.7"
