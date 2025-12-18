@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useData, EventData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../components/Toast';
@@ -8,25 +8,6 @@ import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 
-const generateDates = (days: number = 14): { label: string; date: string; day: string; dateNum: string; monthYear: string }[] => {
-  const dates = [];
-  const today = new Date();
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  
-  for (let i = 0; i < days; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    dates.push({
-      label: `${dayNames[d.getDay()]} ${d.getDate()}`,
-      date: d.toISOString().split('T')[0],
-      day: dayNames[d.getDay()],
-      dateNum: d.getDate().toString(),
-      monthYear: d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    });
-  }
-  return dates;
-};
-
 const MemberEvents: React.FC = () => {
   const { events, addBooking, isLoading } = useData();
   const { effectiveTheme } = useTheme();
@@ -34,54 +15,28 @@ const MemberEvents: React.FC = () => {
   const isDark = effectiveTheme === 'dark';
   const [filter, setFilter] = useState('All');
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
-  
-  const dates = useMemo(() => generateDates(14), []);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const filteredEvents = useMemo(() => {
-    let filtered = filter === 'All' ? events : events.filter(e => e.category === filter);
-    if (selectedDate) {
-      filtered = filtered.filter(e => e.rawDate === selectedDate);
-    }
-    return filtered;
-  }, [events, filter, selectedDate]);
-  
-  const getEventBadge = (event: EventData): { text: string; className: string } => {
-    if (event.source === 'eventbrite') {
-      return { text: 'Ticketed', className: 'bg-[#F05537]/20 text-[#F05537]' };
-    }
-    if (event.source === 'google_calendar') {
-      return { text: 'Public', className: 'bg-blue-500/20 text-blue-400' };
-    }
-    if (event.visibility === 'members_only') {
-      return { text: 'Members Only', className: 'bg-green-500/20 text-green-400' };
-    }
-    return { text: 'Open', className: 'bg-green-500/20 text-green-300' };
-  };
+  const filteredEvents = filter === 'All' 
+    ? events 
+    : events.filter(e => e.category === filter);
 
   const handleRSVP = () => {
-    if (!selectedEvent) return;
-    
-    if (selectedEvent.source === 'eventbrite' && selectedEvent.externalLink) {
+    if (selectedEvent?.source === 'eventbrite' && selectedEvent.externalLink) {
         window.open(selectedEvent.externalLink, '_blank');
-        setSelectedEvent(null);
         return;
     }
 
-    if (selectedEvent.source === 'google_calendar') {
-        setSelectedEvent(null);
-        return;
+    if (selectedEvent) {
+        addBooking({
+            id: Date.now().toString(),
+            type: 'event',
+            title: selectedEvent.title,
+            date: selectedEvent.date.split(',')[1].trim(),
+            time: selectedEvent.time,
+            details: selectedEvent.location,
+            color: 'accent'
+        });
     }
-
-    addBooking({
-        id: Date.now().toString(),
-        type: 'event',
-        title: selectedEvent.title,
-        date: selectedEvent.date.split(',')[1]?.trim() || selectedEvent.date,
-        time: selectedEvent.time,
-        details: selectedEvent.location,
-        color: 'accent'
-    });
 
     setSelectedEvent(null);
     showToast('You are on the list!', 'success');
@@ -111,31 +66,15 @@ const MemberEvents: React.FC = () => {
       <div className="relative z-10 animate-pop-in">
          <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Browse by Date</h3>
-              <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>{dates[0]?.monthYear}</span>
+              <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Select Date</h3>
+              <button className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>January 2024</button>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
-              <button
-                onClick={() => setSelectedDate(null)}
-                className={`flex flex-col items-center justify-center min-w-[54px] py-3 px-2 rounded-xl transition-all ${
-                  selectedDate === null 
-                    ? 'bg-accent text-brand-green' 
-                    : isDark ? 'bg-white/5 text-white/70 hover:bg-white/10' : 'bg-black/5 text-primary/70 hover:bg-black/10'
-                }`}
-              >
-                <span className="text-[10px] font-bold uppercase tracking-wider">All</span>
-                <span className="text-lg font-bold">—</span>
-              </button>
-              {dates.map((d) => (
-                <DateButton 
-                  key={d.date} 
-                  day={d.day} 
-                  date={d.dateNum} 
-                  active={selectedDate === d.date}
-                  onClick={() => setSelectedDate(d.date)}
-                  isDark={isDark} 
-                />
-              ))}
+              <DateButton day="Fri" date="20" active isDark={isDark} />
+              <DateButton day="Sat" date="21" isDark={isDark} />
+              <DateButton day="Sun" date="22" isDark={isDark} />
+              <DateButton day="Mon" date="23" isDark={isDark} />
+              <DateButton day="Tue" date="24" isDark={isDark} />
             </div>
         </section>
 
@@ -179,9 +118,13 @@ const MemberEvents: React.FC = () => {
                         <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start mb-1">
                                 <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-primary'}`}>{event.title}</h4>
-                                <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md whitespace-nowrap ${getEventBadge(event).className}`}>
-                                  {getEventBadge(event).text}
-                                </span>
+                                {event.source === 'eventbrite' ? (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-[#F05537]/20 text-[#F05537] px-1.5 py-0.5 rounded-md whitespace-nowrap">Ticketed</span>
+                                ) : event.id === '3' ? (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded-md whitespace-nowrap">Waitlist</span>
+                                ) : (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-md whitespace-nowrap">Open</span>
+                                )}
                             </div>
                             <p className={`text-xs mb-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{event.date} • {event.time}</p>
                             <p className={`text-xs truncate ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{event.location}</p>
@@ -271,26 +214,13 @@ const MemberEvents: React.FC = () => {
              </div>
 
              <div className={`p-6 border-t pb-8 ${isDark ? 'border-white/10 bg-[#1a210d]' : 'border-black/10 bg-white'}`}>
-                {selectedEvent.source === 'google_calendar' ? (
+                {selectedEvent.id === '3' ? (
                   <button 
-                    className={`w-full bg-transparent border py-4 rounded-xl font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 ${isDark ? 'border-white/20 text-white hover:bg-white/5' : 'border-black/20 text-primary hover:bg-black/5'}`}
+                    onClick={handleRSVP}
+                    className={`w-full bg-transparent border py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-colors ${isDark ? 'border-white text-white hover:bg-white/5' : 'border-primary text-primary hover:bg-black/5'}`}
                   >
-                    <span className="material-symbols-outlined text-lg">calendar_add_on</span>
-                    Add to Calendar
+                    Join Waiting List
                   </button>
-                ) : selectedEvent.source === 'eventbrite' ? (
-                  <div className="flex gap-3">
-                     <button className={`flex-1 bg-transparent border py-4 rounded-xl font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 ${isDark ? 'border-white/20 text-white hover:bg-white/5' : 'border-black/20 text-primary hover:bg-black/5'}`}>
-                        <span className="material-symbols-outlined text-lg">calendar_add_on</span>
-                        Add to Cal
-                     </button>
-                     <button 
-                        onClick={handleRSVP}
-                        className="flex-[2] py-4 rounded-xl font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity shadow-lg bg-[#F05537] text-white"
-                     >
-                        Get Tickets
-                     </button>
-                  </div>
                 ) : (
                   <div className="flex gap-3">
                      <button className={`flex-1 bg-transparent border py-4 rounded-xl font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 ${isDark ? 'border-white/20 text-white hover:bg-white/5' : 'border-black/20 text-primary hover:bg-black/5'}`}>
@@ -299,9 +229,9 @@ const MemberEvents: React.FC = () => {
                      </button>
                      <button 
                         onClick={handleRSVP}
-                        className="flex-[2] py-4 rounded-xl font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity shadow-lg bg-brand-green text-white"
+                        className={`flex-[2] py-4 rounded-xl font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity shadow-lg ${selectedEvent.source === 'eventbrite' ? 'bg-[#F05537] text-white' : 'bg-brand-green text-white'}`}
                      >
-                        RSVP
+                        {selectedEvent.source === 'eventbrite' ? 'Get Tickets' : 'RSVP'}
                      </button>
                   </div>
                 )}

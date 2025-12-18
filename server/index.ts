@@ -8,7 +8,6 @@ import { google } from 'googleapis';
 import webpush from 'web-push';
 import { setupAuth, registerAuthRoutes } from './replit_integrations/auth';
 import { setupSupabaseAuthRoutes } from './supabase/auth';
-import { setupGoogleAuth } from './auth/googleAuth';
 
 // Configure web push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -2076,15 +2075,12 @@ async function autoSeedCafeMenu() {
 }
 
 async function startServer() {
-  // Setup Supabase authentication
+  // Setup Supabase authentication (primary auth method)
   setupSupabaseAuthRoutes(app);
   
-  // Setup Replit authentication (for session management)
+  // Setup Replit authentication (secondary/fallback auth method)
   await setupAuth(app);
   registerAuthRoutes(app);
-  
-  // Setup direct Google OAuth authentication
-  setupGoogleAuth(app);
 
   // Auto-seed cafe menu if empty
   await autoSeedCafeMenu();

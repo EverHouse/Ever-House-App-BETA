@@ -223,10 +223,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const selfAnimatedRoutes = ['/book', '/member-events', '/member-wellness', '/cafe'];
   const shouldAnimate = !selfAnimatedRoutes.some(path => location.pathname.startsWith(path));
 
-  // Navigation Logic: Show Menu on main navigation pages, Back on detail/sub-pages
-  // Main pages include: home, all public pages, and all primary member portal sections
-  const mainNavigationPages = ['/', '/dashboard', '/book', '/member-events', '/member-wellness', '/cafe', '/sims', '/profile', '/membership', '/private-hire', '/whats-on', '/gallery', '/faq', '/contact', '/login'];
-  const isRootPage = mainNavigationPages.includes(location.pathname);
+  // Navigation Logic: Show Menu on Root or Dashboard, otherwise Back
+  const isRootPage = location.pathname === '/' || location.pathname === '/dashboard';
 
   const handleTopLeftClick = () => {
     if (isRootPage) {

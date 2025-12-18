@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { formatDate as formatDateUtil } from '../utils/dateUtils';
 
 // --- Types ---
 
@@ -13,18 +12,14 @@ export interface CafeItem {
   image: string;
 }
 
-export type EventSource = 'internal' | 'eventbrite' | 'google_calendar';
-export type EventVisibility = 'public' | 'members_only';
+export type EventSource = 'internal' | 'eventbrite';
 
 export interface EventData {
   id: string;
   source: EventSource;
-  visibility: EventVisibility;
-  requiresRsvp: boolean;
   externalLink?: string;
   title: string;
   category: string;
-  rawDate: string;
   date: string;
   time: string;
   location: string;
@@ -439,14 +434,11 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           const data = await res.json();
           const formatted: EventData[] = data.map((event: any) => ({
             id: event.id.toString(),
-            source: event.source === 'eventbrite' ? 'eventbrite' : event.source === 'google_calendar' ? 'google_calendar' : 'internal',
-            visibility: event.visibility === 'members_only' ? 'members_only' : 'public',
-            requiresRsvp: event.requires_rsvp ?? false,
+            source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
             externalLink: event.eventbrite_url || undefined,
             title: event.title,
             category: event.category || 'Social',
-            rawDate: event.event_date,
-            date: formatDateUtil(event.event_date),
+            date: new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
             time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
             location: event.location || 'Even House',
             image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import MenuOverlay from '../../components/MenuOverlay';
 import Logo from '../../components/Logo';
-import { formatDate as formatDateUtil, formatDateShort as formatDateShortUtil, formatTime12 as formatTime12Util } from '../../utils/dateUtils';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -369,12 +368,16 @@ const EventsAdmin: React.FC = () => {
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return 'TBD';
-        return formatDateUtil(dateStr);
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     };
 
     const formatTime = (timeStr: string) => {
         if (!timeStr) return '';
-        return formatTime12Util(timeStr);
+        const [hours, mins] = timeStr.split(':').map(Number);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const h12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+        return `${h12}:${mins.toString().padStart(2, '0')} ${period}`;
     };
 
     return (
@@ -1096,8 +1099,18 @@ interface Bay {
     description: string;
 }
 
-const formatTime12 = formatTime12Util;
-const formatDateShort = formatDateShortUtil;
+const formatTime12 = (time24: string): string => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return `${hours12}:${minutes?.toString().padStart(2, '0') || '00'} ${period}`;
+};
+
+const formatDateShort = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+};
 
 const SimulatorAdmin: React.FC = () => {
     const { user } = useData();
@@ -1375,11 +1388,11 @@ const SimulatorAdmin: React.FC = () => {
                                 d.setDate(d.getDate() - 1);
                                 setCalendarDate(d.toISOString().split('T')[0]);
                             }}
-                            className="p-3 rounded-xl bg-primary text-white dark:bg-white dark:text-primary hover:opacity-90 transition-opacity shadow-sm"
+                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10"
                         >
                             <span className="material-symbols-outlined">chevron_left</span>
                         </button>
-                        <h3 className="font-bold text-primary dark:text-white text-lg">
+                        <h3 className="font-bold text-primary dark:text-white">
                             {formatDateShort(calendarDate)}
                         </h3>
                         <button
@@ -1388,7 +1401,7 @@ const SimulatorAdmin: React.FC = () => {
                                 d.setDate(d.getDate() + 1);
                                 setCalendarDate(d.toISOString().split('T')[0]);
                             }}
-                            className="p-3 rounded-xl bg-primary text-white dark:bg-white dark:text-primary hover:opacity-90 transition-opacity shadow-sm"
+                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10"
                         >
                             <span className="material-symbols-outlined">chevron_right</span>
                         </button>

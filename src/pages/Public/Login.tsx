@@ -63,12 +63,7 @@ const Login: React.FC = () => {
     setLoading(false);
   };
 
-  const handleGoogleLogin = () => {
-    setLoading(true);
-    window.location.href = '/api/auth/google';
-  };
-
-  const handleOAuthLogin = async (provider: 'apple' | 'github') => {
+  const handleOAuthLogin = async (provider: 'google' | 'apple' | 'github') => {
     setLoading(true);
     setError('');
     
@@ -85,7 +80,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-[#F2F2EC]">
       <div className="flex-1 flex flex-col justify-center px-6 py-12">
         <div className="w-full max-w-sm mx-auto space-y-8">
             
@@ -211,8 +206,10 @@ const Login: React.FC = () => {
                       onClick={handleReplitLogin}
                       className="flex w-full justify-center items-center gap-3 rounded-xl border border-black/10 px-3 py-4 text-sm font-bold leading-6 text-primary hover:bg-black/5 transition-all active:scale-[0.98]"
                     >
-                      <span className="material-symbols-outlined text-xl">mail</span>
-                      Sign In with Membership Email
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2 4h10v6H4v10h16V4h-8v6h-2V2h14v20H2V4z"/>
+                      </svg>
+                      Sign In with Replit
                     </button>
                   </>
                 )}
