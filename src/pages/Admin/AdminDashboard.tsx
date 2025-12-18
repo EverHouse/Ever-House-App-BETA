@@ -8,7 +8,7 @@ import { formatDate as formatDateUtil, formatDateShort as formatDateShortUtil, f
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'closures' | 'directory' | 'simulator' | 'gallery'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'closures' | 'directory' | 'simulator' | 'gallery' | 'guests' | 'push'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -57,6 +57,8 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'cafe' && 'Manage Cafe Menu'}
                {activeTab === 'events' && 'Manage Events'}
                {activeTab === 'closures' && 'Facility Closures'}
+               {activeTab === 'guests' && 'Guest Passes'}
+               {activeTab === 'push' && 'Push Notifications'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
                {activeTab === 'gallery' && 'Manage Gallery'}
@@ -66,6 +68,8 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsAdmin />}
         {activeTab === 'closures' && <FacilityClosuresAdmin />}
+        {activeTab === 'guests' && <GuestPassAdmin />}
+        {activeTab === 'push' && <PushNotificationAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
         {activeTab === 'gallery' && <GalleryAdmin />}
@@ -73,10 +77,12 @@ const AdminDashboard: React.FC = () => {
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-4 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-        <ul className="flex justify-between items-center text-white/50 w-full max-w-lg mx-auto overflow-x-auto scrollbar-hide">
+        <ul className="flex justify-between items-center text-white/50 w-full max-w-xl mx-auto overflow-x-auto scrollbar-hide gap-1">
             <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
+            <NavItem icon="badge" label="Guests" active={activeTab === 'guests'} onClick={() => setActiveTab('guests')} />
+            <NavItem icon="notifications" label="Push" active={activeTab === 'push'} onClick={() => setActiveTab('push')} />
             <NavItem icon="event_busy" label="Closures" active={activeTab === 'closures'} onClick={() => setActiveTab('closures')} />
             <NavItem icon="photo_library" label="Gallery" active={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
             <NavItem icon="local_cafe" label="Cafe" active={activeTab === 'cafe'} onClick={() => setActiveTab('cafe')} />
@@ -1540,6 +1546,407 @@ const SimulatorAdmin: React.FC = () => {
             )}
         </div>
     );
+};
+
+// --- PUSH NOTIFICATION ADMIN ---
+
+interface PushSubscription {
+  user_email: string;
+  device_count: number;
+  last_subscribed: string;
+}
+
+const PushNotificationAdmin: React.FC = () => {
+  const [subscriptions, setSubscriptions] = useState<PushSubscription[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [message, setMessage] = useState<{ title: string; body: string; url: string }>({
+    title: '',
+    body: '',
+    url: '/#/dashboard'
+  });
+  const [sendTo, setSendTo] = useState<'all' | 'selected'>('all');
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const fetchSubscriptions = async () => {
+    try {
+      const res = await fetch('/api/push/subscriptions');
+      if (res.ok) {
+        setSubscriptions(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch subscriptions:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchSubscriptions(); }, []);
+
+  const toggleEmail = (email: string) => {
+    setSelectedEmails(prev => 
+      prev.includes(email) 
+        ? prev.filter(e => e !== email) 
+        : [...prev, email]
+    );
+  };
+
+  const handleSend = async () => {
+    if (!message.title || !message.body) {
+      setSendResult({ success: false, message: 'Title and message are required' });
+      return;
+    }
+    
+    setIsSending(true);
+    setSendResult(null);
+    
+    try {
+      const res = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: message.title,
+          body: message.body,
+          url: message.url,
+          recipients: sendTo === 'all' ? 'all' : selectedEmails
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        setSendResult({ success: true, message: `Notification sent to ${data.sent_to} member(s)` });
+        setMessage({ title: '', body: '', url: '/#/dashboard' });
+      } else {
+        setSendResult({ success: false, message: data.error || 'Failed to send' });
+      }
+    } catch (err) {
+      setSendResult({ success: false, message: 'Network error' });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="material-symbols-outlined text-primary dark:text-white">notifications_active</span>
+          <h3 className="font-bold text-primary dark:text-white">Send Push Notification</h3>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Title</label>
+            <input
+              type="text"
+              value={message.title}
+              onChange={(e) => setMessage(m => ({ ...m, title: e.target.value }))}
+              placeholder="e.g., New Event Added!"
+              className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Message</label>
+            <textarea
+              value={message.body}
+              onChange={(e) => setMessage(m => ({ ...m, body: e.target.value }))}
+              placeholder="e.g., Join us for a special members-only event this Saturday..."
+              rows={3}
+              className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40 resize-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">Link (optional)</label>
+            <input
+              type="text"
+              value={message.url}
+              onChange={(e) => setMessage(m => ({ ...m, url: e.target.value }))}
+              placeholder="e.g., /#/events"
+              className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-black/70 dark:text-white/70 mb-2">Recipients</label>
+            <div className="flex gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  checked={sendTo === 'all'}
+                  onChange={() => setSendTo('all')}
+                  className="accent-primary"
+                />
+                <span className="text-sm text-primary dark:text-white">All Subscribed ({subscriptions.length})</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  checked={sendTo === 'selected'}
+                  onChange={() => setSendTo('selected')}
+                  className="accent-primary"
+                />
+                <span className="text-sm text-primary dark:text-white">Select Members</span>
+              </label>
+            </div>
+          </div>
+          
+          {sendResult && (
+            <div className={`p-3 rounded-lg text-sm ${sendResult.success ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>
+              {sendResult.message}
+            </div>
+          )}
+          
+          <button
+            onClick={handleSend}
+            disabled={isSending || (sendTo === 'selected' && selectedEmails.length === 0)}
+            className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isSending ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-lg">send</span>
+                Send Notification
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+      
+      {sendTo === 'selected' && (
+        <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
+          <h3 className="font-bold text-primary dark:text-white mb-3">
+            Select Recipients ({selectedEmails.length} selected)
+          </h3>
+          {subscriptions.length === 0 ? (
+            <p className="text-black/50 dark:text-white/50 text-sm">No members have enabled push notifications yet.</p>
+          ) : (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {subscriptions.map(sub => (
+                <label key={sub.user_email} className="flex items-center gap-3 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedEmails.includes(sub.user_email)}
+                    onChange={() => toggleEmail(sub.user_email)}
+                    className="accent-primary w-4 h-4"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-primary dark:text-white">{sub.user_email}</div>
+                    <div className="text-xs text-black/50 dark:text-white/50">{sub.device_count} device(s)</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      
+      <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
+        <h3 className="font-bold text-primary dark:text-white mb-3">Subscribed Members ({subscriptions.length})</h3>
+        {subscriptions.length === 0 ? (
+          <p className="text-black/50 dark:text-white/50 text-sm">No members have enabled push notifications yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {subscriptions.map(sub => (
+              <div key={sub.user_email} className="flex items-center justify-between py-2 border-b border-black/5 dark:border-white/5 last:border-0">
+                <div>
+                  <div className="text-sm font-medium text-primary dark:text-white">{sub.user_email}</div>
+                  <div className="text-xs text-black/50 dark:text-white/50">
+                    {sub.device_count} device(s) · Last subscribed {new Date(sub.last_subscribed).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- GUEST PASS ADMIN ---
+
+interface GuestPassRecord {
+  id: number;
+  member_email: string;
+  first_name: string;
+  last_name: string;
+  passes_used: number;
+  passes_total: number;
+  passes_remaining: number;
+  last_reset_date?: string;
+}
+
+const GuestPassAdmin: React.FC = () => {
+  const [passes, setPasses] = useState<GuestPassRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [resettingEmail, setResettingEmail] = useState<string | null>(null);
+
+  const fetchPasses = async () => {
+    try {
+      const res = await fetch('/api/guest-passes');
+      if (res.ok) {
+        setPasses(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch guest passes:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchPasses(); }, []);
+
+  const handleReset = async (email: string) => {
+    setResettingEmail(email);
+    try {
+      const res = await fetch(`/api/guest-passes/${encodeURIComponent(email)}/reset`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        fetchPasses();
+      }
+    } catch (err) {
+      console.error('Failed to reset passes:', err);
+    } finally {
+      setResettingEmail(null);
+    }
+  };
+
+  const handleUpdateTotal = async (email: string, newTotal: number) => {
+    try {
+      await fetch(`/api/guest-passes/${encodeURIComponent(email)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passes_total: newTotal })
+      });
+      fetchPasses();
+    } catch (err) {
+      console.error('Failed to update passes:', err);
+    }
+  };
+
+  const filteredPasses = passes.filter(p =>
+    p.member_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const stats = {
+    totalMembers: passes.length,
+    totalUsed: passes.reduce((sum, p) => sum + p.passes_used, 0),
+    membersAtLimit: passes.filter(p => p.passes_remaining === 0).length
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
+          <div className="text-2xl font-bold text-primary dark:text-white">{stats.totalMembers}</div>
+          <div className="text-xs text-black/50 dark:text-white/50">Members with Passes</div>
+        </div>
+        <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
+          <div className="text-2xl font-bold text-primary dark:text-white">{stats.totalUsed}</div>
+          <div className="text-xs text-black/50 dark:text-white/50">Passes Used</div>
+        </div>
+        <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
+          <div className="text-2xl font-bold text-amber-500">{stats.membersAtLimit}</div>
+          <div className="text-xs text-black/50 dark:text-white/50">At Limit</div>
+        </div>
+      </div>
+
+      <div className="relative">
+        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30">search</span>
+        <input
+          type="text"
+          placeholder="Search members..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-3 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl text-primary dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40"
+        />
+      </div>
+
+      {filteredPasses.length === 0 ? (
+        <div className="text-center py-12 text-black/50 dark:text-white/50">
+          <span className="material-symbols-outlined text-4xl mb-2 block">badge</span>
+          <p>No guest pass records found</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filteredPasses.map(pass => (
+            <div key={pass.id} className="bg-white dark:bg-white/5 rounded-xl p-4 border border-black/5 dark:border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="font-medium text-primary dark:text-white">
+                    {pass.first_name && pass.last_name 
+                      ? `${pass.first_name} ${pass.last_name}`
+                      : pass.member_email}
+                  </div>
+                  {pass.first_name && <div className="text-xs text-black/50 dark:text-white/50">{pass.member_email}</div>}
+                  {pass.last_reset_date && (
+                    <div className="text-xs text-black/40 dark:text-white/40 mt-1">
+                      Last reset: {new Date(pass.last_reset_date).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${pass.passes_remaining === 0 ? 'text-red-500' : 'text-primary dark:text-white'}`}>
+                      {pass.passes_remaining}/{pass.passes_total}
+                    </div>
+                    <div className="text-xs text-black/50 dark:text-white/50">remaining</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <select
+                      value={pass.passes_total}
+                      onChange={(e) => handleUpdateTotal(pass.member_email, parseInt(e.target.value))}
+                      className="bg-transparent border border-black/10 dark:border-white/10 rounded-lg px-2 py-1 text-sm text-primary dark:text-white"
+                    >
+                      {[2, 4, 6, 8, 10, 12, 15, 20].map(n => (
+                        <option key={n} value={n}>{n} total</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => handleReset(pass.member_email)}
+                      disabled={resettingEmail === pass.member_email || pass.passes_used === 0}
+                      className="p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Reset passes"
+                    >
+                      {resettingEmail === pass.member_email ? (
+                        <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <span className="material-symbols-outlined text-lg">refresh</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 // --- FACILITY CLOSURES ADMIN ---

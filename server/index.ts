@@ -1246,6 +1246,54 @@ const TIER_GUEST_PASSES: Record<string, number> = {
   'Corporate': 15
 };
 
+// Get all guest passes (for staff portal)
+app.get('/api/guest-passes', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM guest_passes ORDER BY passes_used DESC, member_email`
+    );
+    res.json(result.rows.map(row => ({
+      id: row.id,
+      member_email: row.member_email,
+      first_name: '',
+      last_name: '',
+      passes_used: row.passes_used,
+      passes_total: row.passes_total,
+      passes_remaining: row.passes_total - row.passes_used,
+      last_reset_date: row.last_reset_date
+    })));
+  } catch (error: any) {
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Failed to fetch guest passes' });
+  }
+});
+
+// Reset guest passes for a member
+app.post('/api/guest-passes/:email/reset', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const result = await pool.query(
+      `UPDATE guest_passes SET passes_used = 0, last_reset_date = CURRENT_DATE 
+       WHERE member_email = $1 RETURNING *`,
+      [email]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    const data = result.rows[0];
+    res.json({
+      passes_used: data.passes_used,
+      passes_total: data.passes_total,
+      passes_remaining: data.passes_total - data.passes_used
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Failed to reset guest passes' });
+  }
+});
+
 app.get('/api/guest-passes/:email', async (req, res) => {
   try {
     const { email } = req.params;
@@ -1950,6 +1998,50 @@ app.post('/api/push/test', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Test push error:', error);
     res.status(500).json({ error: 'Failed to send test notification' });
+  }
+});
+
+// Get all push subscriptions (for staff to see who can receive notifications)
+app.get('/api/push/subscriptions', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT user_email, COUNT(*) as device_count, MAX(created_at) as last_subscribed
+       FROM push_subscriptions 
+       GROUP BY user_email 
+       ORDER BY last_subscribed DESC`
+    );
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Failed to fetch subscriptions' });
+  }
+});
+
+// Send push notification to specific user(s) or all subscribed users
+app.post('/api/push/send', async (req, res) => {
+  try {
+    const { title, body, url, recipients } = req.body;
+    
+    if (!title || !body) {
+      return res.status(400).json({ error: 'title and body are required' });
+    }
+    
+    const payload = { title, body, url: url || '/#/dashboard' };
+    
+    if (recipients === 'all') {
+      const result = await pool.query('SELECT DISTINCT user_email FROM push_subscriptions');
+      const emails = result.rows.map(r => r.user_email);
+      await Promise.all(emails.map(email => sendPushNotification(email, payload)));
+      res.json({ success: true, sent_to: emails.length });
+    } else if (Array.isArray(recipients) && recipients.length > 0) {
+      await Promise.all(recipients.map((email: string) => sendPushNotification(email, payload)));
+      res.json({ success: true, sent_to: recipients.length });
+    } else {
+      return res.status(400).json({ error: 'recipients must be "all" or an array of emails' });
+    }
+  } catch (error: any) {
+    if (!isProduction) console.error('Push send error:', error);
+    res.status(500).json({ error: 'Failed to send notifications' });
   }
 });
 
