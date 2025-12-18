@@ -1388,11 +1388,11 @@ const SimulatorAdmin: React.FC = () => {
                                 d.setDate(d.getDate() - 1);
                                 setCalendarDate(d.toISOString().split('T')[0]);
                             }}
-                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10"
+                            className="p-3 rounded-xl bg-primary text-white dark:bg-white dark:text-primary hover:opacity-90 transition-opacity shadow-sm"
                         >
                             <span className="material-symbols-outlined">chevron_left</span>
                         </button>
-                        <h3 className="font-bold text-primary dark:text-white">
+                        <h3 className="font-bold text-primary dark:text-white text-lg">
                             {formatDateShort(calendarDate)}
                         </h3>
                         <button
@@ -1401,7 +1401,7 @@ const SimulatorAdmin: React.FC = () => {
                                 d.setDate(d.getDate() + 1);
                                 setCalendarDate(d.toISOString().split('T')[0]);
                             }}
-                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10"
+                            className="p-3 rounded-xl bg-primary text-white dark:bg-white dark:text-primary hover:opacity-90 transition-opacity shadow-sm"
                         >
                             <span className="material-symbols-outlined">chevron_right</span>
                         </button>
