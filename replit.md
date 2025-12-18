@@ -34,6 +34,7 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Simulator Booking Request System**: Members request slots via a 14-day calendar, staff approve/decline with conflict detection.
 - **In-App Notifications**: Real-time notification system with a bell icon, unread badges, and read/mark all as read functionality.
 - **Role Management**: Admin dashboard allows assignment of member/staff/admin roles via `PUT /api/members/:id/role`.
+- **Admin/Staff Management**: Database-driven admin and staff management with full CRUD operations. Admins stored in `admin_users` table, staff in `staff_users` table. Auth middleware uses shared connection pool for efficient database lookups. Last-admin protection prevents accidentally removing all admins.
 - **Guest Pass System**: Database-backed tracking of guest pass usage per member, with atomic consumption.
 - **Real-Time Booking**: Database-backed booking with shared availability, duration-aware slot generation, and collision detection.
 - **Haptic Feedback**: Integrated for mobile interactions.
