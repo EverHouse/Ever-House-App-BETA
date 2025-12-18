@@ -7,7 +7,7 @@ import Logo from '../../components/Logo';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'staff'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'staff' | 'wellness'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -59,6 +59,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Simulator Bookings'}
                {activeTab === 'staff' && 'Manage Staff Access'}
+               {activeTab === 'wellness' && 'Manage Wellness Classes'}
            </h1>
         </div>
         
@@ -68,6 +69,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
         {activeTab === 'staff' && actualUser?.role === 'admin' && <StaffAdmin />}
+        {activeTab === 'wellness' && <WellnessAdmin />}
       </main>
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
@@ -76,7 +78,7 @@ const AdminDashboard: React.FC = () => {
             <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
-            <NavItem icon="campaign" label="Updates" active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} />
+            <NavItem icon="spa" label="Wellness" active={activeTab === 'wellness'} onClick={() => setActiveTab('wellness')} />
             {actualUser?.role === 'admin' && <NavItem icon="badge" label="Staff" active={activeTab === 'staff'} onClick={() => setActiveTab('staff')} />}
         </ul>
       </nav>
@@ -1545,6 +1547,336 @@ const SimulatorAdmin: React.FC = () => {
                                     </span>
                                 )}
                                 {actionModal === 'approve' ? 'Approve' : 'Decline'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- WELLNESS ADMIN ---
+
+interface WellnessClass {
+  id: number;
+  title: string;
+  time: string;
+  instructor: string;
+  duration: string;
+  category: string;
+  spots: string;
+  status: string;
+  description: string | null;
+  date: string;
+  is_active: boolean;
+}
+
+const WellnessAdmin: React.FC = () => {
+    const [classes, setClasses] = useState<WellnessClass[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
+    const [formData, setFormData] = useState<Partial<WellnessClass>>({
+        category: 'Yoga',
+        status: 'available',
+        duration: '60 min'
+    });
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+    const categories = ['Yoga', 'Pilates', 'Meditation', 'HIIT', 'Stretch'];
+
+    useEffect(() => {
+        fetchClasses();
+    }, []);
+
+    const fetchClasses = async () => {
+        try {
+            setIsLoading(true);
+            const res = await fetch('/api/wellness-classes');
+            if (res.ok) {
+                const data = await res.json();
+                setClasses(data);
+            }
+        } catch (err) {
+            console.error('Error fetching wellness classes:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const openEdit = (cls: WellnessClass) => {
+        setFormData({
+            ...cls,
+            date: cls.date.split('T')[0]
+        });
+        setEditId(cls.id);
+        setIsEditing(true);
+        setError(null);
+    };
+
+    const openCreate = () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        setFormData({
+            category: 'Yoga',
+            status: 'available',
+            duration: '60 min',
+            date: tomorrow.toISOString().split('T')[0]
+        });
+        setEditId(null);
+        setIsEditing(true);
+        setError(null);
+    };
+
+    const handleSave = async () => {
+        if (!formData.title || !formData.time || !formData.instructor || !formData.date || !formData.spots) {
+            setError('Please fill in all required fields');
+            return;
+        }
+
+        try {
+            setError(null);
+            const url = editId ? `/api/wellness-classes/${editId}` : '/api/wellness-classes';
+            const method = editId ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (res.ok) {
+                await fetchClasses();
+                setIsEditing(false);
+                setFormData({ category: 'Yoga', status: 'available', duration: '60 min' });
+                setSuccess(editId ? 'Class updated successfully' : 'Class created successfully');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                const data = await res.json();
+                setError(data.error || 'Failed to save class');
+            }
+        } catch (err) {
+            setError('Failed to save class');
+        }
+    };
+
+    const handleDelete = async (cls: WellnessClass) => {
+        if (!window.confirm(`Delete "${cls.title}"?`)) return;
+
+        try {
+            const res = await fetch(`/api/wellness-classes/${cls.id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setClasses(prev => prev.filter(c => c.id !== cls.id));
+                setSuccess('Class deleted');
+                setTimeout(() => setSuccess(null), 3000);
+            }
+        } catch (err) {
+            console.error('Error deleting class:', err);
+        }
+    };
+
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr + 'T12:00:00');
+        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-primary dark:text-white">Wellness Classes</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Schedule and manage wellness classes for members
+                        </p>
+                    </div>
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                    >
+                        <span className="material-symbols-outlined text-lg">add</span>
+                        Add Class
+                    </button>
+                </div>
+
+                {success && (
+                    <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
+                        {success}
+                    </div>
+                )}
+
+                {isLoading ? (
+                    <div className="py-8 text-center text-gray-500">Loading...</div>
+                ) : classes.length === 0 ? (
+                    <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                        No wellness classes scheduled. Add your first class!
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {classes.map(cls => (
+                            <div 
+                                key={cls.id}
+                                className={`flex items-center justify-between p-4 rounded-xl border ${
+                                    cls.is_active 
+                                        ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
+                                        : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-brand-green">
+                                        <span className="material-symbols-outlined">spa</span>
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-primary dark:text-white">{cls.title}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {formatDate(cls.date)} at {cls.time} • {cls.instructor}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-xs px-2 py-0.5 rounded bg-primary/10 dark:bg-white/10 text-primary dark:text-white">{cls.category}</span>
+                                            <span className="text-xs text-gray-400">{cls.duration} • {cls.spots}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => openEdit(cls)}
+                                        className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                        title="Edit"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">edit</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(cls)}
+                                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        title="Delete"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {isEditing && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                        <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
+                            {editId ? 'Edit Class' : 'Add Class'}
+                        </h3>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
+                                <input
+                                    type="text"
+                                    value={formData.title || ''}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    placeholder="Morning Yoga Flow"
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date *</label>
+                                    <input
+                                        type="date"
+                                        value={formData.date || ''}
+                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time *</label>
+                                    <input
+                                        type="text"
+                                        value={formData.time || ''}
+                                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                        placeholder="9:00 AM"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instructor *</label>
+                                <input
+                                    type="text"
+                                    value={formData.instructor || ''}
+                                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
+                                    placeholder="Jane Smith"
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                                    <select
+                                        value={formData.category || 'Yoga'}
+                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    >
+                                        {categories.map(cat => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration</label>
+                                    <input
+                                        type="text"
+                                        value={formData.duration || ''}
+                                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                        placeholder="60 min"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Spots *</label>
+                                <input
+                                    type="text"
+                                    value={formData.spots || ''}
+                                    onChange={(e) => setFormData({ ...formData, spots: e.target.value })}
+                                    placeholder="12 spots"
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                                <textarea
+                                    value={formData.description || ''}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="A restorative session designed to improve flexibility..."
+                                    rows={3}
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white resize-none"
+                                />
+                            </div>
+
+                            {error && (
+                                <p className="text-red-600 text-sm">{error}</p>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => { setIsEditing(false); setError(null); }}
+                                className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                            >
+                                {editId ? 'Save Changes' : 'Add Class'}
                             </button>
                         </div>
                     </div>
