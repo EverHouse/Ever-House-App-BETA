@@ -556,6 +556,56 @@ app.delete('/api/bookings/:id', async (req, res) => {
   }
 });
 
+app.get('/api/bookings/:id/partners', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM booking_partners WHERE booking_id = $1 ORDER BY created_at',
+      [id]
+    );
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Fetch partners error:', error);
+    res.status(500).json({ error: 'Failed to fetch partners' });
+  }
+});
+
+app.post('/api/bookings/:id/partners', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { partner_name, partner_email, is_member, member_id } = req.body;
+    
+    if (!partner_name) {
+      return res.status(400).json({ error: 'Partner name is required' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO booking_partners (booking_id, partner_name, partner_email, is_member, member_id)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [id, partner_name, partner_email || null, is_member || false, member_id || null]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Add partner error:', error);
+    res.status(500).json({ error: 'Failed to add partner' });
+  }
+});
+
+app.delete('/api/bookings/:id/partners/:partnerId', async (req, res) => {
+  try {
+    const { id, partnerId } = req.params;
+    await pool.query(
+      'DELETE FROM booking_partners WHERE id = $1 AND booking_id = $2',
+      [partnerId, id]
+    );
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Remove partner error:', error);
+    res.status(500).json({ error: 'Failed to remove partner' });
+  }
+});
+
 app.get('/api/availability', async (req, res) => {
   try {
     const { resource_id, date, duration } = req.query;
@@ -968,6 +1018,148 @@ app.delete('/api/announcements/:id', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Announcement delete error:', error);
     res.status(500).json({ error: 'Failed to delete announcement' });
+  }
+});
+
+// Birthday Check Endpoint
+app.get('/api/birthday-check', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    const result = await pool.query(
+      `SELECT birthday FROM users WHERE email = $1`,
+      [email]
+    );
+    
+    if (result.rows.length === 0 || !result.rows[0].birthday) {
+      return res.json({ isBirthday: false });
+    }
+    
+    const birthday = new Date(result.rows[0].birthday);
+    const today = new Date();
+    const isBirthday = birthday.getMonth() === today.getMonth() && birthday.getDate() === today.getDate();
+    
+    res.json({ isBirthday });
+  } catch (error: any) {
+    if (!isProduction) console.error('Birthday check error:', error);
+    res.status(500).json({ error: 'Failed to check birthday' });
+  }
+});
+
+// Referral Tracking Endpoints
+const generateReferralCode = (email: string): string => {
+  const base = email.split('@')[0].slice(0, 4).toUpperCase();
+  const hash = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 1000;
+  return `EH${base}${hash.toString().padStart(3, '0')}`;
+};
+
+app.get('/api/referrals/my', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    const referralCode = generateReferralCode(email as string);
+    
+    const stats = await pool.query(
+      `SELECT 
+         COUNT(*) as total_referrals,
+         COUNT(CASE WHEN status = 'converted' THEN 1 END) as converted,
+         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending
+       FROM member_referrals WHERE referrer_email = $1`,
+      [email]
+    );
+    
+    const referrals = await pool.query(
+      `SELECT id, referred_name, referred_email, status, created_at, converted_at 
+       FROM member_referrals WHERE referrer_email = $1 ORDER BY created_at DESC`,
+      [email]
+    );
+    
+    res.json({
+      referralCode,
+      stats: stats.rows[0],
+      referrals: referrals.rows
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Fetch referrals error:', error);
+    res.status(500).json({ error: 'Failed to fetch referral data' });
+  }
+});
+
+app.post('/api/referrals', async (req, res) => {
+  try {
+    const { referral_code, referred_email, referred_name } = req.body;
+    
+    if (!referral_code || !referred_email) {
+      return res.status(400).json({ error: 'Referral code and referred email are required' });
+    }
+    
+    const members = await pool.query('SELECT email FROM users');
+    let referrerEmail = null;
+    
+    for (const member of members.rows) {
+      if (generateReferralCode(member.email) === referral_code.toUpperCase()) {
+        referrerEmail = member.email;
+        break;
+      }
+    }
+    
+    if (!referrerEmail) {
+      return res.status(404).json({ error: 'Invalid referral code' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO member_referrals (referrer_email, referred_email, referred_name, referral_code, status)
+       VALUES ($1, $2, $3, $4, 'pending') RETURNING *`,
+      [referrerEmail, referred_email, referred_name || null, referral_code.toUpperCase()]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Create referral error:', error);
+    res.status(500).json({ error: 'Failed to create referral' });
+  }
+});
+
+app.get('/api/referrals', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM member_referrals ORDER BY created_at DESC`
+    );
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Fetch all referrals error:', error);
+    res.status(500).json({ error: 'Failed to fetch referrals' });
+  }
+});
+
+app.put('/api/referrals/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const updates: string[] = ['status = $1'];
+    const params: any[] = [status];
+    
+    if (status === 'converted') {
+      updates.push('converted_at = CURRENT_TIMESTAMP');
+    }
+    
+    params.push(id);
+    const result = await pool.query(
+      `UPDATE member_referrals SET ${updates.join(', ')} WHERE id = $${params.length} RETURNING *`,
+      params
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Update referral status error:', error);
+    res.status(500).json({ error: 'Failed to update referral status' });
   }
 });
 

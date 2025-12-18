@@ -239,6 +239,21 @@ const MemberEvents: React.FC = () => {
                      </p>
                    </div>
                    
+                   {selectedEvent.galleryUrl && (
+                     <div>
+                       <h3 className={`text-sm font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Event Gallery</h3>
+                       <a 
+                         href={selectedEvent.galleryUrl}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-primary hover:bg-black/10'}`}
+                       >
+                         <span className="material-symbols-outlined text-lg">photo_library</span>
+                         View Photos
+                       </a>
+                     </div>
+                   )}
+                   
                    <div>
                      <div className="flex justify-between items-center mb-3">
                         <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-primary'}`}>Attendees</h3>

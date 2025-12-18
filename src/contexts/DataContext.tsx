@@ -33,6 +33,7 @@ export interface EventData {
   attendees: string[];
   capacity?: number;
   ticketsSold?: number;
+  galleryUrl?: string;
 }
 
 export interface Announcement {
@@ -453,7 +454,8 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             description: event.description || '',
             attendees: [],
             capacity: event.max_attendees || undefined,
-            ticketsSold: undefined
+            ticketsSold: undefined,
+            galleryUrl: event.gallery_url || undefined
           }));
           setEvents(formatted);
         }
