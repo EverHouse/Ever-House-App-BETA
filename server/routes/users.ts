@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
-import { isAdmin } from '../core/middleware';
+import { isAdmin, isStaffOrAdmin } from '../core/middleware';
 
 const router = Router();
 
-router.get('/api/staff-users', isAdmin, async (req, res) => {
+router.get('/api/staff-users', isStaffOrAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT id, email, name, is_active, created_at, created_by FROM staff_users ORDER BY created_at DESC'
