@@ -106,7 +106,7 @@ const Profile: React.FC = () => {
                   </div>
                </div>
                {/* Tap Hint */}
-               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
+               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm z-20">
                    <span className="font-bold text-sm text-white">Tap to View</span>
                </div>
             </div>
