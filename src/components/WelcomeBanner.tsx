@@ -35,66 +35,64 @@ const WelcomeBanner: React.FC = () => {
 
   return (
     <div className={`mb-6 p-5 rounded-2xl border ${isDark ? 'bg-accent/10 border-accent/30' : 'bg-accent/20 border-accent/40'}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="material-symbols-outlined text-brand-green text-2xl">waving_hand</span>
-            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-brand-green'}`}>
-              Welcome to Even House, {firstName}!
-            </h3>
-          </div>
-          <p className={`text-sm mb-4 ${isDark ? 'text-white/70' : 'text-brand-green/70'}`}>
-            Here's a quick overview of your {user.tier || 'Social'} membership:
-          </p>
-          
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <QuickTip 
-              icon="sports_golf" 
-              label="Golf Sims" 
-              value={tierPermissions.canBookSimulators 
-                ? (tierPermissions.dailySimulatorMinutes === 999 ? 'Unlimited' : `${tierPermissions.dailySimulatorMinutes}min/day`)
-                : 'Upgrade needed'}
-              available={tierPermissions.canBookSimulators}
-              isDark={isDark}
-              onClick={tierPermissions.canBookSimulators ? () => navigate('/book') : undefined}
-            />
-            <QuickTip 
-              icon="calendar_month" 
-              label="Book Ahead" 
-              value={`${tierPermissions.advanceBookingDays} days`}
-              available={true}
-              isDark={isDark}
-            />
-            <QuickTip 
-              icon="meeting_room" 
-              label="Conference Room" 
-              value={tierPermissions.dailyConfRoomMinutes === 999 
-                ? 'Unlimited' 
-                : tierPermissions.dailyConfRoomMinutes > 0 
-                  ? `${tierPermissions.dailyConfRoomMinutes}min/day` 
-                  : 'Not included'}
-              available={tierPermissions.dailyConfRoomMinutes > 0}
-              isDark={isDark}
-              onClick={tierPermissions.dailyConfRoomMinutes > 0 ? () => navigate('/book?tab=conference') : undefined}
-            />
-            <QuickTip 
-              icon="self_improvement" 
-              label="MedSpa" 
-              value="Book Services"
-              available={true}
-              isDark={isDark}
-              onClick={() => navigate('/member-wellness?tab=medspa')}
-            />
-          </div>
-
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-brand-green text-2xl">waving_hand</span>
+          <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-brand-green'}`}>
+            Welcome to Even House, {firstName}!
+          </h3>
         </div>
-        
         <button 
           onClick={handleDismiss}
-          className={`p-1 rounded-full hover:bg-black/10 transition-colors ${isDark ? 'text-white/50 hover:text-white' : 'text-brand-green/50 hover:text-brand-green'}`}
+          className={`p-1 rounded-full hover:bg-black/10 transition-colors flex-shrink-0 ${isDark ? 'text-white/50 hover:text-white' : 'text-brand-green/50 hover:text-brand-green'}`}
         >
           <span className="material-symbols-outlined text-[20px]">close</span>
         </button>
+      </div>
+      
+      <p className={`text-sm mb-4 ${isDark ? 'text-white/70' : 'text-brand-green/70'}`}>
+        Here's a quick overview of your {user.tier || 'Social'} membership:
+      </p>
+      
+      <div className="grid grid-cols-2 gap-2">
+        <QuickTip 
+          icon="sports_golf" 
+          label="Golf Sims" 
+          value={tierPermissions.canBookSimulators 
+            ? (tierPermissions.dailySimulatorMinutes === 999 ? 'Unlimited' : `${tierPermissions.dailySimulatorMinutes}min/day`)
+            : 'Upgrade needed'}
+          available={tierPermissions.canBookSimulators}
+          isDark={isDark}
+          onClick={tierPermissions.canBookSimulators ? () => navigate('/book') : undefined}
+        />
+        <QuickTip 
+          icon="celebration" 
+          label="Upcoming Events" 
+          value="RSVP"
+          available={true}
+          isDark={isDark}
+          onClick={() => navigate('/member-events')}
+        />
+        <QuickTip 
+          icon="meeting_room" 
+          label="Conference Room" 
+          value={tierPermissions.dailyConfRoomMinutes === 999 
+            ? 'Unlimited' 
+            : tierPermissions.dailyConfRoomMinutes > 0 
+              ? `${tierPermissions.dailyConfRoomMinutes}min/day` 
+              : 'Not included'}
+          available={tierPermissions.dailyConfRoomMinutes > 0}
+          isDark={isDark}
+          onClick={tierPermissions.dailyConfRoomMinutes > 0 ? () => navigate('/book?tab=conference') : undefined}
+        />
+        <QuickTip 
+          icon="self_improvement" 
+          label="MedSpa" 
+          value="Book Services"
+          available={true}
+          isDark={isDark}
+          onClick={() => navigate('/member-wellness?tab=medspa')}
+        />
       </div>
     </div>
   );
