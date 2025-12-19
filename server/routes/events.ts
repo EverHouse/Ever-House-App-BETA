@@ -3,7 +3,7 @@ import { isProduction } from '../core/db';
 import { db } from '../db';
 import { events, eventRsvps } from '../../shared/schema';
 import { eq, and, sql, gte } from 'drizzle-orm';
-import { syncGoogleCalendarEvents } from '../core/calendar';
+import { syncGoogleCalendarEvents, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 
 const router = Router();
 
@@ -97,6 +97,24 @@ router.post('/api/events', async (req, res) => {
   try {
     const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility, requires_rsvp } = req.body;
     
+    let googleCalendarId: string | null = null;
+    try {
+      const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
+      if (calendarId) {
+        const eventDescription = [description, location ? `Location: ${location}` : ''].filter(Boolean).join('\n');
+        googleCalendarId = await createCalendarEventOnCalendar(
+          calendarId,
+          title,
+          eventDescription,
+          event_date,
+          start_time,
+          end_time || start_time
+        );
+      }
+    } catch (calError) {
+      if (!isProduction) console.error('Failed to create Google Calendar event:', calError);
+    }
+    
     const result = await db.insert(events).values({
       title,
       description,
@@ -110,12 +128,13 @@ router.post('/api/events', async (req, res) => {
       source: 'manual',
       visibility: visibility || 'public',
       requiresRsvp: requires_rsvp || false,
+      googleCalendarId: googleCalendarId,
     }).returning();
     
     res.status(201).json(result[0]);
   } catch (error: any) {
-    if (!isProduction) console.error('Booking creation error:', error);
-    res.status(500).json({ error: 'Failed to create booking' });
+    if (!isProduction) console.error('Event creation error:', error);
+    res.status(500).json({ error: 'Failed to create event' });
   }
 });
 
@@ -150,6 +169,19 @@ router.put('/api/events/:id', async (req, res) => {
 router.delete('/api/events/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    
+    const existing = await db.select({ googleCalendarId: events.googleCalendarId }).from(events).where(eq(events.id, parseInt(id)));
+    if (existing.length > 0 && existing[0].googleCalendarId) {
+      try {
+        const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
+        if (calendarId) {
+          await deleteCalendarEvent(existing[0].googleCalendarId, calendarId);
+        }
+      } catch (calError) {
+        if (!isProduction) console.error('Failed to delete Google Calendar event:', calError);
+      }
+    }
+    
     await db.delete(events).where(eq(events.id, parseInt(id)));
     res.json({ success: true });
   } catch (error: any) {

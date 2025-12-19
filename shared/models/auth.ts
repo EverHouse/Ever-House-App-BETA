@@ -68,6 +68,7 @@ export const wellnessClasses = pgTable("wellness_classes", {
   description: text("description"),
   date: date("date").notNull(),
   isActive: boolean("is_active").default(true),
+  googleCalendarId: varchar("google_calendar_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
