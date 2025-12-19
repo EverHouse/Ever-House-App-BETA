@@ -28,9 +28,20 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 
 ### Technical Implementations
 - **Frontend**: React 19 with React Router DOM, Vite (port 5000).
-- **Backend**: Express.js (port 3001) providing a REST API.
+- **Backend**: Express.js (port 3001) providing a REST API with modular route architecture.
 - **Database**: PostgreSQL for all application data.
 - **Styling**: Tailwind CSS with PostCSS.
+
+### Server Architecture
+The backend is organized into modular route files under `server/`:
+- **`server/core/`**: Shared modules
+  - `db.ts` - PostgreSQL pool and `isProduction` flag
+  - `middleware.ts` - Auth middleware (isAdmin, isStaffOrAdmin)
+  - `integrations.ts` - HubSpot and Google Calendar client factories
+  - `calendar.ts` - Calendar configuration, availability helpers, sync functions
+- **`server/routes/`**: Domain-specific routers
+  - `resources.ts`, `calendar.ts`, `events.ts`, `auth.ts`, `hubspot.ts`, `members.ts`, `users.ts`, `wellness.ts`, `guestPasses.ts`, `bays.ts`, `notifications.ts`, `push.ts`, `availability.ts`, `cafe.ts`
+- **Error Handling Pattern**: All routes use try-catch with conditional logging (`if (!isProduction) console.error(...)`) and generic error messages to avoid leaking system info.
 - **Member Tiers**: Implemented with utilities (`src/utils/permissions.ts`, `src/utils/tierUtils.ts`) to manage access, booking limits, and guest pass allowances based on membership levels (Social, Core, Premium, Corporate, VIP).
 - **Tier Badge System**: Premium visual badges for each tier with distinct colors - VIP (Platinum #E5E4E2), Premium (Gold #D4AF37), Corporate (Charcoal #374151), Core (Brand Green #293515), Social (Lavender #CCB8E4). Uses `TierBadge` and `TagBadge` components.
 - **Member Tags**: JSONB array stored in users table, populated from HubSpot `membership_discount_reason` field. Available tags include "Founding Member", "Investor", "VIP Guest", "Referral". Displayed alongside tier badges in Directory and Profile views.
