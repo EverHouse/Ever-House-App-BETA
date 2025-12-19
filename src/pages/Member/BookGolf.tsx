@@ -131,6 +131,7 @@ const BookGolf: React.FC = () => {
             icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
           }));
         
+        console.log('[BookGolf] Resources fetched:', filtered.length, 'for tab:', activeTab);
         setResources(filtered);
       } catch (err) {
         console.error('Error fetching resources:', err);
@@ -143,7 +144,9 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const fetchAvailability = async () => {
+      console.log('[BookGolf] fetchAvailability called', { resources: resources.length, selectedDate: selectedDateObj?.date, duration });
       if (!resources || resources.length === 0 || !selectedDateObj?.date) {
+        console.log('[BookGolf] Early return: missing resources or date', { resources: resources.length, date: selectedDateObj?.date });
         setAvailableSlots([]);
         return;
       }
@@ -195,6 +198,7 @@ const BookGolf: React.FC = () => {
           }))
           .sort((a, b) => a.startTime24.localeCompare(b.startTime24));
         
+        console.log('[BookGolf] Slots fetched:', sortedSlots.length);
         setAvailableSlots(sortedSlots);
       } catch (err) {
         console.error('Error fetching availability:', err);
