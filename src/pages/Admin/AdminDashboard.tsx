@@ -985,10 +985,14 @@ interface BookingRequest {
     end_time: string;
     duration_minutes: number;
     notes: string | null;
-    status: 'pending' | 'approved' | 'declined' | 'cancelled';
+    status: 'pending' | 'pending_approval' | 'approved' | 'declined' | 'cancelled' | 'confirmed';
     staff_notes: string | null;
     suggested_time: string | null;
     created_at: string;
+    source?: 'booking_request' | 'booking';
+    resource_name?: string;
+    first_name?: string;
+    last_name?: string;
 }
 
 interface Bay {
@@ -1031,15 +1035,45 @@ const SimulatorAdmin: React.FC = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const [reqRes, bayRes] = await Promise.all([
+                const [reqRes, pendingRes, bayRes] = await Promise.all([
                     fetch('/api/booking-requests?include_all=true'),
+                    fetch('/api/pending-bookings'),
                     fetch('/api/bays')
                 ]);
                 
+                let allRequests: BookingRequest[] = [];
+                
                 if (reqRes.ok) {
                     const data = await reqRes.json();
-                    setRequests(data);
+                    allRequests = data.map((r: any) => ({ ...r, source: 'booking_request' as const }));
                 }
+                
+                if (pendingRes.ok) {
+                    const pendingBookings = await pendingRes.json();
+                    const mappedBookings = pendingBookings.map((b: any) => ({
+                        id: b.id,
+                        user_email: b.user_email,
+                        user_name: b.first_name && b.last_name ? `${b.first_name} ${b.last_name}` : b.user_email,
+                        bay_id: null,
+                        bay_name: null,
+                        bay_preference: b.resource_name || null,
+                        request_date: b.booking_date,
+                        start_time: b.start_time,
+                        end_time: b.end_time,
+                        duration_minutes: 60,
+                        notes: b.notes,
+                        status: b.status,
+                        staff_notes: null,
+                        suggested_time: null,
+                        created_at: b.created_at,
+                        source: 'booking' as const,
+                        resource_name: b.resource_name
+                    }));
+                    allRequests = [...allRequests, ...mappedBookings];
+                }
+                
+                setRequests(allRequests);
+                
                 if (bayRes.ok) {
                     const data = await bayRes.json();
                     setBays(data);
@@ -1072,11 +1106,13 @@ const SimulatorAdmin: React.FC = () => {
         }
     }, [activeView, calendarDate]);
 
-    const pendingRequests = requests.filter(r => r.status === 'pending');
-    const processedRequests = requests.filter(r => r.status !== 'pending');
+    const pendingRequests = requests.filter(r => r.status === 'pending' || r.status === 'pending_approval');
+    const processedRequests = requests.filter(r => r.status !== 'pending' && r.status !== 'pending_approval');
 
     const handleApprove = async () => {
-        if (!selectedRequest || !selectedBayId) {
+        if (!selectedRequest) return;
+        
+        if (selectedRequest.source !== 'booking' && !selectedBayId) {
             setError('Please select a bay');
             return;
         }
@@ -1085,16 +1121,24 @@ const SimulatorAdmin: React.FC = () => {
         setError(null);
         
         try {
-            const res = await fetch(`/api/booking-requests/${selectedRequest.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    status: 'approved',
-                    bay_id: selectedBayId,
-                    staff_notes: staffNotes || null,
-                    reviewed_by: user?.email
-                })
-            });
+            let res;
+            if (selectedRequest.source === 'booking') {
+                res = await fetch(`/api/bookings/${selectedRequest.id}/approve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } else {
+                res = await fetch(`/api/booking-requests/${selectedRequest.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'approved',
+                        bay_id: selectedBayId,
+                        staff_notes: staffNotes || null,
+                        reviewed_by: user?.email
+                    })
+                });
+            }
             
             if (!res.ok) {
                 const errData = await res.json();
@@ -1102,7 +1146,11 @@ const SimulatorAdmin: React.FC = () => {
             }
             
             const updated = await res.json();
-            setRequests(prev => prev.map(r => r.id === updated.id ? { ...r, ...updated } : r));
+            setRequests(prev => prev.map(r => 
+                r.id === selectedRequest.id && r.source === selectedRequest.source 
+                    ? { ...r, status: 'confirmed' as const } 
+                    : r
+            ));
             setActionModal(null);
             setSelectedRequest(null);
             setSelectedBayId(null);
@@ -1121,24 +1169,35 @@ const SimulatorAdmin: React.FC = () => {
         setError(null);
         
         try {
-            const res = await fetch(`/api/booking-requests/${selectedRequest.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    status: 'declined',
-                    staff_notes: staffNotes || null,
-                    suggested_time: suggestedTime ? suggestedTime + ':00' : null,
-                    reviewed_by: user?.email
-                })
-            });
+            let res;
+            if (selectedRequest.source === 'booking') {
+                res = await fetch(`/api/bookings/${selectedRequest.id}/decline`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } else {
+                res = await fetch(`/api/booking-requests/${selectedRequest.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'declined',
+                        staff_notes: staffNotes || null,
+                        suggested_time: suggestedTime ? suggestedTime + ':00' : null,
+                        reviewed_by: user?.email
+                    })
+                });
+            }
             
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || 'Failed to decline');
             }
             
-            const updated = await res.json();
-            setRequests(prev => prev.map(r => r.id === updated.id ? { ...r, ...updated } : r));
+            setRequests(prev => prev.map(r => 
+                r.id === selectedRequest.id && r.source === selectedRequest.source 
+                    ? { ...r, status: 'declined' as const } 
+                    : r
+            ));
             setActionModal(null);
             setSelectedRequest(null);
             setStaffNotes('');
@@ -1152,8 +1211,12 @@ const SimulatorAdmin: React.FC = () => {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300';
-            case 'approved': return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300';
+            case 'pending': 
+            case 'pending_approval': 
+                return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300';
+            case 'approved': 
+            case 'confirmed':
+                return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300';
             case 'declined': return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
             default: return 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400';
         }
