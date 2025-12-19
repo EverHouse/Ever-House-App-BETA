@@ -5,7 +5,7 @@ interface SkeletonCardProps {
   isDark?: boolean;
 }
 
-const pulseBase = "animate-pulse";
+const shimmerClass = "relative overflow-hidden before:content-[''] before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent";
 const bgLight = "bg-gray-200";
 const bgDark = "bg-white/10";
 
@@ -13,13 +13,13 @@ export const EventCardSkeleton: React.FC<SkeletonCardProps> = ({ isDark = false 
   const bg = isDark ? bgDark : bgLight;
   return (
     <div className={`rounded-2xl overflow-hidden ${isDark ? 'bg-white/5' : 'bg-white'} shadow-sm`}>
-      <div className={`${pulseBase} ${bg} h-32 w-full`} />
+      <div className={`${shimmerClass} ${bg} h-32 w-full`} />
       <div className="p-4 space-y-3">
-        <div className={`${pulseBase} ${bg} h-5 w-3/4 rounded`} />
-        <div className={`${pulseBase} ${bg} h-4 w-1/2 rounded`} />
+        <div className={`${shimmerClass} ${bg} h-5 w-3/4 rounded`} />
+        <div className={`${shimmerClass} ${bg} h-4 w-1/2 rounded`} />
         <div className="flex gap-2 pt-2">
-          <div className={`${pulseBase} ${bg} h-6 w-16 rounded-full`} />
-          <div className={`${pulseBase} ${bg} h-6 w-20 rounded-full`} />
+          <div className={`${shimmerClass} ${bg} h-6 w-16 rounded-full`} />
+          <div className={`${shimmerClass} ${bg} h-6 w-20 rounded-full`} />
         </div>
       </div>
     </div>
@@ -30,12 +30,12 @@ export const BookingCardSkeleton: React.FC<SkeletonCardProps> = ({ isDark = fals
   const bg = isDark ? bgDark : bgLight;
   return (
     <div className={`flex items-center gap-4 p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'} shadow-sm`}>
-      <div className={`${pulseBase} ${bg} w-12 h-12 rounded-xl flex-shrink-0`} />
+      <div className={`${shimmerClass} ${bg} w-12 h-12 rounded-xl flex-shrink-0`} />
       <div className="flex-1 space-y-2">
-        <div className={`${pulseBase} ${bg} h-5 w-2/3 rounded`} />
-        <div className={`${pulseBase} ${bg} h-4 w-1/2 rounded`} />
+        <div className={`${shimmerClass} ${bg} h-5 w-2/3 rounded`} />
+        <div className={`${shimmerClass} ${bg} h-4 w-1/2 rounded`} />
       </div>
-      <div className={`${pulseBase} ${bg} w-8 h-8 rounded-full`} />
+      <div className={`${shimmerClass} ${bg} w-8 h-8 rounded-full`} />
     </div>
   );
 };
@@ -44,12 +44,12 @@ export const MenuItemSkeleton: React.FC<SkeletonCardProps> = ({ isDark = false }
   const bg = isDark ? bgDark : bgLight;
   return (
     <div className={`flex gap-4 p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'} shadow-sm`}>
-      <div className={`${pulseBase} ${bg} w-14 h-14 rounded-lg flex-shrink-0`} />
+      <div className={`${shimmerClass} ${bg} w-14 h-14 rounded-lg flex-shrink-0`} />
       <div className="flex-1 space-y-2 py-1">
-        <div className={`${pulseBase} ${bg} h-5 w-3/4 rounded`} />
-        <div className={`${pulseBase} ${bg} h-4 w-1/2 rounded`} />
+        <div className={`${shimmerClass} ${bg} h-5 w-3/4 rounded`} />
+        <div className={`${shimmerClass} ${bg} h-4 w-1/2 rounded`} />
       </div>
-      <div className={`${pulseBase} ${bg} h-5 w-12 rounded self-center`} />
+      <div className={`${shimmerClass} ${bg} h-5 w-12 rounded self-center`} />
     </div>
   );
 };
@@ -59,10 +59,10 @@ export const DashboardCardSkeleton: React.FC<SkeletonCardProps> = ({ isDark = fa
   return (
     <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-white'} shadow-sm space-y-3`}>
       <div className="flex items-center gap-3">
-        <div className={`${pulseBase} ${bg} w-10 h-10 rounded-xl`} />
+        <div className={`${shimmerClass} ${bg} w-10 h-10 rounded-xl`} />
         <div className="flex-1">
-          <div className={`${pulseBase} ${bg} h-5 w-2/3 rounded mb-2`} />
-          <div className={`${pulseBase} ${bg} h-4 w-1/3 rounded`} />
+          <div className={`${shimmerClass} ${bg} h-5 w-2/3 rounded mb-2`} />
+          <div className={`${shimmerClass} ${bg} h-4 w-1/3 rounded`} />
         </div>
       </div>
     </div>
@@ -73,8 +73,8 @@ export const StatCardSkeleton: React.FC<SkeletonCardProps> = ({ isDark = false }
   const bg = isDark ? bgDark : bgLight;
   return (
     <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-white'} shadow-sm text-center`}>
-      <div className={`${pulseBase} ${bg} h-8 w-12 rounded mx-auto mb-2`} />
-      <div className={`${pulseBase} ${bg} h-4 w-16 rounded mx-auto`} />
+      <div className={`${shimmerClass} ${bg} h-8 w-12 rounded mx-auto mb-2`} />
+      <div className={`${shimmerClass} ${bg} h-4 w-16 rounded mx-auto`} />
     </div>
   );
 };
@@ -84,14 +84,14 @@ export const ProfileSkeleton: React.FC<SkeletonCardProps> = ({ isDark = false })
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <div className={`${pulseBase} ${bg} w-20 h-20 rounded-full`} />
+        <div className={`${shimmerClass} ${bg} w-20 h-20 rounded-full`} />
         <div className="flex-1 space-y-2">
-          <div className={`${pulseBase} ${bg} h-6 w-2/3 rounded`} />
-          <div className={`${pulseBase} ${bg} h-4 w-1/2 rounded`} />
+          <div className={`${shimmerClass} ${bg} h-6 w-2/3 rounded`} />
+          <div className={`${shimmerClass} ${bg} h-4 w-1/2 rounded`} />
         </div>
       </div>
-      <div className={`${pulseBase} ${bg} h-10 w-full rounded-xl`} />
-      <div className={`${pulseBase} ${bg} h-10 w-full rounded-xl`} />
+      <div className={`${shimmerClass} ${bg} h-10 w-full rounded-xl`} />
+      <div className={`${shimmerClass} ${bg} h-10 w-full rounded-xl`} />
     </div>
   );
 };
@@ -99,7 +99,25 @@ export const ProfileSkeleton: React.FC<SkeletonCardProps> = ({ isDark = false })
 export const TimeSlotSkeleton: React.FC<SkeletonCardProps> = ({ isDark = false }) => {
   const bg = isDark ? bgDark : bgLight;
   return (
-    <div className={`${pulseBase} ${bg} h-12 w-full rounded-xl`} />
+    <div className={`${shimmerClass} ${bg} h-12 w-full rounded-xl`} />
+  );
+};
+
+export const DateButtonSkeleton: React.FC<SkeletonCardProps> = ({ isDark = false }) => {
+  const bg = isDark ? bgDark : bgLight;
+  return (
+    <div className={`flex flex-col items-center gap-1 p-3 rounded-xl min-w-[60px] ${isDark ? 'bg-white/5' : 'bg-white'}`}>
+      <div className={`${shimmerClass} ${bg} h-3 w-8 rounded`} />
+      <div className={`${shimmerClass} ${bg} h-6 w-6 rounded-full`} />
+      <div className={`${shimmerClass} ${bg} h-3 w-10 rounded`} />
+    </div>
+  );
+};
+
+export const TabButtonSkeleton: React.FC<SkeletonCardProps> = ({ isDark = false }) => {
+  const bg = isDark ? bgDark : bgLight;
+  return (
+    <div className={`${shimmerClass} ${bg} h-10 w-24 rounded-lg`} />
   );
 };
 

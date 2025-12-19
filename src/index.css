@@ -363,3 +363,13 @@ html.dark body {
   opacity: 0;
   animation: pageContentEnter 0.35s ease-out 0.15s forwards;
 }
+
+/* Shimmer Animation - Loading skeleton effect */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
