@@ -61,7 +61,7 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Google Calendar**: Three-calendar integration system with named calendars:
   - **Booked Golf**: Primary calendar for golf simulator bookings (4 bays available). Approved booking requests create events here; availability is checked via freeBusy API.
   - **MBO_Conference_Room**: Calendar for conference room bookings (1 room available) with similar availability checking.
-  - **Even House Public/Member Events**: Calendar for public events synced to the database. Events marked with `source='google_calendar'`, `visibility='public'`, and `requires_rsvp=false`.
+  - **Public/Member Events**: Calendar for public events synced to the database. Events are automatically synced on server startup and marked with `source='google_calendar'`, `visibility='public'`, and `requires_rsvp=false`. These events appear on both the public "What's On" page and member Events page.
   - Business hours configured per resource type (golf: 9AM-9PM, conference: 8AM-6PM).
   - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`, `POST /api/events/sync/google`, `POST /api/events/sync`.
 - **Apple Messages for Business**: Direct messaging support via a button on the Contact page, linking to Apple Business Chat.

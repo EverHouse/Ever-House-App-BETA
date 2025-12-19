@@ -201,7 +201,7 @@ const CALENDAR_CONFIG = {
     slotDuration: 30, // 30 minute slots
   },
   events: {
-    name: 'Even House Public/Member Events',
+    name: 'Public/Member Events',
   }
 };
 
@@ -2726,6 +2726,18 @@ async function startServer() {
 
   // Auto-seed cafe menu if empty
   await autoSeedCafeMenu();
+
+  // Sync Google Calendar events on startup
+  try {
+    const gcalResult = await syncGoogleCalendarEvents();
+    if (gcalResult.error) {
+      console.log(`Google Calendar sync skipped: ${gcalResult.error}`);
+    } else {
+      console.log(`Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated)`);
+    }
+  } catch (err) {
+    console.log('Google Calendar sync failed:', err);
+  }
 
   const PORT = Number(process.env.PORT) || (isProduction ? 80 : 3001);
   app.listen(PORT, '0.0.0.0', () => {
