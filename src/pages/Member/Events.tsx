@@ -90,11 +90,11 @@ const MemberEvents: React.FC = () => {
   return (
     <SwipeablePage className="px-6 pt-2 relative min-h-screen pb-24 overflow-hidden">
       <section className="mb-4 pt-2">
-        <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Events</h1>
-        <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Discover what's happening at the House.</p>
+        <h1 className={`text-3xl font-bold leading-tight drop-shadow-md animate-pop-in ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Events</h1>
+        <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/70' : 'text-primary/70'}`} style={{animationDelay: '0.05s'}}>Discover what's happening at the House.</p>
       </section>
 
-      <section className={`mb-8 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+      <section className={`mb-8 border-b -mx-6 px-6 animate-pop-in ${isDark ? 'border-white/10' : 'border-black/10'}`} style={{animationDelay: '0.1s', animationFillMode: 'both'}}>
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide">
           {['All', 'Social', 'Dining', 'Wellness', 'Sport'].map(cat => (
             <TabButton 
@@ -108,7 +108,7 @@ const MemberEvents: React.FC = () => {
         </div>
       </section>
 
-      <div className="relative z-10 animate-pop-in">
+      <div className="relative z-10 animate-pop-in" style={{animationDelay: '0.15s', animationFillMode: 'both'}}>
          <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
@@ -164,7 +164,7 @@ const MemberEvents: React.FC = () => {
                         key={event.id} 
                         onClick={() => setSelectedEvent(event)}
                         className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all animate-pop-in ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
-                        style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
+                        style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
                         tabIndex={0}
                         role="button"
                         onKeyDown={(e) => { if (e.key === 'Enter') setSelectedEvent(event); }}
