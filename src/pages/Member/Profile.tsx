@@ -73,23 +73,6 @@ const Profile: React.FC = () => {
 
   return (
     <div className="px-6 pt-6 pb-24">
-      <div className="flex flex-col items-center mb-8">
-         <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-accent to-purple-500 mb-4 shadow-glow">
-            <img src={user.avatar || "https://i.pravatar.cc/300"} className={`w-full h-full rounded-full object-cover border-4 ${isDark ? 'border-[#0f172a]' : 'border-white'}`} alt="Profile" />
-         </div>
-         <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user.name}</h1>
-         <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
-            <TierBadge tier={user.tier || 'Social'} size="md" />
-            {(user.tags || []).map((tag) => (
-               <TagBadge key={tag} tag={tag} size="sm" />
-            ))}
-            {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
-               <TagBadge tag="Founding Member" size="sm" />
-            )}
-            <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>#{user.id}</span>
-         </div>
-      </div>
-
       {/* Wallet Pass Preview */}
       {(() => {
          const tierColors = getTierColor(user.tier || 'Social');
@@ -258,22 +241,25 @@ const Profile: React.FC = () => {
                    </div>
                    
                    {/* Body */}
-                   <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-6" style={{ backgroundColor: cardBgColor }}>
-                       <div className="w-48 h-48 bg-white rounded-2xl p-2 flex items-center justify-center">
-                           <span className="material-symbols-outlined text-9xl text-black">qr_code_2</span>
+                   <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4" style={{ backgroundColor: cardBgColor }}>
+                       <h2 className="text-3xl font-bold" style={{ color: cardTextColor }}>{user.name}</h2>
+                       <div className="flex items-center justify-center gap-2 flex-wrap">
+                          <TierBadge tier={user.tier || 'Social'} size="md" />
                        </div>
-                       <div>
-                           <h2 className="text-2xl font-bold mb-1" style={{ color: cardTextColor }}>{user.name}</h2>
-                           <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-                              <TierBadge tier={user.tier || 'Social'} size="md" />
-                              {(user.tags || []).map((tag) => (
-                                 <TagBadge key={tag} tag={tag} size="sm" />
-                              ))}
-                              {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
-                                 <TagBadge tag="Founding Member" size="sm" />
-                              )}
-                           </div>
+                       <div className="flex items-center justify-center gap-2 flex-wrap">
+                          {(user.tags || []).map((tag) => (
+                             <TagBadge key={tag} tag={tag} size="sm" />
+                          ))}
+                          {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
+                             <TagBadge tag="Founding Member" size="sm" />
+                          )}
                        </div>
+                       {user.mindbodyClientId && (
+                          <div className="mt-4 pt-4 border-t w-full" style={{ borderColor: `${cardTextColor}20` }}>
+                             <span className="text-xs font-bold uppercase tracking-wider opacity-60" style={{ color: cardTextColor }}>Mindbody ID</span>
+                             <p className="text-xl font-mono font-bold mt-1" style={{ color: cardTextColor }}>{user.mindbodyClientId}</p>
+                          </div>
+                       )}
                    </div>
 
                    <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${cardTextColor}33`, color: cardTextColor }}>

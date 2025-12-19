@@ -75,7 +75,7 @@ const BookGolf: React.FC = () => {
   const { addBooking, user } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
-  const [activeTab, setActiveTab] = useState<'simulator' | 'lessons' | 'conference'>('simulator');
+  const [activeTab, setActiveTab] = useState<'simulator' | 'conference'>('simulator');
   const [duration, setDuration] = useState<number>(60);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -108,7 +108,6 @@ const BookGolf: React.FC = () => {
         
         const typeMap: Record<string, string> = {
           simulator: 'simulator',
-          lessons: 'instructor',
           conference: 'conference_room'
         };
         
@@ -260,13 +259,12 @@ const BookGolf: React.FC = () => {
     <SwipeablePage className="px-6 pt-4 relative min-h-screen pb-32">
       <section className="mb-6 pt-2">
         <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Book</h1>
-        <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Reserve simulators, lessons, or rooms.</p>
+        <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Reserve simulators or conference room.</p>
       </section>
 
       <section className={`mb-8 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide" role="tablist">
           <TabButton label="Golf Simulator" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} isDark={isDark} />
-          <TabButton label="Private Lessons" active={activeTab === 'lessons'} onClick={() => setActiveTab('lessons')} isDark={isDark} />
           <TabButton label="Conference Room" active={activeTab === 'conference'} onClick={() => setActiveTab('conference')} isDark={isDark} />
         </div>
       </section>
@@ -284,21 +282,6 @@ const BookGolf: React.FC = () => {
           >
             <span className="material-symbols-outlined text-lg">upgrade</span>
             View Membership Options
-          </a>
-        </section>
-      ) : activeTab === 'lessons' ? (
-        <section className={`rounded-2xl p-6 border text-center ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
-          <span className="material-symbols-outlined text-4xl text-accent mb-4">school</span>
-          <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Private Lessons</h3>
-          <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
-            Contact the club directly to schedule a private lesson with one of our PGA/LPGA instructors.
-          </p>
-          <a 
-            href="tel:9495455855" 
-            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-brand-green rounded-xl font-bold text-sm"
-          >
-            <span className="material-symbols-outlined text-lg">call</span>
-            Call to Book
           </a>
         </section>
       ) : (

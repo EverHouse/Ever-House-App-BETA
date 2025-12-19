@@ -2,13 +2,13 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 
 interface WellnessClass {
     id: number;
     title: string;
+    date: string;
     time: string;
     instructor: string;
     duration: string;
@@ -101,7 +101,7 @@ const Wellness: React.FC = () => {
                         </div>
                         <div>
                             <p className={`text-xs font-bold uppercase ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Time</p>
-                            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{selectedClass.time} • Sept 24</p>
+                            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{selectedClass.time} • {selectedClass.date}</p>
                         </div>
                     </div>
                     
@@ -139,37 +139,25 @@ const Wellness: React.FC = () => {
 };
 
 const CLASS_DATA: WellnessClass[] = [
-    { id: 1, title: "Sunrise Flow", time: "07:00 AM", instructor: "Sarah Jenkins", duration: "60 min", category: "Yoga", spots: "4 spots left", status: "Open", description: "Start your day with intention. A Vinyasa flow class that awakens the body and focuses the mind." },
-    { id: 2, title: "Reformer Sculpt", time: "09:30 AM", instructor: "Marc Davies", duration: "45 min", category: "Pilates", spots: "0 spots left", status: "Full", description: "High-intensity Pilates on the reformer. Expect a full-body burn with a focus on core stability." },
-    { id: 3, title: "Evening Reset", time: "06:00 PM", instructor: "Dr. Chen", duration: "30 min", category: "Meditation", spots: "8 spots left", status: "Open", description: "Guided meditation and breathwork to transition from a busy day into a restful evening." },
-    { id: 4, title: "Power Yoga", time: "05:00 PM", instructor: "Sarah Jenkins", duration: "60 min", category: "Yoga", spots: "2 spots left", status: "Open" }
+    { id: 1, title: "Sunrise Flow", date: "Fri, Dec 20", time: "07:00 AM", instructor: "Sarah Jenkins", duration: "60 min", category: "Yoga", spots: "4 spots left", status: "Open", description: "Start your day with intention. A Vinyasa flow class that awakens the body and focuses the mind." },
+    { id: 2, title: "Reformer Sculpt", date: "Fri, Dec 20", time: "09:30 AM", instructor: "Marc Davies", duration: "45 min", category: "Pilates", spots: "0 spots left", status: "Full", description: "High-intensity Pilates on the reformer. Expect a full-body burn with a focus on core stability." },
+    { id: 3, title: "Evening Reset", date: "Mon, Dec 23", time: "06:00 PM", instructor: "Dr. Chen", duration: "30 min", category: "Meditation", spots: "8 spots left", status: "Open", description: "Guided meditation and breathwork to transition from a busy day into a restful evening." },
+    { id: 4, title: "Power Yoga", date: "Sat, Dec 21", time: "05:00 PM", instructor: "Sarah Jenkins", duration: "60 min", category: "Yoga", spots: "2 spots left", status: "Open" }
 ];
 
 const ClassesView: React.FC<{onSelect: (c: WellnessClass) => void; isDark?: boolean}> = ({ onSelect, isDark = true }) => {
-  const [selectedDate, setSelectedDate] = useState('Today');
   const [selectedFilter, setSelectedFilter] = useState('All');
 
-  const filteredClasses = CLASS_DATA.filter(cls => {
-      if (selectedFilter === 'All') return true;
-      return cls.category === selectedFilter;
-  });
+  const sortedClasses = [...CLASS_DATA]
+    .filter(cls => selectedFilter === 'All' || cls.category === selectedFilter)
+    .sort((a, b) => {
+      const dateA = new Date(a.date.split(', ')[1] + ', 2024 ' + a.time);
+      const dateB = new Date(b.date.split(', ')[1] + ', 2024 ' + b.time);
+      return dateA.getTime() - dateB.getTime();
+    });
 
   return (
     <div className="animate-pop-in">
-        <section className="mb-8">
-        <div className="flex items-center justify-between mb-3">
-            <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Select Date</h3>
-            <button className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>September 2023</button>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
-            <DateButton day="Today" date="24" active={selectedDate === 'Today'} onClick={() => setSelectedDate('Today')} isDark={isDark} />
-            <DateButton day="Tue" date="25" active={selectedDate === 'Tue'} onClick={() => setSelectedDate('Tue')} isDark={isDark} />
-            <DateButton day="Wed" date="26" active={selectedDate === 'Wed'} onClick={() => setSelectedDate('Wed')} isDark={isDark} />
-            <DateButton day="Thu" date="27" active={selectedDate === 'Thu'} onClick={() => setSelectedDate('Thu')} isDark={isDark} />
-            <DateButton day="Fri" date="28" active={selectedDate === 'Fri'} onClick={() => setSelectedDate('Fri')} isDark={isDark} />
-        </div>
-        </section>
-
         <section className="mb-6">
         <div className="flex gap-3 overflow-x-auto -mx-6 px-6 scrollbar-hide items-center mb-4">
             <FilterPill label="All" active={selectedFilter === 'All'} onClick={() => setSelectedFilter('All')} isDark={isDark} />
@@ -179,8 +167,8 @@ const ClassesView: React.FC<{onSelect: (c: WellnessClass) => void; isDark?: bool
         </div>
         
         <div className="space-y-4">
-            {filteredClasses.length > 0 ? (
-                filteredClasses.map((cls, index) => (
+            {sortedClasses.length > 0 ? (
+                sortedClasses.map((cls, index) => (
                     <div key={cls.id} className="animate-pop-in" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}>
                         <ClassCard 
                             {...cls}
@@ -211,7 +199,7 @@ const MedSpaView: React.FC<{onBook: () => void; isDark?: boolean}> = ({ onBook, 
       </p>
     </div>
 
-    <div className={`sticky top-0 z-10 py-3 -mx-6 px-6 mb-6 ${isDark ? 'bg-[#293515]' : 'bg-[#F2F2EC]'}`}>
+    <div className={`sticky top-0 z-10 py-3 -mx-6 px-6 mb-6 ${isDark ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]'}`}>
        <a 
          href="https://www.amarieaesthetics.co" 
          target="_blank" 
@@ -300,7 +288,7 @@ const FilterPill: React.FC<{label: string; active?: boolean; onClick?: () => voi
   </button>
 );
 
-const ClassCard: React.FC<any> = ({ title, time, instructor, duration, category, spots, status, onClick, isDark = true }) => (
+const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, status, onClick, isDark = true }) => (
   <div 
     onClick={onClick}
     className={`p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/10 shadow-sm'}`}
@@ -318,6 +306,7 @@ const ClassCard: React.FC<any> = ({ title, time, instructor, duration, category,
         </div>
       </div>
       <div className="flex flex-col items-end">
+        <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-primary'}`}>{date}</span>
         <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{time.split(' ')[0]}</span>
         <span className={`text-xs font-medium ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{time.split(' ')[1]}</span>
       </div>

@@ -196,7 +196,7 @@ const CALENDAR_CONFIG = {
     slotDuration: 60, // 60 minute slots
   },
   conference: {
-    name: 'MBO_Members_Club',
+    name: 'MBO_Conference_Room',
     businessHours: { start: 8, end: 18 }, // 8 AM - 6 PM
     slotDuration: 30, // 30 minute slots
   },
@@ -987,7 +987,8 @@ app.post('/api/auth/verify-member', async (req, res) => {
         'phone',
         'membership_tier',
         'membership_status',
-        'membership_discount_reason'
+        'membership_discount_reason',
+        'mindbody_client_id'
       ],
       limit: 1
     });
@@ -1025,6 +1026,7 @@ app.post('/api/auth/verify-member', async (req, res) => {
       phone: contact.properties.phone || '',
       tier: contact.properties.membership_tier || 'Core',
       tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+      mindbodyClientId: contact.properties.mindbody_client_id || '',
       status: 'Active',
       role: adminStatus ? 'admin' : 'member'
     };
@@ -1178,7 +1180,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
           value: magicLink.email
         }]
       }],
-      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason'],
+      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id'],
       limit: 1
     });
     
@@ -1211,6 +1213,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
       phone: contact.properties.phone || '',
       tier: contact.properties.membership_tier || 'Core',
       tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+      mindbodyClientId: contact.properties.mindbody_client_id || '',
       status: 'Active',
       role: adminStatus ? 'admin' : 'member',
       expires_at: Date.now() + sessionTtl

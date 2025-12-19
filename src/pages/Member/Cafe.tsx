@@ -214,7 +214,6 @@ const Cafe: React.FC = () => {
                                 {item.price === 0 ? 'MP' : `$${item.price}`}
                             </span>
                             </div>
-                            {item.desc && <p className={`text-xs leading-snug line-clamp-1 mt-0.5 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{item.desc}</p>}
                         </div>
                     </div>
                     <button 

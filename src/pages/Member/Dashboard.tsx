@@ -277,7 +277,7 @@ const Dashboard: React.FC = () => {
             )}
           </div>
 
-          <div className="mb-8 -mx-6 px-6 overflow-x-auto scrollbar-hide flex gap-4 animate-slide-in-right" style={{animationDelay: '0.2s'}}>
+          <div className="mb-8 flex justify-center gap-4 animate-slide-in-right" style={{animationDelay: '0.2s'}}>
             <QuickAction icon="sports_golf" label="Golf" onClick={() => navigate('/book')} delay="0s" isDark={isDark} />
             <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.05s" isDark={isDark} />
             <QuickAction icon="calendar_month" label="Events" onClick={() => navigate('/member-events')} delay="0.1s" isDark={isDark} />

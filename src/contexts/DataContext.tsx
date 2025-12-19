@@ -53,6 +53,7 @@ export interface MemberProfile {
   joinDate?: string;
   avatar?: string;
   role?: 'member' | 'staff' | 'admin';
+  mindbodyClientId?: string;
 }
 
 export interface Booking {
@@ -466,10 +467,12 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       id: member.id,
       name: [member.firstName, member.lastName].filter(Boolean).join(' ') || member.email || 'Member',
       tier: member.tier || 'Core',
+      tags: member.tags || [],
       status: 'Active',
       email: member.email,
       phone: member.phone || '',
-      role: member.role || 'member'
+      role: member.role || 'member',
+      mindbodyClientId: member.mindbodyClientId || ''
     };
     
     localStorage.setItem('eh_member', JSON.stringify(memberProfile));
@@ -481,10 +484,12 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       id: member.id,
       name: [member.firstName, member.lastName].filter(Boolean).join(' ') || member.email || 'Member',
       tier: member.tier || 'Core',
+      tags: member.tags || [],
       status: 'Active',
       email: member.email,
       phone: member.phone || '',
-      role: member.role || 'member'
+      role: member.role || 'member',
+      mindbodyClientId: member.mindbodyClientId || ''
     };
     
     localStorage.setItem('eh_member', JSON.stringify(memberProfile));
