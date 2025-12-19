@@ -53,7 +53,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content Area - No top padding needed */}
       <main className="flex-1 overflow-y-auto pb-28 px-4 md:px-8 max-w-4xl mx-auto pt-6 w-full">
-        <div className="mb-6">
+        <div className="mb-6 animate-pop-in">
            <span className="text-xs font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 block mb-1">Staff Portal</span>
            <h1 className="text-2xl font-bold text-primary dark:text-white">
                {activeTab === 'cafe' && 'Manage Cafe Menu'}

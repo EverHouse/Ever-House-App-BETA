@@ -8,12 +8,12 @@ const PublicWellness: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="px-6 pt-8 pb-4">
+      <div className="px-6 pt-8 pb-4 animate-pop-in">
         <h1 className="text-3xl font-bold leading-tight text-primary dark:text-white">Wellness at Even House</h1>
         <p className="text-primary/70 dark:text-gray-400 text-base font-medium mt-1">Restoration for body and mind.</p>
       </div>
 
-      <section className="mb-8 border-b border-black/5 dark:border-white/5 px-6">
+      <section className="mb-8 border-b border-black/5 dark:border-white/5 px-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide">
           <button 
             onClick={() => setActiveTab('classes')}

@@ -221,8 +221,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const showHeader = !isAdminRoute;
 
   // Routes that handle their own slide animation
-  const selfAnimatedRoutes = ['/book', '/member-events', '/member-wellness', '/cafe'];
-  const shouldAnimate = !selfAnimatedRoutes.some(path => location.pathname.startsWith(path));
+  const shouldAnimate = true;
 
   // Navigation Logic: Always show hamburger menu
   const handleTopLeftClick = () => {
@@ -317,7 +316,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 
                 {isMemberRoute ? (
                   <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-                    <span className={`material-symbols-outlined text-[32px] ${isDarkTheme ? 'text-[#F2F2EC]' : 'text-[#F2F2EC]'}`}>
+                    <span 
+                      key={getCenterIcon()}
+                      className={`material-symbols-outlined text-[32px] animate-icon-morph ${isDarkTheme ? 'text-[#F2F2EC]' : 'text-[#F2F2EC]'}`}
+                    >
                       {getCenterIcon()}
                     </span>
                   </div>

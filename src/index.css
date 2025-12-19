@@ -300,3 +300,66 @@ html.dark body {
   max-height: 300px;
   opacity: 1;
 }
+
+/* Pop In Animation - Used across the app */
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-pop-in {
+  opacity: 0;
+  animation: popIn 0.35s ease-out forwards;
+}
+
+/* Page Enter Animation - Quick fade for smooth navigation */
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-page-enter {
+  animation: pageEnter 0.15s ease-out forwards;
+}
+
+/* Page Content Animation - Staggered slide up for page elements */
+@keyframes pageContentEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-content-enter {
+  opacity: 0;
+  animation: pageContentEnter 0.35s ease-out forwards;
+}
+
+.animate-content-enter-delay-1 {
+  opacity: 0;
+  animation: pageContentEnter 0.35s ease-out 0.05s forwards;
+}
+
+.animate-content-enter-delay-2 {
+  opacity: 0;
+  animation: pageContentEnter 0.35s ease-out 0.1s forwards;
+}
+
+.animate-content-enter-delay-3 {
+  opacity: 0;
+  animation: pageContentEnter 0.35s ease-out 0.15s forwards;
+}

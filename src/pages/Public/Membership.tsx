@@ -29,7 +29,7 @@ const MembershipOverview: React.FC = () => {
 
   return (
     <div className="px-4 pt-6 pb-0 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen overflow-x-hidden">
-      <div className="text-center px-2 pt-4">
+      <div className="text-center px-2 pt-4 animate-pop-in">
         <h2 className="text-3xl font-medium tracking-tight text-primary mb-3">Membership Overview</h2>
         <p className="text-primary/70 text-base font-light leading-relaxed max-w-[320px] mx-auto">
           A space for connection and growth. Select the membership that fits your lifestyle.
@@ -37,7 +37,7 @@ const MembershipOverview: React.FC = () => {
       </div>
 
       {/* Guest Pass Section - Light Glass */}
-      <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-5 border border-white/60 shadow-sm">
+      <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-5 border border-white/60 shadow-sm animate-pop-in" style={{animationDelay: '0.1s'}}>
         <div className="flex items-center gap-3 mb-4">
            <div className="p-2 bg-primary/5 rounded-xl text-primary">
               <span className="material-symbols-outlined font-light">id_card</span>

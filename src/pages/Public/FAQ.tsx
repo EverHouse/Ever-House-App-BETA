@@ -4,12 +4,12 @@ import { Footer } from '../../components/Footer';
 const FAQ: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
-      <div className="px-6 pt-8 pb-6">
+      <div className="px-6 pt-8 pb-6 animate-pop-in">
         <h1 className="text-3xl font-bold tracking-tight text-primary mb-2">Frequently Asked Questions</h1>
         <p className="text-primary/70 text-base font-medium">Common questions about membership, amenities, and policies.</p>
       </div>
 
-      <div className="px-6 pb-12 flex-1 space-y-3">
+      <div className="px-6 pb-12 flex-1 space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
         <AccordionItem 
           question="What is included in the membership?" 
           answer="Membership includes access to our lounge areas, coworking spaces, and the onsite cafe. Core and Premium memberships also include monthly hours for our TrackMan golf simulators and conference room bookings." 
