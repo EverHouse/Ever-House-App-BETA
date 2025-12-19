@@ -112,7 +112,7 @@ const QuickTip: React.FC<{
     role={onClick ? 'button' : undefined}
     tabIndex={onClick ? 0 : undefined}
   >
-    <span className={`material-symbols-outlined text-[18px] ${available ? 'text-accent' : (isDark ? 'text-white/30' : 'text-gray-400')}`}>
+    <span className={`material-symbols-outlined text-[18px] ${available ? (isDark ? 'text-accent' : 'text-brand-green') : (isDark ? 'text-white/30' : 'text-gray-400')}`}>
       {available ? icon : 'lock'}
     </span>
     <div className="flex-1 min-w-0">
