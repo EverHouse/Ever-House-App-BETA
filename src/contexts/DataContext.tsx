@@ -54,6 +54,8 @@ export interface MemberProfile {
   avatar?: string;
   role?: 'member' | 'staff' | 'admin';
   mindbodyClientId?: string;
+  lifetimeVisits?: number;
+  lastBookingDate?: string;
 }
 
 export interface Booking {
@@ -84,7 +86,7 @@ interface DataContextType {
   logout: () => void;
   
   // View As Actions
-  setViewAsUser: (member: MemberProfile) => void;
+  setViewAsUser: (member: MemberProfile) => Promise<void>;
   clearViewAsUser: () => void;
 
   // Data Actions
@@ -339,9 +341,28 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   }, []);
   
   // View As Functions - only for admins
-  const setViewAsUser = (member: MemberProfile) => {
+  const setViewAsUser = async (member: MemberProfile) => {
     if (actualUser?.role === 'admin' || actualUser?.role === 'staff') {
-      setViewAsUserState(member);
+      try {
+        const res = await fetch(`/api/members/${encodeURIComponent(member.email)}/details`);
+        if (res.ok) {
+          const details = await res.json();
+          const fullMember: MemberProfile = {
+            ...member,
+            tier: details.tier || member.tier,
+            tags: details.tags || member.tags,
+            lifetimeVisits: details.lifetimeVisits || 0,
+            lastBookingDate: details.lastBookingDate || undefined,
+            mindbodyClientId: details.mindbodyClientId || ''
+          };
+          setViewAsUserState(fullMember);
+        } else {
+          setViewAsUserState(member);
+        }
+      } catch (err) {
+        console.error('Failed to fetch member details:', err);
+        setViewAsUserState(member);
+      }
     }
   };
   
@@ -472,7 +493,9 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       email: member.email,
       phone: member.phone || '',
       role: member.role || 'member',
-      mindbodyClientId: member.mindbodyClientId || ''
+      mindbodyClientId: member.mindbodyClientId || '',
+      lifetimeVisits: member.lifetimeVisits || 0,
+      lastBookingDate: member.lastBookingDate || undefined
     };
     
     localStorage.setItem('eh_member', JSON.stringify(memberProfile));
@@ -489,7 +512,9 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       email: member.email,
       phone: member.phone || '',
       role: member.role || 'member',
-      mindbodyClientId: member.mindbodyClientId || ''
+      mindbodyClientId: member.mindbodyClientId || '',
+      lifetimeVisits: member.lifetimeVisits || 0,
+      lastBookingDate: member.lastBookingDate || undefined
     };
     
     localStorage.setItem('eh_member', JSON.stringify(memberProfile));

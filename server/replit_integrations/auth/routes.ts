@@ -32,6 +32,18 @@ export function registerAuthRoutes(app: Express): void {
       const isStaff = await isStaffEmail(user.email);
       const isAdmin = await isAdminEmail(user.email);
       
+      const userResult = await pool.query(
+        'SELECT lifetime_visits, tags FROM users WHERE LOWER(email) = LOWER($1)',
+        [user.email]
+      );
+      const dbUser = userResult.rows[0];
+      
+      const lastBookingResult = await pool.query(
+        'SELECT booking_date FROM bookings WHERE LOWER(user_email) = LOWER($1) ORDER BY booking_date DESC LIMIT 1',
+        [user.email]
+      );
+      const lastBookingDate = lastBookingResult.rows[0]?.booking_date || null;
+      
       res.json({
         id: user.id,
         email: user.email,
@@ -40,7 +52,10 @@ export function registerAuthRoutes(app: Express): void {
         tier: user.tier,
         role: user.role,
         isStaff,
-        isAdmin
+        isAdmin,
+        lifetimeVisits: dbUser?.lifetime_visits || 0,
+        tags: dbUser?.tags || [],
+        lastBookingDate
       });
     } catch (error) {
       console.error("Error fetching user:", error);

@@ -3,6 +3,47 @@ import { pool, isProduction } from '../core/db';
 
 const router = Router();
 
+router.get('/api/members/:email/details', async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    const userResult = await pool.query(
+      `SELECT id, email, first_name, last_name, tier, tags, role, phone, mindbody_client_id, lifetime_visits 
+       FROM users WHERE LOWER(email) = LOWER($1)`,
+      [decodeURIComponent(email)]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    const user = userResult.rows[0];
+    
+    const lastBookingResult = await pool.query(
+      'SELECT booking_date FROM bookings WHERE LOWER(user_email) = LOWER($1) ORDER BY booking_date DESC LIMIT 1',
+      [decodeURIComponent(email)]
+    );
+    const lastBookingDate = lastBookingResult.rows[0]?.booking_date || null;
+    
+    res.json({
+      id: user.id,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      tier: user.tier,
+      tags: user.tags || [],
+      role: user.role,
+      phone: user.phone,
+      mindbodyClientId: user.mindbody_client_id,
+      lifetimeVisits: user.lifetime_visits || 0,
+      lastBookingDate
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Failed to fetch member details' });
+  }
+});
+
 router.put('/api/members/:id/role', async (req, res) => {
   try {
     const { id } = req.params;

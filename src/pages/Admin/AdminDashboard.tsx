@@ -692,9 +692,9 @@ const MembersAdmin: React.FC = () => {
         setIsEditing(true);
     };
     
-    const handleViewAs = (member: MemberProfile) => {
+    const handleViewAs = async (member: MemberProfile) => {
         if (!isAdmin) return;
-        setViewAsUser(member);
+        await setViewAsUser(member);
         navigate('/dashboard');
     };
 

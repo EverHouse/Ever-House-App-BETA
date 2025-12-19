@@ -193,18 +193,61 @@ const Dashboard: React.FC = () => {
     return 'Good evening';
   };
 
+  const getTierBadgeStyle = (tier: string | undefined) => {
+    const t = (tier || '').toLowerCase();
+    if (t === 'vip' || t === 'premium') {
+      return 'bg-amber-400 text-amber-900';
+    } else if (t === 'core') {
+      return 'bg-brand-green text-white';
+    }
+    return 'bg-gray-400 text-gray-900';
+  };
+
+  const formatLastVisit = (dateStr: string | undefined) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   return (
     <div className="px-6 pt-4 pb-32 font-sans relative min-h-full">
       {/* Welcome banner for new members */}
       <WelcomeBanner />
       
       <div className="mb-6">
-        <h1 className={`text-3xl font-bold tracking-tight animate-pop-in ${isDark ? 'text-white' : 'text-primary'}`}>
-          {getGreeting()}, {user?.name.split(' ')[0]}
-        </h1>
+        <div className="flex items-center gap-3 animate-pop-in">
+          <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-primary'}`}>
+            {getGreeting()}, {user?.name.split(' ')[0]}
+          </h1>
+          {user?.tier && (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getTierBadgeStyle(user.tier)}`}>
+              {user.tier}
+            </span>
+          )}
+        </div>
         <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/60' : 'text-primary/60'}`} style={{animationDelay: '0.1s'}}>
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
+      </div>
+
+      {/* Stats Card */}
+      <div className={`mb-6 p-4 rounded-2xl animate-pop-in ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white shadow-layered'}`} style={{animationDelay: '0.12s'}}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isDark ? 'bg-accent/20' : 'bg-accent/30'}`}>
+              <span className="material-symbols-outlined text-brand-green text-2xl">sports_golf</span>
+            </div>
+            <div>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-brand-green'}`}>{user?.lifetimeVisits || 0}</p>
+              <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Lifetime Visits</p>
+            </div>
+          </div>
+        </div>
+        {user?.lastBookingDate && (
+          <p className={`mt-3 pt-3 text-xs border-t ${isDark ? 'border-white/10 text-white/40' : 'border-gray-100 text-primary/40'}`}>
+            Last visited: {formatLastVisit(user.lastBookingDate)}
+          </p>
+        )}
       </div>
 
       {isLoading ? (
