@@ -135,7 +135,8 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const fetchAvailability = async () => {
-      if (resources.length === 0 || !selectedDateObj?.date) {
+      if (!resources || resources.length === 0 || !selectedDateObj?.date) {
+        setAvailableSlots([]);
         return;
       }
       
