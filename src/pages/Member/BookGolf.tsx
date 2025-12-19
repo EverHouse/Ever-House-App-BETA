@@ -419,7 +419,7 @@ const BookGolf: React.FC = () => {
               </>
             ) : (
               <>
-                <span>Confirm Booking</span>
+                <span>Request Booking</span>
                 <span className="material-symbols-outlined text-xl">arrow_forward</span>
               </>
             )}
@@ -430,10 +430,10 @@ const BookGolf: React.FC = () => {
       {showConfirmation && (
         <div className="fixed bottom-32 left-0 right-0 z-[60] flex justify-center pointer-events-none">
           <div className={`backdrop-blur-md px-6 py-3 rounded-full shadow-2xl text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] border pointer-events-auto ${isDark ? 'bg-black/80 text-white border-white/10' : 'bg-white/95 text-primary border-black/10'}`}>
-            <span className="material-symbols-outlined text-xl text-green-500">check_circle</span>
+            <span className="material-symbols-outlined text-xl text-green-500">schedule_send</span>
             <div>
-              <p>Booking confirmed!</p>
-              <p className="text-[10px] font-normal opacity-80 mt-0.5">Added to your dashboard.</p>
+              <p>Request sent!</p>
+              <p className="text-[10px] font-normal opacity-80 mt-0.5">Concierge will confirm shortly.</p>
             </div>
           </div>
         </div>

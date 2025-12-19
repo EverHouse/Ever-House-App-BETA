@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
-import { isAuthorizedForMemberBooking, MEMBER_BOOKING_PRODUCT_ID } from '../core/trackman';
+import { isAuthorizedForMemberBooking } from '../core/trackman';
 
 const router = Router();
 
@@ -16,9 +16,17 @@ router.get('/api/resources', async (req, res) => {
 
 router.get('/api/bookings', async (req, res) => {
   try {
-    const { user_email, date, resource_id } = req.query;
-    let query = 'SELECT b.*, r.name as resource_name, r.type as resource_type FROM bookings b JOIN resources r ON b.resource_id = r.id WHERE b.status = $1';
-    const params: any[] = ['confirmed'];
+    const { user_email, date, resource_id, status } = req.query;
+    let query = 'SELECT b.*, r.name as resource_name, r.type as resource_type FROM bookings b JOIN resources r ON b.resource_id = r.id WHERE 1=1';
+    const params: any[] = [];
+    
+    if (status) {
+      params.push(status);
+      query += ` AND b.status = $${params.length}`;
+    } else {
+      params.push('confirmed');
+      query += ` AND b.status = $${params.length}`;
+    }
     
     if (user_email) {
       params.push(user_email);
@@ -43,12 +51,63 @@ router.get('/api/bookings', async (req, res) => {
   }
 });
 
+router.get('/api/pending-bookings', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT b.*, r.name as resource_name, r.type as resource_type, u.first_name, u.last_name 
+       FROM bookings b 
+       JOIN resources r ON b.resource_id = r.id 
+       LEFT JOIN users u ON b.user_email = u.email
+       WHERE b.status = 'pending_approval'
+       ORDER BY b.created_at DESC`
+    );
+    res.json(result.rows);
+  } catch (error: any) {
+    if (!isProduction) console.error('Pending bookings error:', error);
+    res.status(500).json({ error: 'Failed to fetch pending bookings' });
+  }
+});
+
+router.put('/api/bookings/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `UPDATE bookings SET status = 'confirmed' WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Approve booking error:', error);
+    res.status(500).json({ error: 'Failed to approve booking' });
+  }
+});
+
+router.put('/api/bookings/:id/decline', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `UPDATE bookings SET status = 'declined' WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Decline booking error:', error);
+    res.status(500).json({ error: 'Failed to decline booking' });
+  }
+});
+
 router.post('/api/bookings', async (req, res) => {
   try {
     const { resource_id, user_email, booking_date, start_time, end_time, notes } = req.body;
     
     const userResult = await pool.query(
-      `SELECT tier, tags FROM users WHERE email = $1`,
+      `SELECT id, tier, tags FROM users WHERE email = $1`,
       [user_email]
     );
     
@@ -65,16 +124,16 @@ router.post('/api/bookings', async (req, res) => {
     
     if (!isMemberAuthorized) {
       return res.status(402).json({ 
-        error: 'Payment required',
-        bookingType: 'payment_required',
-        message: 'Your membership tier requires payment for simulator bookings'
+        error: 'Membership upgrade required',
+        bookingType: 'upgrade_required',
+        message: 'Simulator booking is available for Core, Premium, VIP, and Corporate members'
       });
     }
     
     const existingResult = await pool.query(
       `SELECT * FROM bookings 
        WHERE resource_id = $1 AND booking_date = $2 
-       AND status = 'confirmed'
+       AND status IN ('confirmed', 'pending_approval')
        AND (
          (start_time <= $3 AND end_time > $3) OR
          (start_time < $4 AND end_time >= $4) OR
@@ -84,23 +143,22 @@ router.post('/api/bookings', async (req, res) => {
     );
     
     if (existingResult.rows.length > 0) {
-      return res.status(409).json({ error: 'Time slot is already booked' });
+      return res.status(409).json({ error: 'This time slot is already requested or booked' });
     }
     
     const result = await pool.query(
-      `INSERT INTO bookings (resource_id, user_email, booking_date, start_time, end_time, notes)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO bookings (resource_id, user_email, booking_date, start_time, end_time, notes, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending_approval') RETURNING *`,
       [resource_id, user_email, booking_date, start_time, end_time, notes || null]
     );
     
     res.status(201).json({
       ...result.rows[0],
-      bookingType: 'member',
-      trackmanProductId: MEMBER_BOOKING_PRODUCT_ID
+      message: 'Request sent! Concierge will confirm shortly.'
     });
   } catch (error: any) {
-    if (!isProduction) console.error('Booking creation error:', error);
-    res.status(500).json({ error: 'Failed to create booking' });
+    if (!isProduction) console.error('Booking request error:', error);
+    res.status(500).json({ error: 'Failed to submit booking request' });
   }
 });
 
