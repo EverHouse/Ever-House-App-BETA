@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { pool, isProduction } from '../core/db';
+import { eq, sql, and, lt } from 'drizzle-orm';
+import { db } from '../db';
+import { guestPasses } from '../../shared/schema';
+import { isProduction } from '../core/db';
 
 const router = Router();
 
@@ -16,33 +19,32 @@ router.get('/api/guest-passes/:email', async (req, res) => {
     const { tier } = req.query;
     const passesTotal = TIER_GUEST_PASSES[tier as string] || 4;
     
-    let result = await pool.query(
-      'SELECT * FROM guest_passes WHERE member_email = $1',
-      [email]
-    );
+    let result = await db.select()
+      .from(guestPasses)
+      .where(eq(guestPasses.memberEmail, email));
     
-    if (result.rows.length === 0) {
-      await pool.query(
-        'INSERT INTO guest_passes (member_email, passes_used, passes_total) VALUES ($1, 0, $2)',
-        [email, passesTotal]
-      );
-      result = await pool.query(
-        'SELECT * FROM guest_passes WHERE member_email = $1',
-        [email]
-      );
-    } else if (result.rows[0].passes_total !== passesTotal) {
-      await pool.query(
-        'UPDATE guest_passes SET passes_total = $1 WHERE member_email = $2',
-        [passesTotal, email]
-      );
-      result.rows[0].passes_total = passesTotal;
+    if (result.length === 0) {
+      await db.insert(guestPasses)
+        .values({
+          memberEmail: email,
+          passesUsed: 0,
+          passesTotal: passesTotal
+        });
+      result = await db.select()
+        .from(guestPasses)
+        .where(eq(guestPasses.memberEmail, email));
+    } else if (result[0].passesTotal !== passesTotal) {
+      await db.update(guestPasses)
+        .set({ passesTotal: passesTotal })
+        .where(eq(guestPasses.memberEmail, email));
+      result[0].passesTotal = passesTotal;
     }
     
-    const data = result.rows[0];
+    const data = result[0];
     res.json({
-      passes_used: data.passes_used,
-      passes_total: data.passes_total,
-      passes_remaining: data.passes_total - data.passes_used
+      passes_used: data.passesUsed,
+      passes_total: data.passesTotal,
+      passes_remaining: data.passesTotal - data.passesUsed
     });
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
@@ -53,20 +55,24 @@ router.get('/api/guest-passes/:email', async (req, res) => {
 router.post('/api/guest-passes/:email/use', async (req, res) => {
   try {
     const { email } = req.params;
-    const result = await pool.query(
-      'UPDATE guest_passes SET passes_used = passes_used + 1 WHERE member_email = $1 AND passes_used < passes_total RETURNING *',
-      [email]
-    );
     
-    if (result.rows.length === 0) {
+    const result = await db.update(guestPasses)
+      .set({ passesUsed: sql`${guestPasses.passesUsed} + 1` })
+      .where(and(
+        eq(guestPasses.memberEmail, email),
+        lt(guestPasses.passesUsed, guestPasses.passesTotal)
+      ))
+      .returning();
+    
+    if (result.length === 0) {
       return res.status(400).json({ error: 'No guest passes remaining' });
     }
     
-    const data = result.rows[0];
+    const data = result[0];
     res.json({
-      passes_used: data.passes_used,
-      passes_total: data.passes_total,
-      passes_remaining: data.passes_total - data.passes_used
+      passes_used: data.passesUsed,
+      passes_total: data.passesTotal,
+      passes_remaining: data.passesTotal - data.passesUsed
     });
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
@@ -79,20 +85,20 @@ router.put('/api/guest-passes/:email', async (req, res) => {
     const { email } = req.params;
     const { passes_total } = req.body;
     
-    const result = await pool.query(
-      'UPDATE guest_passes SET passes_total = $1 WHERE member_email = $2 RETURNING *',
-      [passes_total, email]
-    );
+    const result = await db.update(guestPasses)
+      .set({ passesTotal: passes_total })
+      .where(eq(guestPasses.memberEmail, email))
+      .returning();
     
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Member not found' });
     }
     
-    const data = result.rows[0];
+    const data = result[0];
     res.json({
-      passes_used: data.passes_used,
-      passes_total: data.passes_total,
-      passes_remaining: data.passes_total - data.passes_used
+      passes_used: data.passesUsed,
+      passes_total: data.passesTotal,
+      passes_remaining: data.passesTotal - data.passesUsed
     });
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);

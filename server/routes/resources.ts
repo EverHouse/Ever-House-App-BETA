@@ -1,16 +1,18 @@
 import { Router } from 'express';
-import { pool, isProduction } from '../core/db';
+import { eq, and, or, sql, desc, asc } from 'drizzle-orm';
 import { db } from '../db';
 import { bookings, resources, users } from '../../shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { isProduction } from '../core/db';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
 
 const router = Router();
 
 router.get('/api/resources', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM resources ORDER BY type, name');
-    res.json(result.rows);
+    const result = await db.select()
+      .from(resources)
+      .orderBy(asc(resources.type), asc(resources.name));
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('Resources error:', error);
     res.status(500).json({ error: 'Failed to fetch resources' });
@@ -20,34 +22,40 @@ router.get('/api/resources', async (req, res) => {
 router.get('/api/bookings', async (req, res) => {
   try {
     const { user_email, date, resource_id, status } = req.query;
-    let query = 'SELECT b.*, r.name as resource_name, r.type as resource_type FROM bookings b JOIN resources r ON b.resource_id = r.id WHERE 1=1';
-    const params: any[] = [];
     
-    if (status) {
-      params.push(status);
-      query += ` AND b.status = $${params.length}`;
-    } else {
-      params.push('confirmed');
-      query += ` AND b.status = $${params.length}`;
-    }
+    const conditions = [
+      eq(bookings.status, (status as string) || 'confirmed')
+    ];
     
     if (user_email) {
-      params.push(user_email);
-      query += ` AND b.user_email = $${params.length}`;
+      conditions.push(eq(bookings.userEmail, user_email as string));
     }
     if (date) {
-      params.push(date);
-      query += ` AND b.booking_date = $${params.length}`;
+      conditions.push(sql`${bookings.bookingDate} = ${date}`);
     }
     if (resource_id) {
-      params.push(resource_id);
-      query += ` AND b.resource_id = $${params.length}`;
+      conditions.push(eq(bookings.resourceId, parseInt(resource_id as string)));
     }
     
-    query += ' ORDER BY b.booking_date, b.start_time';
+    const result = await db.select({
+      id: bookings.id,
+      resource_id: bookings.resourceId,
+      user_email: bookings.userEmail,
+      booking_date: bookings.bookingDate,
+      start_time: bookings.startTime,
+      end_time: bookings.endTime,
+      status: bookings.status,
+      notes: bookings.notes,
+      created_at: bookings.createdAt,
+      resource_name: resources.name,
+      resource_type: resources.type
+    })
+      .from(bookings)
+      .innerJoin(resources, eq(bookings.resourceId, resources.id))
+      .where(and(...conditions))
+      .orderBy(asc(bookings.bookingDate), asc(bookings.startTime));
     
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('Bookings error:', error);
     res.status(500).json({ error: 'Failed to fetch bookings' });
@@ -87,14 +95,15 @@ router.get('/api/pending-bookings', async (req, res) => {
 router.put('/api/bookings/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      `UPDATE bookings SET status = 'confirmed' WHERE id = $1 RETURNING *`,
-      [id]
-    );
-    if (result.rows.length === 0) {
+    const result = await db.update(bookings)
+      .set({ status: 'confirmed' })
+      .where(eq(bookings.id, parseInt(id)))
+      .returning();
+    
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Booking not found' });
     }
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error: any) {
     if (!isProduction) console.error('Approve booking error:', error);
     res.status(500).json({ error: 'Failed to approve booking' });
@@ -104,14 +113,15 @@ router.put('/api/bookings/:id/approve', async (req, res) => {
 router.put('/api/bookings/:id/decline', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      `UPDATE bookings SET status = 'declined' WHERE id = $1 RETURNING *`,
-      [id]
-    );
-    if (result.rows.length === 0) {
+    const result = await db.update(bookings)
+      .set({ status: 'declined' })
+      .where(eq(bookings.id, parseInt(id)))
+      .returning();
+    
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Booking not found' });
     }
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error: any) {
     if (!isProduction) console.error('Decline booking error:', error);
     res.status(500).json({ error: 'Failed to decline booking' });
@@ -122,12 +132,15 @@ router.post('/api/bookings', async (req, res) => {
   try {
     const { resource_id, user_email, booking_date, start_time, end_time, notes } = req.body;
     
-    const userResult = await pool.query(
-      `SELECT id, tier, tags FROM users WHERE email = $1`,
-      [user_email]
-    );
+    const userResult = await db.select({
+      id: users.id,
+      tier: users.tier,
+      tags: users.tags
+    })
+      .from(users)
+      .where(eq(users.email, user_email));
     
-    const user = userResult.rows[0];
+    const user = userResult[0];
     const userTier = user?.tier || 'Social';
     let userTags: string[] = [];
     try {
@@ -146,30 +159,49 @@ router.post('/api/bookings', async (req, res) => {
       });
     }
     
-    const existingResult = await pool.query(
-      `SELECT * FROM bookings 
-       WHERE resource_id = $1 AND booking_date = $2 
-       AND status IN ('confirmed', 'pending_approval')
-       AND (
-         (start_time <= $3 AND end_time > $3) OR
-         (start_time < $4 AND end_time >= $4) OR
-         (start_time >= $3 AND end_time <= $4)
-       )`,
-      [resource_id, booking_date, start_time, end_time]
-    );
+    const existingResult = await db.select()
+      .from(bookings)
+      .where(and(
+        eq(bookings.resourceId, resource_id),
+        sql`${bookings.bookingDate} = ${booking_date}`,
+        or(
+          eq(bookings.status, 'confirmed'),
+          eq(bookings.status, 'pending_approval')
+        ),
+        or(
+          and(
+            sql`${bookings.startTime} <= ${start_time}`,
+            sql`${bookings.endTime} > ${start_time}`
+          ),
+          and(
+            sql`${bookings.startTime} < ${end_time}`,
+            sql`${bookings.endTime} >= ${end_time}`
+          ),
+          and(
+            sql`${bookings.startTime} >= ${start_time}`,
+            sql`${bookings.endTime} <= ${end_time}`
+          )
+        )
+      ));
     
-    if (existingResult.rows.length > 0) {
+    if (existingResult.length > 0) {
       return res.status(409).json({ error: 'This time slot is already requested or booked' });
     }
     
-    const result = await pool.query(
-      `INSERT INTO bookings (resource_id, user_email, booking_date, start_time, end_time, notes, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pending_approval') RETURNING *`,
-      [resource_id, user_email, booking_date, start_time, end_time, notes || null]
-    );
+    const result = await db.insert(bookings)
+      .values({
+        resourceId: resource_id,
+        userEmail: user_email,
+        bookingDate: booking_date,
+        startTime: start_time,
+        endTime: end_time,
+        notes: notes || null,
+        status: 'pending_approval'
+      })
+      .returning();
     
     res.status(201).json({
-      ...result.rows[0],
+      ...result[0],
       message: 'Request sent! Concierge will confirm shortly.'
     });
   } catch (error: any) {
@@ -181,7 +213,9 @@ router.post('/api/bookings', async (req, res) => {
 router.delete('/api/bookings/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("UPDATE bookings SET status = 'cancelled' WHERE id = $1", [id]);
+    await db.update(bookings)
+      .set({ status: 'cancelled' })
+      .where(eq(bookings.id, parseInt(id)));
     res.json({ success: true });
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);

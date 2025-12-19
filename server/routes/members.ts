@@ -1,41 +1,56 @@
 import { Router } from 'express';
-import { pool, isProduction } from '../core/db';
+import { eq, sql, desc } from 'drizzle-orm';
+import { db } from '../db';
+import { users, bookings } from '../../shared/schema';
+import { isProduction } from '../core/db';
 
 const router = Router();
 
 router.get('/api/members/:email/details', async (req, res) => {
   try {
     const { email } = req.params;
+    const normalizedEmail = decodeURIComponent(email).toLowerCase();
     
-    const userResult = await pool.query(
-      `SELECT id, email, first_name, last_name, tier, tags, role, phone, mindbody_client_id, lifetime_visits 
-       FROM users WHERE LOWER(email) = LOWER($1)`,
-      [decodeURIComponent(email)]
-    );
+    const userResult = await db.select({
+      id: users.id,
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      tier: users.tier,
+      tags: users.tags,
+      role: users.role,
+      phone: users.phone,
+      mindbodyClientId: users.mindbodyClientId,
+      lifetimeVisits: users.lifetimeVisits
+    })
+      .from(users)
+      .where(sql`LOWER(${users.email}) = ${normalizedEmail}`);
     
-    if (userResult.rows.length === 0) {
+    if (userResult.length === 0) {
       return res.status(404).json({ error: 'Member not found' });
     }
     
-    const user = userResult.rows[0];
+    const user = userResult[0];
     
-    const lastBookingResult = await pool.query(
-      'SELECT booking_date FROM bookings WHERE LOWER(user_email) = LOWER($1) ORDER BY booking_date DESC LIMIT 1',
-      [decodeURIComponent(email)]
-    );
-    const lastBookingDate = lastBookingResult.rows[0]?.booking_date || null;
+    const lastBookingResult = await db.select({ bookingDate: bookings.bookingDate })
+      .from(bookings)
+      .where(sql`LOWER(${bookings.userEmail}) = ${normalizedEmail}`)
+      .orderBy(desc(bookings.bookingDate))
+      .limit(1);
+    
+    const lastBookingDate = lastBookingResult[0]?.bookingDate || null;
     
     res.json({
       id: user.id,
       email: user.email,
-      firstName: user.first_name,
-      lastName: user.last_name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       tier: user.tier,
       tags: user.tags || [],
       role: user.role,
       phone: user.phone,
-      mindbodyClientId: user.mindbody_client_id,
-      lifetimeVisits: user.lifetime_visits || 0,
+      mindbodyClientId: user.mindbodyClientId,
+      lifetimeVisits: user.lifetimeVisits || 0,
       lastBookingDate
     });
   } catch (error: any) {
@@ -53,40 +68,39 @@ router.put('/api/members/:id/role', async (req, res) => {
       return res.status(400).json({ error: 'Invalid role' });
     }
     
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-    
-    if (role) {
-      updates.push(`role = $${paramIndex}`);
-      values.push(role);
-      paramIndex++;
-    }
-    
-    if (tags !== undefined) {
-      updates.push(`tags = $${paramIndex}::jsonb`);
-      values.push(JSON.stringify(tags));
-      paramIndex++;
-    }
-    
-    if (updates.length === 0) {
+    if (!role && tags === undefined) {
       return res.status(400).json({ error: 'No updates provided' });
     }
     
-    values.push(id);
-    const updateQuery = `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex} RETURNING *`;
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (role) updateData.role = role;
+    if (tags !== undefined) updateData.tags = tags;
     
-    const result = await pool.query(updateQuery, values);
+    const result = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
     
-    if (result.rows.length === 0) {
-      const insertResult = await pool.query(
-        'INSERT INTO users (id, role, tags) VALUES ($1, $2, $3::jsonb) ON CONFLICT (id) DO UPDATE SET role = COALESCE($2, users.role), tags = COALESCE($3::jsonb, users.tags), updated_at = NOW() RETURNING *',
-        [id, role || 'member', JSON.stringify(tags || [])]
-      );
-      return res.json(insertResult.rows[0]);
+    if (result.length === 0) {
+      const insertResult = await db.insert(users)
+        .values({
+          id,
+          role: role || 'member',
+          tags: tags || []
+        })
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            role: role || sql`${users.role}`,
+            tags: tags !== undefined ? tags : sql`${users.tags}`,
+            updatedAt: new Date()
+          }
+        })
+        .returning();
+      return res.json(insertResult[0]);
     }
     
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
     res.status(500).json({ error: 'Failed to update member' });
