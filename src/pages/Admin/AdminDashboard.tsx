@@ -1588,7 +1588,7 @@ const WellnessAdmin: React.FC = () => {
                         className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
                     >
                         <span className="material-symbols-outlined text-lg">add</span>
-                        Add Class
+                        Class
                     </button>
                 </div>
 
@@ -1946,7 +1946,7 @@ const StaffAdmin: React.FC = () => {
                         className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
                     >
                         <span className="material-symbols-outlined text-lg">person_add</span>
-                        Add Staff
+                        Staff
                     </button>
                 </div>
 
@@ -2226,7 +2226,7 @@ const AdminsAdmin: React.FC = () => {
                         className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
                     >
                         <span className="material-symbols-outlined text-lg">person_add</span>
-                        Add Admin
+                        Admin
                     </button>
                 </div>
 
