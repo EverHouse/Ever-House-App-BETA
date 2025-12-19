@@ -30,7 +30,9 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Backend**: Express.js (port 3001) providing a REST API.
 - **Database**: PostgreSQL for all application data.
 - **Styling**: Tailwind CSS with PostCSS.
-- **Member Tiers**: Implemented with a utility (`src/utils/permissions.ts`) to manage access, booking limits, and guest pass allowances based on membership levels (Social, Core, Premium, Corporate, VIP, Founding).
+- **Member Tiers**: Implemented with utilities (`src/utils/permissions.ts`, `src/utils/tierUtils.ts`) to manage access, booking limits, and guest pass allowances based on membership levels (Social, Core, Premium, Corporate, VIP).
+- **Tier Badge System**: Premium visual badges for each tier with distinct colors - VIP (Platinum #E5E4E2), Premium (Gold #D4AF37), Corporate (Charcoal #374151), Core (Brand Green #293515), Social (Lavender #CCB8E4). Uses `TierBadge` and `TagBadge` components.
+- **Member Tags**: JSONB array stored in users table, populated from HubSpot `membership_discount_reason` field. Available tags include "Founding Member", "Investor", "VIP Guest", "Referral". Displayed alongside tier badges in Directory and Profile views.
 - **Simulator Booking Request System**: Members request slots via a 14-day calendar, staff approve/decline with conflict detection.
 - **In-App Notifications**: Real-time notification system with a bell icon, unread badges, and read/mark all as read functionality.
 - **Role Management**: Admin dashboard allows assignment of member/staff/admin roles via `PUT /api/members/:id/role`.
