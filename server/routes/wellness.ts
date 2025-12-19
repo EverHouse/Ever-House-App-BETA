@@ -1,8 +1,30 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
 import { isStaffOrAdmin } from '../core/middleware';
+import { syncWellnessCalendarEvents, discoverCalendarIds } from '../core/calendar';
 
 const router = Router();
+
+router.post('/api/wellness-classes/sync', async (req, res) => {
+  try {
+    await discoverCalendarIds();
+    const result = await syncWellnessCalendarEvents();
+    
+    if (result.error) {
+      return res.status(404).json({ error: result.error });
+    }
+    
+    res.json({
+      message: `Synced ${result.synced} wellness classes from Google Calendar`,
+      created: result.created,
+      updated: result.updated,
+      total: result.synced
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Wellness calendar sync error:', error);
+    res.status(500).json({ error: 'Failed to sync wellness calendar events' });
+  }
+});
 
 router.get('/api/wellness-classes', async (req, res) => {
   try {

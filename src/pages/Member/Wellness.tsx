@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -19,14 +18,20 @@ interface WellnessClass {
     description?: string;
 }
 
+const formatDateForDisplay = (dateStr: string): string => {
+  const date = new Date(dateStr + 'T12:00:00');
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
 const Wellness: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { addBooking } = useData();
+  const { user } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const initialTab = searchParams.get('tab') === 'medspa' ? 'medspa' : 'classes';
   const [activeTab, setActiveTab] = useState<'classes' | 'medspa'>(initialTab);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState('Booking confirmed.');
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -34,22 +39,64 @@ const Wellness: React.FC = () => {
     else if (tab === 'classes') setActiveTab('classes');
   }, [searchParams]);
 
-  const handleBook = (title?: string) => {
-    addBooking({
-        id: Date.now().toString(),
-        type: 'wellness',
-        title: title || 'Wellness Session',
-        // Updated to a clearer date format for dashboard display
-        date: 'Tue, Oct 24',
-        time: 'TBD',
-        details: 'Confirmed',
-        color: 'accent'
-    });
+  const convertTo24Hour = (time12: string): string => {
+    const match = time12.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!match) return '09:00:00';
+    let hours = parseInt(match[1]);
+    const minutes = match[2];
+    const period = match[3].toUpperCase();
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+  };
 
-    setShowConfirmation(true);
-    setTimeout(() => {
-        setShowConfirmation(false);
-    }, 2500);
+  const calculateEndTime = (startTime24: string, durationStr: string): string => {
+    const durationMatch = durationStr.match(/(\d+)/);
+    const durationMinutes = durationMatch ? parseInt(durationMatch[1]) : 60;
+    const [hours, minutes] = startTime24.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + durationMinutes;
+    const endHours = Math.floor(totalMinutes / 60) % 24;
+    const endMins = totalMinutes % 60;
+    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
+  };
+
+  const handleBook = async (classData: WellnessClass) => {
+    if (!user?.email) return;
+    
+    const startTime24 = convertTo24Hour(classData.time);
+    const endTime24 = calculateEndTime(startTime24, classData.duration);
+    
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resource_type: 'wellness_class',
+          resource_name: classData.title,
+          user_email: user.email,
+          booking_date: classData.date,
+          start_time: startTime24,
+          end_time: endTime24,
+          notes: `${classData.category} with ${classData.instructor} - ${classData.duration}`
+        })
+      });
+      
+      if (res.ok) {
+        setConfirmationMessage(`RSVP confirmed for ${classData.title}!`);
+        setShowConfirmation(true);
+        setTimeout(() => setShowConfirmation(false), 2500);
+      } else {
+        const err = await res.json();
+        setConfirmationMessage(err.error || 'Failed to book. Please try again.');
+        setShowConfirmation(true);
+        setTimeout(() => setShowConfirmation(false), 2500);
+      }
+    } catch (err) {
+      console.error('Booking error:', err);
+      setConfirmationMessage('Failed to book. Please try again.');
+      setShowConfirmation(true);
+      setTimeout(() => setShowConfirmation(false), 2500);
+    }
   };
 
   return (
@@ -67,8 +114,8 @@ const Wellness: React.FC = () => {
       </section>
 
       <div className="relative z-10 animate-pop-in">
-        {activeTab === 'classes' && <ClassesView onBook={(title) => handleBook(title)} isDark={isDark} />}
-        {activeTab === 'medspa' && <MedSpaView onBook={() => handleBook("MedSpa Appointment")} isDark={isDark} />}
+        {activeTab === 'classes' && <ClassesView onBook={handleBook} isDark={isDark} />}
+        {activeTab === 'medspa' && <MedSpaView isDark={isDark} />}
       </div>
 
       {showConfirmation && (
@@ -76,7 +123,7 @@ const Wellness: React.FC = () => {
              <div className={`backdrop-blur-md px-6 py-3 rounded-full shadow-2xl text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] border pointer-events-auto ${isDark ? 'bg-black/80 text-white border-white/10' : 'bg-white/95 text-primary border-black/10'}`}>
                 <span className="material-symbols-outlined text-xl text-green-500">check_circle</span>
                 <div>
-                  <p>Booking confirmed.</p>
+                  <p>{confirmationMessage}</p>
                 </div>
              </div>
          </div>
@@ -86,33 +133,76 @@ const Wellness: React.FC = () => {
   );
 };
 
-const CLASS_DATA: WellnessClass[] = [
-    { id: 1, title: "Sunrise Flow", date: "Fri, Dec 20", time: "07:00 AM", instructor: "Sarah Jenkins", duration: "60 min", category: "Yoga", spots: "4 spots left", status: "Open", description: "Start your day with intention. A Vinyasa flow class that awakens the body and focuses the mind." },
-    { id: 2, title: "Reformer Sculpt", date: "Fri, Dec 20", time: "09:30 AM", instructor: "Marc Davies", duration: "45 min", category: "Pilates", spots: "0 spots left", status: "Full", description: "High-intensity Pilates on the reformer. Expect a full-body burn with a focus on core stability." },
-    { id: 3, title: "Evening Reset", date: "Mon, Dec 23", time: "06:00 PM", instructor: "Dr. Chen", duration: "30 min", category: "Meditation", spots: "8 spots left", status: "Open", description: "Guided meditation and breathwork to transition from a busy day into a restful evening." },
-    { id: 4, title: "Power Yoga", date: "Sat, Dec 21", time: "05:00 PM", instructor: "Sarah Jenkins", duration: "60 min", category: "Yoga", spots: "2 spots left", status: "Open" }
-];
-
-const ClassesView: React.FC<{onBook: (title: string) => void; isDark?: boolean}> = ({ onBook, isDark = true }) => {
+const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: boolean}> = ({ onBook, isDark = true }) => {
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [classes, setClasses] = useState<WellnessClass[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>(['All']);
 
-  const sortedClasses = [...CLASS_DATA]
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await fetch('/api/wellness-classes?active_only=true');
+        if (res.ok) {
+          const data = await res.json();
+          const formatted = data.map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            date: c.date,
+            time: c.time,
+            instructor: c.instructor,
+            duration: c.duration,
+            category: c.category,
+            spots: c.spots,
+            status: c.status || 'Open',
+            description: c.description
+          }));
+          setClasses(formatted);
+          
+          const uniqueCategories = ['All', ...new Set(formatted.map((c: WellnessClass) => c.category))];
+          setCategories(uniqueCategories as string[]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch wellness classes:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchClasses();
+  }, []);
+
+  const sortedClasses = classes
     .filter(cls => selectedFilter === 'All' || cls.category === selectedFilter)
     .sort((a, b) => {
-      const dateA = new Date(a.date.split(', ')[1] + ', 2024 ' + a.time);
-      const dateB = new Date(b.date.split(', ')[1] + ', 2024 ' + b.time);
+      const dateA = new Date(a.date + ' ' + a.time);
+      const dateB = new Date(b.date + ' ' + b.time);
       return dateA.getTime() - dateB.getTime();
     });
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className={`h-32 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="animate-pop-in">
         <section className="mb-6">
         <div className="flex gap-3 overflow-x-auto -mx-6 px-6 scrollbar-hide items-center mb-4">
-            <FilterPill label="All" active={selectedFilter === 'All'} onClick={() => setSelectedFilter('All')} isDark={isDark} />
-            <FilterPill label="Yoga" active={selectedFilter === 'Yoga'} onClick={() => setSelectedFilter('Yoga')} isDark={isDark} />
-            <FilterPill label="Pilates" active={selectedFilter === 'Pilates'} onClick={() => setSelectedFilter('Pilates')} isDark={isDark} />
-            <FilterPill label="Meditation" active={selectedFilter === 'Meditation'} onClick={() => setSelectedFilter('Meditation')} isDark={isDark} />
+            {categories.map(cat => (
+              <FilterPill 
+                key={cat} 
+                label={cat} 
+                active={selectedFilter === cat} 
+                onClick={() => setSelectedFilter(cat)} 
+                isDark={isDark} 
+              />
+            ))}
         </div>
         
         <div className="space-y-4">
@@ -123,9 +213,10 @@ const ClassesView: React.FC<{onBook: (title: string) => void; isDark?: boolean}>
                     <div key={cls.id} className="animate-pop-in" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}>
                         <ClassCard 
                             {...cls}
+                            date={formatDateForDisplay(cls.date)}
                             isExpanded={isExpanded}
                             onToggle={() => setExpandedId(isExpanded ? null : cls.id)}
-                            onBook={() => onBook(cls.title)}
+                            onBook={() => onBook(cls)}
                             isDark={isDark}
                         />
                     </div>
@@ -133,7 +224,7 @@ const ClassesView: React.FC<{onBook: (title: string) => void; isDark?: boolean}>
                 })
             ) : (
                 <div className={`text-center py-10 ${isDark ? 'opacity-60' : 'text-primary/60'}`}>
-                    <p>No classes available for this filter.</p>
+                    <p>No classes scheduled yet. Check back soon!</p>
                 </div>
             )}
         </div>
@@ -142,7 +233,7 @@ const ClassesView: React.FC<{onBook: (title: string) => void; isDark?: boolean}>
   );
 };
 
-const MedSpaView: React.FC<{onBook: () => void; isDark?: boolean}> = ({ onBook, isDark = true }) => (
+const MedSpaView: React.FC<{isDark?: boolean}> = ({ isDark = true }) => (
   <div className="animate-pop-in space-y-8">
     <div className="text-center space-y-2 mb-6">
       <p className={`text-xs uppercase tracking-[0.2em] ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Powered by</p>

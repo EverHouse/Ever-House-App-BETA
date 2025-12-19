@@ -74,12 +74,13 @@ The backend is organized into modular route files under `server/`:
 - **Eventbrite**: Syncs members-only events from Eventbrite organization to the application database. Synced events are marked with `source='eventbrite'`, `visibility='members_only'`, and `requires_rsvp=true`. Ticketing links redirect to Eventbrite.
   - Sync endpoint: `POST /api/eventbrite/sync`
   - Requires `EVENTBRITE_PRIVATE_TOKEN` environment variable.
-- **Google Calendar**: Three-calendar integration system with named calendars:
+- **Google Calendar**: Four-calendar integration system with named calendars:
   - **Booked Golf**: Primary calendar for golf simulator bookings (4 bays available). Approved booking requests create events here; availability is checked via freeBusy API.
   - **MBO_Conference_Room**: Calendar for conference room bookings (1 room available) with similar availability checking.
   - **Public/Member Events**: Calendar for public events synced to the database. Events are automatically synced on server startup and marked with `source='google_calendar'`, `visibility='public'`, and `requires_rsvp=false`. These events appear on both the public "What's On" page and member Events page.
-  - Business hours configured per resource type (golf: 9AM-9PM, conference: 8AM-6PM).
-  - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`, `POST /api/events/sync/google`, `POST /api/events/sync`.
+  - **Wellness & Classes**: Calendar for wellness classes (yoga, pilates, meditation, etc.). Events sync to the `wellness_classes` table and appear on the member Wellness page. Event title format: "Category - Class Name with Instructor" (e.g., "Yoga - Sunrise Flow with Sarah Jenkins"). Sync endpoint: `POST /api/wellness-classes/sync`.
+  - Business hours configured per resource type (golf: 9AM-9PM, conference: 8AM-6PM, wellness: 6AM-9PM).
+  - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`, `POST /api/events/sync/google`, `POST /api/events/sync`, `POST /api/wellness-classes/sync`.
 - **Apple Messages for Business**: Direct messaging support via a button on the Contact page, linking to Apple Business Chat.
 - **Amarie Aesthetics MedSpa**: Integration for wellness services, including IV Hydration Drip Menu, Wellness Shots, NAD+ Treatments, Injectables, and Medical Weightloss programs, with a direct booking link.
 

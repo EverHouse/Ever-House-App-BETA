@@ -16,6 +16,10 @@ export const CALENDAR_CONFIG = {
   },
   events: {
     name: 'Public/Member Events',
+  },
+  wellness: {
+    name: 'Wellness & Classes',
+    businessHours: { start: 6, end: 21 },
   }
 };
 
@@ -323,5 +327,124 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
   } catch (error) {
     console.error('Error syncing Google Calendar events:', error);
     return { synced: 0, created: 0, updated: 0, error: 'Failed to sync events' };
+  }
+}
+
+export async function syncWellnessCalendarEvents(): Promise<{ synced: number; created: number; updated: number; error?: string }> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
+    
+    if (!calendarId) {
+      return { synced: 0, created: 0, updated: 0, error: `Calendar "${CALENDAR_CONFIG.wellness.name}" not found` };
+    }
+    
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const response = await calendar.events.list({
+      calendarId,
+      timeMin: now.toISOString(),
+      maxResults: 100,
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+    
+    const events = response.data.items || [];
+    let created = 0;
+    let updated = 0;
+    
+    for (const event of events) {
+      if (!event.id || !event.summary) continue;
+      
+      const googleEventId = event.id;
+      const rawTitle = event.summary;
+      const description = event.description || null;
+      
+      let eventDate: string;
+      let startTime: string;
+      let endTime: string | null = null;
+      let durationMinutes = 60;
+      
+      if (event.start?.dateTime) {
+        const startDt = new Date(event.start.dateTime);
+        eventDate = startDt.toISOString().split('T')[0];
+        const hours = startDt.getHours();
+        const minutes = startDt.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+        startTime = `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+        
+        if (event.end?.dateTime) {
+          const endDt = new Date(event.end.dateTime);
+          durationMinutes = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
+        }
+      } else if (event.start?.date) {
+        eventDate = event.start.date;
+        startTime = '09:00 AM';
+      } else {
+        continue;
+      }
+      
+      let title = rawTitle;
+      let instructor = 'TBD';
+      let category = 'Wellness';
+      
+      if (rawTitle.includes(' - ')) {
+        const parts = rawTitle.split(' - ');
+        category = parts[0].trim();
+        title = parts.slice(1).join(' - ').trim();
+      }
+      
+      if (rawTitle.toLowerCase().includes(' with ')) {
+        const withMatch = rawTitle.match(/with\s+(.+?)(?:\s*[-|]|$)/i);
+        if (withMatch) {
+          instructor = withMatch[1].trim();
+          title = title.replace(/\s+with\s+.+$/i, '').trim();
+        }
+      }
+      
+      if (description) {
+        const instructorMatch = description.match(/instructor[:\s]+([^\n,]+)/i);
+        if (instructorMatch) instructor = instructorMatch[1].trim();
+        
+        const categoryMatch = description.match(/category[:\s]+([^\n,]+)/i);
+        if (categoryMatch) category = categoryMatch[1].trim();
+      }
+      
+      const duration = `${durationMinutes} min`;
+      const spots = '10 spots';
+      const status = 'Open';
+      
+      const existing = await pool.query(
+        'SELECT id FROM wellness_classes WHERE google_calendar_id = $1',
+        [googleEventId]
+      );
+      
+      if (existing.rows.length > 0) {
+        await pool.query(
+          `UPDATE wellness_classes SET 
+            title = $1, time = $2, instructor = $3, duration = $4, 
+            category = $5, spots = $6, status = $7, description = $8, 
+            date = $9, is_active = true, updated_at = NOW()
+           WHERE google_calendar_id = $10`,
+          [title, startTime, instructor, duration, category, spots, status, description, eventDate, googleEventId]
+        );
+        updated++;
+      } else {
+        await pool.query(
+          `INSERT INTO wellness_classes 
+            (title, time, instructor, duration, category, spots, status, description, date, is_active, google_calendar_id, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10, NOW())`,
+          [title, startTime, instructor, duration, category, spots, status, description, eventDate, googleEventId]
+        );
+        created++;
+      }
+    }
+    
+    return { synced: events.length, created, updated };
+  } catch (error) {
+    console.error('Error syncing Wellness Calendar events:', error);
+    return { synced: 0, created: 0, updated: 0, error: 'Failed to sync wellness classes' };
   }
 }

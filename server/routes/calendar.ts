@@ -71,7 +71,8 @@ router.get('/api/calendars', async (req, res) => {
       configured: {
         golf: CALENDAR_CONFIG.golf.name,
         conference: CALENDAR_CONFIG.conference.name,
-        events: CALENDAR_CONFIG.events.name
+        events: CALENDAR_CONFIG.events.name,
+        wellness: CALENDAR_CONFIG.wellness.name
       }
     });
   } catch (error: any) {
