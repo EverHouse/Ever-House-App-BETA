@@ -1279,18 +1279,18 @@ const SimulatorAdmin: React.FC = () => {
                 </div>
             ) : (
                 <div>
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-center gap-4 mb-4">
                         <button
                             onClick={() => {
                                 const d = new Date(calendarDate);
                                 d.setDate(d.getDate() - 1);
                                 setCalendarDate(d.toISOString().split('T')[0]);
                             }}
-                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10"
+                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 text-primary dark:text-white hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                         >
                             <span className="material-symbols-outlined">chevron_left</span>
                         </button>
-                        <h3 className="font-bold text-primary dark:text-white">
+                        <h3 className="font-bold text-primary dark:text-white min-w-[140px] text-center">
                             {formatDateShort(calendarDate)}
                         </h3>
                         <button
@@ -1299,15 +1299,15 @@ const SimulatorAdmin: React.FC = () => {
                                 d.setDate(d.getDate() + 1);
                                 setCalendarDate(d.toISOString().split('T')[0]);
                             }}
-                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10"
+                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 text-primary dark:text-white hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                         >
                             <span className="material-symbols-outlined">chevron_right</span>
                         </button>
                     </div>
                     
-                    <div className="overflow-x-auto">
-                        <div className="min-w-[600px]">
-                            <div className="grid gap-1" style={{ gridTemplateColumns: `80px repeat(${bays.length}, 1fr)` }}>
+                    <div className="overflow-x-auto -mx-4 px-4">
+                        <div style={{ minWidth: `${60 + (bays.length * 70)}px` }}>
+                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${bays.length}, 1fr)` }}>
                                 <div className="h-10"></div>
                                 {bays.map(bay => (
                                     <div key={bay.id} className="h-10 flex items-center justify-center font-bold text-sm text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10">
@@ -1317,7 +1317,7 @@ const SimulatorAdmin: React.FC = () => {
                                 
                                 {hours.map(hour => (
                                     <React.Fragment key={hour}>
-                                        <div className="h-12 flex items-center justify-end pr-2 text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                        <div className="h-10 flex items-center justify-end pr-1 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
                                             {formatTime12(`${hour.toString().padStart(2, '0')}:00`)}
                                         </div>
                                         {bays.map(bay => {
@@ -1330,19 +1330,16 @@ const SimulatorAdmin: React.FC = () => {
                                             return (
                                                 <div
                                                     key={`${bay.id}-${hour}`}
-                                                    className={`h-12 border border-gray-100 dark:border-white/5 ${
+                                                    className={`h-10 rounded border ${
                                                         booking 
                                                             ? 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30' 
-                                                            : 'bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-white/5'
+                                                            : 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5'
                                                     }`}
                                                 >
                                                     {booking && (
-                                                        <div className="p-1 h-full flex flex-col justify-center">
-                                                            <p className="text-xs font-medium text-green-700 dark:text-green-300 truncate">
+                                                        <div className="px-1 h-full flex items-center">
+                                                            <p className="text-[10px] font-medium text-green-700 dark:text-green-300 truncate">
                                                                 {booking.user_name || 'Booked'}
-                                                            </p>
-                                                            <p className="text-[10px] text-green-600 dark:text-green-400">
-                                                                {booking.duration_minutes}min
                                                             </p>
                                                         </div>
                                                     )}
