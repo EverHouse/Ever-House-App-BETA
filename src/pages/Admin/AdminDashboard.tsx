@@ -892,7 +892,6 @@ const MembersAdmin: React.FC = () => {
                                 <h4 className="font-bold text-lg text-primary dark:text-white">{m.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
                             </div>
-                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${m.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{m.status}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -900,11 +899,6 @@ const MembersAdmin: React.FC = () => {
                                 {m.tags?.map(tag => (
                                     <TagBadge key={tag} tag={tag} size="sm" />
                                 ))}
-                                {m.role && m.role !== 'member' && (
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>
-                                        {m.role}
-                                    </span>
-                                )}
                             </div>
                             <div className="flex items-center gap-2">
                                 {/* View As - admin only */}
@@ -930,13 +924,11 @@ const MembersAdmin: React.FC = () => {
             {/* Desktop View: Table */}
             {filteredList.length > 0 && (
             <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden overflow-x-auto">
-                <table className="w-full text-left min-w-[700px]">
+                <table className="w-full text-left min-w-[500px]">
                     <thead className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/5">
                         <tr>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Name</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Tier</th>
-                            <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Role</th>
-                            <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Status</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Email</th>
                             <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-sm">Action</th>
                         </tr>
@@ -953,16 +945,6 @@ const MembersAdmin: React.FC = () => {
                                         ))}
                                     </div>
                                 </td>
-                                <td className="p-4">
-                                    <span className={`px-2 py-1 rounded text-xs font-bold ${
-                                        m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 
-                                        m.role === 'staff' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' : 
-                                        'bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400'
-                                    }`}>
-                                        {m.role || 'member'}
-                                    </span>
-                                </td>
-                                <td className="p-4 text-sm font-bold text-gray-700 dark:text-gray-300">{m.status}</td>
                                 <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{m.email}</td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-2">
