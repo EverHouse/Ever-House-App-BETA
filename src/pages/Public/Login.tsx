@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import { useData } from '../../contexts/DataContext';
@@ -16,8 +16,16 @@ const Login: React.FC = () => {
   const [hasPassword, setHasPassword] = useState(false);
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpInputs, setOtpInputs] = useState(['', '', '', '', '', '']);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   
   const isDev = import.meta.env.DEV;
+  
+  const isPWA = typeof window !== 'undefined' && (
+    (window.navigator as any).standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches
+  );
 
   const checkStaffAdmin = useCallback(async (emailToCheck: string) => {
     if (!emailToCheck || !emailToCheck.includes('@')) return;
@@ -131,6 +139,169 @@ const Login: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleRequestOTP = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('/api/auth/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to send login code');
+      }
+      
+      setOtpSent(true);
+      setOtpInputs(['', '', '', '', '', '']);
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 100);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send login code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    
+    const newInputs = [...otpInputs];
+    newInputs[index] = value.slice(-1);
+    setOtpInputs(newInputs);
+    
+    if (value && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+    
+    const fullCode = newInputs.join('');
+    if (fullCode.length === 6) {
+      handleVerifyOTP(fullCode);
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !otpInputs[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerifyOTP = async (code: string) => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+        credentials: 'include'
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid code');
+      }
+      
+      loginWithMember(data.member);
+      navigate('/member/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to verify code');
+      setOtpInputs(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (otpSent) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
+        <div className="flex-1 flex flex-col justify-center px-6 py-12">
+          <div className="w-full max-w-sm mx-auto space-y-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary text-[#F2F2EC] rounded-full flex items-center justify-center mx-auto text-2xl mb-6 shadow-xl">
+                <span className="material-symbols-outlined text-3xl">dialpad</span>
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-primary">
+                Enter Your Code
+              </h2>
+              <p className="mt-4 text-base text-primary/60 font-medium leading-relaxed">
+                We sent a 6-digit code to<br />
+                <span className="font-bold text-primary">{email}</span>
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="bg-white py-8 px-6 shadow-sm rounded-2xl border border-black/5 space-y-6">
+              <div className="flex justify-center gap-2">
+                {otpInputs.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    ref={(el) => (otpRefs.current[idx] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                    className="w-12 h-14 text-center text-2xl font-bold rounded-xl border border-black/10 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-primary"
+                    disabled={loading}
+                  />
+                ))}
+              </div>
+              
+              {loading && (
+                <div className="text-center text-sm text-primary/60">
+                  Verifying...
+                </div>
+              )}
+              
+              <div className="flex items-center gap-2 text-center justify-center text-sm text-primary/60">
+                <span className="material-symbols-outlined text-sm">schedule</span>
+                Code expires in 15 minutes
+              </div>
+              
+              <hr className="border-black/5" />
+              
+              <div className="space-y-2">
+                <button
+                  onClick={() => handleRequestOTP()}
+                  disabled={loading}
+                  className="w-full text-center text-sm text-primary font-medium hover:underline transition-colors disabled:opacity-50"
+                >
+                  Resend code
+                </button>
+                <button
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtpInputs(['', '', '', '', '', '']);
+                    setError('');
+                  }}
+                  className="w-full text-center text-sm text-primary/60 hover:text-primary transition-colors"
+                >
+                  Use a different email
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (emailSent) {
     return (
@@ -301,22 +472,46 @@ const Login: React.FC = () => {
                 {showPasswordField && (
                   <div className="animate-pop-in">
                     <hr className="border-black/10" />
-                    <button
-                      type="button"
-                      onClick={handleRequestMagicLink}
-                      disabled={loading}
-                      className="flex w-full justify-center items-center gap-2 rounded-xl bg-gray-100 px-3 py-3 text-sm font-bold leading-6 text-primary hover:bg-gray-200 transition-all active:scale-[0.98] disabled:opacity-50 mt-4"
-                    >
-                      <span className="material-symbols-outlined text-lg">mail</span>
-                      Use Magic Link Instead
-                    </button>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        type="button"
+                        onClick={handleRequestMagicLink}
+                        disabled={loading}
+                        className="flex flex-1 justify-center items-center gap-2 rounded-xl bg-gray-100 px-3 py-3 text-sm font-bold leading-6 text-primary hover:bg-gray-200 transition-all active:scale-[0.98] disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-lg">mail</span>
+                        Magic Link
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRequestOTP}
+                        disabled={loading}
+                        className="flex flex-1 justify-center items-center gap-2 rounded-xl bg-gray-100 px-3 py-3 text-sm font-bold leading-6 text-primary hover:bg-gray-200 transition-all active:scale-[0.98] disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-lg">dialpad</span>
+                        Login Code
+                      </button>
+                    </div>
                   </div>
                 )}
 
                 {!showPasswordField && (
-                  <p className="text-center text-xs text-primary/50">
-                    We'll email you a secure link to sign in instantly.
-                  </p>
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleRequestOTP}
+                      disabled={loading || !email.includes('@')}
+                      className="flex w-full justify-center items-center gap-2 rounded-xl bg-gray-100 px-3 py-3 text-sm font-bold leading-6 text-primary hover:bg-gray-200 transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-lg">dialpad</span>
+                      {loading ? 'Sending...' : 'Get Login Code Instead'}
+                    </button>
+                    <p className="text-center text-xs text-primary/50">
+                      {isPWA 
+                        ? 'Use login code for best experience in the app.' 
+                        : 'Use a 6-digit code if magic link goes to spam.'}
+                    </p>
+                  </>
                 )}
                 
                 {isDev && (

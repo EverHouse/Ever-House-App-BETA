@@ -9,6 +9,71 @@ import { isAdminEmail } from '../core/middleware';
 const router = Router();
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
+const otpRequestLimiter: Map<string, { count: number; resetAt: number }> = new Map();
+const otpVerifyAttempts: Map<string, { count: number; lockedUntil: number }> = new Map();
+
+const OTP_REQUEST_LIMIT = 3;
+const OTP_REQUEST_WINDOW = 15 * 60 * 1000;
+const OTP_VERIFY_MAX_ATTEMPTS = 5;
+const OTP_VERIFY_LOCKOUT = 15 * 60 * 1000;
+
+const checkOtpRequestLimit = (email: string, ip: string): { allowed: boolean; retryAfter?: number } => {
+  const key = `${email}:${ip}`;
+  const now = Date.now();
+  const record = otpRequestLimiter.get(key);
+  
+  if (!record || now > record.resetAt) {
+    otpRequestLimiter.set(key, { count: 1, resetAt: now + OTP_REQUEST_WINDOW });
+    return { allowed: true };
+  }
+  
+  if (record.count >= OTP_REQUEST_LIMIT) {
+    return { allowed: false, retryAfter: Math.ceil((record.resetAt - now) / 1000) };
+  }
+  
+  record.count++;
+  return { allowed: true };
+};
+
+const checkOtpVerifyAttempts = (email: string): { allowed: boolean; retryAfter?: number } => {
+  const now = Date.now();
+  const record = otpVerifyAttempts.get(email);
+  
+  if (!record) {
+    return { allowed: true };
+  }
+  
+  if (record.lockedUntil > 0 && now < record.lockedUntil) {
+    return { allowed: false, retryAfter: Math.ceil((record.lockedUntil - now) / 1000) };
+  }
+  
+  if (record.lockedUntil > 0 && now >= record.lockedUntil) {
+    otpVerifyAttempts.delete(email);
+    return { allowed: true };
+  }
+  
+  return { allowed: true };
+};
+
+const recordOtpVerifyFailure = (email: string): void => {
+  const now = Date.now();
+  const record = otpVerifyAttempts.get(email);
+  
+  if (!record) {
+    otpVerifyAttempts.set(email, { count: 1, lockedUntil: 0 });
+    return;
+  }
+  
+  record.count++;
+  if (record.count >= OTP_VERIFY_MAX_ATTEMPTS) {
+    record.lockedUntil = now + OTP_VERIFY_LOCKOUT;
+  }
+};
+
+const clearOtpVerifyAttempts = (email: string): void => {
+  otpVerifyAttempts.delete(email);
+};
+
 const parseDiscountReasonToTags = (reason: string | undefined): string[] => {
   if (!reason) return [];
   const tags: string[] = [];
@@ -192,6 +257,210 @@ router.post('/api/auth/magic-link', async (req, res) => {
     }
     
     res.status(500).json({ error: 'Failed to send magic link. Please try again.' });
+  }
+});
+
+router.post('/api/auth/request-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    if (!resend) {
+      return res.status(500).json({ error: 'Email service not configured' });
+    }
+    
+    const normalizedEmail = email.toLowerCase();
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    
+    const rateCheck = checkOtpRequestLimit(normalizedEmail, clientIp);
+    if (!rateCheck.allowed) {
+      return res.status(429).json({ 
+        error: `Too many code requests. Please try again in ${Math.ceil((rateCheck.retryAfter || 0) / 60)} minutes.` 
+      });
+    }
+    
+    const isAdmin = await isAdminEmail(normalizedEmail);
+    
+    const hubspot = await getHubSpotClient();
+    
+    const searchResponse = await hubspot.crm.contacts.searchApi.doSearch({
+      filterGroups: [{
+        filters: [{
+          propertyName: 'email',
+          operator: 'EQ' as any,
+          value: normalizedEmail
+        }]
+      }],
+      properties: ['firstname', 'lastname', 'email', 'membership_status'],
+      limit: 1
+    });
+    
+    let contact = searchResponse.results[0];
+    let firstName = 'Admin';
+    
+    if (!contact && !isAdmin) {
+      return res.status(404).json({ error: 'No member found with this email address' });
+    }
+    
+    if (contact) {
+      const status = (contact.properties.membership_status || '').toLowerCase();
+      firstName = contact.properties.firstname || 'Member';
+      
+      if (status !== 'active' && !isAdmin) {
+        return res.status(403).json({ error: 'Your membership is not active. Please contact us for assistance.' });
+      }
+    }
+    
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    
+    await pool.query(
+      'INSERT INTO magic_links (email, token, expires_at) VALUES ($1, $2, $3)',
+      [normalizedEmail, code, expiresAt]
+    );
+    
+    const emailResult = await resend.emails.send({
+      from: 'Even House <noreply@everhouse.app>',
+      to: normalizedEmail,
+      subject: 'Your Even House Login Code',
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <div style="width: 64px; height: 64px; background: #293515; color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold;">EH</div>
+          </div>
+          <h1 style="color: #293515; font-size: 24px; text-align: center; margin-bottom: 16px;">Hi ${firstName},</h1>
+          <p style="color: #666; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 24px;">
+            Enter this code in the Even House app to sign in:
+          </p>
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div style="display: inline-block; background: #f5f5f5; padding: 20px 40px; border-radius: 12px; font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #293515; font-family: monospace;">
+              ${code}
+            </div>
+          </div>
+          <p style="color: #666; font-size: 14px; text-align: center; margin-bottom: 32px;">
+            This code expires in 15 minutes.
+          </p>
+          <p style="color: #999; font-size: 14px; text-align: center;">
+            If you didn't request this code, you can safely ignore this email.
+          </p>
+        </div>
+      `
+    });
+    
+    console.log('Resend OTP email result:', JSON.stringify(emailResult));
+    
+    if (emailResult.error) {
+      console.error('Resend OTP error:', emailResult.error);
+      return res.status(500).json({ error: 'Failed to send code: ' + emailResult.error.message });
+    }
+    
+    res.json({ success: true, message: 'Login code sent to your email' });
+  } catch (error: any) {
+    console.error('OTP request error:', error?.message || error);
+    
+    if (error?.message?.includes('HubSpot') || error?.message?.includes('hubspot')) {
+      return res.status(500).json({ error: 'Unable to verify membership. Please try again later.' });
+    }
+    if (error?.message?.includes('Resend') || error?.message?.includes('email')) {
+      return res.status(500).json({ error: 'Unable to send email. Please try again later.' });
+    }
+    
+    res.status(500).json({ error: 'Failed to send login code. Please try again.' });
+  }
+});
+
+router.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    
+    if (!email || !code) {
+      return res.status(400).json({ error: 'Email and code are required' });
+    }
+    
+    const normalizedEmail = email.toLowerCase();
+    const normalizedCode = code.toString().trim();
+    
+    const attemptCheck = checkOtpVerifyAttempts(normalizedEmail);
+    if (!attemptCheck.allowed) {
+      return res.status(429).json({ 
+        error: `Too many failed attempts. Please try again in ${Math.ceil((attemptCheck.retryAfter || 0) / 60)} minutes.` 
+      });
+    }
+    
+    const result = await pool.query(
+      'SELECT * FROM magic_links WHERE email = $1 AND token = $2 AND used = FALSE AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
+      [normalizedEmail, normalizedCode]
+    );
+    
+    if (result.rows.length === 0) {
+      recordOtpVerifyFailure(normalizedEmail);
+      const currentAttempts = otpVerifyAttempts.get(normalizedEmail);
+      const attemptsLeft = OTP_VERIFY_MAX_ATTEMPTS - (currentAttempts?.count || 0);
+      return res.status(400).json({ 
+        error: attemptsLeft > 0 
+          ? `Invalid code. ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining.`
+          : 'Too many failed attempts. Please request a new code.'
+      });
+    }
+    
+    clearOtpVerifyAttempts(normalizedEmail);
+    
+    const otpRecord = result.rows[0];
+    
+    await pool.query('UPDATE magic_links SET used = TRUE WHERE id = $1', [otpRecord.id]);
+    
+    const hubspot = await getHubSpotClient();
+    
+    const searchResponse = await hubspot.crm.contacts.searchApi.doSearch({
+      filterGroups: [{
+        filters: [{
+          propertyName: 'email',
+          operator: 'EQ' as any,
+          value: normalizedEmail
+        }]
+      }],
+      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id'],
+      limit: 1
+    });
+    
+    if (searchResponse.results.length === 0) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    const contact = searchResponse.results[0];
+    
+    const adminStatus = await isAdminEmail(normalizedEmail);
+
+    const sessionTtl = 7 * 24 * 60 * 60 * 1000;
+    const member = {
+      id: contact.id,
+      firstName: contact.properties.firstname || '',
+      lastName: contact.properties.lastname || '',
+      email: contact.properties.email || normalizedEmail,
+      phone: contact.properties.phone || '',
+      tier: contact.properties.membership_tier || 'Core',
+      tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+      mindbodyClientId: contact.properties.mindbody_client_id || '',
+      status: 'Active',
+      role: adminStatus ? 'admin' : 'member',
+      expires_at: Date.now() + sessionTtl
+    };
+    
+    (req.session as any).user = member;
+    
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Failed to create session' });
+      }
+      res.json({ success: true, member });
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('OTP verification error:', error);
+    res.status(500).json({ error: 'Failed to verify code' });
   }
 });
 
