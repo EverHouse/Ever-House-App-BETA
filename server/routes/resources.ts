@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
+import { db } from '../db';
+import { bookings, resources, users } from '../../shared/schema';
+import { eq, desc } from 'drizzle-orm';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
 
 const router = Router();
@@ -53,15 +56,28 @@ router.get('/api/bookings', async (req, res) => {
 
 router.get('/api/pending-bookings', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT b.*, r.name as resource_name, r.type as resource_type, u.first_name, u.last_name 
-       FROM bookings b 
-       JOIN resources r ON b.resource_id = r.id 
-       LEFT JOIN users u ON b.user_email = u.email
-       WHERE b.status = 'pending_approval'
-       ORDER BY b.created_at DESC`
-    );
-    res.json(result.rows);
+    const result = await db
+      .select({
+        id: bookings.id,
+        resourceId: bookings.resourceId,
+        userEmail: bookings.userEmail,
+        bookingDate: bookings.bookingDate,
+        startTime: bookings.startTime,
+        endTime: bookings.endTime,
+        status: bookings.status,
+        notes: bookings.notes,
+        createdAt: bookings.createdAt,
+        resource_name: resources.name,
+        resource_type: resources.type,
+        first_name: users.firstName,
+        last_name: users.lastName,
+      })
+      .from(bookings)
+      .innerJoin(resources, eq(bookings.resourceId, resources.id))
+      .leftJoin(users, eq(bookings.userEmail, users.email))
+      .where(eq(bookings.status, 'pending_approval'))
+      .orderBy(desc(bookings.createdAt));
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('Pending bookings error:', error);
     res.status(500).json({ error: 'Failed to fetch pending bookings' });
