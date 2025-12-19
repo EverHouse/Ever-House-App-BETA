@@ -74,11 +74,11 @@ The backend is organized into modular route files under `server/`:
 - **Eventbrite**: Syncs members-only events from Eventbrite organization to the application database. Synced events are marked with `source='eventbrite'`, `visibility='members_only'`, and `requires_rsvp=true`. Ticketing links redirect to Eventbrite.
   - Sync endpoint: `POST /api/eventbrite/sync`
   - Requires `EVENTBRITE_PRIVATE_TOKEN` environment variable.
-- **Google Calendar**: Four-calendar integration system with named calendars:
-  - **Booked Golf**: Primary calendar for golf simulator bookings (4 bays available). Approved booking requests create events here; availability is checked via freeBusy API.
+- **Google Calendar**: Four-calendar integration system with **two-way sync** for all calendars:
+  - **Booked Golf**: Primary calendar for golf simulator bookings (4 bays available). **Two-way**: Approved booking requests create events here; availability is checked via freeBusy API.
   - **MBO_Conference_Room**: Calendar for conference room bookings (1 room available) with similar availability checking.
-  - **Public/Member Events**: Calendar for public events synced to the database. Events are automatically synced on server startup and marked with `source='google_calendar'`, `visibility='public'`, and `requires_rsvp=false`. These events appear on both the public "What's On" page and member Events page.
-  - **Wellness & Classes**: Calendar for wellness classes (yoga, pilates, meditation, etc.). Events sync to the `wellness_classes` table and appear on the member Wellness page. Event title format: "Category - Class Name with Instructor" (e.g., "Yoga - Sunrise Flow with Sarah Jenkins"). Sync endpoint: `POST /api/wellness-classes/sync`.
+  - **Public/Member Events**: Calendar for public events. **Two-way sync**: Events created by staff in admin dashboard automatically push to Google Calendar. Events from Google Calendar sync to the database on startup (marked with `source='google_calendar'`). Events deleted from app are removed from Google Calendar.
+  - **Wellness & Classes**: Calendar for wellness classes (yoga, pilates, meditation, etc.). **Two-way sync**: Classes created by staff in admin push to Google Calendar with title format "Category - Class Name with Instructor". Classes deleted from app are removed from Google Calendar. Sync endpoint `POST /api/wellness-classes/sync` pulls calendar events into `wellness_classes` table.
   - Business hours configured per resource type (golf: 9AM-9PM, conference: 8AM-6PM, wellness: 6AM-9PM).
   - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`, `POST /api/events/sync/google`, `POST /api/events/sync`, `POST /api/wellness-classes/sync`.
 - **Apple Messages for Business**: Direct messaging support via a button on the Contact page, linking to Apple Business Chat.

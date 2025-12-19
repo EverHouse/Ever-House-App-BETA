@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
 import { isStaffOrAdmin } from '../core/middleware';
-import { syncWellnessCalendarEvents, discoverCalendarIds } from '../core/calendar';
+import { syncWellnessCalendarEvents, discoverCalendarIds, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 
 const router = Router();
 
@@ -50,10 +50,63 @@ router.post('/api/wellness-classes', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
+    let googleCalendarId: string | null = null;
+    try {
+      const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
+      if (calendarId) {
+        const calendarTitle = `${category} - ${title} with ${instructor}`;
+        const calendarDescription = [description, `Duration: ${duration}`, `Spots: ${spots}`].filter(Boolean).join('\n');
+        
+        const convertTo24Hour = (timeStr: string): string => {
+          const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+          if (match12h) {
+            let hours = parseInt(match12h[1]);
+            const minutes = match12h[2];
+            const period = match12h[3].toUpperCase();
+            if (period === 'PM' && hours !== 12) hours += 12;
+            if (period === 'AM' && hours === 12) hours = 0;
+            return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+          }
+          const match24h = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+          if (match24h) {
+            const hours = match24h[1].padStart(2, '0');
+            const minutes = match24h[2];
+            const seconds = match24h[3] || '00';
+            return `${hours}:${minutes}:${seconds}`;
+          }
+          return '09:00:00';
+        };
+        
+        const calculateEndTime = (startTime24: string, durationStr: string): string => {
+          const durationMatch = durationStr.match(/(\d+)/);
+          const durationMinutes = durationMatch ? parseInt(durationMatch[1]) : 60;
+          const [hours, minutes] = startTime24.split(':').map(Number);
+          const totalMinutes = hours * 60 + minutes + durationMinutes;
+          const endHours = Math.floor(totalMinutes / 60) % 24;
+          const endMins = totalMinutes % 60;
+          return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
+        };
+        
+        const startTime24 = convertTo24Hour(time);
+        const endTime24 = calculateEndTime(startTime24, duration);
+        
+        googleCalendarId = await createCalendarEventOnCalendar(
+          calendarId,
+          calendarTitle,
+          calendarDescription,
+          date,
+          startTime24,
+          endTime24
+        );
+      }
+    } catch (calError) {
+      if (!isProduction) console.error('Failed to create Google Calendar event for wellness class:', calError);
+    }
+    
     const result = await pool.query(
-      `INSERT INTO wellness_classes (title, time, instructor, duration, category, spots, status, description, date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [title, time, instructor, duration, category, spots, status || 'available', description || null, date]
+      `INSERT INTO wellness_classes (title, time, instructor, duration, category, spots, status, description, date, google_calendar_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [title, time, instructor, duration, category, spots, status || 'available', description || null, date, googleCalendarId]
     );
     
     res.status(201).json(result.rows[0]);
@@ -67,6 +120,8 @@ router.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, time, instructor, duration, category, spots, status, description, date, is_active } = req.body;
+    
+    const existing = await pool.query('SELECT google_calendar_id, title, time, instructor, duration, category, date FROM wellness_classes WHERE id = $1', [id]);
     
     const result = await pool.query(
       `UPDATE wellness_classes SET 
@@ -89,6 +144,62 @@ router.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Wellness class not found' });
     }
     
+    if (existing.rows.length > 0 && existing.rows[0].google_calendar_id) {
+      try {
+        const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
+        if (calendarId) {
+          const updated = result.rows[0];
+          const calendarTitle = `${updated.category} - ${updated.title} with ${updated.instructor}`;
+          const calendarDescription = [updated.description, `Duration: ${updated.duration}`, `Spots: ${updated.spots}`].filter(Boolean).join('\n');
+          
+          const convertTo24Hour = (timeStr: string): string => {
+            const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (match12h) {
+              let hours = parseInt(match12h[1]);
+              const minutes = match12h[2];
+              const period = match12h[3].toUpperCase();
+              if (period === 'PM' && hours !== 12) hours += 12;
+              if (period === 'AM' && hours === 12) hours = 0;
+              return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+            }
+            const match24h = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+            if (match24h) {
+              const hours = match24h[1].padStart(2, '0');
+              const minutes = match24h[2];
+              const seconds = match24h[3] || '00';
+              return `${hours}:${minutes}:${seconds}`;
+            }
+            return '09:00:00';
+          };
+          
+          const calculateEndTime = (startTime24: string, durationStr: string): string => {
+            const durationMatch = durationStr.match(/(\d+)/);
+            const durationMinutes = durationMatch ? parseInt(durationMatch[1]) : 60;
+            const [hours, minutes] = startTime24.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + durationMinutes;
+            const endHours = Math.floor(totalMinutes / 60) % 24;
+            const endMins = totalMinutes % 60;
+            return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
+          };
+          
+          const startTime24 = convertTo24Hour(updated.time);
+          const endTime24 = calculateEndTime(startTime24, updated.duration);
+          
+          await updateCalendarEvent(
+            existing.rows[0].google_calendar_id,
+            calendarId,
+            calendarTitle,
+            calendarDescription,
+            updated.date,
+            startTime24,
+            endTime24
+          );
+        }
+      } catch (calError) {
+        if (!isProduction) console.error('Failed to update Google Calendar event for wellness class:', calError);
+      }
+    }
+    
     res.json(result.rows[0]);
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
@@ -99,6 +210,18 @@ router.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
 router.delete('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    
+    const existing = await pool.query('SELECT google_calendar_id FROM wellness_classes WHERE id = $1', [id]);
+    if (existing.rows.length > 0 && existing.rows[0].google_calendar_id) {
+      try {
+        const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
+        if (calendarId) {
+          await deleteCalendarEvent(existing.rows[0].google_calendar_id, calendarId);
+        }
+      } catch (calError) {
+        if (!isProduction) console.error('Failed to delete Google Calendar event for wellness class:', calError);
+      }
+    }
     
     const result = await pool.query(
       'DELETE FROM wellness_classes WHERE id = $1 RETURNING *',

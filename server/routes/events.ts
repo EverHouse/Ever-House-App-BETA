@@ -3,7 +3,7 @@ import { isProduction } from '../core/db';
 import { db } from '../db';
 import { events, eventRsvps } from '../../shared/schema';
 import { eq, and, sql, gte } from 'drizzle-orm';
-import { syncGoogleCalendarEvents, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
+import { syncGoogleCalendarEvents, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 
 const router = Router();
 
@@ -143,6 +143,8 @@ router.put('/api/events/:id', async (req, res) => {
     const { id } = req.params;
     const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees } = req.body;
     
+    const existing = await db.select({ googleCalendarId: events.googleCalendarId }).from(events).where(eq(events.id, parseInt(id)));
+    
     const result = await db.update(events).set({
       title,
       description,
@@ -157,6 +159,26 @@ router.put('/api/events/:id', async (req, res) => {
     
     if (result.length === 0) {
       return res.status(404).json({ error: 'Event not found' });
+    }
+    
+    if (existing.length > 0 && existing[0].googleCalendarId) {
+      try {
+        const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
+        if (calendarId) {
+          const eventDescription = [description, location ? `Location: ${location}` : ''].filter(Boolean).join('\n');
+          await updateCalendarEvent(
+            existing[0].googleCalendarId,
+            calendarId,
+            title,
+            eventDescription,
+            event_date,
+            start_time,
+            end_time || start_time
+          );
+        }
+      } catch (calError) {
+        if (!isProduction) console.error('Failed to update Google Calendar event:', calError);
+      }
     }
     
     res.json(result[0]);

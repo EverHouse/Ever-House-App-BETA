@@ -148,6 +148,7 @@ const Dashboard: React.FC = () => {
       case 'simulator': return 'sports_golf';
       case 'conference_room': return 'meeting_room';
       case 'wellness_room': return 'spa';
+      case 'wellness_class': return 'self_improvement';
       case 'event': return 'celebration';
       default: return 'event';
     }

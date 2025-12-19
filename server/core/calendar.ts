@@ -245,6 +245,45 @@ export async function deleteCalendarEvent(eventId: string, calendarId: string = 
   }
 }
 
+export async function updateCalendarEvent(
+  eventId: string,
+  calendarId: string,
+  summary: string,
+  description: string,
+  date: string,
+  startTime: string,
+  endTime: string
+): Promise<boolean> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    
+    const startDateTime = new Date(`${date}T${startTime}`);
+    const endDateTime = new Date(`${date}T${endTime}`);
+    
+    await calendar.events.update({
+      calendarId,
+      eventId,
+      requestBody: {
+        summary,
+        description,
+        start: {
+          dateTime: startDateTime.toISOString(),
+          timeZone: 'America/Los_Angeles',
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: 'America/Los_Angeles',
+        },
+      },
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating calendar event:', error);
+    return false;
+  }
+}
+
 export async function syncGoogleCalendarEvents(): Promise<{ synced: number; created: number; updated: number; error?: string }> {
   try {
     const calendar = await getGoogleCalendarClient();
