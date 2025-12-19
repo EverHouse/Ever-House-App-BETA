@@ -36,9 +36,12 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 const otpRequestLimiter: Map<string, { count: number; resetAt: number }> = new Map();
 const otpVerifyAttempts: Map<string, { count: number; lockedUntil: number }> = new Map();
+const magicLinkRequestLimiter: Map<string, { count: number; resetAt: number }> = new Map();
 
 const OTP_REQUEST_LIMIT = 3;
 const OTP_REQUEST_WINDOW = 15 * 60 * 1000;
+const MAGIC_LINK_REQUEST_LIMIT = 3;
+const MAGIC_LINK_REQUEST_WINDOW = 15 * 60 * 1000;
 const OTP_VERIFY_MAX_ATTEMPTS = 5;
 const OTP_VERIFY_LOCKOUT = 15 * 60 * 1000;
 
@@ -53,6 +56,24 @@ const checkOtpRequestLimit = (email: string, ip: string): { allowed: boolean; re
   }
   
   if (record.count >= OTP_REQUEST_LIMIT) {
+    return { allowed: false, retryAfter: Math.ceil((record.resetAt - now) / 1000) };
+  }
+  
+  record.count++;
+  return { allowed: true };
+};
+
+const checkMagicLinkRequestLimit = (email: string, ip: string): { allowed: boolean; retryAfter?: number } => {
+  const key = `${email}:${ip}`;
+  const now = Date.now();
+  const record = magicLinkRequestLimiter.get(key);
+  
+  if (!record || now > record.resetAt) {
+    magicLinkRequestLimiter.set(key, { count: 1, resetAt: now + MAGIC_LINK_REQUEST_WINDOW });
+    return { allowed: true };
+  }
+  
+  if (record.count >= MAGIC_LINK_REQUEST_LIMIT) {
     return { allowed: false, retryAfter: Math.ceil((record.resetAt - now) / 1000) };
   }
   
@@ -187,6 +208,15 @@ router.post('/api/auth/magic-link', async (req, res) => {
     }
     
     const normalizedEmail = email.toLowerCase();
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    
+    const rateCheck = checkMagicLinkRequestLimit(normalizedEmail, clientIp);
+    if (!rateCheck.allowed) {
+      return res.status(429).json({ 
+        error: `Too many login requests. Please try again in ${Math.ceil((rateCheck.retryAfter || 0) / 60)} minutes.` 
+      });
+    }
+    
     const isAdmin = await isAdminEmail(normalizedEmail);
     
     const hubspot = await getHubSpotClient();
@@ -769,6 +799,10 @@ router.post('/api/auth/set-password', async (req, res) => {
 router.post('/api/auth/dev-login', async (req, res) => {
   if (isProduction) {
     return res.status(403).json({ error: 'Dev login not available in production' });
+  }
+  
+  if (process.env.DEV_LOGIN_ENABLED !== 'true') {
+    return res.status(403).json({ error: 'Dev login not enabled' });
   }
   
   try {
