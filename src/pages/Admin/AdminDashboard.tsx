@@ -1911,13 +1911,18 @@ const StaffAdmin: React.FC = () => {
     const fetchStaffUsers = async () => {
         try {
             setIsLoading(true);
+            setError(null);
             const res = await fetch('/api/staff-users', { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
                 setStaffUsers(data);
+            } else {
+                const errorData = await res.json().catch(() => ({}));
+                setError(errorData.message || `Failed to load staff (${res.status})`);
             }
         } catch (err) {
             console.error('Error fetching staff users:', err);
+            setError('Failed to connect to server');
         } finally {
             setIsLoading(false);
         }
