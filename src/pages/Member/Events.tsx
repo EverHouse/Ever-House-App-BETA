@@ -108,8 +108,8 @@ const MemberEvents: React.FC = () => {
         </div>
       </section>
 
-      <div className="relative z-10 animate-pop-in" style={{animationDelay: '0.15s', animationFillMode: 'both'}}>
-         <section className="mb-8">
+      <div className="relative z-10">
+         <section className="mb-8 animate-pop-in" style={{animationDelay: '0.15s', animationFillMode: 'both'}}>
             <div className="flex items-center justify-between mb-3">
               <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
                 {selectedDateIndex !== null ? 'Showing' : 'Filter by Date'}
@@ -140,7 +140,7 @@ const MemberEvents: React.FC = () => {
             </div>
         </section>
 
-         <section className="mb-6">
+         <section className="mb-6 animate-pop-in" style={{animationDelay: '0.2s', animationFillMode: 'both'}}>
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Events</h3>
             <div className="space-y-4">
                 {isLoading ? (
@@ -163,8 +163,7 @@ const MemberEvents: React.FC = () => {
                     <div 
                         key={event.id} 
                         onClick={() => setSelectedEvent(event)}
-                        className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all animate-pop-in ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
-                        style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
+                        className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
                         tabIndex={0}
                         role="button"
                         onKeyDown={(e) => { if (e.key === 'Enter') setSelectedEvent(event); }}
