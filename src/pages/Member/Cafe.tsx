@@ -24,6 +24,7 @@ const Cafe: React.FC = () => {
   const [isOrderPlaced, setIsOrderPlaced] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<CafeItem | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   const categoryScrollRef = useRef<HTMLDivElement>(null);
 
@@ -192,42 +193,60 @@ const Cafe: React.FC = () => {
                 className={activeCategory === cat.category ? 'block animate-slide-in-right' : 'hidden'}
             >
                 <div className="space-y-4">
-                {cat.items.map((item, index) => (
+                {cat.items.map((item, index) => {
+                    const isExpanded = expandedItemId === item.id;
+                    return (
                     <div 
                     key={item.id} 
-                    onClick={() => setSelectedItem(item)}
-                    className={`flex justify-between items-center group p-3 rounded-xl transition-all cursor-pointer animate-pop-in active:scale-[0.98] ${isDark ? 'glass-card hover:bg-white/5 border border-white/5' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
+                    className={`rounded-xl transition-all animate-pop-in overflow-hidden ${isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered'}`}
                     style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
                     >
-                    <div className="flex gap-4 flex-1 items-center">
-                        <div className={`w-14 h-14 flex-shrink-0 rounded-lg flex items-center justify-center overflow-hidden relative ${isDark ? 'bg-white/5 text-white/40 border border-white/5' : 'bg-black/5 text-primary/40 border border-black/5'}`}>
-                            {item.image ? (
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover absolute inset-0 opacity-80" />
-                            ) : (
-                            <span className="material-symbols-outlined text-2xl">{item.icon || 'restaurant'}</span>
-                            )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center gap-2">
-                            <h3 className={`font-bold text-base leading-tight ${isDark ? 'text-white' : 'text-primary'}`}>{item.name}</h3>
-                            <span className={`font-bold text-sm whitespace-nowrap ${isDark ? 'text-accent' : 'text-brand-green'}`}>
-                                {item.price === 0 ? 'MP' : `$${item.price}`}
-                            </span>
+                    <div 
+                        onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                        className={`flex justify-between items-center group p-3 cursor-pointer transition-all ${isExpanded ? '' : 'active:scale-[0.98]'}`}
+                    >
+                        <div className="flex gap-4 flex-1 items-center">
+                            <div className={`w-14 h-14 flex-shrink-0 rounded-lg flex items-center justify-center overflow-hidden relative ${isDark ? 'bg-white/5 text-white/40' : 'bg-black/5 text-primary/40'}`}>
+                                {item.image ? (
+                                <img src={item.image} alt={item.name} className="w-full h-full object-cover absolute inset-0 opacity-80" />
+                                ) : (
+                                <span className="material-symbols-outlined text-2xl">{item.icon || 'restaurant'}</span>
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center gap-2">
+                                <h3 className={`font-bold text-base leading-tight ${isDark ? 'text-white' : 'text-primary'}`}>{item.name}</h3>
+                                <span className={`font-bold text-sm whitespace-nowrap ${isDark ? 'text-accent' : 'text-brand-green'}`}>
+                                    {item.price === 0 ? 'MP' : `$${item.price}`}
+                                </span>
+                                </div>
                             </div>
                         </div>
+                        <span className={`material-symbols-outlined text-[20px] transition-transform duration-300 ml-2 ${isDark ? 'text-white/40' : 'text-primary/40'} ${isExpanded ? 'rotate-180' : ''}`}>
+                            expand_more
+                        </span>
                     </div>
-                    <button 
-                        onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(item);
-                        }}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors active:scale-90 flex-shrink-0 ml-3 ${isDark ? 'bg-white/10 text-white hover:bg-white hover:text-brand-green' : 'bg-brand-green/10 text-brand-green hover:bg-brand-green hover:text-white'}`}
-                        aria-label={`Add ${item.name} to cart`}
-                    >
-                        <span className="material-symbols-outlined text-[20px]">add</span>
-                    </button>
+                    <div className={`accordion-content ${isExpanded ? 'expanded' : ''}`}>
+                        <div className="px-3 pb-3 pt-0">
+                            <p className={`text-sm leading-relaxed mb-3 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+                                {item.desc || "A delicious choice from our menu, prepared fresh to order."}
+                            </p>
+                            <button 
+                                onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(item);
+                                }}
+                                className={`w-full py-2.5 rounded-lg flex items-center justify-center gap-2 font-bold text-sm transition-colors active:scale-[0.98] ${isDark ? 'bg-white/10 text-white hover:bg-white hover:text-brand-green' : 'bg-brand-green text-white hover:bg-brand-green/90'}`}
+                                aria-label={`Add ${item.name} to cart`}
+                            >
+                                <span className="material-symbols-outlined text-[18px]">add</span>
+                                Add to Order
+                            </button>
+                        </div>
                     </div>
-                ))}
+                    </div>
+                    );
+                })}
                 </div>
             </div>
             ))

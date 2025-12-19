@@ -27,7 +27,6 @@ const Wellness: React.FC = () => {
   const initialTab = searchParams.get('tab') === 'medspa' ? 'medspa' : 'classes';
   const [activeTab, setActiveTab] = useState<'classes' | 'medspa'>(initialTab);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<WellnessClass | null>(null);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -47,7 +46,6 @@ const Wellness: React.FC = () => {
         color: 'accent'
     });
 
-    setSelectedClass(null);
     setShowConfirmation(true);
     setTimeout(() => {
         setShowConfirmation(false);
@@ -69,7 +67,7 @@ const Wellness: React.FC = () => {
       </section>
 
       <div className="relative z-10 animate-pop-in">
-        {activeTab === 'classes' && <ClassesView onSelect={(c) => setSelectedClass(c)} isDark={isDark} />}
+        {activeTab === 'classes' && <ClassesView onBook={(title) => handleBook(title)} isDark={isDark} />}
         {activeTab === 'medspa' && <MedSpaView onBook={() => handleBook("MedSpa Appointment")} isDark={isDark} />}
       </div>
 
@@ -84,65 +82,6 @@ const Wellness: React.FC = () => {
          </div>
       )}
 
-      {selectedClass && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          <div className={`absolute inset-0 backdrop-blur-sm transition-opacity ${isDark ? 'bg-black/60' : 'bg-black/40'}`} onClick={() => setSelectedClass(null)}></div>
-          
-          <div className={`relative w-full max-w-md rounded-t-3xl shadow-2xl animate-slide-up flex flex-col overflow-hidden pb-8 border-t ${isDark ? 'glass-card bg-[#1a210d] border-white/10' : 'bg-white border-black/10'}`}>
-             <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${isDark ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>{selectedClass.category}</span>
-                            <span className={`text-xs font-bold ${isDark ? 'text-white/60' : 'text-primary/60'}`}>• {selectedClass.duration}</span>
-                        </div>
-                        <h2 className={`text-2xl font-bold leading-tight ${isDark ? 'text-white' : 'text-primary'}`}>{selectedClass.title}</h2>
-                    </div>
-                    <button onClick={() => setSelectedClass(null)} className={`p-1 rounded-full ${isDark ? 'bg-white/10 text-white' : 'bg-black/5 text-primary'}`}>
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                    <div className={`flex items-center gap-3 p-3 rounded-xl border ${isDark ? 'bg-black/20 border-white/5' : 'bg-black/5 border-black/5'}`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>
-                            <span className="material-symbols-outlined">schedule</span>
-                        </div>
-                        <div>
-                            <p className={`text-xs font-bold uppercase ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Time</p>
-                            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{selectedClass.time} • {selectedClass.date}</p>
-                        </div>
-                    </div>
-                    
-                    <div className={`flex items-center gap-3 p-3 rounded-xl border ${isDark ? 'bg-black/20 border-white/5' : 'bg-black/5 border-black/5'}`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>
-                            <span className="material-symbols-outlined">person</span>
-                        </div>
-                        <div>
-                            <p className={`text-xs font-bold uppercase ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Instructor</p>
-                            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{selectedClass.instructor}</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 className={`text-sm font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Description</h3>
-                        <p className={`text-sm leading-relaxed ${isDark ? 'text-white/70' : 'text-primary/70'}`}>
-                            {selectedClass.description || "Join us for a restorative session designed to improve flexibility, strength, and mental clarity. Suitable for all levels."}
-                        </p>
-                    </div>
-                </div>
-
-                <button 
-                    onClick={() => handleBook(selectedClass.title)}
-                    disabled={selectedClass.status === 'Full'}
-                    className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 ${selectedClass.status === 'Full' ? (isDark ? 'bg-white/10 text-white/40' : 'bg-black/10 text-primary/40') + ' cursor-not-allowed' : 'bg-brand-green text-white hover:bg-brand-green/90 shadow-glow'}`}
-                >
-                    {selectedClass.status === 'Full' ? 'Join Waitlist' : 'RSVP'}
-                </button>
-             </div>
-          </div>
-        </div>
-      )}
     </SwipeablePage>
   );
 };
@@ -154,8 +93,9 @@ const CLASS_DATA: WellnessClass[] = [
     { id: 4, title: "Power Yoga", date: "Sat, Dec 21", time: "05:00 PM", instructor: "Sarah Jenkins", duration: "60 min", category: "Yoga", spots: "2 spots left", status: "Open" }
 ];
 
-const ClassesView: React.FC<{onSelect: (c: WellnessClass) => void; isDark?: boolean}> = ({ onSelect, isDark = true }) => {
+const ClassesView: React.FC<{onBook: (title: string) => void; isDark?: boolean}> = ({ onBook, isDark = true }) => {
   const [selectedFilter, setSelectedFilter] = useState('All');
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const sortedClasses = [...CLASS_DATA]
     .filter(cls => selectedFilter === 'All' || cls.category === selectedFilter)
@@ -177,15 +117,20 @@ const ClassesView: React.FC<{onSelect: (c: WellnessClass) => void; isDark?: bool
         
         <div className="space-y-4">
             {sortedClasses.length > 0 ? (
-                sortedClasses.map((cls, index) => (
+                sortedClasses.map((cls, index) => {
+                    const isExpanded = expandedId === cls.id;
+                    return (
                     <div key={cls.id} className="animate-pop-in" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}>
                         <ClassCard 
                             {...cls}
-                            onClick={() => onSelect(cls)}
+                            isExpanded={isExpanded}
+                            onToggle={() => setExpandedId(isExpanded ? null : cls.id)}
+                            onBook={() => onBook(cls.title)}
                             isDark={isDark}
                         />
                     </div>
-                ))
+                    );
+                })
             ) : (
                 <div className={`text-center py-10 ${isDark ? 'opacity-60' : 'text-primary/60'}`}>
                     <p>No classes available for this filter.</p>
@@ -297,39 +242,49 @@ const FilterPill: React.FC<{label: string; active?: boolean; onClick?: () => voi
   </button>
 );
 
-const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, status, onClick, isDark = true }) => (
+const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, status, description, isExpanded, onToggle, onBook, isDark = true }) => (
   <div 
-    onClick={onClick}
-    className={`p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/10 shadow-sm'}`}
+    className={`rounded-xl relative overflow-hidden transition-all ${isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered'}`}
   >
-    <div className="flex justify-between items-start mb-3">
-      <div>
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${isDark ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>{category}</span>
-          <span className={`text-xs font-bold ${isDark ? 'text-white/60' : 'text-primary/60'}`}>• {duration}</span>
+    <div 
+      onClick={onToggle}
+      className={`p-4 cursor-pointer transition-all ${isExpanded ? '' : 'active:scale-[0.98]'}`}
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${isDark ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>{category}</span>
+            <span className={`text-xs font-bold ${isDark ? 'text-white/60' : 'text-primary/60'}`}>• {duration}</span>
+          </div>
+          <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{title}</h3>
         </div>
-        <h3 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-primary'}`}>{title}</h3>
+        <div className="flex flex-col items-end">
+          <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-primary'}`}>{date}</span>
+          <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{time.split(' ')[0]}</span>
+          <span className={`text-xs font-medium ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{time.split(' ')[1]}</span>
+        </div>
+      </div>
+    </div>
+    <div className={`accordion-content ${isExpanded ? 'expanded' : ''}`}>
+      <div className="px-4 pb-4 pt-0 space-y-3">
         <div className={`flex items-center gap-1.5 text-sm ${isDark ? 'text-gray-400' : 'text-primary/70'}`}>
           <span className="material-symbols-outlined text-[16px]">person</span>
           <span>{instructor}</span>
         </div>
+        <p className={`text-sm leading-relaxed ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+          {description || "Join us for a restorative session designed to improve flexibility, strength, and mental clarity."}
+        </p>
+        <div className={`flex items-center gap-1.5 text-xs font-bold ${status === 'Full' ? 'text-orange-500' : status === 'Confirmed' ? 'text-green-500' : (isDark ? 'text-white/60' : 'text-primary/60')}`}>
+          <span className={`w-2 h-2 rounded-full ${status === 'Full' ? 'bg-orange-500' : status === 'Confirmed' ? 'bg-green-500' : 'bg-green-500'}`}></span>
+          {status || spots}
+        </div>
+        <button 
+          onClick={(e) => { e.stopPropagation(); onBook(); }}
+          className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all active:scale-[0.98] ${status === 'Full' ? (isDark ? 'bg-white/10 text-white' : 'bg-black/10 text-primary') : (isDark ? 'bg-white text-brand-green' : 'bg-brand-green text-white')}`}
+        >
+          {status === 'Full' ? 'Join Waitlist' : status === 'Confirmed' ? 'Booked' : 'RSVP'}
+        </button>
       </div>
-      <div className="flex flex-col items-end">
-        <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-primary'}`}>{date}</span>
-        <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{time.split(' ')[0]}</span>
-        <span className={`text-xs font-medium ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{time.split(' ')[1]}</span>
-      </div>
-    </div>
-    <div className={`flex items-center justify-between pt-3 border-t ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-      <div className={`flex items-center gap-1.5 text-xs font-bold ${status === 'Full' ? 'text-orange-500' : status === 'Confirmed' ? 'text-green-500' : (isDark ? 'text-white/60' : 'text-primary/60')}`}>
-        <span className={`w-2 h-2 rounded-full ${status === 'Full' ? 'bg-orange-500' : status === 'Confirmed' ? 'bg-green-500' : 'bg-green-500'}`}></span>
-        {status || spots}
-      </div>
-      <button 
-        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${status === 'Full' ? (isDark ? 'bg-transparent border border-white/20 text-white' : 'bg-transparent border border-black/20 text-primary') : status === 'Confirmed' ? 'bg-green-500/20 text-green-500' : (isDark ? 'bg-transparent border border-white/20 text-white' : 'bg-transparent border border-black/20 text-primary')}`}
-      >
-        {status === 'Full' ? 'Waitlist' : status === 'Confirmed' ? 'Booked' : 'View'}
-      </button>
     </div>
   </div>
 );
@@ -337,8 +292,7 @@ const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, cat
 const MedSpaCard: React.FC<{title: string; subtitle?: string; children: React.ReactNode; isDark?: boolean}> = ({ title, subtitle, children, isDark = true }) => (
   <div className={`rounded-2xl p-5 border ${isDark ? 'glass-card border-white/5' : 'bg-white border-black/10 shadow-sm'}`}>
     <div className="flex items-center justify-between mb-4">
-      <h3 className={`font-bold text-xl flex items-center gap-2 ${isDark ? 'text-white' : 'text-primary'}`}>
-        <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
+      <h3 className={`font-bold text-xl ${isDark ? 'text-white' : 'text-primary'}`}>
         {title}
       </h3>
       {subtitle && <span className={`text-lg font-bold ${isDark ? 'text-accent' : 'text-primary'}`}>{subtitle}</span>}

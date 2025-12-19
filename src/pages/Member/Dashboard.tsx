@@ -261,7 +261,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className={`relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-black/5 shadow-sm'}`}>
+              <div className={`relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group ${isDark ? 'bg-white/5 shadow-layered-dark' : 'bg-white shadow-layered'}`}>
                 <div>
                   <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-primary'}`}>No upcoming bookings</h2>
                   <p className={`text-sm ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Ready to plan your day?</p>
@@ -277,11 +277,11 @@ const Dashboard: React.FC = () => {
             )}
           </div>
 
-          <div className="mb-8 flex justify-center gap-4 animate-slide-in-right" style={{animationDelay: '0.2s'}}>
-            <QuickAction icon="sports_golf" label="Golf" onClick={() => navigate('/book')} delay="0s" isDark={isDark} />
-            <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.05s" isDark={isDark} />
-            <QuickAction icon="calendar_month" label="Events" onClick={() => navigate('/member-events')} delay="0.1s" isDark={isDark} />
-            <QuickAction icon="local_cafe" label="Cafe" onClick={() => navigate('/cafe')} delay="0.15s" isDark={isDark} />
+          <div className="mb-8 flex justify-center gap-4">
+            <QuickAction icon="sports_golf" label="Golf" onClick={() => navigate('/book')} delay="0.15s" isDark={isDark} />
+            <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.20s" isDark={isDark} />
+            <QuickAction icon="calendar_month" label="Events" onClick={() => navigate('/member-events')} delay="0.25s" isDark={isDark} />
+            <QuickAction icon="local_cafe" label="Cafe" onClick={() => navigate('/cafe')} delay="0.30s" isDark={isDark} />
           </div>
 
           <div className="space-y-8 animate-pop-in" style={{animationDelay: '0.3s'}}>
@@ -327,11 +327,11 @@ const Dashboard: React.FC = () => {
 const QuickAction: React.FC<{icon: string; label: string; onClick: () => void; delay: string; isDark: boolean}> = ({ icon, label, onClick, delay, isDark }) => (
   <button 
     onClick={onClick}
-    className="flex flex-col items-center gap-2 min-w-[80px] group focus:outline-none"
+    className="flex flex-col items-center gap-2 min-w-[80px] group focus:outline-none animate-slide-up-stagger"
     style={{animationDelay: delay}}
     aria-label={label}
   >
-    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center group-active:scale-95 transition-all shadow-lg group-focus:ring-2 group-focus:ring-accent ${isDark ? 'glass-button border border-white/10 text-white group-hover:bg-white/10' : 'bg-white border border-black/5 text-brand-green group-hover:bg-black/5'}`}>
+    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center group-active:scale-95 transition-all group-focus:ring-2 group-focus:ring-accent ${isDark ? 'glass-button border-0 shadow-layered-dark text-white group-hover:bg-white/10' : 'bg-white shadow-layered text-brand-green group-hover:bg-black/5'}`}>
       <span className="material-symbols-outlined text-[28px]">{icon}</span>
     </div>
     <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-white/70' : 'text-primary/70'}`}>{label}</span>

@@ -79,7 +79,7 @@ const Profile: React.FC = () => {
          const cardBgColor = tierColors.bg;
          const cardTextColor = tierColors.text;
          return (
-            <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-2xl mb-8 group">
+            <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-layered mb-8 group">
                {/* Card Background */}
                <div className="absolute inset-0" style={{ backgroundColor: cardBgColor }}></div>
                {/* Gloss */}

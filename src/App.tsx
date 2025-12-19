@@ -317,11 +317,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 
                 {isMemberRoute ? (
                   <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#1e2810] shadow-lg'}`}>
-                      <span className="material-symbols-outlined text-[28px] text-[#F2F2EC]">
-                        {getCenterIcon()}
-                      </span>
-                    </div>
+                    <span className={`material-symbols-outlined text-[32px] ${isDarkTheme ? 'text-[#F2F2EC]' : 'text-[#F2F2EC]'}`}>
+                      {getCenterIcon()}
+                    </span>
                   </div>
                 ) : (
                   <button 
@@ -357,7 +355,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
                     aria-label={user ? (isMemberRoute ? 'View profile' : 'Go to dashboard') : 'Login'}
                   >
-                    <span className="material-symbols-outlined text-[24px]">
+                    <span 
+                      key={getTopRightIcon()}
+                      className="material-symbols-outlined text-[24px] animate-icon-morph"
+                    >
                        {getTopRightIcon()}
                     </span>
                   </button>
