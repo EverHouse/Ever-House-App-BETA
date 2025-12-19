@@ -65,7 +65,10 @@ The backend is organized into modular route files under `server/`:
 
 ## External Dependencies
 
-- **Magic Link Authentication**: Email-based passwordless authentication via magic links. Sessions stored in PostgreSQL with 1-week TTL. Emails sent via Resend from `noreply@everhouse.app`.
+- **Magic Link Authentication**: Email-based passwordless authentication via magic links. Sessions stored in PostgreSQL with 1-week TTL. Emails sent via Resend from `noreply@everhouse.app`. Rate limited to 3 requests per email/IP every 15 minutes.
+- **Authentication Security**: 
+  - OTP and Magic Link endpoints are rate-limited (3 requests per 15 minutes per email+IP).
+  - Dev login endpoint requires `DEV_LOGIN_ENABLED=true` environment variable in addition to non-production check.
 - **HubSpot CRM**: Integrated for contact and member management. Access tokens refreshed via Replit Connectors.
 - **HubSpot Forms**: Native application forms (Tour Request, Membership Application, Private Hire Inquiry, Guest Check-In, Contact) submit directly to HubSpot Forms API, utilizing `hutk` cookie for tracking.
 - **Eventbrite**: Syncs members-only events from Eventbrite organization to the application database. Synced events are marked with `source='eventbrite'`, `visibility='members_only'`, and `requires_rsvp=true`. Ticketing links redirect to Eventbrite.
