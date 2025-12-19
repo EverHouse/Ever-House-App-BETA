@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import DateButton from '../../components/DateButton';
@@ -72,10 +73,12 @@ const generateDates = (advanceDays: number = 7): { label: string; date: string; 
 };
 
 const BookGolf: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const { addBooking, user } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
-  const [activeTab, setActiveTab] = useState<'simulator' | 'conference'>('simulator');
+  const initialTab = searchParams.get('tab') === 'conference' ? 'conference' : 'simulator';
+  const [activeTab, setActiveTab] = useState<'simulator' | 'conference'>(initialTab);
   const [duration, setDuration] = useState<number>(60);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -85,6 +88,12 @@ const BookGolf: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'conference') setActiveTab('conference');
+    else if (tab === 'simulator') setActiveTab('simulator');
+  }, [searchParams]);
 
   const tierPermissions = getTierPermissions(user?.tier || 'Social');
   const canBookSimulators = canAccessResource(user?.tier || 'Social', 'simulator');

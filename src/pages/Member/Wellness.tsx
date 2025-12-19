@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import TabButton from '../../components/TabButton';
@@ -19,12 +20,20 @@ interface WellnessClass {
 }
 
 const Wellness: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const { addBooking } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
-  const [activeTab, setActiveTab] = useState<'classes' | 'medspa'>('classes');
+  const initialTab = searchParams.get('tab') === 'medspa' ? 'medspa' : 'classes';
+  const [activeTab, setActiveTab] = useState<'classes' | 'medspa'>(initialTab);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [selectedClass, setSelectedClass] = useState<WellnessClass | null>(null);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'medspa') setActiveTab('medspa');
+    else if (tab === 'classes') setActiveTab('classes');
+  }, [searchParams]);
 
   const handleBook = (title?: string) => {
     addBooking({

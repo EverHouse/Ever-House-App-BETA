@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getTierPermissions } from '../utils/permissions';
 
 const WelcomeBanner: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -61,18 +63,20 @@ const WelcomeBanner: React.FC = () => {
               isDark={isDark}
             />
             <QuickTip 
-              icon="group_add" 
-              label="Guest Passes" 
-              value={tierPermissions.guestPassesPerMonth === 999 ? 'Unlimited' : `${tierPermissions.guestPassesPerMonth}/month`}
-              available={tierPermissions.guestPassesPerMonth > 0}
+              icon="meeting_room" 
+              label="Conference Room" 
+              value="Book Now"
+              available={true}
               isDark={isDark}
+              onClick={() => navigate('/book?tab=conference')}
             />
             <QuickTip 
-              icon="spa" 
-              label="Wellness" 
-              value={tierPermissions.canAccessWellness ? 'Full Access' : 'Limited'}
-              available={tierPermissions.canAccessWellness}
+              icon="self_improvement" 
+              label="MedSpa" 
+              value="Book Services"
+              available={true}
               isDark={isDark}
+              onClick={() => navigate('/member-wellness?tab=medspa')}
             />
           </div>
 
@@ -95,8 +99,14 @@ const QuickTip: React.FC<{
   value: string;
   available: boolean;
   isDark: boolean;
-}> = ({ icon, label, value, available, isDark }) => (
-  <div className={`flex items-center gap-2 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-white/50'}`}>
+  onClick?: () => void;
+}> = ({ icon, label, value, available, isDark, onClick }) => (
+  <div 
+    className={`flex items-center gap-2 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-white/50'} ${onClick ? 'cursor-pointer hover:bg-white/20 active:scale-95 transition-all' : ''}`}
+    onClick={onClick}
+    role={onClick ? 'button' : undefined}
+    tabIndex={onClick ? 0 : undefined}
+  >
     <span className={`material-symbols-outlined text-[18px] ${available ? 'text-green-600' : (isDark ? 'text-white/30' : 'text-gray-400')}`}>
       {available ? icon : 'lock'}
     </span>

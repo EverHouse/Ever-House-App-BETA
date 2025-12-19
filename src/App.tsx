@@ -224,15 +224,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const selfAnimatedRoutes = ['/book', '/member-events', '/member-wellness', '/cafe'];
   const shouldAnimate = !selfAnimatedRoutes.some(path => location.pathname.startsWith(path));
 
-  // Navigation Logic: Show Menu on Root or Dashboard, otherwise Back
-  const isRootPage = location.pathname === '/' || location.pathname === '/dashboard';
-
+  // Navigation Logic: Always show hamburger menu
   const handleTopLeftClick = () => {
-    if (isRootPage) {
-        setIsMenuOpen(true);
-    } else {
-        navigate(-1);
-    }
+    setIsMenuOpen(true);
   };
 
   const isProfilePage = location.pathname === '/profile';
@@ -316,16 +310,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <button 
                   onClick={handleTopLeftClick}
                   className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
-                  aria-label={isRootPage ? 'Open menu' : 'Go back'}
+                  aria-label="Open menu"
                 >
-                  <span className="material-symbols-outlined text-[24px]">
-                    {isRootPage ? 'menu' : 'arrow_back'}
-                  </span>
+                  <span className="material-symbols-outlined text-[24px]">menu</span>
                 </button>
                 
                 {isMemberRoute ? (
                   <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-[#293515] flex items-center justify-center shadow-lg">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#1e2810] shadow-lg'}`}>
                       <span className="material-symbols-outlined text-[28px] text-[#F2F2EC]">
                         {getCenterIcon()}
                       </span>
