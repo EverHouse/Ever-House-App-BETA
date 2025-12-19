@@ -192,6 +192,30 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleOtpPaste = (e: React.ClipboardEvent, startIndex: number) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    const digits = pastedText.replace(/\D/g, '').split('');
+    
+    if (digits.length === 0) return;
+    
+    const newInputs = [...otpInputs];
+    let digitIdx = 0;
+    for (let i = startIndex; i < 6 && digitIdx < digits.length; i++) {
+      newInputs[i] = digits[digitIdx];
+      digitIdx++;
+    }
+    setOtpInputs(newInputs);
+    
+    const lastFilledIndex = Math.min(startIndex + digits.length - 1, 5);
+    const nextIndex = lastFilledIndex < 5 ? lastFilledIndex + 1 : 5;
+    otpRefs.current[nextIndex]?.focus();
+    
+    if (newInputs.every((digit) => digit.length === 1)) {
+      handleVerifyOTP(newInputs.join(''));
+    }
+  };
+
   const handleVerifyOTP = async (code: string) => {
     setLoading(true);
     setError('');
@@ -257,6 +281,7 @@ const Login: React.FC = () => {
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                    onPaste={(e) => handleOtpPaste(e, idx)}
                     className="w-12 h-14 text-center text-2xl font-bold rounded-xl border border-black/10 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-primary"
                     disabled={loading}
                   />
