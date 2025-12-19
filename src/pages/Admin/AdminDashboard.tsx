@@ -701,16 +701,26 @@ const MembersAdmin: React.FC = () => {
     const handleSave = async () => {
         if (selectedMember) {
             updateMember(selectedMember);
-            if (isAdmin && selectedMember.role) {
-                try {
+            try {
+                const updateData: { role?: string; tags?: string[] } = {};
+                
+                if (isAdmin && selectedMember.role) {
+                    updateData.role = selectedMember.role;
+                }
+                
+                if (selectedMember.tags) {
+                    updateData.tags = selectedMember.tags;
+                }
+                
+                if (Object.keys(updateData).length > 0) {
                     await fetch(`/api/members/${selectedMember.id}/role`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ role: selectedMember.role })
+                        body: JSON.stringify(updateData)
                     });
-                } catch (e) {
-                    console.error('Failed to update role:', e);
                 }
+            } catch (e) {
+                console.error('Failed to update member:', e);
             }
         }
         setIsEditing(false);

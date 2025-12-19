@@ -1005,6 +1005,18 @@ app.post('/api/auth/verify-member', async (req, res) => {
     
     const adminStatus = await isAdminEmail(email.toLowerCase());
     
+    // Helper to parse discount reason into tags
+    const parseDiscountReasonToTags = (reason: string | undefined): string[] => {
+      if (!reason) return [];
+      const tags: string[] = [];
+      const lowerReason = reason.toLowerCase();
+      if (lowerReason.includes('founding')) tags.push('Founding Member');
+      if (lowerReason.includes('investor')) tags.push('Investor');
+      if (lowerReason.includes('vip') || lowerReason.includes('guest')) tags.push('VIP Guest');
+      if (lowerReason.includes('referral')) tags.push('Referral');
+      return tags;
+    };
+
     const member = {
       id: contact.id,
       firstName: contact.properties.firstname || '',
@@ -1012,6 +1024,7 @@ app.post('/api/auth/verify-member', async (req, res) => {
       email: contact.properties.email || email,
       phone: contact.properties.phone || '',
       tier: contact.properties.membership_tier || 'Core',
+      tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
       status: 'Active',
       role: adminStatus ? 'admin' : 'member'
     };
@@ -1177,6 +1190,18 @@ app.post('/api/auth/verify-token', async (req, res) => {
     
     const adminStatus = await isAdminEmail(magicLink.email.toLowerCase());
     
+    // Helper to parse discount reason into tags
+    const parseDiscountReasonToTags = (reason: string | undefined): string[] => {
+      if (!reason) return [];
+      const tags: string[] = [];
+      const lowerReason = reason.toLowerCase();
+      if (lowerReason.includes('founding')) tags.push('Founding Member');
+      if (lowerReason.includes('investor')) tags.push('Investor');
+      if (lowerReason.includes('vip') || lowerReason.includes('guest')) tags.push('VIP Guest');
+      if (lowerReason.includes('referral')) tags.push('Referral');
+      return tags;
+    };
+
     const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
     const member = {
       id: contact.id,
@@ -1185,6 +1210,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
       email: contact.properties.email || magicLink.email,
       phone: contact.properties.phone || '',
       tier: contact.properties.membership_tier || 'Core',
+      tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
       status: 'Active',
       role: adminStatus ? 'admin' : 'member',
       expires_at: Date.now() + sessionTtl
@@ -1384,21 +1410,43 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
 app.put('/api/members/:id/role', async (req, res) => {
   try {
     const { id } = req.params;
-    const { role } = req.body;
+    const { role, tags } = req.body;
     
-    if (!['member', 'staff', 'admin'].includes(role)) {
+    if (role && !['member', 'staff', 'admin'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
     
-    const result = await pool.query(
-      'UPDATE users SET role = $1 WHERE id = $2 RETURNING *',
-      [role, id]
-    );
+    // Build dynamic update query based on what's provided
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+    
+    if (role) {
+      updates.push(`role = $${paramIndex}`);
+      values.push(role);
+      paramIndex++;
+    }
+    
+    if (tags !== undefined) {
+      updates.push(`tags = $${paramIndex}::jsonb`);
+      values.push(JSON.stringify(tags));
+      paramIndex++;
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No updates provided' });
+    }
+    
+    values.push(id);
+    const updateQuery = `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex} RETURNING *`;
+    
+    const result = await pool.query(updateQuery, values);
     
     if (result.rows.length === 0) {
+      // User doesn't exist, create them
       const insertResult = await pool.query(
-        'INSERT INTO users (id, role) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET role = $2 RETURNING *',
-        [id, role]
+        'INSERT INTO users (id, role, tags) VALUES ($1, $2, $3::jsonb) ON CONFLICT (id) DO UPDATE SET role = COALESCE($2, users.role), tags = COALESCE($3::jsonb, users.tags), updated_at = NOW() RETURNING *',
+        [id, role || 'member', JSON.stringify(tags || [])]
       );
       return res.json(insertResult.rows[0]);
     }
@@ -1406,7 +1454,7 @@ app.put('/api/members/:id/role', async (req, res) => {
     res.json(result.rows[0]);
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Failed to update role' });
+    res.status(500).json({ error: 'Failed to update member' });
   }
 });
 

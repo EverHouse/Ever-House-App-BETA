@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getTierPermissions, isFoundingMember, getBaseTier } from '../../utils/permissions';
-import { getTierColor, parseTierString } from '../../utils/tierUtils';
+import { getTierColor } from '../../utils/tierUtils';
 import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
@@ -93,13 +93,8 @@ const Profile: React.FC = () => {
       {/* Wallet Pass Preview */}
       {(() => {
          const tierColors = getTierColor(user.tier || 'Social');
-         const { tier: displayTier } = parseTierString(user.tier || 'Social');
-         const cardBgColor = displayTier === 'VIP' || displayTier === 'Premium' || displayTier === 'Social' 
-            ? '#293515' 
-            : tierColors.bg;
-         const cardTextColor = displayTier === 'VIP' || displayTier === 'Premium' || displayTier === 'Social'
-            ? '#F2F2EC'
-            : tierColors.text;
+         const cardBgColor = tierColors.bg;
+         const cardTextColor = tierColors.text;
          return (
             <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-2xl mb-8 group">
                {/* Card Background */}
@@ -249,13 +244,8 @@ const Profile: React.FC = () => {
       {/* Full Screen Card Modal */}
       {isCardOpen && (() => {
          const tierColors = getTierColor(user.tier || 'Social');
-         const { tier: displayTier } = parseTierString(user.tier || 'Social');
-         const cardBgColor = displayTier === 'VIP' || displayTier === 'Premium' || displayTier === 'Social' 
-            ? '#293515' 
-            : tierColors.bg;
-         const cardTextColor = displayTier === 'VIP' || displayTier === 'Premium' || displayTier === 'Social'
-            ? '#F2F2EC'
-            : tierColors.text;
+         const cardBgColor = tierColors.bg;
+         const cardTextColor = tierColors.text;
          return (
             <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
                <div className="w-full max-w-sm aspect-[1/1.4] rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500" style={{ backgroundColor: cardBgColor }}>
