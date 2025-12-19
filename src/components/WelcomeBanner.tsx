@@ -37,7 +37,7 @@ const WelcomeBanner: React.FC = () => {
     <div className={`mb-6 p-5 rounded-2xl border ${isDark ? 'bg-accent/10 border-accent/30' : 'bg-accent/20 border-accent/40'}`}>
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-brand-green text-2xl">waving_hand</span>
+          <span className={`material-symbols-outlined text-2xl ${isDark ? 'text-accent' : 'text-brand-green'}`}>waving_hand</span>
           <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-brand-green'}`}>
             Welcome to Even House, {firstName}!
           </h3>
@@ -112,7 +112,7 @@ const QuickTip: React.FC<{
     role={onClick ? 'button' : undefined}
     tabIndex={onClick ? 0 : undefined}
   >
-    <span className={`material-symbols-outlined text-[18px] ${available ? 'text-green-600' : (isDark ? 'text-white/30' : 'text-gray-400')}`}>
+    <span className={`material-symbols-outlined text-[18px] ${available ? 'text-accent' : (isDark ? 'text-white/30' : 'text-gray-400')}`}>
       {available ? icon : 'lock'}
     </span>
     <div className="flex-1 min-w-0">
