@@ -24,6 +24,11 @@ export const users = pgTable("users", {
   role: varchar("role").default("member"),
   tier: varchar("tier"),
   tags: jsonb("tags").default(sql`'[]'::jsonb`),
+  phone: varchar("phone"),
+  mindbodyClientId: varchar("mindbody_client_id"),
+  lifetimeVisits: integer("lifetime_visits").default(0),
+  linkedEmails: jsonb("linked_emails").default(sql`'[]'::jsonb`),
+  dataSource: varchar("data_source"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
