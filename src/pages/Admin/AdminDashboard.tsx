@@ -1845,7 +1845,7 @@ const StaffAdmin: React.FC = () => {
     const fetchStaffUsers = async () => {
         try {
             setIsLoading(true);
-            const res = await fetch('/api/staff-users');
+            const res = await fetch('/api/staff-users', { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
                 setStaffUsers(data);
@@ -1868,6 +1868,7 @@ const StaffAdmin: React.FC = () => {
             const res = await fetch('/api/staff-users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     email: newEmail.trim(),
                     name: newName.trim() || null,
@@ -1897,6 +1898,7 @@ const StaffAdmin: React.FC = () => {
             const res = await fetch(`/api/staff-users/${staff.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ is_active: !staff.is_active })
             });
 
@@ -1915,7 +1917,8 @@ const StaffAdmin: React.FC = () => {
 
         try {
             const res = await fetch(`/api/staff-users/${staff.id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'include'
             });
 
             if (res.ok) {
@@ -2104,7 +2107,7 @@ const AdminsAdmin: React.FC = () => {
     const fetchAdminUsers = async () => {
         try {
             setIsLoading(true);
-            const res = await fetch('/api/admin-users');
+            const res = await fetch('/api/admin-users', { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
                 setAdminUsers(data);
@@ -2127,6 +2130,7 @@ const AdminsAdmin: React.FC = () => {
             const res = await fetch('/api/admin-users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     email: newEmail.trim(),
                     name: newName.trim() || null,
@@ -2163,6 +2167,7 @@ const AdminsAdmin: React.FC = () => {
             const res = await fetch(`/api/admin-users/${admin.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ is_active: !admin.is_active })
             });
 
@@ -2188,7 +2193,8 @@ const AdminsAdmin: React.FC = () => {
 
         try {
             const res = await fetch(`/api/admin-users/${admin.id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'include'
             });
 
             if (res.ok) {
