@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { getTierPermissions, isFoundingMember, isVIPMember, getBaseTier } from '../../utils/permissions';
+import { getTierPermissions, isFoundingMember, getBaseTier } from '../../utils/permissions';
+import { getTierColor, parseTierString } from '../../utils/tierUtils';
+import TierBadge from '../../components/TierBadge';
+import TagBadge from '../../components/TagBadge';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import { isPushSupported, isSubscribedToPush, subscribeToPush, unsubscribeFromPush } from '../../services/pushNotifications';
 
@@ -75,48 +78,62 @@ const Profile: React.FC = () => {
             <img src={user.avatar || "https://i.pravatar.cc/300"} className={`w-full h-full rounded-full object-cover border-4 ${isDark ? 'border-[#0f172a]' : 'border-white'}`} alt="Profile" />
          </div>
          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user.name}</h1>
-         <div className="flex items-center gap-2 mt-2">
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-brand-green text-[#F2F2EC]">{getBaseTier(user.tier || '')} Member</span>
-            {isFoundingMember(user.tier || '', user.isFounding) && (
-               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding</span>
-            )}
-            {isVIPMember(user.tier || '') && (
-               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-yellow-400 text-black">VIP</span>
+         <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
+            <TierBadge tier={user.tier || 'Social'} size="md" />
+            {(user.tags || []).map((tag) => (
+               <TagBadge key={tag} tag={tag} size="sm" />
+            ))}
+            {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
+               <TagBadge tag="Founding Member" size="sm" />
             )}
             <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>#{user.id}</span>
          </div>
       </div>
 
       {/* Wallet Pass Preview */}
-      <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-2xl mb-8 group">
-         {/* Card Background */}
-         <div className="absolute inset-0 bg-[#293515]"></div>
-         {/* Gloss */}
-         <div className="absolute inset-0 bg-glossy opacity-50"></div>
-         {/* Content */}
-         <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
-            <div className="flex justify-between items-start">
-               <img src="/assets/logos/monogram-white.png" className="w-8 h-8 opacity-90" alt="" />
-               <div className="flex flex-col items-end gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#F2F2EC]/60">Even House</span>
-                  {isFoundingMember(user.tier || '', user.isFounding) && (
-                     <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding Member</span>
-                  )}
-                  {isVIPMember(user.tier || '') && (
-                     <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-yellow-400 text-black">VIP</span>
-                  )}
+      {(() => {
+         const tierColors = getTierColor(user.tier || 'Social');
+         const { tier: displayTier } = parseTierString(user.tier || 'Social');
+         const cardBgColor = displayTier === 'VIP' || displayTier === 'Premium' || displayTier === 'Social' 
+            ? '#293515' 
+            : tierColors.bg;
+         const cardTextColor = displayTier === 'VIP' || displayTier === 'Premium' || displayTier === 'Social'
+            ? '#F2F2EC'
+            : tierColors.text;
+         return (
+            <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-2xl mb-8 group">
+               {/* Card Background */}
+               <div className="absolute inset-0" style={{ backgroundColor: cardBgColor }}></div>
+               {/* Gloss */}
+               <div className="absolute inset-0 bg-glossy opacity-50"></div>
+               {/* Content */}
+               <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
+                  <div className="flex justify-between items-start">
+                     <img src="/assets/logos/monogram-white.png" className="w-8 h-8 opacity-90" alt="" />
+                     <div className="flex flex-col items-end gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${cardTextColor}99` }}>Even House</span>
+                        {(user.tags || []).map((tag) => (
+                           <TagBadge key={tag} tag={tag} size="sm" />
+                        ))}
+                        {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
+                           <TagBadge tag="Founding Member" size="sm" />
+                        )}
+                     </div>
+                  </div>
+                  <div>
+                     <div className="flex items-center gap-2 mb-1">
+                        <TierBadge tier={user.tier || 'Social'} size="sm" />
+                     </div>
+                     <h3 className="text-xl font-bold tracking-wide" style={{ color: cardTextColor }}>{user.name}</h3>
+                  </div>
+               </div>
+               {/* Tap Hint */}
+               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
+                   <span className="font-bold text-sm text-white">Tap to View</span>
                </div>
             </div>
-            <div>
-               <p className="text-xs text-[#F2F2EC]/60 uppercase tracking-wider mb-1">{getBaseTier(user.tier || '')} Member</p>
-               <h3 className="text-xl font-bold tracking-wide text-[#F2F2EC]">{user.name}</h3>
-            </div>
-         </div>
-         {/* Tap Hint */}
-         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
-             <span className="font-bold text-sm">Tap to View</span>
-         </div>
-      </div>
+         );
+      })()}
 
       <div className="space-y-6">
          <Section title="Account" isDark={isDark}>
@@ -230,45 +247,55 @@ const Profile: React.FC = () => {
       />
 
       {/* Full Screen Card Modal */}
-      {isCardOpen && (
-         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
-            <div className="w-full max-w-sm aspect-[1/1.4] bg-[#293515] rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500">
-                {/* Header Section of Pass */}
-                <div className="bg-[#293515] p-6 pb-4 border-b border-[#F2F2EC]/10">
-                    <div className="flex justify-between items-center mb-6">
-                         <img src="/assets/logos/monogram-white.png" className="w-10 h-10" alt="" />
-                         <span className="font-bold text-lg tracking-wide text-[#F2F2EC]">Even House</span>
-                    </div>
-                </div>
-                
-                {/* Body */}
-                <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-6 bg-[#293515]">
-                    <div className="w-48 h-48 bg-white rounded-2xl p-2 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-9xl text-black">qr_code_2</span>
-                    </div>
-                    <div>
-                        <h2 className="text-2xl font-bold mb-1 text-[#F2F2EC]">{user.name}</h2>
-                        <p className="text-[#F2F2EC]/50 text-sm uppercase tracking-widest">{getBaseTier(user.tier || '')} Member</p>
-                        <div className="flex items-center justify-center gap-2 mt-2">
-                           {isFoundingMember(user.tier || '', user.isFounding) && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent text-brand-green">Founding Member</span>
-                           )}
-                           {isVIPMember(user.tier || '') && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-yellow-400 text-black">VIP</span>
-                           )}
-                        </div>
-                    </div>
-                </div>
+      {isCardOpen && (() => {
+         const tierColors = getTierColor(user.tier || 'Social');
+         const { tier: displayTier } = parseTierString(user.tier || 'Social');
+         const cardBgColor = displayTier === 'VIP' || displayTier === 'Premium' || displayTier === 'Social' 
+            ? '#293515' 
+            : tierColors.bg;
+         const cardTextColor = displayTier === 'VIP' || displayTier === 'Premium' || displayTier === 'Social'
+            ? '#F2F2EC'
+            : tierColors.text;
+         return (
+            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
+               <div className="w-full max-w-sm aspect-[1/1.4] rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500" style={{ backgroundColor: cardBgColor }}>
+                   {/* Header Section of Pass */}
+                   <div className="p-6 pb-4" style={{ backgroundColor: cardBgColor, borderBottom: `1px solid ${cardTextColor}20` }}>
+                       <div className="flex justify-between items-center mb-6">
+                            <img src="/assets/logos/monogram-white.png" className="w-10 h-10" alt="" />
+                            <span className="font-bold text-lg tracking-wide" style={{ color: cardTextColor }}>Even House</span>
+                       </div>
+                   </div>
+                   
+                   {/* Body */}
+                   <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-6" style={{ backgroundColor: cardBgColor }}>
+                       <div className="w-48 h-48 bg-white rounded-2xl p-2 flex items-center justify-center">
+                           <span className="material-symbols-outlined text-9xl text-black">qr_code_2</span>
+                       </div>
+                       <div>
+                           <h2 className="text-2xl font-bold mb-1" style={{ color: cardTextColor }}>{user.name}</h2>
+                           <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+                              <TierBadge tier={user.tier || 'Social'} size="md" />
+                              {(user.tags || []).map((tag) => (
+                                 <TagBadge key={tag} tag={tag} size="sm" />
+                              ))}
+                              {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
+                                 <TagBadge tag="Founding Member" size="sm" />
+                              )}
+                           </div>
+                       </div>
+                   </div>
 
-                <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#F2F2EC]/20 flex items-center justify-center text-[#F2F2EC]">
-                    <span className="material-symbols-outlined text-sm">close</span>
-                </button>
+                   <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${cardTextColor}33`, color: cardTextColor }}>
+                       <span className="material-symbols-outlined text-sm">close</span>
+                   </button>
+               </div>
+               <button className="mt-8 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow" onClick={() => alert("Added to Wallet")}>
+                   Add to Apple Wallet
+               </button>
             </div>
-            <button className="mt-8 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow" onClick={() => alert("Added to Wallet")}>
-                Add to Apple Wallet
-            </button>
-         </div>
-      )}
+         );
+      })()}
     </div>
   );
 };
