@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { Resend } from 'resend';
 import { pool, isProduction } from '../core/db';
 import { getHubSpotClient } from '../core/integrations';
@@ -276,6 +277,199 @@ router.post('/api/auth/logout', (req, res) => {
     res.clearCookie('connect.sid');
     res.json({ success: true, message: 'Logged out successfully' });
   });
+});
+
+router.get('/api/auth/check-staff-admin', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    const normalizedEmail = email.toLowerCase();
+    
+    const adminResult = await pool.query(
+      'SELECT id, password_hash IS NOT NULL as has_password FROM admin_users WHERE email = $1 AND is_active = true',
+      [normalizedEmail]
+    );
+    
+    if (adminResult.rows.length > 0) {
+      return res.json({ 
+        isStaffOrAdmin: true, 
+        role: 'admin',
+        hasPassword: adminResult.rows[0].has_password 
+      });
+    }
+    
+    const staffResult = await pool.query(
+      'SELECT id, password_hash IS NOT NULL as has_password FROM staff_users WHERE email = $1 AND is_active = true',
+      [normalizedEmail]
+    );
+    
+    if (staffResult.rows.length > 0) {
+      return res.json({ 
+        isStaffOrAdmin: true, 
+        role: 'staff',
+        hasPassword: staffResult.rows[0].has_password 
+      });
+    }
+    
+    res.json({ isStaffOrAdmin: false, role: null, hasPassword: false });
+  } catch (error: any) {
+    if (!isProduction) console.error('Check staff/admin error:', error);
+    res.status(500).json({ error: 'Failed to check user status' });
+  }
+});
+
+router.post('/api/auth/password-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    
+    const normalizedEmail = email.toLowerCase();
+    
+    let userRecord = null;
+    let userRole = 'member';
+    
+    const adminResult = await pool.query(
+      'SELECT id, email, name, password_hash FROM admin_users WHERE email = $1 AND is_active = true',
+      [normalizedEmail]
+    );
+    
+    if (adminResult.rows.length > 0) {
+      userRecord = adminResult.rows[0];
+      userRole = 'admin';
+    } else {
+      const staffResult = await pool.query(
+        'SELECT id, email, name, password_hash FROM staff_users WHERE email = $1 AND is_active = true',
+        [normalizedEmail]
+      );
+      
+      if (staffResult.rows.length > 0) {
+        userRecord = staffResult.rows[0];
+        userRole = 'staff';
+      }
+    }
+    
+    if (!userRecord) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    if (!userRecord.password_hash) {
+      return res.status(400).json({ error: 'Password not set. Please use magic link or contact an admin.' });
+    }
+    
+    const isValid = await bcrypt.compare(password, userRecord.password_hash);
+    
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    const hubspot = await getHubSpotClient();
+    let memberData = null;
+    
+    try {
+      const searchResponse = await hubspot.crm.contacts.searchApi.doSearch({
+        filterGroups: [{
+          filters: [{
+            propertyName: 'email',
+            operator: 'EQ' as any,
+            value: normalizedEmail
+          }]
+        }],
+        properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id'],
+        limit: 1
+      });
+      
+      if (searchResponse.results.length > 0) {
+        const contact = searchResponse.results[0];
+        memberData = {
+          id: contact.id,
+          firstName: contact.properties.firstname || userRecord.name?.split(' ')[0] || '',
+          lastName: contact.properties.lastname || userRecord.name?.split(' ').slice(1).join(' ') || '',
+          email: normalizedEmail,
+          phone: contact.properties.phone || '',
+          tier: contact.properties.membership_tier || 'Core',
+          tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+          mindbodyClientId: contact.properties.mindbody_client_id || '',
+        };
+      }
+    } catch (hubspotError) {
+      if (!isProduction) console.error('HubSpot lookup failed:', hubspotError);
+    }
+    
+    const sessionTtl = 7 * 24 * 60 * 60 * 1000;
+    const member = {
+      id: memberData?.id || userRecord.id.toString(),
+      firstName: memberData?.firstName || userRecord.name?.split(' ')[0] || '',
+      lastName: memberData?.lastName || userRecord.name?.split(' ').slice(1).join(' ') || '',
+      email: normalizedEmail,
+      phone: memberData?.phone || '',
+      tier: memberData?.tier || 'Core',
+      tags: memberData?.tags || [],
+      mindbodyClientId: memberData?.mindbodyClientId || '',
+      status: 'Active',
+      role: userRole,
+      expires_at: Date.now() + sessionTtl
+    };
+    
+    (req.session as any).user = member;
+    
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Failed to create session' });
+      }
+      res.json({ success: true, member });
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Password login error:', error);
+    res.status(500).json({ error: 'Login failed. Please try again.' });
+  }
+});
+
+router.post('/api/auth/set-password', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+    
+    const normalizedEmail = email.toLowerCase();
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    const adminResult = await pool.query(
+      'UPDATE admin_users SET password_hash = $1 WHERE email = $2 AND is_active = true RETURNING id',
+      [passwordHash, normalizedEmail]
+    );
+    
+    if (adminResult.rows.length > 0) {
+      return res.json({ success: true, message: 'Password set successfully' });
+    }
+    
+    const staffResult = await pool.query(
+      'UPDATE staff_users SET password_hash = $1 WHERE email = $2 AND is_active = true RETURNING id',
+      [passwordHash, normalizedEmail]
+    );
+    
+    if (staffResult.rows.length > 0) {
+      return res.json({ success: true, message: 'Password set successfully' });
+    }
+    
+    res.status(404).json({ error: 'User not found' });
+  } catch (error: any) {
+    if (!isProduction) console.error('Set password error:', error);
+    res.status(500).json({ error: 'Failed to set password' });
+  }
 });
 
 router.post('/api/auth/dev-login', async (req, res) => {
