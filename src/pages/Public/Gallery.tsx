@@ -16,17 +16,8 @@ const INITIAL_DATA = [
 
 const Gallery: React.FC = () => {
   const [filter, setFilter] = useState('All');
-  const [data, setData] = useState(INITIAL_DATA);
-  const [page, setPage] = useState(1);
 
-  const filteredItems = filter === 'All' ? data : data.filter(item => item.category === filter);
-
-  const handleLoadMore = () => {
-    // Simulate loading more items by duplicating initial data
-    const moreItems = INITIAL_DATA.map(item => ({ ...item, img: `${item.img}?v=${page}` }));
-    setData(prev => [...prev, ...moreItems]);
-    setPage(prev => prev + 1);
-  };
+  const filteredItems = filter === 'All' ? INITIAL_DATA : INITIAL_DATA.filter(item => item.category === filter);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
@@ -52,16 +43,7 @@ const Gallery: React.FC = () => {
            ))}
         </div>
         <div className="mt-12 flex justify-center pb-8">
-            {data.length < 24 ? (
-                <button 
-                    onClick={handleLoadMore}
-                    className="px-6 py-3 rounded-xl bg-white/40 border border-primary/10 text-primary text-sm font-semibold hover:bg-white/60 transition-colors shadow-sm"
-                >
-                    Load More Photos
-                </button>
-            ) : (
-                <p className="text-xs text-primary/40 font-medium">End of Gallery</p>
-            )}
+            <p className="text-xs text-primary/40 font-medium">End of Gallery</p>
         </div>
       </div>
 
