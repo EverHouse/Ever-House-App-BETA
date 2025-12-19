@@ -45,6 +45,7 @@ export interface MemberProfile {
   id: string;
   name: string;
   tier: string;
+  tags?: string[];
   isFounding?: boolean;
   status: 'Active' | 'Pending';
   email: string;

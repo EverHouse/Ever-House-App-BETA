@@ -986,7 +986,8 @@ app.post('/api/auth/verify-member', async (req, res) => {
         'email',
         'phone',
         'membership_tier',
-        'membership_status'
+        'membership_status',
+        'membership_discount_reason'
       ],
       limit: 1
     });
@@ -1164,7 +1165,7 @@ app.post('/api/auth/verify-token', async (req, res) => {
           value: magicLink.email
         }]
       }],
-      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status'],
+      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason'],
       limit: 1
     });
     
@@ -1283,7 +1284,8 @@ app.get('/api/hubspot/contacts', async (req, res) => {
       'hs_lead_status',
       'createdate',
       'membership_tier',
-      'membership_status'
+      'membership_status',
+      'membership_discount_reason'
     ];
     
     // Fetch all pages of contacts
@@ -1296,6 +1298,18 @@ app.get('/api/hubspot/contacts', async (req, res) => {
       after = response.paging?.next?.after;
     } while (after);
     
+    // Helper to parse discount reason into tags
+    const parseDiscountReasonToTags = (reason: string | undefined): string[] => {
+      if (!reason) return [];
+      const tags: string[] = [];
+      const lowerReason = reason.toLowerCase();
+      if (lowerReason.includes('founding')) tags.push('Founding Member');
+      if (lowerReason.includes('investor')) tags.push('Investor');
+      if (lowerReason.includes('vip') || lowerReason.includes('guest')) tags.push('VIP Guest');
+      if (lowerReason.includes('referral')) tags.push('Referral');
+      return tags;
+    };
+
     // Map and filter to only Active members
     const contacts = allContacts
       .map((contact: any) => ({
@@ -1307,6 +1321,7 @@ app.get('/api/hubspot/contacts', async (req, res) => {
         company: contact.properties.company || '',
         status: contact.properties.membership_status || contact.properties.hs_lead_status || '',
         tier: contact.properties.membership_tier || '',
+        tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
         createdAt: contact.properties.createdate
       }))
       .filter((contact: any) => contact.status.toLowerCase() === 'active');
@@ -1332,9 +1347,22 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
       'hs_lead_status',
       'createdate',
       'membership_tier',
-      'membership_status'
+      'membership_status',
+      'membership_discount_reason'
     ]);
     
+    // Helper to parse discount reason into tags
+    const parseDiscountReasonToTags = (reason: string | undefined): string[] => {
+      if (!reason) return [];
+      const tags: string[] = [];
+      const lowerReason = reason.toLowerCase();
+      if (lowerReason.includes('founding')) tags.push('Founding Member');
+      if (lowerReason.includes('investor')) tags.push('Investor');
+      if (lowerReason.includes('vip') || lowerReason.includes('guest')) tags.push('VIP Guest');
+      if (lowerReason.includes('referral')) tags.push('Referral');
+      return tags;
+    };
+
     res.json({
       id: contact.id,
       firstName: contact.properties.firstname || '',
@@ -1344,6 +1372,7 @@ app.get('/api/hubspot/contacts/:id', async (req, res) => {
       company: contact.properties.company || '',
       status: contact.properties.membership_status || contact.properties.hs_lead_status || 'Active',
       tier: contact.properties.membership_tier || '',
+      tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
       createdAt: contact.properties.createdate
     });
   } catch (error: any) {

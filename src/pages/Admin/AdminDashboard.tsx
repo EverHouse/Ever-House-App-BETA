@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import MenuOverlay from '../../components/MenuOverlay';
 import Logo from '../../components/Logo';
+import TierBadge from '../../components/TierBadge';
+import TagBadge from '../../components/TagBadge';
+import { AVAILABLE_TAGS } from '../../utils/tierUtils';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -795,18 +798,29 @@ const MembersAdmin: React.FC = () => {
                                     </select>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 p-2 rounded-lg bg-accent/10 border border-accent/20">
-                                <input 
-                                    type="checkbox" 
-                                    id="isFounding" 
-                                    checked={selectedMember.isFounding || false} 
-                                    onChange={e => setSelectedMember({...selectedMember, isFounding: e.target.checked})}
-                                    className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                />
-                                <label htmlFor="isFounding" className="flex-1">
-                                    <span className="text-sm font-bold text-primary dark:text-white">Founding Member</span>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Charter member who joined during launch</p>
-                                </label>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Tags</label>
+                                <div className="mt-1 space-y-2">
+                                    {AVAILABLE_TAGS.map(tag => (
+                                        <label key={tag} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={selectedMember.tags?.includes(tag) || false} 
+                                                onChange={e => {
+                                                    const currentTags = selectedMember.tags || [];
+                                                    if (e.target.checked) {
+                                                        setSelectedMember({...selectedMember, tags: [...currentTags, tag]});
+                                                    } else {
+                                                        setSelectedMember({...selectedMember, tags: currentTags.filter(t => t !== tag)});
+                                                    }
+                                                }}
+                                                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            />
+                                            <span className="text-sm text-primary dark:text-white">{tag}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">Select all applicable tags for this member</p>
                             </div>
                             {/* Role selector - only for admins */}
                             {isAdmin && (
@@ -871,11 +885,11 @@ const MembersAdmin: React.FC = () => {
                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${m.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{m.status}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <span className="bg-primary/5 dark:bg-white/10 text-primary dark:text-white px-2 py-0.5 rounded text-xs font-bold">{m.tier}</span>
-                                {m.isFounding && (
-                                    <span className="bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent px-2 py-0.5 rounded text-[10px] font-bold uppercase">Founding</span>
-                                )}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <TierBadge tier={m.tier} size="sm" />
+                                {m.tags?.map(tag => (
+                                    <TagBadge key={tag} tag={tag} size="sm" />
+                                ))}
                                 {m.role && m.role !== 'member' && (
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'}`}>
                                         {m.role}
@@ -922,11 +936,11 @@ const MembersAdmin: React.FC = () => {
                             <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
                                 <td className="p-4 font-medium text-primary dark:text-white">{m.name}</td>
                                 <td className="p-4">
-                                    <div className="flex items-center gap-1">
-                                        <span className="bg-primary/10 dark:bg-white/10 text-primary dark:text-white px-2 py-1 rounded text-xs font-bold">{m.tier}</span>
-                                        {m.isFounding && (
-                                            <span className="bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent px-2 py-1 rounded text-[10px] font-bold uppercase">Founding</span>
-                                        )}
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                        <TierBadge tier={m.tier} size="sm" />
+                                        {m.tags?.map(tag => (
+                                            <TagBadge key={tag} tag={tag} size="sm" />
+                                        ))}
                                     </div>
                                 </td>
                                 <td className="p-4">
