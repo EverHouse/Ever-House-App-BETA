@@ -20,7 +20,7 @@ async function isStaffEmail(email: string): Promise<boolean> {
       ));
     return result.length > 0;
   } catch (error) {
-    console.error('Error checking staff status:', error);
+    if (!isProduction) console.error('Error checking staff status:', error);
     return false;
   }
 }
@@ -296,16 +296,16 @@ router.post('/api/auth/magic-link', async (req, res) => {
       `
     });
     
-    console.log('Resend email result:', JSON.stringify(emailResult));
+    if (!isProduction) console.log('Resend email result:', JSON.stringify(emailResult));
     
     if (emailResult.error) {
-      console.error('Resend error:', emailResult.error);
+      if (!isProduction) console.error('Resend error:', emailResult.error);
       return res.status(500).json({ error: 'Failed to send email: ' + emailResult.error.message });
     }
     
     res.json({ success: true, message: 'Magic link sent to your email' });
   } catch (error: any) {
-    console.error('Magic link error:', error?.message || error);
+    if (!isProduction) console.error('Magic link error:', error?.message || error);
     
     if (error?.message?.includes('HubSpot') || error?.message?.includes('hubspot')) {
       return res.status(500).json({ error: 'Unable to verify membership. Please try again later.' });
@@ -412,16 +412,16 @@ router.post('/api/auth/request-otp', async (req, res) => {
       `
     });
     
-    console.log('Resend OTP email result:', JSON.stringify(emailResult));
+    if (!isProduction) console.log('Resend OTP email result:', JSON.stringify(emailResult));
     
     if (emailResult.error) {
-      console.error('Resend OTP error:', emailResult.error);
+      if (!isProduction) console.error('Resend OTP error:', emailResult.error);
       return res.status(500).json({ error: 'Failed to send code: ' + emailResult.error.message });
     }
     
     res.json({ success: true, message: 'Login code sent to your email' });
   } catch (error: any) {
-    console.error('OTP request error:', error?.message || error);
+    if (!isProduction) console.error('OTP request error:', error?.message || error);
     
     if (error?.message?.includes('HubSpot') || error?.message?.includes('hubspot')) {
       return res.status(500).json({ error: 'Unable to verify membership. Please try again later.' });
@@ -523,7 +523,7 @@ router.post('/api/auth/verify-otp', async (req, res) => {
     
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
+        if (!isProduction) console.error('Session save error:', err);
         return res.status(500).json({ error: 'Failed to create session' });
       }
       res.json({ success: true, member });
@@ -601,7 +601,7 @@ router.post('/api/auth/verify-token', async (req, res) => {
     
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
+        if (!isProduction) console.error('Session save error:', err);
         return res.status(500).json({ error: 'Failed to create session' });
       }
       res.json({ success: true, member });
@@ -615,7 +615,7 @@ router.post('/api/auth/verify-token', async (req, res) => {
 router.post('/api/auth/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      console.error('Session destroy error:', err);
+      if (!isProduction) console.error('Session destroy error:', err);
       return res.status(500).json({ error: 'Failed to logout' });
     }
     res.clearCookie('connect.sid');
@@ -789,7 +789,7 @@ router.post('/api/auth/password-login', async (req, res) => {
     
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
+        if (!isProduction) console.error('Session save error:', err);
         return res.status(500).json({ error: 'Failed to create session' });
       }
       res.json({ success: true, member });
@@ -898,13 +898,13 @@ router.post('/api/auth/dev-login', async (req, res) => {
     
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
+        if (!isProduction) console.error('Session save error:', err);
         return res.status(500).json({ error: 'Failed to create session' });
       }
       res.json({ success: true, member });
     });
   } catch (error: any) {
-    console.error('Dev login error:', error);
+    if (!isProduction) console.error('Dev login error:', error);
     res.status(500).json({ error: 'Dev login failed' });
   }
 });
