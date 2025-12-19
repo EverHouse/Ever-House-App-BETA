@@ -283,6 +283,23 @@ export const facilityClosures = pgTable("facility_closures", {
   createdBy: varchar("created_by"),
 });
 
+// Membership tier conflicts table - tracks tier discrepancies between app and external sources
+export const membershipTierConflicts = pgTable("membership_tier_conflicts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id"),
+  email: varchar("email").notNull(),
+  mindbodyId: varchar("mindbody_id"),
+  currentTier: varchar("current_tier"),
+  incomingTier: varchar("incoming_tier").notNull(),
+  source: varchar("source").notNull(),
+  status: varchar("status").default("open"),
+  resolvedBy: varchar("resolved_by"),
+  resolvedAt: timestamp("resolved_at"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type StaffUser = typeof staffUsers.$inferSelect;
