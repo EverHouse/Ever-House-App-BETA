@@ -21,7 +21,8 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Color Palette**: Primary (Deep Green: #293515), Accent (Lavender: #CCB8E4), Background Light (Bone: #F2F2EC), Background Dark (#0f120a).
 - **Glass Effects**: Applied with 3-5% opacity, 40px+ blur, and 12px squircle corners.
 - **Selection States**: Lavender background with Deep Green text (`bg-accent text-brand-green`).
-- **Branding**: Dynamic logo selection (`EH-guy` for member portal, `EH monogram` for public) based on context and automatic dark/white variants.
+- **Branding**: EH monogram logo on public pages. Member portal uses dynamic page-specific icons in header center (home, account_circle, sports_golf, spa, local_cafe, celebration).
+- **Dynamic Header Navigation**: Member portal header features profile/dashboard toggle (top-right icon switches between account_circle and dashboard based on current page) and page-specific center icons in a Deep Green circle.
 - **Responsive Design**: Targets various iPhone, iPad, and Desktop viewports, utilizing `safe-area-bottom` and `tap-target` classes.
 - **Theme System**: Supports Light, Dark, and System themes, persisted via `localStorage`.
 
