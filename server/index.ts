@@ -21,6 +21,7 @@ import notificationsRouter from './routes/notifications';
 import pushRouter from './routes/push';
 import availabilityRouter from './routes/availability';
 import cafeRouter from './routes/cafe';
+import dataConflictsRouter from './routes/dataConflicts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -61,6 +62,7 @@ app.use(notificationsRouter);
 app.use(pushRouter);
 app.use(availabilityRouter);
 app.use(cafeRouter);
+app.use(dataConflictsRouter);
 
 async function autoSeedCafeMenu() {
   try {

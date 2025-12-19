@@ -10,7 +10,7 @@ import { AVAILABLE_TAGS } from '../../utils/tierUtils';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness'>('directory');
+  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'conflicts'>('directory');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -63,6 +63,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'simulator' && 'Simulator Bookings'}
                {activeTab === 'team' && 'Manage Team Access'}
                {activeTab === 'wellness' && 'Manage Wellness Classes'}
+               {activeTab === 'conflicts' && 'Data Conflicts'}
            </h1>
         </div>
         
@@ -73,6 +74,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'simulator' && <SimulatorAdmin />}
         {activeTab === 'team' && actualUser?.role === 'admin' && <TeamAdmin />}
         {activeTab === 'wellness' && <WellnessAdmin />}
+        {activeTab === 'conflicts' && actualUser?.role === 'admin' && <DataConflictsAdmin />}
       </main>
 
       {/* Bottom Nav - Fixed with iOS Safe Area */}
@@ -83,6 +85,7 @@ const AdminDashboard: React.FC = () => {
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
             <NavItem icon="spa" label="Wellness" active={activeTab === 'wellness'} onClick={() => setActiveTab('wellness')} />
             {actualUser?.role === 'admin' && <NavItem icon="shield_person" label="Team" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />}
+            {actualUser?.role === 'admin' && <NavItem icon="sync_problem" label="Conflicts" active={activeTab === 'conflicts'} onClick={() => setActiveTab('conflicts')} />}
         </ul>
       </nav>
 
@@ -2416,6 +2419,202 @@ const AdminsAdmin: React.FC = () => {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- DATA CONFLICTS ADMIN ---
+
+interface TierConflict {
+    id: number;
+    userId: string;
+    email: string;
+    mindbodyId: string;
+    firstName: string;
+    lastName: string;
+    currentTier: string;
+    incomingTier: string;
+    source: string;
+    status: string;
+    createdAt: string;
+}
+
+const DataConflictsAdmin: React.FC = () => {
+    const [conflicts, setConflicts] = useState<TierConflict[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState<number | null>(null);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    const fetchConflicts = async () => {
+        try {
+            const res = await fetch('/api/admin/data-conflicts');
+            if (res.ok) {
+                const data = await res.json();
+                setConflicts(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch conflicts:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchConflicts();
+    }, []);
+
+    const handleAccept = async (id: number) => {
+        setActionLoading(id);
+        setMessage(null);
+        try {
+            const res = await fetch(`/api/admin/data-conflicts/${id}/accept`, { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setMessage({ type: 'success', text: `Tier updated to ${data.newTier}` });
+                setConflicts(prev => prev.filter(c => c.id !== id));
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Failed to update' });
+            }
+        } catch (err) {
+            setMessage({ type: 'error', text: 'Network error' });
+        } finally {
+            setActionLoading(null);
+            setTimeout(() => setMessage(null), 3000);
+        }
+    };
+
+    const handleIgnore = async (id: number) => {
+        setActionLoading(id);
+        setMessage(null);
+        try {
+            const res = await fetch(`/api/admin/data-conflicts/${id}/ignore`, { method: 'POST' });
+            if (res.ok) {
+                setMessage({ type: 'success', text: 'Conflict dismissed' });
+                setConflicts(prev => prev.filter(c => c.id !== id));
+            } else {
+                const data = await res.json();
+                setMessage({ type: 'error', text: data.error || 'Failed to dismiss' });
+            }
+        } catch (err) {
+            setMessage({ type: 'error', text: 'Network error' });
+        } finally {
+            setActionLoading(null);
+            setTimeout(() => setMessage(null), 3000);
+        }
+    };
+
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return '';
+        return new Date(dateStr).toLocaleDateString('en-US', { 
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+        });
+    };
+
+    const getSourceLabel = (source: string) => {
+        switch (source) {
+            case 'mindbody_csv': return 'Mindbody CSV';
+            case 'hubspot': return 'HubSpot';
+            default: return source;
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <span className="material-symbols-outlined animate-spin text-4xl text-primary/50">progress_activity</span>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            {message && (
+                <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${
+                    message.type === 'success' 
+                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800' 
+                        : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+                }`}>
+                    {message.text}
+                </div>
+            )}
+
+            {conflicts.length === 0 ? (
+                <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-white/5">
+                    <span className="material-symbols-outlined text-5xl text-green-500 mb-3 block">check_circle</span>
+                    <h3 className="text-lg font-bold text-primary dark:text-white mb-2">All Clear!</h3>
+                    <p className="text-gray-500 dark:text-gray-400">No membership tier conflicts detected.</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        {conflicts.length} conflict{conflicts.length !== 1 ? 's' : ''} require{conflicts.length === 1 ? 's' : ''} review
+                    </p>
+                    
+                    {conflicts.map(conflict => (
+                        <div 
+                            key={conflict.id} 
+                            className="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-amber-200 dark:border-amber-800/30"
+                        >
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-bold text-primary dark:text-white truncate">
+                                            {conflict.firstName} {conflict.lastName}
+                                        </h4>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded">
+                                            {getSourceLabel(conflict.source)}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{conflict.email}</p>
+                                    
+                                    <div className="flex items-center gap-2 mt-3">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-xs text-gray-400 dark:text-gray-500">App:</span>
+                                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                                {conflict.currentTier || 'Guest'}
+                                            </span>
+                                        </div>
+                                        <span className="material-symbols-outlined text-lg text-amber-500">arrow_forward</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-xs text-gray-400 dark:text-gray-500">New:</span>
+                                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                                {conflict.incomingTier}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
+                                        Detected {formatDate(conflict.createdAt)}
+                                    </p>
+                                </div>
+                                
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={() => handleAccept(conflict.id)}
+                                        disabled={actionLoading === conflict.id}
+                                        className="px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-bold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                        {actionLoading === conflict.id ? (
+                                            <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-sm">check</span>
+                                        )}
+                                        Accept New
+                                    </button>
+                                    <button
+                                        onClick={() => handleIgnore(conflict.id)}
+                                        disabled={actionLoading === conflict.id}
+                                        className="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">close</span>
+                                        Ignore
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>
