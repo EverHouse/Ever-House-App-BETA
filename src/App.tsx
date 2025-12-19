@@ -58,6 +58,7 @@ import WhatsOn from './pages/Public/WhatsOn';
 import PrivateHire from './pages/Public/PrivateHire';
 import PrivateEvents from './pages/Public/PrivateEvents';
 import PublicWellness from './pages/Public/Wellness';
+import PublicCafe from './pages/Public/Cafe';
 import FAQ from './pages/Public/FAQ';
 import Login from './pages/Public/Login';
 import VerifyMagicLink from './pages/Public/VerifyMagicLink';
@@ -540,6 +541,7 @@ const App: React.FC = () => {
               <Route path="/private-hire" element={<PrivateHire />} />
               <Route path="/private-events" element={<PrivateEvents />} />
               <Route path="/wellness" element={<PublicWellness />} />
+              <Route path="/menu" element={<PublicCafe />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/login" element={<Login />} />
               <Route path="/verify" element={<VerifyMagicLink />} />

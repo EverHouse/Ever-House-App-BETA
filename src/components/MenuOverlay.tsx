@@ -18,7 +18,6 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  // Use actualUser for role checking (not user, which could be a "view-as" user)
   const getActionButtonConfig = () => {
     if (actualUser?.role === 'admin' || actualUser?.role === 'staff') {
         return { label: "STAFF PORTAL", icon: "admin_panel_settings", action: () => handleNav('/admin') };
@@ -33,25 +32,17 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-start overflow-hidden">
-      {/* Clickable backdrop - no dimming, no blur */}
       <div 
         className="absolute inset-0 transition-opacity duration-500" 
         onClick={onClose}
       ></div>
 
-      {/* 
-          Menu Panel - Opaque Glass Pane
-          High opacity bone background with blur applied only to the panel itself
-      */}
       <div className="relative w-[85%] md:w-[320px] lg:w-[360px] h-full flex flex-col animate-slide-in-left shadow-[20px_0_50px_rgba(0,0,0,0.15)] overflow-hidden bg-[#F2F2EC] backdrop-blur-xl border-r border-black/5">
         
-        {/* Subtle Grain Texture */}
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-multiply"></div>
 
-        {/* Content Container with iOS Safe Area */}
         <div className="relative z-10 flex flex-col h-full py-8 text-[#293515] safe-area-inset-menu">
             
-            {/* Header: Close Button */}
             <div className="flex items-center justify-end mb-8">
                 <button 
                   onClick={onClose} 
@@ -61,18 +52,17 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                 </button>
             </div>
             
-            {/* Navigation Links */}
             <nav className="flex flex-col gap-6 flex-1 overflow-y-auto scrollbar-hide py-4">
                 <MenuLink label="Home" onClick={() => handleNav('/')} delay="0.05s" />
                 <MenuLink label="Membership" onClick={() => handleNav('/membership')} delay="0.1s" />
-                <MenuLink label="Host Events" onClick={() => handleNav('/private-hire')} delay="0.15s" />
-                <MenuLink label="What’s On" onClick={() => handleNav('/whats-on')} delay="0.2s" />
-                <MenuLink label="Gallery" onClick={() => handleNav('/gallery')} delay="0.25s" />
-                <MenuLink label="FAQ" onClick={() => handleNav('/faq')} delay="0.3s" />
+                <MenuLink label="Cafe" onClick={() => handleNav('/menu')} delay="0.15s" />
+                <MenuLink label="Host Events" onClick={() => handleNav('/private-hire')} delay="0.2s" />
+                <MenuLink label="What's On" onClick={() => handleNav('/whats-on')} delay="0.25s" />
+                <MenuLink label="Gallery" onClick={() => handleNav('/gallery')} delay="0.3s" />
+                <MenuLink label="FAQ" onClick={() => handleNav('/faq')} delay="0.35s" />
             </nav>
             
-            {/* Bottom Section */}
-            <div className="mt-4 pt-6 border-t border-[#293515]/10 space-y-4 animate-pop-in" style={{ animationDelay: '0.35s' }}>
+            <div className="mt-4 pt-6 border-t border-[#293515]/10 space-y-4 animate-pop-in" style={{ animationDelay: '0.4s' }}>
                 <button 
                     onClick={() => handleNav('/contact')}
                     className="w-full group flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-white/40 transition-colors border border-transparent hover:border-white/50"
