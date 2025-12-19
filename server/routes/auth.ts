@@ -6,6 +6,31 @@ import { pool, isProduction } from '../core/db';
 import { getHubSpotClient } from '../core/integrations';
 import { isAdminEmail } from '../core/middleware';
 
+async function isStaffEmail(email: string): Promise<boolean> {
+  if (!email) return false;
+  try {
+    const result = await pool.query(
+      'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+      [email]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Error checking staff status:', error);
+    return false;
+  }
+}
+
+async function getUserRole(email: string): Promise<'admin' | 'staff' | 'member'> {
+  const normalizedEmail = email.toLowerCase();
+  if (await isAdminEmail(normalizedEmail)) {
+    return 'admin';
+  }
+  if (await isStaffEmail(normalizedEmail)) {
+    return 'staff';
+  }
+  return 'member';
+}
+
 const router = Router();
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -127,7 +152,7 @@ router.post('/api/auth/verify-member', async (req, res) => {
       return res.status(403).json({ error: 'Your membership is not active. Please contact us for assistance.' });
     }
     
-    const adminStatus = await isAdminEmail(email.toLowerCase());
+    const role = await getUserRole(email.toLowerCase());
 
     const member = {
       id: contact.id,
@@ -139,7 +164,7 @@ router.post('/api/auth/verify-member', async (req, res) => {
       tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
       mindbodyClientId: contact.properties.mindbody_client_id || '',
       status: 'Active',
-      role: adminStatus ? 'admin' : 'member'
+      role
     };
     
     res.json({ success: true, member });
@@ -432,7 +457,7 @@ router.post('/api/auth/verify-otp', async (req, res) => {
     
     const contact = searchResponse.results[0];
     
-    const adminStatus = await isAdminEmail(normalizedEmail);
+    const role = await getUserRole(normalizedEmail);
 
     const sessionTtl = 7 * 24 * 60 * 60 * 1000;
     const member = {
@@ -445,7 +470,7 @@ router.post('/api/auth/verify-otp', async (req, res) => {
       tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
       mindbodyClientId: contact.properties.mindbody_client_id || '',
       status: 'Active',
-      role: adminStatus ? 'admin' : 'member',
+      role,
       expires_at: Date.now() + sessionTtl
     };
     
@@ -505,7 +530,7 @@ router.post('/api/auth/verify-token', async (req, res) => {
     
     const contact = searchResponse.results[0];
     
-    const adminStatus = await isAdminEmail(magicLink.email.toLowerCase());
+    const role = await getUserRole(magicLink.email.toLowerCase());
 
     const sessionTtl = 7 * 24 * 60 * 60 * 1000;
     const member = {
@@ -518,7 +543,7 @@ router.post('/api/auth/verify-token', async (req, res) => {
       tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
       mindbodyClientId: contact.properties.mindbody_client_id || '',
       status: 'Active',
-      role: adminStatus ? 'admin' : 'member',
+      role,
       expires_at: Date.now() + sessionTtl
     };
     
