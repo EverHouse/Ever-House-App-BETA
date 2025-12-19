@@ -51,9 +51,12 @@ const WelcomeBanner: React.FC = () => {
             <QuickTip 
               icon="sports_golf" 
               label="Golf Sims" 
-              value={tierPermissions.canBookSimulators ? 'Included' : 'Upgrade needed'}
+              value={tierPermissions.canBookSimulators 
+                ? (tierPermissions.dailySimulatorMinutes === 999 ? 'Unlimited' : `${tierPermissions.dailySimulatorMinutes}min/day`)
+                : 'Upgrade needed'}
               available={tierPermissions.canBookSimulators}
               isDark={isDark}
+              onClick={tierPermissions.canBookSimulators ? () => navigate('/book') : undefined}
             />
             <QuickTip 
               icon="calendar_month" 
@@ -65,10 +68,14 @@ const WelcomeBanner: React.FC = () => {
             <QuickTip 
               icon="meeting_room" 
               label="Conference Room" 
-              value="Book Now"
-              available={true}
+              value={tierPermissions.dailyConfRoomMinutes === 999 
+                ? 'Unlimited' 
+                : tierPermissions.dailyConfRoomMinutes > 0 
+                  ? `${tierPermissions.dailyConfRoomMinutes}min/day` 
+                  : 'Not included'}
+              available={tierPermissions.dailyConfRoomMinutes > 0}
               isDark={isDark}
-              onClick={() => navigate('/book?tab=conference')}
+              onClick={tierPermissions.dailyConfRoomMinutes > 0 ? () => navigate('/book?tab=conference') : undefined}
             />
             <QuickTip 
               icon="self_improvement" 

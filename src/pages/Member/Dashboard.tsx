@@ -6,7 +6,6 @@ import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
 import { formatDateShort, getTodayString } from '../../utils/dateUtils';
-import { getBaseTier, TIER_PERMISSIONS } from '../../utils/permissions';
 
 
 interface DBBooking {
@@ -278,39 +277,9 @@ const Dashboard: React.FC = () => {
             )}
           </div>
 
-          <div className="mb-8 grid grid-cols-4 gap-2 w-full">
-            <QuickAction 
-              icon="sports_golf" 
-              label="Golf" 
-              caption={(() => {
-                const baseTier = getBaseTier(user?.tier || 'Social');
-                const perms = TIER_PERMISSIONS[baseTier];
-                return perms.dailySimulatorMinutes === 999 
-                  ? 'Unlimited' 
-                  : perms.dailySimulatorMinutes > 0 
-                    ? `${perms.dailySimulatorMinutes}min/day` 
-                    : 'Not included';
-              })()}
-              onClick={() => navigate('/book')} 
-              delay="0.15s" 
-              isDark={isDark} 
-            />
-            <QuickAction 
-              icon="meeting_room" 
-              label="Conference" 
-              caption={(() => {
-                const baseTier = getBaseTier(user?.tier || 'Social');
-                const perms = TIER_PERMISSIONS[baseTier];
-                return perms.dailyConfRoomMinutes === 999 
-                  ? 'Unlimited' 
-                  : perms.dailyConfRoomMinutes > 0 
-                    ? `${perms.dailyConfRoomMinutes}min/day` 
-                    : 'Not included';
-              })()}
-              onClick={() => navigate('/book?tab=conference')} 
-              delay="0.20s" 
-              isDark={isDark} 
-            />
+          <div className="mb-8 flex justify-center gap-4">
+            <QuickAction icon="sports_golf" label="Golf" onClick={() => navigate('/book')} delay="0.15s" isDark={isDark} />
+            <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.20s" isDark={isDark} />
             <QuickAction icon="calendar_month" label="Events" onClick={() => navigate('/member-events')} delay="0.25s" isDark={isDark} />
             <QuickAction icon="local_cafe" label="Cafe" onClick={() => navigate('/cafe')} delay="0.30s" isDark={isDark} />
           </div>
@@ -355,20 +324,17 @@ const Dashboard: React.FC = () => {
   );
 };
 
-const QuickAction: React.FC<{icon: string; label: string; caption?: string; onClick: () => void; delay: string; isDark: boolean}> = ({ icon, label, caption, onClick, delay, isDark }) => (
+const QuickAction: React.FC<{icon: string; label: string; onClick: () => void; delay: string; isDark: boolean}> = ({ icon, label, onClick, delay, isDark }) => (
   <button 
     onClick={onClick}
-    className="flex flex-col items-center gap-1.5 group focus:outline-none animate-slide-up-stagger"
+    className="flex flex-col items-center gap-2 min-w-[72px] group focus:outline-none animate-slide-up-stagger"
     style={{animationDelay: delay}}
     aria-label={label}
   >
-    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center group-active:scale-95 transition-all group-focus:ring-2 group-focus:ring-accent ${isDark ? 'glass-button border-0 shadow-layered-dark text-white group-hover:bg-white/10' : 'bg-white shadow-layered text-brand-green group-hover:bg-black/5'}`}>
-      <span className="material-symbols-outlined text-[24px]">{icon}</span>
+    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center group-active:scale-95 transition-all group-focus:ring-2 group-focus:ring-accent ${isDark ? 'glass-button border-0 shadow-layered-dark text-white group-hover:bg-white/10' : 'bg-white shadow-layered text-brand-green group-hover:bg-black/5'}`}>
+      <span className="material-symbols-outlined text-[28px]">{icon}</span>
     </div>
     <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-white/70' : 'text-primary/70'}`}>{label}</span>
-    {caption && (
-      <span className={`text-[9px] -mt-0.5 ${isDark ? 'text-white/40' : 'text-primary/40'}`}>{caption}</span>
-    )}
   </button>
 );
 
