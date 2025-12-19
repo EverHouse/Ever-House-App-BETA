@@ -33,6 +33,7 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Member Tiers**: Implemented with utilities (`src/utils/permissions.ts`, `src/utils/tierUtils.ts`) to manage access, booking limits, and guest pass allowances based on membership levels (Social, Core, Premium, Corporate, VIP).
 - **Tier Badge System**: Premium visual badges for each tier with distinct colors - VIP (Platinum #E5E4E2), Premium (Gold #D4AF37), Corporate (Charcoal #374151), Core (Brand Green #293515), Social (Lavender #CCB8E4). Uses `TierBadge` and `TagBadge` components.
 - **Member Tags**: JSONB array stored in users table, populated from HubSpot `membership_discount_reason` field. Available tags include "Founding Member", "Investor", "VIP Guest", "Referral". Displayed alongside tier badges in Directory and Profile views.
+- **Mindbody Integration**: Member's Mindbody Client ID synced from HubSpot `mindbody_client_id` property. Displayed on member card popup in Profile view.
 - **Simulator Booking Request System**: Members request slots via a 14-day calendar, staff approve/decline with conflict detection.
 - **In-App Notifications**: Real-time notification system with a bell icon, unread badges, and read/mark all as read functionality.
 - **Role Management**: Admin dashboard allows assignment of member/staff/admin roles via `PUT /api/members/:id/role`.
@@ -57,8 +58,8 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
   - Sync endpoint: `POST /api/eventbrite/sync`
   - Requires `EVENTBRITE_PRIVATE_TOKEN` environment variable.
 - **Google Calendar**: Three-calendar integration system with named calendars:
-  - **Booked Golf**: Primary calendar for golf simulator bookings. Approved booking requests create events here; availability is checked via freeBusy API.
-  - **MBO_Members_Club**: Calendar for conference room bookings with similar availability checking.
+  - **Booked Golf**: Primary calendar for golf simulator bookings (4 bays available). Approved booking requests create events here; availability is checked via freeBusy API.
+  - **MBO_Conference_Room**: Calendar for conference room bookings (1 room available) with similar availability checking.
   - **Even House Public/Member Events**: Calendar for public events synced to the database. Events marked with `source='google_calendar'`, `visibility='public'`, and `requires_rsvp=false`.
   - Business hours configured per resource type (golf: 9AM-9PM, conference: 8AM-6PM).
   - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`, `POST /api/events/sync/google`, `POST /api/events/sync`.
