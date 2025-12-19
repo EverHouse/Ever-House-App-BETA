@@ -253,9 +253,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const getTopRightIcon = () => {
       if (!user) return 'login';
-      if (isProfilePage) return 'account_circle';
-      if (isMemberRoute) return 'badge';
+      if (isProfilePage) return 'dashboard';
+      if (isMemberRoute) return 'account_circle';
       return 'account_circle';
+  };
+
+  const getCenterIcon = () => {
+      if (!isMemberRoute) return null;
+      const path = location.pathname;
+      if (path === '/dashboard') return 'home';
+      if (path === '/profile') return 'account_circle';
+      if (path.startsWith('/book') || path.startsWith('/sims')) return 'sports_golf';
+      if (path.startsWith('/member-wellness')) return 'spa';
+      if (path.startsWith('/cafe')) return 'local_cafe';
+      if (path.startsWith('/member-events')) return 'celebration';
+      return 'home';
   };
 
   const openNotifications = (tab?: 'updates' | 'announcements') => {
@@ -311,17 +323,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   </span>
                 </button>
                 
-                <button 
-                  className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
-                  onClick={() => navigate('/')}
-                  aria-label="Go to home"
-                >
-                  <Logo 
-                    isMemberRoute={isMemberRoute} 
-                    isDarkBackground={true} 
-                    className="h-14 w-auto"
-                  />
-                </button>
+                {isMemberRoute ? (
+                  <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-[#293515] flex items-center justify-center shadow-lg">
+                      <span className="material-symbols-outlined text-[28px] text-[#F2F2EC]">
+                        {getCenterIcon()}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <button 
+                    className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
+                    onClick={() => navigate('/')}
+                    aria-label="Go to home"
+                  >
+                    <Logo 
+                      isMemberRoute={isMemberRoute} 
+                      isDarkBackground={true} 
+                      className="h-14 w-auto"
+                    />
+                  </button>
+                )}
 
                 <div className="flex items-center gap-1 ml-auto">
                   {isMemberRoute && user && (
