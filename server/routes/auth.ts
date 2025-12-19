@@ -2,18 +2,23 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { Resend } from 'resend';
-import { pool, isProduction } from '../core/db';
+import { eq, and, sql, gt, isNotNull } from 'drizzle-orm';
+import { db } from '../db';
+import { users, magicLinks, adminUsers, staffUsers } from '../../shared/schema';
+import { isProduction } from '../core/db';
 import { getHubSpotClient } from '../core/integrations';
 import { isAdminEmail } from '../core/middleware';
 
 async function isStaffEmail(email: string): Promise<boolean> {
   if (!email) return false;
   try {
-    const result = await pool.query(
-      'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
-      [email]
-    );
-    return result.rows.length > 0;
+    const result = await db.select({ id: staffUsers.id })
+      .from(staffUsers)
+      .where(and(
+        sql`LOWER(${staffUsers.email}) = LOWER(${email})`,
+        eq(staffUsers.isActive, true)
+      ));
+    return result.length > 0;
   } catch (error) {
     console.error('Error checking staff status:', error);
     return false;
@@ -252,10 +257,11 @@ router.post('/api/auth/magic-link', async (req, res) => {
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     
-    await pool.query(
-      'INSERT INTO magic_links (email, token, expires_at) VALUES ($1, $2, $3)',
-      [email.toLowerCase(), token, expiresAt]
-    );
+    await db.insert(magicLinks).values({
+      email: email.toLowerCase(),
+      token,
+      expiresAt
+    });
     
     const baseUrl = process.env.REPLIT_DOMAINS 
       ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
@@ -372,10 +378,11 @@ router.post('/api/auth/request-otp', async (req, res) => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     
-    await pool.query(
-      'INSERT INTO magic_links (email, token, expires_at) VALUES ($1, $2, $3)',
-      [normalizedEmail, code, expiresAt]
-    );
+    await db.insert(magicLinks).values({
+      email: normalizedEmail,
+      token: code,
+      expiresAt
+    });
     
     const emailResult = await resend.emails.send({
       from: 'Even House <noreply@everhouse.app>',
@@ -445,12 +452,18 @@ router.post('/api/auth/verify-otp', async (req, res) => {
       });
     }
     
-    const result = await pool.query(
-      'SELECT * FROM magic_links WHERE email = $1 AND token = $2 AND used = FALSE AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
-      [normalizedEmail, normalizedCode]
-    );
+    const result = await db.select()
+      .from(magicLinks)
+      .where(and(
+        eq(magicLinks.email, normalizedEmail),
+        eq(magicLinks.token, normalizedCode),
+        eq(magicLinks.used, false),
+        gt(magicLinks.expiresAt, new Date())
+      ))
+      .orderBy(sql`${magicLinks.createdAt} DESC`)
+      .limit(1);
     
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       recordOtpVerifyFailure(normalizedEmail);
       const currentAttempts = otpVerifyAttempts.get(normalizedEmail);
       const attemptsLeft = OTP_VERIFY_MAX_ATTEMPTS - (currentAttempts?.count || 0);
@@ -463,9 +476,11 @@ router.post('/api/auth/verify-otp', async (req, res) => {
     
     clearOtpVerifyAttempts(normalizedEmail);
     
-    const otpRecord = result.rows[0];
+    const otpRecord = result[0];
     
-    await pool.query('UPDATE magic_links SET used = TRUE WHERE id = $1', [otpRecord.id]);
+    await db.update(magicLinks)
+      .set({ used: true })
+      .where(eq(magicLinks.id, otpRecord.id));
     
     const hubspot = await getHubSpotClient();
     
@@ -527,18 +542,23 @@ router.post('/api/auth/verify-token', async (req, res) => {
       return res.status(400).json({ error: 'Token is required' });
     }
     
-    const result = await pool.query(
-      'SELECT * FROM magic_links WHERE token = $1 AND used = FALSE AND expires_at > NOW()',
-      [token]
-    );
+    const result = await db.select()
+      .from(magicLinks)
+      .where(and(
+        eq(magicLinks.token, token),
+        eq(magicLinks.used, false),
+        gt(magicLinks.expiresAt, new Date())
+      ));
     
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(400).json({ error: 'Invalid or expired link. Please request a new one.' });
     }
     
-    const magicLink = result.rows[0];
+    const magicLinkRecord = result[0];
     
-    await pool.query('UPDATE magic_links SET used = TRUE WHERE id = $1', [magicLink.id]);
+    await db.update(magicLinks)
+      .set({ used: true })
+      .where(eq(magicLinks.id, magicLinkRecord.id));
     
     const hubspot = await getHubSpotClient();
     
@@ -547,7 +567,7 @@ router.post('/api/auth/verify-token', async (req, res) => {
         filters: [{
           propertyName: 'email',
           operator: 'EQ' as any,
-          value: magicLink.email
+          value: magicLinkRecord.email
         }]
       }],
       properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id'],
@@ -560,14 +580,14 @@ router.post('/api/auth/verify-token', async (req, res) => {
     
     const contact = searchResponse.results[0];
     
-    const role = await getUserRole(magicLink.email.toLowerCase());
+    const role = await getUserRole(magicLinkRecord.email.toLowerCase());
 
     const sessionTtl = 7 * 24 * 60 * 60 * 1000;
     const member = {
       id: contact.id,
       firstName: contact.properties.firstname || '',
       lastName: contact.properties.lastname || '',
-      email: contact.properties.email || magicLink.email,
+      email: contact.properties.email || magicLinkRecord.email,
       phone: contact.properties.phone || '',
       tier: contact.properties.membership_tier || 'Core',
       tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
@@ -613,29 +633,39 @@ router.get('/api/auth/check-staff-admin', async (req, res) => {
     
     const normalizedEmail = email.toLowerCase();
     
-    const adminResult = await pool.query(
-      'SELECT id, password_hash IS NOT NULL as has_password FROM admin_users WHERE email = $1 AND is_active = true',
-      [normalizedEmail]
-    );
+    const adminResult = await db.select({
+      id: adminUsers.id,
+      hasPassword: isNotNull(adminUsers.passwordHash)
+    })
+      .from(adminUsers)
+      .where(and(
+        eq(adminUsers.email, normalizedEmail),
+        eq(adminUsers.isActive, true)
+      ));
     
-    if (adminResult.rows.length > 0) {
+    if (adminResult.length > 0) {
       return res.json({ 
         isStaffOrAdmin: true, 
         role: 'admin',
-        hasPassword: adminResult.rows[0].has_password 
+        hasPassword: adminResult[0].hasPassword 
       });
     }
     
-    const staffResult = await pool.query(
-      'SELECT id, password_hash IS NOT NULL as has_password FROM staff_users WHERE email = $1 AND is_active = true',
-      [normalizedEmail]
-    );
+    const staffResult = await db.select({
+      id: staffUsers.id,
+      hasPassword: isNotNull(staffUsers.passwordHash)
+    })
+      .from(staffUsers)
+      .where(and(
+        eq(staffUsers.email, normalizedEmail),
+        eq(staffUsers.isActive, true)
+      ));
     
-    if (staffResult.rows.length > 0) {
+    if (staffResult.length > 0) {
       return res.json({ 
         isStaffOrAdmin: true, 
         role: 'staff',
-        hasPassword: staffResult.rows[0].has_password 
+        hasPassword: staffResult[0].hasPassword 
       });
     }
     
@@ -656,25 +686,39 @@ router.post('/api/auth/password-login', async (req, res) => {
     
     const normalizedEmail = email.toLowerCase();
     
-    let userRecord = null;
+    let userRecord: { id: number; email: string; name: string | null; passwordHash: string | null } | null = null;
     let userRole = 'member';
     
-    const adminResult = await pool.query(
-      'SELECT id, email, name, password_hash FROM admin_users WHERE email = $1 AND is_active = true',
-      [normalizedEmail]
-    );
+    const adminResult = await db.select({
+      id: adminUsers.id,
+      email: adminUsers.email,
+      name: adminUsers.name,
+      passwordHash: adminUsers.passwordHash
+    })
+      .from(adminUsers)
+      .where(and(
+        eq(adminUsers.email, normalizedEmail),
+        eq(adminUsers.isActive, true)
+      ));
     
-    if (adminResult.rows.length > 0) {
-      userRecord = adminResult.rows[0];
+    if (adminResult.length > 0) {
+      userRecord = adminResult[0];
       userRole = 'admin';
     } else {
-      const staffResult = await pool.query(
-        'SELECT id, email, name, password_hash FROM staff_users WHERE email = $1 AND is_active = true',
-        [normalizedEmail]
-      );
+      const staffResult = await db.select({
+        id: staffUsers.id,
+        email: staffUsers.email,
+        name: staffUsers.name,
+        passwordHash: staffUsers.passwordHash
+      })
+        .from(staffUsers)
+        .where(and(
+          eq(staffUsers.email, normalizedEmail),
+          eq(staffUsers.isActive, true)
+        ));
       
-      if (staffResult.rows.length > 0) {
-        userRecord = staffResult.rows[0];
+      if (staffResult.length > 0) {
+        userRecord = staffResult[0];
         userRole = 'staff';
       }
     }
@@ -683,11 +727,11 @@ router.post('/api/auth/password-login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     
-    if (!userRecord.password_hash) {
+    if (!userRecord.passwordHash) {
       return res.status(400).json({ error: 'Password not set. Please use magic link or contact an admin.' });
     }
     
-    const isValid = await bcrypt.compare(password, userRecord.password_hash);
+    const isValid = await bcrypt.compare(password, userRecord.passwordHash);
     
     if (!isValid) {
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -771,21 +815,27 @@ router.post('/api/auth/set-password', async (req, res) => {
     const normalizedEmail = email.toLowerCase();
     const passwordHash = await bcrypt.hash(password, 10);
     
-    const adminResult = await pool.query(
-      'UPDATE admin_users SET password_hash = $1 WHERE email = $2 AND is_active = true RETURNING id',
-      [passwordHash, normalizedEmail]
-    );
+    const adminResult = await db.update(adminUsers)
+      .set({ passwordHash })
+      .where(and(
+        eq(adminUsers.email, normalizedEmail),
+        eq(adminUsers.isActive, true)
+      ))
+      .returning({ id: adminUsers.id });
     
-    if (adminResult.rows.length > 0) {
+    if (adminResult.length > 0) {
       return res.json({ success: true, message: 'Password set successfully' });
     }
     
-    const staffResult = await pool.query(
-      'UPDATE staff_users SET password_hash = $1 WHERE email = $2 AND is_active = true RETURNING id',
-      [passwordHash, normalizedEmail]
-    );
+    const staffResult = await db.update(staffUsers)
+      .set({ passwordHash })
+      .where(and(
+        eq(staffUsers.email, normalizedEmail),
+        eq(staffUsers.isActive, true)
+      ))
+      .returning({ id: staffUsers.id });
     
-    if (staffResult.rows.length > 0) {
+    if (staffResult.length > 0) {
       return res.json({ success: true, message: 'Password set successfully' });
     }
     
@@ -808,23 +858,27 @@ router.post('/api/auth/dev-login', async (req, res) => {
   try {
     const testEmail = 'testuser@evenhouse.club';
     
-    const existingUser = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [testEmail]
-    );
+    const existingUser = await db.select()
+      .from(users)
+      .where(eq(users.email, testEmail));
     
     let userId: string;
-    if (existingUser.rows.length === 0) {
-      const newUser = await pool.query(
-        `INSERT INTO users (id, email, role, tier, first_name, last_name, created_at) 
-         VALUES (gen_random_uuid(), $1, 'admin', 'Premium', 'Test', 'Admin', NOW()) 
-         RETURNING id`,
-        [testEmail]
-      );
-      userId = newUser.rows[0].id;
+    if (existingUser.length === 0) {
+      const newUser = await db.insert(users)
+        .values({
+          email: testEmail,
+          role: 'admin',
+          tier: 'Premium',
+          firstName: 'Test',
+          lastName: 'Admin'
+        })
+        .returning({ id: users.id });
+      userId = newUser[0].id;
     } else {
-      userId = existingUser.rows[0].id;
-      await pool.query('UPDATE users SET role = $1 WHERE email = $2', ['admin', testEmail]);
+      userId = existingUser[0].id;
+      await db.update(users)
+        .set({ role: 'admin' })
+        .where(eq(users.email, testEmail));
     }
     
     const sessionTtl = 7 * 24 * 60 * 60 * 1000;

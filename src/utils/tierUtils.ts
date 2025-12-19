@@ -1,4 +1,6 @@
-export type BaseTier = 'Social' | 'Core' | 'Premium' | 'Corporate' | 'VIP';
+import { getBaseTier, type BaseTier } from './permissions';
+
+export type { BaseTier };
 
 export interface TierColor {
   bg: string;
@@ -29,27 +31,18 @@ export function parseTierString(tierString: string): { tier: BaseTier; tags: str
     return { tier: 'Social', tags: [] };
   }
 
-  const normalizedTier = tierString.trim();
+  const normalizedTier = tierString.trim().toLowerCase();
   const tags: string[] = [];
-  let tier: BaseTier = 'Social';
 
-  if (normalizedTier.toLowerCase().includes('founding')) {
+  if (normalizedTier.includes('founding')) {
     tags.push('Founding Member');
   }
 
-  if (normalizedTier.toLowerCase().includes('investor')) {
+  if (normalizedTier.includes('investor')) {
     tags.push('Investor');
   }
 
-  const baseTiers: BaseTier[] = ['VIP', 'Premium', 'Corporate', 'Core', 'Social'];
-  for (const baseTier of baseTiers) {
-    if (normalizedTier.toLowerCase().includes(baseTier.toLowerCase())) {
-      tier = baseTier;
-      break;
-    }
-  }
-
-  return { tier, tags };
+  return { tier: getBaseTier(tierString), tags };
 }
 
 export function getTierColor(tier: string): TierColor {

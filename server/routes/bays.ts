@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { pool, isProduction } from '../core/db';
+import { db } from '../db';
+import { bays, availabilityBlocks, bookingRequests, notifications } from '../../shared/schema';
+import { eq, and, or, gte, lte, gt, lt, desc, asc, ne } from 'drizzle-orm';
+import { isProduction } from '../core/db';
 import { getGoogleCalendarClient } from '../core/integrations';
 import { CALENDAR_CONFIG, getCalendarIdByName, createCalendarEvent, createCalendarEventOnCalendar, deleteCalendarEvent } from '../core/calendar';
 import { sendPushNotification } from './push';
@@ -8,8 +11,8 @@ const router = Router();
 
 router.get('/api/bays', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM bays WHERE is_active = true ORDER BY name');
-    res.json(result.rows);
+    const result = await db.select().from(bays).where(eq(bays.isActive, true)).orderBy(asc(bays.name));
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('Bays error:', error);
     res.status(500).json({ error: 'Failed to fetch bays' });
@@ -25,19 +28,31 @@ router.get('/api/bays/:bayId/availability', async (req, res) => {
       return res.status(400).json({ error: 'Date is required' });
     }
     
-    const bookings = await pool.query(
-      `SELECT start_time, end_time, user_name FROM booking_requests 
-       WHERE bay_id = $1 AND request_date = $2 AND status = 'approved'
-       ORDER BY start_time`,
-      [bayId, date]
-    );
+    const bookingsResult = await db.select({
+      start_time: bookingRequests.startTime,
+      end_time: bookingRequests.endTime,
+      user_name: bookingRequests.userName
+    })
+    .from(bookingRequests)
+    .where(and(
+      eq(bookingRequests.bayId, parseInt(bayId)),
+      eq(bookingRequests.requestDate, date as string),
+      eq(bookingRequests.status, 'approved')
+    ))
+    .orderBy(asc(bookingRequests.startTime));
     
-    const blocks = await pool.query(
-      `SELECT start_time, end_time, block_type, notes FROM availability_blocks 
-       WHERE bay_id = $1 AND block_date = $2
-       ORDER BY start_time`,
-      [bayId, date]
-    );
+    const blocksResult = await db.select({
+      start_time: availabilityBlocks.startTime,
+      end_time: availabilityBlocks.endTime,
+      block_type: availabilityBlocks.blockType,
+      notes: availabilityBlocks.notes
+    })
+    .from(availabilityBlocks)
+    .where(and(
+      eq(availabilityBlocks.bayId, parseInt(bayId)),
+      eq(availabilityBlocks.blockDate, date as string)
+    ))
+    .orderBy(asc(availabilityBlocks.startTime));
     
     let calendarBlocks: any[] = [];
     try {
@@ -73,8 +88,8 @@ router.get('/api/bays/:bayId/availability', async (req, res) => {
     }
     
     res.json({
-      bookings: bookings.rows,
-      blocks: [...blocks.rows, ...calendarBlocks]
+      bookings: bookingsResult,
+      blocks: [...blocksResult, ...calendarBlocks]
     });
   } catch (error: any) {
     if (!isProduction) console.error('Availability error:', error);
@@ -86,30 +101,43 @@ router.get('/api/booking-requests', async (req, res) => {
   try {
     const { user_email, status, include_all } = req.query;
     
-    let query = `SELECT br.*, b.name as bay_name 
-                 FROM booking_requests br 
-                 LEFT JOIN bays b ON br.bay_id = b.id`;
-    const params: any[] = [];
-    const conditions: string[] = [];
+    const conditions: any[] = [];
     
     if (user_email && !include_all) {
-      params.push(user_email);
-      conditions.push(`br.user_email = $${params.length}`);
+      conditions.push(eq(bookingRequests.userEmail, user_email as string));
     }
     
     if (status) {
-      params.push(status);
-      conditions.push(`br.status = $${params.length}`);
+      conditions.push(eq(bookingRequests.status, status as string));
     }
     
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
+    const result = await db.select({
+      id: bookingRequests.id,
+      user_email: bookingRequests.userEmail,
+      user_name: bookingRequests.userName,
+      bay_id: bookingRequests.bayId,
+      bay_preference: bookingRequests.bayPreference,
+      request_date: bookingRequests.requestDate,
+      start_time: bookingRequests.startTime,
+      duration_minutes: bookingRequests.durationMinutes,
+      end_time: bookingRequests.endTime,
+      notes: bookingRequests.notes,
+      status: bookingRequests.status,
+      staff_notes: bookingRequests.staffNotes,
+      suggested_time: bookingRequests.suggestedTime,
+      reviewed_by: bookingRequests.reviewedBy,
+      reviewed_at: bookingRequests.reviewedAt,
+      created_at: bookingRequests.createdAt,
+      updated_at: bookingRequests.updatedAt,
+      calendar_event_id: bookingRequests.calendarEventId,
+      bay_name: bays.name
+    })
+    .from(bookingRequests)
+    .leftJoin(bays, eq(bookingRequests.bayId, bays.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(bookingRequests.createdAt));
     
-    query += ' ORDER BY br.created_at DESC';
-    
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('Booking requests error:', error);
     res.status(500).json({ error: 'Failed to fetch booking requests' });
@@ -130,14 +158,39 @@ router.post('/api/booking-requests', async (req, res) => {
     const endMins = totalMins % 60;
     const end_time = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
     
-    const result = await pool.query(
-      `INSERT INTO booking_requests 
-       (user_email, user_name, bay_id, bay_preference, request_date, start_time, duration_minutes, end_time, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [user_email, user_name, bay_id || null, bay_preference, request_date, start_time, duration_minutes, end_time, notes]
-    );
+    const result = await db.insert(bookingRequests).values({
+      userEmail: user_email,
+      userName: user_name,
+      bayId: bay_id || null,
+      bayPreference: bay_preference,
+      requestDate: request_date,
+      startTime: start_time,
+      durationMinutes: duration_minutes,
+      endTime: end_time,
+      notes: notes
+    }).returning();
     
-    res.status(201).json(result.rows[0]);
+    const row = result[0];
+    res.status(201).json({
+      id: row.id,
+      user_email: row.userEmail,
+      user_name: row.userName,
+      bay_id: row.bayId,
+      bay_preference: row.bayPreference,
+      request_date: row.requestDate,
+      start_time: row.startTime,
+      duration_minutes: row.durationMinutes,
+      end_time: row.endTime,
+      notes: row.notes,
+      status: row.status,
+      staff_notes: row.staffNotes,
+      suggested_time: row.suggestedTime,
+      reviewed_by: row.reviewedBy,
+      reviewed_at: row.reviewedAt,
+      created_at: row.createdAt,
+      updated_at: row.updatedAt,
+      calendar_event_id: row.calendarEventId
+    });
   } catch (error: any) {
     if (!isProduction) console.error('Booking request creation error:', error);
     res.status(500).json({ error: 'Failed to create booking request' });
@@ -153,50 +206,72 @@ router.put('/api/booking-requests/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid status' });
     }
     
+    const formatRow = (row: any) => ({
+      id: row.id,
+      user_email: row.userEmail,
+      user_name: row.userName,
+      bay_id: row.bayId,
+      bay_preference: row.bayPreference,
+      request_date: row.requestDate,
+      start_time: row.startTime,
+      duration_minutes: row.durationMinutes,
+      end_time: row.endTime,
+      notes: row.notes,
+      status: row.status,
+      staff_notes: row.staffNotes,
+      suggested_time: row.suggestedTime,
+      reviewed_by: row.reviewedBy,
+      reviewed_at: row.reviewedAt,
+      created_at: row.createdAt,
+      updated_at: row.updatedAt,
+      calendar_event_id: row.calendarEventId
+    });
+    
     if (status === 'approved') {
-      const request = await pool.query('SELECT * FROM booking_requests WHERE id = $1', [id]);
-      if (request.rows.length === 0) {
+      const requestResult = await db.select().from(bookingRequests).where(eq(bookingRequests.id, parseInt(id)));
+      if (requestResult.length === 0) {
         return res.status(404).json({ error: 'Request not found' });
       }
       
-      const req_data = request.rows[0];
-      const assignedBayId = bay_id || req_data.bay_id;
+      const req_data = requestResult[0];
+      const assignedBayId = bay_id || req_data.bayId;
       
       if (!assignedBayId) {
         return res.status(400).json({ error: 'Bay must be assigned before approval' });
       }
       
-      const conflicts = await pool.query(
-        `SELECT * FROM booking_requests 
-         WHERE bay_id = $1 AND request_date = $2 AND status = 'approved' AND id != $3
-         AND (
-           (start_time <= $4 AND end_time > $4) OR
-           (start_time < $5 AND end_time >= $5) OR
-           (start_time >= $4 AND end_time <= $5)
-         )`,
-        [assignedBayId, req_data.request_date, id, req_data.start_time, req_data.end_time]
-      );
+      const conflicts = await db.select().from(bookingRequests).where(and(
+        eq(bookingRequests.bayId, assignedBayId),
+        eq(bookingRequests.requestDate, req_data.requestDate),
+        eq(bookingRequests.status, 'approved'),
+        ne(bookingRequests.id, parseInt(id)),
+        or(
+          and(lte(bookingRequests.startTime, req_data.startTime), gt(bookingRequests.endTime, req_data.startTime)),
+          and(lt(bookingRequests.startTime, req_data.endTime), gte(bookingRequests.endTime, req_data.endTime)),
+          and(gte(bookingRequests.startTime, req_data.startTime), lte(bookingRequests.endTime, req_data.endTime))
+        )
+      ));
       
-      if (conflicts.rows.length > 0) {
+      if (conflicts.length > 0) {
         return res.status(409).json({ error: 'Time slot conflicts with existing booking' });
       }
       
-      const bayResult = await pool.query('SELECT name FROM bays WHERE id = $1', [assignedBayId]);
-      const bayName = bayResult.rows[0]?.name || 'Simulator';
+      const bayResult = await db.select({ name: bays.name }).from(bays).where(eq(bays.id, assignedBayId));
+      const bayName = bayResult[0]?.name || 'Simulator';
       
       let calendarEventId: string | null = null;
       try {
         const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
         if (golfCalendarId) {
-          const summary = `Simulator: ${req_data.user_name || req_data.user_email}`;
-          const description = `Bay: ${bayName}\nMember: ${req_data.user_email}\nDuration: ${req_data.duration_minutes} minutes${req_data.notes ? '\nNotes: ' + req_data.notes : ''}`;
+          const summary = `Simulator: ${req_data.userName || req_data.userEmail}`;
+          const description = `Bay: ${bayName}\nMember: ${req_data.userEmail}\nDuration: ${req_data.durationMinutes} minutes${req_data.notes ? '\nNotes: ' + req_data.notes : ''}`;
           calendarEventId = await createCalendarEventOnCalendar(
             golfCalendarId,
             summary,
             description,
-            req_data.request_date,
-            req_data.start_time,
-            req_data.end_time
+            req_data.requestDate,
+            req_data.startTime,
+            req_data.endTime
           );
         } else {
           calendarEventId = await createCalendarEvent(req_data, bayName);
@@ -205,83 +280,101 @@ router.put('/api/booking-requests/:id', async (req, res) => {
         console.error('Calendar sync failed (non-blocking):', calError);
       }
       
-      const result = await pool.query(
-        `UPDATE booking_requests 
-         SET status = $1, staff_notes = $2, suggested_time = $3, reviewed_by = $4, reviewed_at = CURRENT_TIMESTAMP, bay_id = $5, calendar_event_id = $6, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $7 RETURNING *`,
-        [status, staff_notes, suggested_time, reviewed_by, assignedBayId, calendarEventId, id]
-      );
+      const result = await db.update(bookingRequests)
+        .set({
+          status: status,
+          staffNotes: staff_notes,
+          suggestedTime: suggested_time,
+          reviewedBy: reviewed_by,
+          reviewedAt: new Date(),
+          bayId: assignedBayId,
+          calendarEventId: calendarEventId,
+          updatedAt: new Date()
+        })
+        .where(eq(bookingRequests.id, parseInt(id)))
+        .returning();
       
-      const updated = result.rows[0];
-      const approvalMessage = `Your simulator booking for ${updated.request_date} at ${updated.start_time.substring(0, 5)} has been approved.`;
-      await pool.query(
-        `INSERT INTO notifications (user_email, title, message, type, related_id, related_type)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          updated.user_email,
-          'Booking Request Approved',
-          approvalMessage,
-          'booking_approved',
-          updated.id,
-          'booking_request'
-        ]
-      );
+      const updated = result[0];
+      const approvalMessage = `Your simulator booking for ${updated.requestDate} at ${updated.startTime.substring(0, 5)} has been approved.`;
       
-      await sendPushNotification(updated.user_email, {
+      await db.insert(notifications).values({
+        userEmail: updated.userEmail,
+        title: 'Booking Request Approved',
+        message: approvalMessage,
+        type: 'booking_approved',
+        relatedId: updated.id,
+        relatedType: 'booking_request'
+      });
+      
+      await sendPushNotification(updated.userEmail, {
         title: 'Booking Approved!',
         body: approvalMessage,
         url: '/#/sims'
       });
       
-      return res.json(result.rows[0]);
+      return res.json(formatRow(result[0]));
     }
     
     if (status === 'declined') {
-      const result = await pool.query(
-        `UPDATE booking_requests 
-         SET status = $1, staff_notes = $2, suggested_time = $3, reviewed_by = $4, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $5 RETURNING *`,
-        [status, staff_notes, suggested_time, reviewed_by, id]
-      );
+      const result = await db.update(bookingRequests)
+        .set({
+          status: status,
+          staffNotes: staff_notes,
+          suggestedTime: suggested_time,
+          reviewedBy: reviewed_by,
+          reviewedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(bookingRequests.id, parseInt(id)))
+        .returning();
       
-      const updated = result.rows[0];
+      const updated = result[0];
       const declineMessage = suggested_time 
-        ? `Your simulator booking request for ${updated.request_date} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
-        : `Your simulator booking request for ${updated.request_date} was declined.${staff_notes ? ' Note: ' + staff_notes : ''}`;
+        ? `Your simulator booking request for ${updated.requestDate} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
+        : `Your simulator booking request for ${updated.requestDate} was declined.${staff_notes ? ' Note: ' + staff_notes : ''}`;
       
-      await pool.query(
-        `INSERT INTO notifications (user_email, title, message, type, related_id, related_type)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [updated.user_email, 'Booking Request Declined', declineMessage, 'booking_declined', updated.id, 'booking_request']
-      );
+      await db.insert(notifications).values({
+        userEmail: updated.userEmail,
+        title: 'Booking Request Declined',
+        message: declineMessage,
+        type: 'booking_declined',
+        relatedId: updated.id,
+        relatedType: 'booking_request'
+      });
       
-      await sendPushNotification(updated.user_email, {
+      await sendPushNotification(updated.userEmail, {
         title: 'Booking Request Update',
         body: declineMessage,
         url: '/#/sims'
       });
       
-      return res.json(result.rows[0]);
+      return res.json(formatRow(result[0]));
     }
     
     if (status === 'cancelled') {
-      const existing = await pool.query('SELECT calendar_event_id FROM booking_requests WHERE id = $1', [id]);
-      if (existing.rows[0]?.calendar_event_id) {
+      const existing = await db.select({ calendarEventId: bookingRequests.calendarEventId })
+        .from(bookingRequests)
+        .where(eq(bookingRequests.id, parseInt(id)));
+      
+      if (existing[0]?.calendarEventId) {
         try {
           const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-          await deleteCalendarEvent(existing.rows[0].calendar_event_id, golfCalendarId || 'primary');
+          await deleteCalendarEvent(existing[0].calendarEventId, golfCalendarId || 'primary');
         } catch (calError) {
           console.error('Failed to delete calendar event (non-blocking):', calError);
         }
       }
     }
     
-    const result = await pool.query(
-      `UPDATE booking_requests SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
-      [status, id]
-    );
+    const result = await db.update(bookingRequests)
+      .set({
+        status: status,
+        updatedAt: new Date()
+      })
+      .where(eq(bookingRequests.id, parseInt(id)))
+      .returning();
     
-    res.json(result.rows[0]);
+    res.json(formatRow(result[0]));
   } catch (error: any) {
     if (!isProduction) console.error('Booking request update error:', error);
     res.status(500).json({ error: 'Failed to update booking request' });
@@ -292,25 +385,42 @@ router.get('/api/approved-bookings', async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
     
-    let query = `SELECT br.*, b.name as bay_name 
-                 FROM booking_requests br 
-                 JOIN bays b ON br.bay_id = b.id
-                 WHERE br.status = 'approved'`;
-    const params: any[] = [];
+    const conditions: any[] = [eq(bookingRequests.status, 'approved')];
     
     if (start_date) {
-      params.push(start_date);
-      query += ` AND br.request_date >= $${params.length}`;
+      conditions.push(gte(bookingRequests.requestDate, start_date as string));
     }
     if (end_date) {
-      params.push(end_date);
-      query += ` AND br.request_date <= $${params.length}`;
+      conditions.push(lte(bookingRequests.requestDate, end_date as string));
     }
     
-    query += ' ORDER BY br.request_date, br.start_time';
+    const result = await db.select({
+      id: bookingRequests.id,
+      user_email: bookingRequests.userEmail,
+      user_name: bookingRequests.userName,
+      bay_id: bookingRequests.bayId,
+      bay_preference: bookingRequests.bayPreference,
+      request_date: bookingRequests.requestDate,
+      start_time: bookingRequests.startTime,
+      duration_minutes: bookingRequests.durationMinutes,
+      end_time: bookingRequests.endTime,
+      notes: bookingRequests.notes,
+      status: bookingRequests.status,
+      staff_notes: bookingRequests.staffNotes,
+      suggested_time: bookingRequests.suggestedTime,
+      reviewed_by: bookingRequests.reviewedBy,
+      reviewed_at: bookingRequests.reviewedAt,
+      created_at: bookingRequests.createdAt,
+      updated_at: bookingRequests.updatedAt,
+      calendar_event_id: bookingRequests.calendarEventId,
+      bay_name: bays.name
+    })
+    .from(bookingRequests)
+    .innerJoin(bays, eq(bookingRequests.bayId, bays.id))
+    .where(and(...conditions))
+    .orderBy(asc(bookingRequests.requestDate), asc(bookingRequests.startTime));
     
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('Approved bookings error:', error);
     res.status(500).json({ error: 'Failed to fetch approved bookings' });

@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { pool, isProduction } from '../core/db';
+import { isProduction } from '../core/db';
+import { db } from '../db';
+import { events, eventRsvps } from '../../shared/schema';
+import { eq, and, sql, gte } from 'drizzle-orm';
 import { syncGoogleCalendarEvents } from '../core/calendar';
 
 const router = Router();
@@ -45,30 +48,45 @@ router.post('/api/events/sync', async (req, res) => {
 router.get('/api/events', async (req, res) => {
   try {
     const { date, include_past, visibility } = req.query;
-    let query = 'SELECT id, title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, eventbrite_id, eventbrite_url, source, visibility, requires_rsvp, google_calendar_id FROM events';
-    const params: any[] = [];
-    const conditions: string[] = [];
+    const conditions: any[] = [];
     
     if (date) {
-      params.push(date);
-      conditions.push(`event_date = $${params.length}`);
+      conditions.push(eq(events.eventDate, date as string));
     } else if (include_past !== 'true') {
-      conditions.push('event_date >= CURRENT_DATE');
+      conditions.push(gte(events.eventDate, sql`CURRENT_DATE`));
     }
     
     if (visibility) {
-      params.push(visibility);
-      conditions.push(`visibility = $${params.length}`);
+      conditions.push(eq(events.visibility, visibility as string));
     }
     
+    const query = db.select({
+      id: events.id,
+      title: events.title,
+      description: events.description,
+      event_date: events.eventDate,
+      start_time: events.startTime,
+      end_time: events.endTime,
+      location: events.location,
+      category: events.category,
+      image_url: events.imageUrl,
+      max_attendees: events.maxAttendees,
+      eventbrite_id: events.eventbriteId,
+      eventbrite_url: events.eventbriteUrl,
+      source: events.source,
+      visibility: events.visibility,
+      requires_rsvp: events.requiresRsvp,
+      google_calendar_id: events.googleCalendarId,
+    }).from(events);
+    
+    let result;
     if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
+      result = await query.where(and(...conditions)).orderBy(events.eventDate, events.startTime);
+    } else {
+      result = await query.orderBy(events.eventDate, events.startTime);
     }
     
-    query += ' ORDER BY event_date, start_time';
-    
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
     res.status(500).json({ error: 'Request failed' });
@@ -79,13 +97,22 @@ router.post('/api/events', async (req, res) => {
   try {
     const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility, requires_rsvp } = req.body;
     
-    const result = await pool.query(
-      `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, source, visibility, requires_rsvp)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual', $10, $11) RETURNING *`,
-      [title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility || 'public', requires_rsvp || false]
-    );
+    const result = await db.insert(events).values({
+      title,
+      description,
+      eventDate: event_date,
+      startTime: start_time,
+      endTime: end_time,
+      location,
+      category,
+      imageUrl: image_url,
+      maxAttendees: max_attendees,
+      source: 'manual',
+      visibility: visibility || 'public',
+      requiresRsvp: requires_rsvp || false,
+    }).returning();
     
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result[0]);
   } catch (error: any) {
     if (!isProduction) console.error('Booking creation error:', error);
     res.status(500).json({ error: 'Failed to create booking' });
@@ -97,18 +124,23 @@ router.put('/api/events/:id', async (req, res) => {
     const { id } = req.params;
     const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees } = req.body;
     
-    const result = await pool.query(
-      `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, end_time = $5, 
-       location = $6, category = $7, image_url = $8, max_attendees = $9
-       WHERE id = $10 RETURNING *`,
-      [title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, id]
-    );
+    const result = await db.update(events).set({
+      title,
+      description,
+      eventDate: event_date,
+      startTime: start_time,
+      endTime: end_time,
+      location,
+      category,
+      imageUrl: image_url,
+      maxAttendees: max_attendees,
+    }).where(eq(events.id, parseInt(id))).returning();
     
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error: any) {
     if (!isProduction) console.error('Event update error:', error);
     res.status(500).json({ error: 'Failed to update event' });
@@ -118,7 +150,7 @@ router.put('/api/events/:id', async (req, res) => {
 router.delete('/api/events/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM events WHERE id = $1', [id]);
+    await db.delete(events).where(eq(events.id, parseInt(id)));
     res.json({ success: true });
   } catch (error: any) {
     if (!isProduction) console.error('Event delete error:', error);
@@ -179,26 +211,43 @@ router.post('/api/eventbrite/sync', async (req, res) => {
       const eventbriteUrl = ebEvent.url || null;
       const maxAttendees = ebEvent.capacity || null;
 
-      const existing = await pool.query(
-        'SELECT id FROM events WHERE eventbrite_id = $1',
-        [eventbriteId]
-      );
+      const existing = await db.select({ id: events.id })
+        .from(events)
+        .where(eq(events.eventbriteId, eventbriteId));
 
-      if (existing.rows.length > 0) {
-        await pool.query(
-          `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, 
-           end_time = $5, location = $6, image_url = $7, eventbrite_url = $8, max_attendees = $9,
-           source = 'eventbrite', visibility = 'members_only', requires_rsvp = true
-           WHERE eventbrite_id = $10`,
-          [title, description, eventDate, startTime, endTime, location, imageUrl, eventbriteUrl, maxAttendees, eventbriteId]
-        );
+      if (existing.length > 0) {
+        await db.update(events).set({
+          title,
+          description,
+          eventDate,
+          startTime,
+          endTime,
+          location,
+          imageUrl,
+          eventbriteUrl,
+          maxAttendees,
+          source: 'eventbrite',
+          visibility: 'members_only',
+          requiresRsvp: true,
+        }).where(eq(events.eventbriteId, eventbriteId));
         updated++;
       } else {
-        await pool.query(
-          `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, image_url, eventbrite_id, eventbrite_url, max_attendees, source, visibility, requires_rsvp)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'eventbrite', 'members_only', true)`,
-          [title, description, eventDate, startTime, endTime, location, 'Social', imageUrl, eventbriteId, eventbriteUrl, maxAttendees]
-        );
+        await db.insert(events).values({
+          title,
+          description,
+          eventDate,
+          startTime,
+          endTime,
+          location,
+          category: 'Social',
+          imageUrl,
+          eventbriteId,
+          eventbriteUrl,
+          maxAttendees,
+          source: 'eventbrite',
+          visibility: 'members_only',
+          requiresRsvp: true,
+        });
         synced++;
       }
     }
@@ -220,21 +269,34 @@ router.get('/api/rsvps', async (req, res) => {
   try {
     const { user_email } = req.query;
     
-    let query = `SELECT r.*, e.title, e.event_date, e.start_time, e.location, e.category, e.image_url 
-                 FROM event_rsvps r 
-                 JOIN events e ON r.event_id = e.id 
-                 WHERE r.status = 'confirmed'`;
-    const params: any[] = [];
+    const conditions = [
+      eq(eventRsvps.status, 'confirmed'),
+      gte(events.eventDate, sql`CURRENT_DATE`),
+    ];
     
     if (user_email) {
-      params.push(user_email);
-      query += ` AND r.user_email = $${params.length}`;
+      conditions.push(eq(eventRsvps.userEmail, user_email as string));
     }
     
-    query += ' AND e.event_date >= CURRENT_DATE ORDER BY e.event_date, e.start_time';
+    const result = await db.select({
+      id: eventRsvps.id,
+      event_id: eventRsvps.eventId,
+      user_email: eventRsvps.userEmail,
+      status: eventRsvps.status,
+      created_at: eventRsvps.createdAt,
+      title: events.title,
+      event_date: events.eventDate,
+      start_time: events.startTime,
+      location: events.location,
+      category: events.category,
+      image_url: events.imageUrl,
+    })
+    .from(eventRsvps)
+    .innerJoin(events, eq(eventRsvps.eventId, events.id))
+    .where(and(...conditions))
+    .orderBy(events.eventDate, events.startTime);
     
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
     res.status(500).json({ error: 'Request failed' });
@@ -245,15 +307,15 @@ router.post('/api/rsvps', async (req, res) => {
   try {
     const { event_id, user_email } = req.body;
     
-    const result = await pool.query(
-      `INSERT INTO event_rsvps (event_id, user_email) 
-       VALUES ($1, $2) 
-       ON CONFLICT (event_id, user_email) DO UPDATE SET status = 'confirmed'
-       RETURNING *`,
-      [event_id, user_email]
-    );
+    const result = await db.insert(eventRsvps).values({
+      eventId: event_id,
+      userEmail: user_email,
+    }).onConflictDoUpdate({
+      target: [eventRsvps.eventId, eventRsvps.userEmail],
+      set: { status: 'confirmed' },
+    }).returning();
     
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result[0]);
   } catch (error: any) {
     if (!isProduction) console.error('Booking creation error:', error);
     res.status(500).json({ error: 'Failed to create booking' });
@@ -263,10 +325,12 @@ router.post('/api/rsvps', async (req, res) => {
 router.delete('/api/rsvps/:event_id/:user_email', async (req, res) => {
   try {
     const { event_id, user_email } = req.params;
-    await pool.query(
-      "UPDATE event_rsvps SET status = 'cancelled' WHERE event_id = $1 AND user_email = $2",
-      [event_id, user_email]
-    );
+    await db.update(eventRsvps)
+      .set({ status: 'cancelled' })
+      .where(and(
+        eq(eventRsvps.eventId, parseInt(event_id)),
+        eq(eventRsvps.userEmail, user_email)
+      ));
     res.json({ success: true });
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
