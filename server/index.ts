@@ -1215,6 +1215,61 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
+app.post('/api/auth/dev-login', async (req, res) => {
+  if (isProduction) {
+    return res.status(403).json({ error: 'Dev login not available in production' });
+  }
+  
+  try {
+    const testEmail = 'testuser@evenhouse.club';
+    
+    const existingUser = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [testEmail]
+    );
+    
+    let userId: string;
+    if (existingUser.rows.length === 0) {
+      const newUser = await pool.query(
+        `INSERT INTO users (id, email, role, tier, first_name, last_name, created_at) 
+         VALUES (gen_random_uuid(), $1, 'admin', 'Premium', 'Test', 'Admin', NOW()) 
+         RETURNING id`,
+        [testEmail]
+      );
+      userId = newUser.rows[0].id;
+    } else {
+      userId = existingUser.rows[0].id;
+      await pool.query('UPDATE users SET role = $1 WHERE email = $2', ['admin', testEmail]);
+    }
+    
+    const sessionTtl = 7 * 24 * 60 * 60 * 1000;
+    const member = {
+      id: userId,
+      firstName: 'Test',
+      lastName: 'Admin',
+      email: testEmail,
+      phone: '',
+      tier: 'Premium',
+      status: 'Active',
+      role: 'admin',
+      expires_at: Date.now() + sessionTtl
+    };
+    
+    (req.session as any).user = member;
+    
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Failed to create session' });
+      }
+      res.json({ success: true, member });
+    });
+  } catch (error: any) {
+    console.error('Dev login error:', error);
+    res.status(500).json({ error: 'Dev login failed' });
+  }
+});
+
 app.get('/api/hubspot/contacts', async (req, res) => {
   try {
     const hubspot = await getHubSpotClient();

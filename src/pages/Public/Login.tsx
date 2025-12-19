@@ -1,13 +1,43 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
+import { useData } from '../../contexts/DataContext';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { loginWithMember } = useData();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [devLoading, setDevLoading] = useState(false);
   const [error, setError] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+  
+  const isDev = import.meta.env.DEV;
+
+  const handleDevLogin = async () => {
+    setDevLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('/api/auth/dev-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Dev login failed');
+      }
+      
+      const { member } = await res.json();
+      loginWithMember(member);
+      navigate('/member/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Dev login failed');
+    } finally {
+      setDevLoading(false);
+    }
+  };
 
   const handleRequestMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,6 +162,24 @@ const Login: React.FC = () => {
                 <p className="text-center text-xs text-primary/50">
                   We'll email you a secure link to sign in instantly.
                 </p>
+                
+                {isDev && (
+                  <>
+                    <hr className="border-black/10" />
+                    <button
+                      type="button"
+                      onClick={handleDevLogin}
+                      disabled={devLoading}
+                      className="flex w-full justify-center items-center gap-2 rounded-xl bg-amber-500 px-3 py-3 text-sm font-bold leading-6 text-white hover:bg-amber-600 transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-lg">developer_mode</span>
+                      {devLoading ? 'Logging in...' : 'Dev Login (Test Admin)'}
+                    </button>
+                    <p className="text-center text-xs text-amber-600">
+                      Development only - logs in as testuser@evenhouse.club
+                    </p>
+                  </>
+                )}
             </div>
 
             <p className="text-center text-sm text-primary/60 font-medium">
