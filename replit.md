@@ -77,3 +77,17 @@ The backend is organized into modular route files under `server/`:
   - API endpoints: `/api/calendar-availability/golf`, `/api/calendar-availability/conference`, `/api/calendars`, `POST /api/events/sync/google`, `POST /api/events/sync`.
 - **Apple Messages for Business**: Direct messaging support via a button on the Contact page, linking to Apple Business Chat.
 - **Amarie Aesthetics MedSpa**: Integration for wellness services, including IV Hydration Drip Menu, Wellness Shots, NAD+ Treatments, Injectables, and Medical Weightloss programs, with a direct booking link.
+
+## Backlog
+
+### Pending: Trackman Integration
+- **Trackman Calendar Sync**: Google Apps Script to auto-sync Trackman booking emails to Google Calendar. Script ready in `docs/trackman-calendar-sync.md`. Setup steps:
+  1. Deploy the script to Google Apps Script
+  2. Configure the Trackman sender email in CONFIG
+  3. Enable Trackman Notify integration (add trigger flags, set to Active)
+  4. Run `setupTrigger` to enable automatic syncing
+- **HubSpot Deals Integration**: Waiting for Trackman to approve HubSpot integration. Once approved, implement:
+  1. Endpoint to fetch HubSpot Deals (Trackman bookings) for members
+  2. Display Trackman bookings on member dashboard
+  3. Factor Trackman usage into tier limit calculations
+  4. Unified calendar view with both in-app and Trackman bookings
