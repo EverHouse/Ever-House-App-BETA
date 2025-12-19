@@ -4,6 +4,7 @@ import { useData, EventData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../components/Toast';
 import Skeleton from '../../components/Skeleton';
+import { EventCardSkeleton, SkeletonList } from '../../components/skeletons';
 import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
@@ -144,18 +145,9 @@ const MemberEvents: React.FC = () => {
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 animate-pop-in ${isDark ? 'text-white/80' : 'text-primary/80'}`} style={{animationDelay: '0.2s', animationFillMode: 'both'}}>Events</h3>
             <div className="space-y-4">
                 {isLoading ? (
-                    <>
-                       {Array.from({ length: 3 }).map((_, i) => (
-                           <div key={i} className={`flex gap-4 p-4 rounded-xl relative overflow-hidden border ${isDark ? 'glass-card border-white/5' : 'bg-white border-black/5 shadow-sm'}`}>
-                                <Skeleton width={80} height={80} className="flex-shrink-0" />
-                                <div className="flex-1 space-y-2 py-1">
-                                    <Skeleton variant="text" width="80%" height={24} />
-                                    <Skeleton variant="text" width="50%" height={16} />
-                                    <Skeleton variant="text" width="40%" height={14} />
-                                </div>
-                           </div>
-                       ))}
-                    </>
+                    <div className="grid grid-cols-1 gap-4">
+                        <SkeletonList count={4} Component={EventCardSkeleton} isDark={isDark} className="grid grid-cols-1 gap-4" />
+                    </div>
                 ) : filteredEvents.length === 0 ? (
                     <p className={`text-sm italic ${isDark ? 'text-white/60' : 'text-primary/60'}`}>No events found in this category.</p>
                 ) : (

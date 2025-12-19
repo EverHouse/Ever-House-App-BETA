@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Footer } from '../../components/Footer';
+import { MenuItemSkeleton, SkeletonList } from '../../components/skeletons';
 
 interface CafeItem {
   id: string;
@@ -99,17 +100,7 @@ const PublicCafe: React.FC = () => {
 
       <div className="px-6 space-y-3 pb-8 flex-1 animate-pop-in" style={{ animationDelay: '0.15s' }}>
         {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex gap-4 p-3 rounded-xl bg-white shadow-sm">
-                <div className="w-14 h-14 rounded-lg bg-gray-200 animate-pulse" />
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <SkeletonList count={5} Component={MenuItemSkeleton} isDark={isDark} />
         ) : (
           itemsByCategory.map(cat => (
             <div

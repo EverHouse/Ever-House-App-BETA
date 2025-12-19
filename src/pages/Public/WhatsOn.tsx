@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
+import { BookingCardSkeleton, SkeletonList } from '../../components/skeletons';
 
 interface Event {
   id: number;
@@ -130,9 +131,7 @@ const WhatsOn: React.FC = () => {
 
       <div className="px-4 space-y-3 pb-12 flex-1 animate-pop-in" style={{animationDelay: '0.1s'}}>
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
+          <SkeletonList count={5} Component={BookingCardSkeleton} />
         ) : combinedItems.length === 0 ? (
           <div className="text-center py-20">
             <span className="material-symbols-outlined text-5xl text-primary/30 mb-4">calendar_month</span>

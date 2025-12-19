@@ -6,6 +6,7 @@ import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
 import { formatDateShort, getTodayString } from '../../utils/dateUtils';
+import { BookingCardSkeleton, SkeletonList } from '../../components/skeletons';
 
 
 interface DBBooking {
@@ -251,9 +252,13 @@ const Dashboard: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className={`flex flex-col items-center justify-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
-          <span className="material-symbols-outlined animate-spin text-3xl mb-4">progress_activity</span>
-          <p className="text-sm">Loading your schedule...</p>
+        <div className="space-y-6">
+          <div className={`rounded-3xl p-6 ${isDark ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
+            <div className={`animate-pulse h-6 w-24 rounded mb-4 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+            <div className={`animate-pulse h-8 w-2/3 rounded mb-2 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+            <div className={`animate-pulse h-5 w-1/2 rounded ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+          </div>
+          <SkeletonList count={3} Component={BookingCardSkeleton} isDark={isDark} />
         </div>
       ) : error ? (
         <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm flex items-center gap-3 mb-6">
