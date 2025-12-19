@@ -233,6 +233,11 @@ const BookGolf: React.FC = () => {
       
       if (!res.ok) {
         const data = await res.json();
+        if (res.status === 402) {
+          setError('Please contact the front desk to complete your booking.');
+          haptic.error();
+          return;
+        }
         throw new Error(data.error || 'Booking failed');
       }
       

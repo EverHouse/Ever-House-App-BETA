@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
+import { isAuthorizedForMemberBooking, MEMBER_BOOKING_PRODUCT_ID } from '../core/trackman';
 
 const router = Router();
 
@@ -46,6 +47,30 @@ router.post('/api/bookings', async (req, res) => {
   try {
     const { resource_id, user_email, booking_date, start_time, end_time, notes } = req.body;
     
+    const userResult = await pool.query(
+      `SELECT tier, tags FROM users WHERE email = $1`,
+      [user_email]
+    );
+    
+    const user = userResult.rows[0];
+    const userTier = user?.tier || 'Social';
+    let userTags: string[] = [];
+    try {
+      if (user?.tags) {
+        userTags = typeof user.tags === 'string' ? JSON.parse(user.tags) : (Array.isArray(user.tags) ? user.tags : []);
+      }
+    } catch { userTags = []; }
+    
+    const isMemberAuthorized = isAuthorizedForMemberBooking(userTier, userTags);
+    
+    if (!isMemberAuthorized) {
+      return res.status(402).json({ 
+        error: 'Payment required',
+        bookingType: 'payment_required',
+        message: 'Your membership tier requires payment for simulator bookings'
+      });
+    }
+    
     const existingResult = await pool.query(
       `SELECT * FROM bookings 
        WHERE resource_id = $1 AND booking_date = $2 
@@ -65,10 +90,14 @@ router.post('/api/bookings', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO bookings (resource_id, user_email, booking_date, start_time, end_time, notes)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [resource_id, user_email, booking_date, start_time, end_time, notes]
+      [resource_id, user_email, booking_date, start_time, end_time, notes || null]
     );
     
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      ...result.rows[0],
+      bookingType: 'member',
+      trackmanProductId: MEMBER_BOOKING_PRODUCT_ID
+    });
   } catch (error: any) {
     if (!isProduction) console.error('Booking creation error:', error);
     res.status(500).json({ error: 'Failed to create booking' });
