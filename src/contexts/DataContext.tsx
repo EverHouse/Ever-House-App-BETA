@@ -84,6 +84,7 @@ interface DataContextType {
   login: (email: string) => Promise<void>;
   loginWithMember: (member: any) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   
   // View As Actions
   setViewAsUser: (member: MemberProfile) => Promise<void>;
@@ -527,6 +528,40 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     setViewAsUserState(null);
   };
 
+  const refreshUser = async () => {
+    if (!actualUser?.email) return;
+    
+    try {
+      const res = await fetch('/api/auth/verify-member', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: actualUser.email })
+      });
+      
+      if (res.ok) {
+        const { member } = await res.json();
+        const memberProfile: MemberProfile = {
+          id: member.id,
+          name: [member.firstName, member.lastName].filter(Boolean).join(' ') || member.email || 'Member',
+          tier: member.tier || 'Core',
+          tags: member.tags || [],
+          status: 'Active',
+          email: member.email,
+          phone: member.phone || '',
+          role: member.role || 'member',
+          mindbodyClientId: member.mindbodyClientId || '',
+          lifetimeVisits: member.lifetimeVisits || 0,
+          lastBookingDate: member.lastBookingDate || undefined
+        };
+        
+        localStorage.setItem('eh_member', JSON.stringify(memberProfile));
+        setActualUser(memberProfile);
+      }
+    } catch (err) {
+      console.error('Failed to refresh user data:', err);
+    }
+  };
+
   // Cafe Actions (now using API)
   const addCafeItem = async (item: CafeItem) => {
     try {
@@ -636,7 +671,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   return (
     <DataContext.Provider value={{
       user, actualUser, viewAsUser, isViewingAs,
-      login, loginWithMember, logout, setViewAsUser, clearViewAsUser,
+      login, loginWithMember, logout, refreshUser, setViewAsUser, clearViewAsUser,
       cafeMenu, events, announcements, members, bookings, isLoading,
       addCafeItem, updateCafeItem, deleteCafeItem,
       addEvent, updateEvent, deleteEvent, syncEventbrite,
