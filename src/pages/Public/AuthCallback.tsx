@@ -17,7 +17,19 @@ const AuthCallback: React.FC = () => {
         }
         
         if (session) {
-          navigate('/dashboard');
+          try {
+            const res = await fetch(`/api/auth/check-staff-admin?email=${encodeURIComponent(session.user.email || '')}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.isStaffOrAdmin) {
+                navigate('/admin');
+                return;
+              }
+            }
+          } catch (err) {
+            console.error('Failed to check staff/admin status');
+          }
+          navigate('/member/dashboard');
         } else {
           navigate('/login');
         }

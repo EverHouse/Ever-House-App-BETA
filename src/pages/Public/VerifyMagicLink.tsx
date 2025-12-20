@@ -36,7 +36,7 @@ const VerifyMagicLink: React.FC = () => {
         setStatus('success');
         
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate(member.role === 'admin' || member.role === 'staff' ? '/admin' : '/member/dashboard');
         }, 1500);
       } catch (err: any) {
         setStatus('error');

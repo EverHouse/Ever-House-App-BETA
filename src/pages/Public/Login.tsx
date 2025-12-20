@@ -79,7 +79,7 @@ const Login: React.FC = () => {
       
       const { member } = await res.json();
       loginWithMember(member);
-      navigate('/member/dashboard');
+      navigate(member.role === 'admin' || member.role === 'staff' ? '/admin' : '/member/dashboard');
     } catch (err: any) {
       setError(err.message || 'Dev login failed');
     } finally {
@@ -107,7 +107,7 @@ const Login: React.FC = () => {
       }
       
       loginWithMember(data.member);
-      navigate('/member/dashboard');
+      navigate(data.member.role === 'admin' || data.member.role === 'staff' ? '/admin' : '/member/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -235,7 +235,7 @@ const Login: React.FC = () => {
       }
       
       loginWithMember(data.member);
-      navigate('/member/dashboard');
+      navigate(data.member.role === 'admin' || data.member.role === 'staff' ? '/admin' : '/member/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to verify code');
       setOtpInputs(['', '', '', '', '', '']);
@@ -470,7 +470,7 @@ const Login: React.FC = () => {
                           const loginData = await loginRes.json();
                           if (!loginRes.ok) throw new Error(loginData.error);
                           loginWithMember(loginData.member);
-                          navigate('/member/dashboard');
+                          navigate(loginData.member.role === 'admin' || loginData.member.role === 'staff' ? '/admin' : '/member/dashboard');
                         } catch (err: any) {
                           setError(err.message || 'Failed to set password');
                         } finally {
