@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useContext, ErrorInfo, useMemo, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -11,6 +11,7 @@ import Logo from './components/Logo';
 import MenuOverlay from './components/MenuOverlay';
 import ViewAsBanner from './components/ViewAsBanner';
 import { ToastProvider } from './components/Toast';
+import { NotificationContext } from './contexts/NotificationContext';
 
 const Dashboard = lazy(() => import('./pages/Member/Dashboard'));
 const BookGolf = lazy(() => import('./pages/Member/BookGolf'));
@@ -144,13 +145,6 @@ const ScrollToTop = () => {
   
   return null;
 };
-
-interface NotificationContextType {
-  openNotifications: (tab?: 'updates' | 'announcements') => void;
-}
-export const NotificationContext = createContext<NotificationContextType>({ 
-    openNotifications: () => {}
-});
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useData();

@@ -30,10 +30,23 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+const getAllowedOrigins = (): string[] | boolean => {
+  if (!isProduction) {
+    return true;
+  }
+  const origins = process.env.ALLOWED_ORIGINS;
+  if (origins && origins.trim()) {
+    return origins.split(',').map(o => o.trim()).filter(Boolean);
+  }
+  const replitDomain = process.env.REPLIT_DEV_DOMAIN;
+  if (replitDomain) {
+    return [`https://${replitDomain}`, `https://${replitDomain.replace('-00-', '-')}`];
+  }
+  return false;
+};
+
 const corsOptions = {
-  origin: isProduction 
-    ? process.env.ALLOWED_ORIGINS?.split(',') || true
-    : true,
+  origin: getAllowedOrigins(),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

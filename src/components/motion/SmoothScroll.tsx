@@ -23,13 +23,30 @@ interface SmoothScrollProviderProps {
 
 export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ children }) => {
   const [lenis, setLenis] = useState<Lenis | null>(null);
-  const rafRef = useRef<number>();
-  const prefersReducedMotion = useRef(
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
+  const rafRef = useRef<number>();
 
   useEffect(() => {
-    if (prefersReducedMotion.current) {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      if (lenis) {
+        lenis.destroy();
+        setLenis(null);
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = undefined;
+      }
       return;
     }
 
@@ -73,7 +90,7 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
       window.removeEventListener('scroll', handleNativeScroll);
       lenisInstance.destroy();
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   const scrollTo = useCallback((target: number | string | HTMLElement, options?: { offset?: number; duration?: number }) => {
     if (lenis) {
