@@ -491,13 +491,13 @@ const EventsAdmin: React.FC = () => {
                     <button
                         key={tab.id}
                         onClick={() => setActiveCategory(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-all flex-shrink-0 ${
                             activeCategory === tab.id 
                                 ? 'bg-primary text-white shadow-md' 
                                 : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
                         }`}
                     >
-                        <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+                        <span className="material-symbols-outlined text-[14px] sm:text-[16px]">{tab.icon}</span>
                         {tab.label}
                     </button>
                 ))}
