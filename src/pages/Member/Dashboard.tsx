@@ -232,21 +232,21 @@ const Dashboard: React.FC = () => {
         </p>
       </div>
 
-      {/* Stats Card */}
-      <div className={`mb-6 p-4 rounded-2xl animate-pop-in ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white shadow-layered'}`} style={{animationDelay: '0.12s'}}>
+      {/* Stats Card - Liquid Glass */}
+      <div className={`mb-6 p-5 rounded-3xl animate-pop-in backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`} style={{animationDelay: '0.12s'}}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isDark ? 'bg-accent/20' : 'bg-accent/30'}`}>
-              <span className="material-symbols-outlined text-brand-green text-2xl">sports_golf</span>
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm ${isDark ? 'bg-white/20' : 'bg-white/30'}`}>
+              <span className="material-symbols-outlined text-brand-green text-3xl drop-shadow-sm">schedule</span>
             </div>
             <div>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-brand-green'}`}>{user?.lifetimeVisits || 0}</p>
-              <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Lifetime Visits</p>
+              <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user?.lifetimeVisits || 0}</p>
+              <p className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Lifetime Visits</p>
             </div>
           </div>
         </div>
         {user?.lastBookingDate && (
-          <p className={`mt-3 pt-3 text-xs border-t ${isDark ? 'border-white/10 text-white/40' : 'border-gray-100 text-primary/40'}`}>
+          <p className={`mt-4 pt-3 text-xs border-t ${isDark ? 'border-white/15 text-white/50' : 'border-white/30 text-primary/50'}`}>
             Last visited: {formatLastVisit(user.lastBookingDate)}
           </p>
         )}
@@ -310,17 +310,22 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className={`relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group ${isDark ? 'bg-white/5 shadow-layered-dark' : 'bg-white shadow-layered'}`}>
-                <div>
-                  <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-primary'}`}>No upcoming bookings</h2>
-                  <p className={`text-sm ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Ready to plan your day?</p>
+              <div className={`relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm ${isDark ? 'bg-white/20' : 'bg-white/30'}`}>
+                    <span className="material-symbols-outlined text-brand-green text-3xl drop-shadow-sm">calendar_month</span>
+                  </div>
+                  <div>
+                    <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Bookings</h2>
+                    <p className={`text-sm ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Ready to plan your day?</p>
+                  </div>
                 </div>
                 <button 
                   onClick={() => navigate('/book')} 
-                  className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-brand-green shadow-glow active:scale-90 transition-transform focus:ring-2 focus:ring-white focus:outline-none"
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 active:scale-90 transition-transform focus:ring-2 focus:ring-purple-300 focus:outline-none ring-1 ring-inset ring-white/20"
                   aria-label="Make a new booking"
                 >
-                  <span className="material-symbols-outlined">add</span>
+                  <span className="material-symbols-outlined text-2xl drop-shadow-sm">add</span>
                 </button>
               </div>
             )}
