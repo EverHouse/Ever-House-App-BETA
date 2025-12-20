@@ -70,7 +70,7 @@ const PublicCafe: React.FC = () => {
   }, [cafeMenu, categories]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#EAEBE6] overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-[#EAEBE6] overflow-x-hidden w-full max-w-full">
       <section className="px-6 pt-10 pb-6 bg-[#EAEBE6] animate-pop-in">
         <h1 className="text-5xl font-light text-primary mb-4 tracking-tight">Cafe Menu</h1>
         <p className="text-primary/70 text-base leading-relaxed max-w-[90%]">

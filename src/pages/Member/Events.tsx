@@ -191,15 +191,15 @@ const MemberEvents: React.FC = () => {
       </div>
 
       {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-50 flex items-end justify-center pt-16">
           <div className={`absolute inset-0 backdrop-blur-sm transition-opacity ${isDark ? 'bg-black/60' : 'bg-black/40'}`} onClick={() => setSelectedEvent(null)}></div>
           
-          <div className={`relative w-full max-w-md h-[90vh] rounded-t-3xl shadow-2xl animate-slide-up flex flex-col overflow-hidden border-t ${isDark ? 'glass-card bg-[#1a210d] border-white/10' : 'bg-white border-black/10'}`}>
-             <div className={`relative h-64 w-full flex-shrink-0 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+          <div className={`relative w-full max-w-md h-[calc(90vh-4rem)] rounded-t-3xl shadow-2xl animate-slide-up flex flex-col overflow-hidden border-t ${isDark ? 'glass-card bg-[#1a210d] border-white/10' : 'bg-white border-black/10'}`}>
+             <div className={`relative h-56 w-full flex-shrink-0 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
                 <img src={selectedEvent.image} alt={selectedEvent.title} className="w-full h-full object-cover opacity-90" />
                 <button 
                   onClick={() => setSelectedEvent(null)}
-                  className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+                  className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors shadow-lg"
                   aria-label="Close"
                 >
                   <span className="material-symbols-outlined">close</span>

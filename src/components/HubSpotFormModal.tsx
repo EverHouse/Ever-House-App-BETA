@@ -112,13 +112,13 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-20">
       <div className="absolute inset-0 glass-modal-backdrop" onClick={handleClose} />
       
-      <div className="relative glass-modal w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="relative glass-modal w-full max-w-md max-h-[calc(90vh-4rem)] overflow-y-auto">
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full glass-button"
+          className="sticky top-0 right-0 float-right m-4 w-10 h-10 flex items-center justify-center rounded-full glass-button z-10 bg-white/80 dark:bg-black/60 backdrop-blur-md shadow-lg"
         >
           <span className="material-symbols-outlined text-xl text-primary dark:text-white">close</span>
         </button>
