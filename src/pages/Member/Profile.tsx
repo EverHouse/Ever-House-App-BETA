@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -225,13 +226,15 @@ const Profile: React.FC = () => {
       />
 
       {/* Full Screen Card Modal */}
-      {isCardOpen && (() => {
+      {isCardOpen && createPortal((() => {
          const tierColors = getTierColor(user.tier || 'Social');
          const cardBgColor = tierColors.bg;
          const cardTextColor = tierColors.text;
          return (
-            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
-               <div className="w-full max-w-sm aspect-[1/1.4] rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500" style={{ backgroundColor: cardBgColor }}>
+            <div className="fixed inset-0 z-[10001] overflow-y-auto">
+               <div className="fixed inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200" onClick={() => setIsCardOpen(false)} />
+               <div className="flex min-h-full flex-col items-center justify-center p-6 pointer-events-none">
+                  <div className="w-full max-w-sm aspect-[1/1.4] rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500 pointer-events-auto" style={{ backgroundColor: cardBgColor }}>
                    {/* Header Section of Pass */}
                    <div className="p-6 pb-4" style={{ backgroundColor: cardBgColor, borderBottom: `1px solid ${cardTextColor}20` }}>
                        <div className="flex justify-between items-center mb-6">
@@ -265,13 +268,14 @@ const Profile: React.FC = () => {
                    <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${cardTextColor}33`, color: cardTextColor }}>
                        <span className="material-symbols-outlined text-sm">close</span>
                    </button>
+                  </div>
+                  <button className="mt-8 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow pointer-events-auto" onClick={() => alert("Added to Wallet")}>
+                      Add to Apple Wallet
+                  </button>
                </div>
-               <button className="mt-8 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow" onClick={() => alert("Added to Wallet")}>
-                   Add to Apple Wallet
-               </button>
             </div>
          );
-      })()}
+      })(), document.body)}
     </div>
   );
 };
