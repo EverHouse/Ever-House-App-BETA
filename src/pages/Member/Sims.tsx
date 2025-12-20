@@ -76,9 +76,10 @@ const getStatusColor = (status: string): string => {
 };
 
 const Sims: React.FC = () => {
-  const { user } = useData();
-  const tierPermissions = getTierPermissions(user?.tier || 'Social');
-  const canBookSimulators = canAccessResource(user?.tier || 'Social', 'simulator');
+  const { user, viewAsUser } = useData();
+  const effectiveUser = viewAsUser || user;
+  const tierPermissions = getTierPermissions(effectiveUser?.tier || 'Social');
+  const canBookSimulators = canAccessResource(effectiveUser?.tier || 'Social', 'simulator');
   const advanceDays = Math.min(tierPermissions.advanceBookingDays, 14);
   const dates = useMemo(() => generateDates(advanceDays), [advanceDays]);
   
@@ -180,9 +181,9 @@ const Sims: React.FC = () => {
 
   useEffect(() => {
     const fetchMyRequests = async () => {
-      if (!user?.email) return;
+      if (!effectiveUser?.email) return;
       try {
-        const res = await fetch(`/api/booking-requests?user_email=${encodeURIComponent(user.email)}`);
+        const res = await fetch(`/api/booking-requests?user_email=${encodeURIComponent(effectiveUser.email)}`);
         if (res.ok) {
           const data = await res.json();
           setMyRequests(data);
@@ -192,10 +193,10 @@ const Sims: React.FC = () => {
       }
     };
     fetchMyRequests();
-  }, [user?.email, showSuccess]);
+  }, [effectiveUser?.email, showSuccess]);
 
   const handleSubmitRequest = async () => {
-    if (!selectedTime || !user?.email) {
+    if (!selectedTime || !effectiveUser?.email) {
       setError('Please select a time slot');
       return;
     }
@@ -209,8 +210,8 @@ const Sims: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_email: user.email,
-          user_name: user.name,
+          user_email: effectiveUser.email,
+          user_name: effectiveUser.name,
           bay_id: selectedBay,
           bay_preference: bayPreference || null,
           request_date: selectedDate.date,

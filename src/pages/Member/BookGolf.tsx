@@ -75,7 +75,7 @@ const generateDates = (advanceDays: number = 7): { label: string; date: string; 
 
 const BookGolf: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { addBooking, user } = useData();
+  const { addBooking, user, viewAsUser } = useData();
   const { effectiveTheme } = useTheme();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
@@ -91,15 +91,17 @@ const BookGolf: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
 
+  const effectiveUser = viewAsUser || user;
+
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'conference') setActiveTab('conference');
     else if (tab === 'simulator') setActiveTab('simulator');
   }, [searchParams]);
 
-  const tierPermissions = getTierPermissions(user?.tier || 'Social');
-  const canBookSimulators = canAccessResource(user?.tier || 'Social', 'simulator');
-  const isTierLoaded = Boolean(user?.tier);
+  const tierPermissions = getTierPermissions(effectiveUser?.tier || 'Social');
+  const canBookSimulators = canAccessResource(effectiveUser?.tier || 'Social', 'simulator');
+  const isTierLoaded = Boolean(effectiveUser?.tier);
   
   const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
   const [selectedDateObj, setSelectedDateObj] = useState(dates[0]);
@@ -208,14 +210,14 @@ const BookGolf: React.FC = () => {
     };
     
     fetchAvailability();
-  }, [resources, selectedDateObj, duration, user?.email]);
+  }, [resources, selectedDateObj, duration, effectiveUser?.email]);
 
   const getAvailableResourcesForSlot = (slot: TimeSlot): Resource[] => {
     return resources.filter(r => slot.availableResourceDbIds.includes(r.dbId));
   };
 
   const handleConfirm = async () => {
-    if (!selectedSlot || !selectedResource || !user) return;
+    if (!selectedSlot || !selectedResource || !effectiveUser) return;
     
     setIsBooking(true);
     setError(null);
@@ -225,8 +227,8 @@ const BookGolf: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_email: user.email,
-          user_name: user.name,
+          user_email: effectiveUser.email,
+          user_name: effectiveUser.name,
           bay_id: selectedResource.dbId,
           request_date: selectedDateObj.date,
           start_time: selectedSlot.startTime24,
