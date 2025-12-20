@@ -1,10 +1,13 @@
 
 import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo, useRef } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { DataProvider, useData } from './contexts/DataContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { SmoothScrollProvider, useSmoothScroll } from './components/motion/SmoothScroll';
+import PageTransition from './components/motion/PageTransition';
+import LiquidGlassOverlay from './components/motion/LiquidGlassOverlay';
 
-// Debug layout mode - activate with ?debugLayout=1
 const useDebugLayout = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -68,7 +71,6 @@ import ViewAsBanner from './components/ViewAsBanner';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import { ToastProvider } from './components/Toast';
 
-// Error Boundary Component
 interface ErrorBoundaryProps {
   children?: React.ReactNode;
 }
@@ -79,7 +81,6 @@ interface ErrorBoundaryState {
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Use property initializer to avoid strict property initialization errors
   state: ErrorBoundaryState = { hasError: false, error: null };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -115,18 +116,23 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
+  const { scrollTo, lenis } = useSmoothScroll();
+  
   useEffect(() => {
-    // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(() => {
-      const main = document.querySelector('#main-content');
-      if (main) {
-        main.scrollTo({ top: 0, behavior: 'auto' });
+      if (lenis) {
+        scrollTo(0, { duration: 0 });
       } else {
-        // Fallback to window scroll if element not found
-        window.scrollTo({ top: 0, behavior: 'auto' });
+        const main = document.querySelector('#main-content');
+        if (main) {
+          main.scrollTo({ top: 0, behavior: 'auto' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        }
       }
     });
-  }, [pathname]);
+  }, [pathname, lenis, scrollTo]);
+  
   return null;
 };
 
@@ -159,6 +165,85 @@ interface UserNotification {
   created_at: string;
   related_id?: number;
 }
+
+const AnimatedRoutes: React.FC = () => {
+  const location = useLocation();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  useEffect(() => {
+    setIsTransitioning(true);
+    const timer = setTimeout(() => setIsTransitioning(false), 600);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
+  return (
+    <>
+      <LiquidGlassOverlay isTransitioning={isTransitioning} />
+      <AnimatePresence mode="wait" initial={false}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+          <Route path="/membership/*" element={<PageTransition><Membership /></PageTransition>} />
+          <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+          <Route path="/gallery" element={<PageTransition><Gallery /></PageTransition>} />
+          <Route path="/whats-on" element={<PageTransition><WhatsOn /></PageTransition>} />
+          <Route path="/private-hire" element={<PageTransition><PrivateHire /></PageTransition>} />
+          <Route path="/private-events" element={<PageTransition><PrivateEvents /></PageTransition>} />
+          <Route path="/wellness" element={<PageTransition><PublicWellness /></PageTransition>} />
+          <Route path="/menu" element={<PageTransition><PublicCafe /></PageTransition>} />
+          <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
+          <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+          <Route path="/verify" element={<PageTransition><VerifyMagicLink /></PageTransition>} />
+          <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
+          <Route path="/reset-password" element={<PageTransition><Login /></PageTransition>} />
+
+          <Route path="/admin" element={
+            <AdminProtectedRoute>
+              <PageTransition><AdminDashboard /></PageTransition>
+            </AdminProtectedRoute>
+          } />
+
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <PageTransition><Dashboard /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/book" element={
+            <ProtectedRoute>
+              <PageTransition><BookGolf /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/member-events" element={
+            <ProtectedRoute>
+              <PageTransition><MemberEvents /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/member-wellness" element={
+            <ProtectedRoute>
+              <PageTransition><MemberWellness /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <PageTransition><Profile /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/cafe" element={
+            <ProtectedRoute>
+              <PageTransition><Cafe /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/sims" element={
+            <ProtectedRoute>
+              <PageTransition><Sims /></PageTransition>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AnimatePresence>
+    </>
+  );
+};
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -212,19 +297,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
   
-  // Activate debug layout mode
   useDebugLayout();
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe', '/sims'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
-  // Admin always dark, member routes respect theme preference, public routes always light
   const isDarkTheme = isAdminRoute || (isMemberRoute && effectiveTheme === 'dark');
   const showHeader = !isAdminRoute;
 
-  // Routes that handle their own slide animation
-  const shouldAnimate = true;
-
-  // Navigation Logic: Always show hamburger menu
   const handleTopLeftClick = () => {
     setIsMenuOpen(true);
   };
@@ -269,19 +348,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     setIsNotificationsOpen(true);
   };
   
-  // Header: Depends on theme for member routes, Brand Green for public
   const headerClasses = isMemberRoute 
     ? (isDarkTheme 
         ? "bg-[#0f120a] text-[#F2F2EC] shadow-md relative z-40 border-b border-white/5"
         : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 relative z-40 border-b border-[#1e2810]")
     : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 relative z-40";
-  // Icon-only buttons with simple hover state, no background shapes
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
 
   return (
     <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} h-screen w-screen overflow-hidden flex justify-center transition-colors duration-500 font-sans`}>
       
-      {/* Ambient Background Orbs & Noise Texture */}
       {isDarkTheme ? (
         <>
             <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow"></div>
@@ -294,17 +370,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </>
       )}
       
-      {/* Global Noise Texture Overlay */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
 
       <NotificationContext.Provider value={{ openNotifications }}>
-        {/* View As Banner - shows when admin is viewing as another member */}
         <ViewAsBanner />
         
-        {/* Main App Container */}
         <div className={`relative w-full h-full flex flex-col overflow-hidden ${isDarkTheme ? 'text-white' : 'text-primary'}`}>
             
-            {/* Header - Now Relative (Flex Item) to flush perfectly with content */}
             {showHeader && (
               <header className={`flex items-center justify-between px-6 py-4 flex-shrink-0 ${headerClasses}`} role="banner">
                 <button 
@@ -369,24 +441,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </header>
             )}
 
-            {/* Main Content - No top padding needed due to flex layout */}
             <main 
                 id="main-content"
                 className={`flex-1 overflow-y-auto overscroll-contain relative scrollbar-hide ${isMemberRoute && !isAdminRoute ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
             >
-                <div key={location.pathname} className={`${shouldAnimate ? 'animate-page-enter' : ''} min-h-full`}>
-                    {children}
-                </div>
+                {children}
             </main>
 
-            {/* Member Dock - Floating Pill with Animated Blob */}
             {isMemberRoute && !isAdminRoute && user && (
               <MemberBottomNav currentPath={location.pathname} isDarkTheme={isDarkTheme} />
             )}
 
             <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
             
-            {/* Notifications Modal */}
             {isNotificationsOpen && (
               <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4">
                  <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" onClick={() => setIsNotificationsOpen(false)}></div>
@@ -517,7 +584,6 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
         aria-label="Member navigation"
       >
         <div className="relative flex items-center w-full">
-          {/* Animated Blob Indicator */}
           {activeIndex >= 0 && (
             <div 
               className={`absolute top-0 bottom-0 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
@@ -532,7 +598,6 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
             />
           )}
           
-          {/* Nav Items */}
           {MEMBER_NAV_ITEMS.map((item, index) => {
             const isActive = currentPath === item.path;
             const isGolfIcon = item.icon === 'sports_golf';
@@ -581,72 +646,12 @@ const App: React.FC = () => {
         <DataProvider>
           <ToastProvider>
           <HashRouter>
-            <ScrollToTop />
-            <Layout>
-              <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/membership/*" element={<Membership />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/whats-on" element={<WhatsOn />} />
-              <Route path="/private-hire" element={<PrivateHire />} />
-              <Route path="/private-events" element={<PrivateEvents />} />
-              <Route path="/wellness" element={<PublicWellness />} />
-              <Route path="/menu" element={<PublicCafe />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/verify" element={<VerifyMagicLink />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/reset-password" element={<Login />} />
-
-              {/* Admin Routes - requires admin role */}
-              <Route path="/admin" element={
-                <AdminProtectedRoute>
-                  <AdminDashboard />
-                </AdminProtectedRoute>
-              } />
-
-              {/* Member Routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/book" element={
-                <ProtectedRoute>
-                  <BookGolf />
-                </ProtectedRoute>
-              } />
-              <Route path="/member-events" element={
-                <ProtectedRoute>
-                  <MemberEvents />
-                </ProtectedRoute>
-              } />
-              <Route path="/member-wellness" element={
-                <ProtectedRoute>
-                  <MemberWellness />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/cafe" element={
-                <ProtectedRoute>
-                  <Cafe />
-                </ProtectedRoute>
-              } />
-              <Route path="/sims" element={
-                <ProtectedRoute>
-                  <Sims />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Layout>
+            <SmoothScrollProvider>
+              <ScrollToTop />
+              <Layout>
+                <AnimatedRoutes />
+              </Layout>
+            </SmoothScrollProvider>
           </HashRouter>
           </ToastProvider>
         </DataProvider>
