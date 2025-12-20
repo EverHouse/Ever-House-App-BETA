@@ -14,7 +14,7 @@ router.get('/api/bays', async (req, res) => {
     const result = await db.select().from(bays).where(eq(bays.isActive, true)).orderBy(asc(bays.name));
     res.json(result);
   } catch (error: any) {
-    if (!isProduction) console.error('Bays error:', error);
+    console.error('Bays error:', error);
     res.status(500).json({ error: 'Failed to fetch bays' });
   }
 });
@@ -92,7 +92,7 @@ router.get('/api/bays/:bayId/availability', async (req, res) => {
       blocks: [...blocksResult, ...calendarBlocks]
     });
   } catch (error: any) {
-    if (!isProduction) console.error('Availability error:', error);
+    console.error('Availability error:', error);
     res.status(500).json({ error: 'Failed to fetch availability' });
   }
 });
@@ -139,7 +139,7 @@ router.get('/api/booking-requests', async (req, res) => {
     
     res.json(result);
   } catch (error: any) {
-    if (!isProduction) console.error('Booking requests error:', error);
+    console.error('Booking requests error:', error);
     res.status(500).json({ error: 'Failed to fetch booking requests' });
   }
 });
@@ -192,7 +192,7 @@ router.post('/api/booking-requests', async (req, res) => {
       calendar_event_id: row.calendarEventId
     });
   } catch (error: any) {
-    if (!isProduction) console.error('Booking request creation error:', error);
+    console.error('Booking request creation error:', error);
     res.status(500).json({ error: 'Failed to create booking request' });
   }
 });
@@ -376,7 +376,7 @@ router.put('/api/booking-requests/:id', async (req, res) => {
     
     res.json(formatRow(result[0]));
   } catch (error: any) {
-    if (!isProduction) console.error('Booking request update error:', error);
+    console.error('Booking request update error:', error);
     res.status(500).json({ error: 'Failed to update booking request' });
   }
 });
@@ -422,7 +422,7 @@ router.get('/api/approved-bookings', async (req, res) => {
     
     res.json(result);
   } catch (error: any) {
-    if (!isProduction) console.error('Approved bookings error:', error);
+    console.error('Approved bookings error:', error);
     res.status(500).json({ error: 'Failed to fetch approved bookings' });
   }
 });
