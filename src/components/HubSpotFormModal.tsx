@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { triggerHaptic } from '../utils/haptics';
 
 
@@ -49,6 +50,17 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -111,11 +123,11 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-20">
-      <div className="absolute inset-0 glass-modal-backdrop" onClick={handleClose} />
+  const modalContent = (
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 pointer-events-auto">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={handleClose} />
       
-      <div className="relative glass-modal w-full max-w-md max-h-[calc(90vh-4rem)] overflow-y-auto">
+      <div className="relative glass-modal w-full max-w-md max-h-[85vh] overflow-y-auto">
         <button
           onClick={handleClose}
           className="sticky top-0 right-0 float-right m-4 w-10 h-10 flex items-center justify-center rounded-full glass-button z-10 bg-white/80 dark:bg-black/60 backdrop-blur-md shadow-lg"
@@ -215,6 +227,8 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default HubSpotFormModal;
