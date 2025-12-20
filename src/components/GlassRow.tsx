@@ -19,10 +19,10 @@ interface GlassRowProps {
 const GlassRow: React.FC<GlassRowProps> = ({ title, subtitle, icon, color, actions, delay, onClick }) => (
    <div 
      onClick={onClick}
-     className={`glass-card p-4 rounded-2xl flex items-center gap-4 hover:bg-white/5 transition-colors border border-white/10 group animate-pop-in ${onClick ? 'cursor-pointer' : ''}`} 
+     className={`glass-card p-4 flex items-center gap-4 group animate-pop-in ${onClick ? 'cursor-pointer' : ''}`} 
      style={{animationDelay: delay, animationFillMode: 'both'}}
    >
-      <div className={`w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center ${color} border border-white/5`}>
+      <div className={`w-12 h-12 rounded-[1.5rem] glass-button flex items-center justify-center ${color}`}>
          <span className="material-symbols-outlined text-[24px]">{icon}</span>
       </div>
       <div className="flex-1 min-w-0">
@@ -35,7 +35,7 @@ const GlassRow: React.FC<GlassRowProps> = ({ title, subtitle, icon, color, actio
                 <button 
                     key={idx} 
                     onClick={(e) => { e.stopPropagation(); action.onClick(); }} 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/10 hover:text-white transition-colors active:scale-90" 
+                    className="w-8 h-8 rounded-[1rem] glass-button flex items-center justify-center text-white/60 hover:text-white active:scale-90" 
                     aria-label={action.label}
                 >
                     <span className="material-symbols-outlined text-[18px]">{action.icon}</span>

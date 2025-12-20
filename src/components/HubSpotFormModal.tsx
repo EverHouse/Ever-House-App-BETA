@@ -113,12 +113,12 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
+      <div className="absolute inset-0 glass-modal-backdrop" onClick={handleClose} />
       
-      <div className="relative bg-[#F2F2EC] dark:bg-surface-dark rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="relative glass-modal w-full max-w-md max-h-[90vh] overflow-y-auto">
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full glass-button"
         >
           <span className="material-symbols-outlined text-xl text-primary dark:text-white">close</span>
         </button>
@@ -133,7 +133,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
               <p className="text-primary/60 dark:text-white/60 mb-6">We've received your submission and will be in touch soon.</p>
               <button
                 onClick={handleClose}
-                className="px-6 py-3 bg-primary dark:bg-accent text-white dark:text-brand-green rounded-xl font-semibold hover:opacity-90 transition-opacity"
+                className="px-6 py-3 bg-primary dark:bg-accent text-white dark:text-brand-green rounded-[2rem] font-semibold hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out"
               >
                 Close
               </button>
@@ -158,7 +158,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                         value={formData[field.name] || ''}
                         onChange={(e) => handleChange(field.name, e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-primary dark:focus:ring-accent text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none"
+                        className="w-full px-4 py-3 glass-input text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none"
                       />
                     ) : field.type === 'select' ? (
                       <select
@@ -166,7 +166,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                         required={field.required}
                         value={formData[field.name] || ''}
                         onChange={(e) => handleChange(field.name, e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-primary dark:focus:ring-accent text-primary dark:text-white"
+                        className="w-full px-4 py-3 glass-input text-primary dark:text-white"
                       >
                         <option value="">Select...</option>
                         {field.options?.map(opt => (
@@ -181,7 +181,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                         placeholder={field.placeholder}
                         value={formData[field.name] || ''}
                         onChange={(e) => handleChange(field.name, e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-primary dark:focus:ring-accent text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                        className="w-full px-4 py-3 glass-input text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       />
                     )}
                   </div>
@@ -197,7 +197,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-primary dark:bg-accent text-white dark:text-brand-green rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-primary dark:bg-accent text-white dark:text-brand-green rounded-[2rem] font-semibold hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>

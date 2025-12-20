@@ -37,7 +37,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
         onClick={onClose}
       ></div>
 
-      <div className="relative w-[85%] md:w-[320px] lg:w-[360px] h-full flex flex-col animate-slide-in-left shadow-[20px_0_50px_rgba(0,0,0,0.15)] overflow-hidden bg-[#F2F2EC] backdrop-blur-xl border-r border-black/5">
+      <div className="relative w-[85%] md:w-[320px] lg:w-[360px] h-full flex flex-col animate-slide-in-left overflow-hidden glass-navbar rounded-none rounded-r-[2rem] border-l-0">
         
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-multiply"></div>
 
@@ -65,17 +65,17 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
             <div className="mt-4 pt-6 border-t border-[#293515]/10 space-y-4 animate-pop-in" style={{ animationDelay: '0.4s' }}>
                 <button 
                     onClick={() => handleNav('/contact')}
-                    className="w-full group flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-white/40 transition-colors border border-transparent hover:border-white/50"
+                    className="w-full group flex items-center justify-between px-4 py-3 rounded-[2rem] glass-button border border-white/50"
                 >
                     <span className="text-xl font-bold text-[#293515]">Contact Us</span>
-                    <span className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform backdrop-blur-md">
+                    <span className="w-10 h-10 rounded-full glass-button flex items-center justify-center group-hover:scale-110 transition-all duration-[400ms] ease-in-out">
                         <span className="material-symbols-outlined text-[#293515]">arrow_forward</span>
                     </span>
                 </button>
 
                 <button 
                     onClick={actionBtn.action}
-                    className="w-full bg-[#293515] text-[#F2F2EC] py-4 rounded-2xl font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    className="w-full bg-[#293515] text-[#F2F2EC] py-4 rounded-[2rem] font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out"
                 >
                     <span className="material-symbols-outlined text-lg">{actionBtn.icon}</span>
                     {actionBtn.label}

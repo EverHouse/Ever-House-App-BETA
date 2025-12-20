@@ -19,7 +19,14 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Typography**: Exclusive use of Inter (sans-serif).
 - **Icons**: Material Symbols Outlined (weight 300) with `.filled` class for active states.
 - **Color Palette**: Primary (Deep Green: #293515), Accent (Lavender: #CCB8E4), Background Light (Bone: #F2F2EC), Background Dark (#0f120a).
-- **Glass Effects**: Applied with 3-5% opacity, 40px+ blur, and 12px squircle corners.
+- **Liquid Glass Design System**: Futuristic iOS-inspired glassmorphism aesthetic applied globally to cards, modals, navigation, buttons, and inputs:
+  - **Backdrop Blur**: 20px blur with translucent backgrounds (light: rgba(255,255,255,0.4), dark: rgba(0,0,0,0.4))
+  - **Reflective Edges**: 1px solid border with rgba(255,255,255,0.5) for subtle edge catchlight
+  - **Inner Depth**: Inset shadows for 3D glass thickness effect
+  - **Liquid Shapes**: Extra-large rounded corners (2rem/32px) for Apple squircle-like appearance
+  - **Fluid Interactions**: 0.4s ease-in-out transitions with 1-2% scale on hover for organic, reactive feel
+  - **CSS Classes**: `.glass-panel`, `.glass-card`, `.glass-button`, `.glass-modal`, `.glass-navbar`, `.glass-input`
+  - **CSS Variables**: Defined in `:root` with `--liquid-glass-*` prefix for consistency
 - **Selection States**: Lavender background with Deep Green text (`bg-accent text-brand-green`).
 - **Branding**: EH monogram logo on public pages. Member portal uses dynamic page-specific icons in header center (home, account_circle, sports_golf, spa, local_cafe, celebration).
 - **Dynamic Header Navigation**: Member portal header features profile/dashboard toggle (top-right icon switches between account_circle and dashboard based on current page) and page-specific center icons in a Deep Green circle.

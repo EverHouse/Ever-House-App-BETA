@@ -51,9 +51,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: () => void; isDark: 
 
   return (
     <div 
-      className={`backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] border pointer-events-auto ${
-        isDark ? 'bg-black/80 text-white border-white/10' : 'bg-white/95 text-primary border-black/10'
-      }`}
+      className="glass-card px-5 py-3 text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] pointer-events-auto"
       role="alert"
       aria-live="polite"
     >
@@ -63,7 +61,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: () => void; isDark: 
       <span>{toast.message}</span>
       <button 
         onClick={onDismiss}
-        className={`ml-1 p-1 rounded-full transition-colors ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className="ml-1 p-1 rounded-full glass-button transition-all duration-[400ms] ease-in-out"
         aria-label="Dismiss"
       >
         <span className="material-symbols-outlined text-[16px]">close</span>
