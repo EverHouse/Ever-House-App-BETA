@@ -50,7 +50,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
             <div className="flex items-center justify-end mb-8">
                 <button 
                   onClick={onClose} 
-                  className={`w-10 h-10 flex items-center justify-center hover:rotate-90 transition-transform duration-300 rounded-full active:scale-90 ${isDark ? 'text-[#F2F2EC] hover:bg-white/10' : 'text-[#293515] hover:bg-black/5'}`}
+                  className={`w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center hover:rotate-90 transition-transform duration-300 rounded-full active:scale-90 ${isDark ? 'text-[#F2F2EC] hover:bg-white/10' : 'text-[#293515] hover:bg-black/5'}`}
                 >
                     <span className="material-symbols-outlined text-3xl">close</span>
                 </button>
@@ -69,17 +69,17 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
             <div className={`mt-4 pt-6 border-t space-y-4 animate-pop-in ${isDark ? 'border-[#F2F2EC]/10' : 'border-[#293515]/10'}`} style={{ animationDelay: '0.4s' }}>
                 <button 
                     onClick={() => handleNav('/contact')}
-                    className={`w-full group flex items-center justify-between px-4 py-3 rounded-[2rem] glass-button border ${isDark ? 'border-white/20' : 'border-white/50'}`}
+                    className={`w-full group flex items-center justify-between px-4 py-3 min-h-[44px] rounded-[2rem] glass-button border ${isDark ? 'border-white/20' : 'border-white/50'}`}
                 >
                     <span className={`text-xl font-bold ${isDark ? 'text-[#F2F2EC]' : 'text-[#293515]'}`}>Contact Us</span>
-                    <span className="w-10 h-10 rounded-full glass-button flex items-center justify-center group-hover:scale-110 transition-all duration-[400ms] ease-in-out">
+                    <span className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full glass-button flex items-center justify-center group-hover:scale-110 transition-all duration-[400ms] ease-in-out">
                         <span className={`material-symbols-outlined ${isDark ? 'text-[#F2F2EC]' : 'text-[#293515]'}`}>arrow_forward</span>
                     </span>
                 </button>
 
                 <button 
                     onClick={actionBtn.action}
-                    className={`w-full px-4 py-3 rounded-[2rem] font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out ${isDark ? 'bg-accent text-[#293515]' : 'bg-[#293515] text-[#F2F2EC]'}`}
+                    className={`w-full px-4 py-3 min-h-[44px] rounded-[2rem] font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out ${isDark ? 'bg-accent text-[#293515]' : 'bg-[#293515] text-[#F2F2EC]'}`}
                 >
                     <span className="material-symbols-outlined text-lg">{actionBtn.icon}</span>
                     {actionBtn.label}
@@ -96,7 +96,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string; isDark: boolean }> = ({ label, onClick, delay, isDark }) => (
   <button 
     onClick={onClick} 
-    className={`text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight hover:translate-x-2 ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/60' : 'text-[#293515] hover:text-[#293515]/60'}`}
+    className={`text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight hover:translate-x-2 min-h-[44px] ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/60' : 'text-[#293515] hover:text-[#293515]/60'}`}
     style={{ animationDelay: delay, animationFillMode: 'both' }}
   >
     {label}

@@ -17,7 +17,7 @@ const TabButton: React.FC<TabButtonProps> = ({ label, active, onClick, isDark = 
   return (
     <button 
       onClick={handleClick}
-      className={`pb-3 border-b-[3px] text-sm whitespace-nowrap transition-colors ${
+      className={`pb-3 border-b-[3px] text-sm whitespace-nowrap transition-colors min-h-[44px] ${
         active 
           ? (isDark ? 'border-white text-white font-bold' : 'border-primary text-primary font-bold') 
           : (isDark ? 'border-transparent text-white/60 font-medium' : 'border-transparent text-primary/60 font-medium')

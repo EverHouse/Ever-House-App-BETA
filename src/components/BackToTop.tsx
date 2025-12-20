@@ -44,7 +44,7 @@ const BackToTop: React.FC<BackToTopProps> = ({
     <div className={`back-to-top ${isVisible ? 'visible' : ''} ${className}`}>
       <button
         onClick={handleClick}
-        className="glass-button bg-white/90 dark:bg-black/70 text-primary dark:text-white hover:scale-110 active:scale-95 transition-all duration-300"
+        className="glass-button bg-white/90 dark:bg-black/70 text-primary dark:text-white hover:scale-110 active:scale-95 transition-all duration-300 min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center"
         aria-label="Back to top"
       >
         <span className="material-symbols-outlined text-xl">keyboard_arrow_up</span>
