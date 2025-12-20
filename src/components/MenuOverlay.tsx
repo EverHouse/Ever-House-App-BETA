@@ -56,7 +56,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                 </button>
             </div>
             
-            <nav className="flex flex-col gap-6 flex-1 overflow-y-auto scrollbar-hide py-4">
+            <nav className="flex flex-col gap-4 flex-1 overflow-y-auto scrollbar-hide py-2">
                 <MenuLink label="Home" onClick={() => handleNav('/')} delay="0.05s" isDark={isDark} />
                 <MenuLink label="Membership" onClick={() => handleNav('/membership')} delay="0.1s" isDark={isDark} />
                 <MenuLink label="Cafe" onClick={() => handleNav('/menu')} delay="0.15s" isDark={isDark} />
@@ -96,7 +96,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string; isDark: boolean }> = ({ label, onClick, delay, isDark }) => (
   <button 
     onClick={onClick} 
-    className={`text-left text-[32px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight hover:translate-x-2 ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/60' : 'text-[#293515] hover:text-[#293515]/60'}`}
+    className={`text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight hover:translate-x-2 ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/60' : 'text-[#293515] hover:text-[#293515]/60'}`}
     style={{ animationDelay: delay, animationFillMode: 'both' }}
   >
     {label}
