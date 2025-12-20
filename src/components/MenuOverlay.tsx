@@ -79,7 +79,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 
                 <button 
                     onClick={actionBtn.action}
-                    className={`w-full py-4 rounded-[2rem] font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out ${isDark ? 'bg-accent text-[#293515]' : 'bg-[#293515] text-[#F2F2EC]'}`}
+                    className={`w-full px-4 py-3 rounded-[2rem] font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out ${isDark ? 'bg-accent text-[#293515]' : 'bg-[#293515] text-[#F2F2EC]'}`}
                 >
                     <span className="material-symbols-outlined text-lg">{actionBtn.icon}</span>
                     {actionBtn.label}
