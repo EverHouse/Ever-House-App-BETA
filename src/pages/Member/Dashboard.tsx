@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, Booking } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useToast } from '../../components/Toast';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
 import { formatDateShort, getTodayString } from '../../utils/dateUtils';
 import { BookingCardSkeleton, SkeletonList } from '../../components/skeletons';
+import { EmptyBookings } from '../../components/EmptyState';
 
 
 interface DBBooking {
@@ -56,6 +58,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, addBooking, deleteBooking } = useData();
   const { effectiveTheme } = useTheme();
+  const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   
   const [dbBookings, setDbBookings] = useState<DBBooking[]>([]);
@@ -165,9 +168,13 @@ const Dashboard: React.FC = () => {
       if (res.ok) {
         setDbBookings(prev => prev.filter(b => b.id !== bookingId));
         setSelectedBooking(null);
+        showToast('Booking cancelled successfully', 'success');
+      } else {
+        showToast('Failed to cancel booking', 'error');
       }
     } catch (err) {
       console.error('Error cancelling booking:', err);
+      showToast('Failed to cancel booking', 'error');
     }
   };
 
@@ -182,9 +189,13 @@ const Dashboard: React.FC = () => {
       
       if (res.ok) {
         setDbRSVPs(prev => prev.filter(r => r.event_id !== eventId));
+        showToast('RSVP cancelled', 'success');
+      } else {
+        showToast('Failed to cancel RSVP', 'error');
       }
     } catch (err) {
       console.error('Error cancelling RSVP:', err);
+      showToast('Failed to cancel RSVP', 'error');
     }
   };
 
@@ -359,15 +370,7 @@ const Dashboard: React.FC = () => {
                     delay={`${0.3 + (idx * 0.1)}s`}
                   />
                 )) : (
-                  <div className={`p-4 rounded-2xl text-center ${isDark ? 'border border-white/5 bg-white/5' : 'border border-black/5 bg-white shadow-sm'}`}>
-                    <p className={`text-sm ${isDark ? 'text-white/40' : 'text-primary/40'}`}>No upcoming bookings or events.</p>
-                    <button 
-                      onClick={() => navigate('/book')}
-                      className={`mt-3 text-sm font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded ${isDark ? 'text-accent' : 'text-brand-green'}`}
-                    >
-                      Book something now
-                    </button>
-                  </div>
+                  <EmptyBookings onBook={() => navigate('/book')} />
                 )}
               </div>
             </div>

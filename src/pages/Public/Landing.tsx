@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
+import BackToTop from '../../components/BackToTop';
 
 const TOUR_REQUEST_FIELDS = [
   { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
@@ -157,6 +158,8 @@ const Landing: React.FC = () => {
         fields={TOUR_REQUEST_FIELDS}
         submitButtonText="Request Tour"
       />
+
+      <BackToTop threshold={500} />
     </div>
   );
 };

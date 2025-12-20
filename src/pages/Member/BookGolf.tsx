@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useToast } from '../../components/Toast';
 import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
@@ -76,6 +77,7 @@ const BookGolf: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { addBooking, user } = useData();
   const { effectiveTheme } = useTheme();
+  const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   const initialTab = searchParams.get('tab') === 'conference' ? 'conference' : 'simulator';
   const [activeTab, setActiveTab] = useState<'simulator' | 'conference'>(initialTab);
@@ -252,6 +254,7 @@ const BookGolf: React.FC = () => {
       });
       
       haptic.success();
+      showToast('Booking request sent! We\'ll confirm shortly.', 'success');
       setShowConfirmation(true);
       setTimeout(() => {
         setShowConfirmation(false);
@@ -261,6 +264,7 @@ const BookGolf: React.FC = () => {
       }, 2500);
     } catch (err: any) {
       haptic.error();
+      showToast(err.message || 'Booking failed. Please try again.', 'error');
       setError(err.message || 'Booking failed. Please try again.');
     } finally {
       setIsBooking(false);

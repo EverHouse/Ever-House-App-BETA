@@ -10,6 +10,7 @@ import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { getDateString, formatDateShort, parseLocalDate } from '../../utils/dateUtils';
 import { MotionList, MotionListItem } from '../../components/motion';
+import { EmptyEvents } from '../../components/EmptyState';
 
 const generateUpcomingDates = (days: number = 14): { day: string; date: string; dateNum: string; fullDate: string }[] => {
   const dates = [];
@@ -149,7 +150,7 @@ const MemberEvents: React.FC = () => {
                     <SkeletonList count={4} Component={EventCardSkeleton} isDark={isDark} className="grid grid-cols-1 gap-4" />
                 </div>
             ) : filteredEvents.length === 0 ? (
-                <p className={`text-sm italic ${isDark ? 'text-white/60' : 'text-primary/60'}`}>No events found in this category.</p>
+                <EmptyEvents />
             ) : (
                 <MotionList className="space-y-4">
                     {filteredEvents.map((event) => (

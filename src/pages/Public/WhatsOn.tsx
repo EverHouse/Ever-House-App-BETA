@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import { BookingCardSkeleton, SkeletonList } from '../../components/skeletons';
+import BackToTop from '../../components/BackToTop';
 
 interface Event {
   id: number;
@@ -255,6 +256,8 @@ const WhatsOn: React.FC = () => {
       </section>
 
       <Footer />
+
+      <BackToTop threshold={400} />
     </div>
   );
 };

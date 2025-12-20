@@ -33,6 +33,18 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Responsive Design**: Targets various iPhone, iPad, and Desktop viewports, utilizing `safe-area-bottom` and `tap-target` classes.
 - **Theme System**: Supports Light, Dark, and System themes, persisted via `localStorage`.
 
+### Accessibility & UX Components
+- **Focus States**: All interactive elements have visible focus outlines with box-shadows for keyboard navigation (WCAG-compliant).
+- **Touch Targets**: Minimum 44x44px touch targets on mobile via `.tap-target` class and global CSS overrides.
+- **Toast Notifications**: Centralized toast system (`useToast()` hook from `src/components/Toast.tsx`) for success, error, warning, and info messages. Used across Dashboard, BookGolf, Events, and Wellness pages.
+- **Loading States**: `LoadingButton` component (`src/components/LoadingButton.tsx`) provides consistent loading spinners with primary/secondary/ghost variants.
+- **Empty States**: `EmptyState` component (`src/components/EmptyState.tsx`) with animated illustrations:
+  - `EmptyBookings` - for empty booking lists
+  - `EmptyEvents` - for empty event lists (accepts optional `message` prop)
+  - `EmptySearch` - for empty search results (accepts optional `query` prop)
+  - `EmptyNotifications` - for empty notification lists
+- **Back-to-Top Button**: `BackToTop` component (`src/components/BackToTop.tsx`) appears after scrolling past threshold, used on Landing, Membership, and WhatsOn pages.
+
 ### Motion Architecture
 - **Framer Motion**: Used for page transitions and animations across the app.
 - **Lenis Smooth Scroll**: Premium smooth scrolling with weighted easing (duration 1.2s, easing: `Math.min(1, 1.001 - Math.pow(2, -10 * t))`).

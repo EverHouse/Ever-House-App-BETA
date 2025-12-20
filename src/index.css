@@ -93,6 +93,75 @@ html, body {
   min-height: 44px;
 }
 
+/* Mobile touch target improvements */
+@media (max-width: 768px) {
+  button,
+  a[role="button"],
+  [role="button"],
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Ensure buttons have adequate padding for touch */
+  button:not(.icon-only):not(.close-btn) {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  
+  /* Icon-only buttons get invisible touch padding */
+  .icon-only,
+  button.icon-button {
+    position: relative;
+  }
+  
+  .icon-only::before,
+  button.icon-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: inherit;
+  }
+}
+
+/* Touch target utility class */
+.touch-target-lg {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Back to top button styles */
+.back-to-top {
+  position: fixed;
+  bottom: 6rem;
+  right: 1.5rem;
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.3s ease-out;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
 html.dark body {
   background-color: #293515;
   color: white;
@@ -377,6 +446,47 @@ html.dark .glass-input:focus {
 :focus-visible {
   outline: 2px solid #CCB8E4;
   outline-offset: 2px;
+}
+
+/* Enhanced focus states for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #CCB8E4;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(204, 184, 228, 0.3);
+}
+
+.glass-button:focus-visible {
+  outline: 2px solid #CCB8E4;
+  outline-offset: 2px;
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    0 0 0 4px rgba(204, 184, 228, 0.4),
+    0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+.glass-card:focus-visible,
+.glass-panel:focus-visible {
+  outline: 2px solid #CCB8E4;
+  outline-offset: 2px;
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    0 0 0 4px rgba(204, 184, 228, 0.3),
+    var(--liquid-glass-outer-shadow);
+}
+
+.glass-input:focus-visible {
+  outline: none;
+  border-color: #CCB8E4;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.05),
+    0 0 0 3px rgba(204, 184, 228, 0.4);
+}
+
+html.dark button:focus-visible,
+html.dark a:focus-visible {
+  box-shadow: 0 0 0 4px rgba(204, 184, 228, 0.4);
 }
 
 /* Skip link for keyboard navigation */

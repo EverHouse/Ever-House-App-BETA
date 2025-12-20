@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
+import BackToTop from '../../components/BackToTop';
 
 const MEMBERSHIP_FIELDS = [
   { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
@@ -174,6 +175,8 @@ const MembershipOverview: React.FC = () => {
         fields={MEMBERSHIP_FIELDS}
         submitButtonText="Submit Application"
       />
+
+      <BackToTop threshold={400} />
     </div>
   );
 };

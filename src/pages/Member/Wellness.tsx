@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useToast } from '../../components/Toast';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { MotionList, MotionListItem } from '../../components/motion';
+import { EmptyEvents } from '../../components/EmptyState';
 
 interface WellnessClass {
     id: number;
@@ -28,6 +30,7 @@ const Wellness: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { user } = useData();
   const { effectiveTheme } = useTheme();
+  const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   const initialTab = searchParams.get('tab') === 'medspa' ? 'medspa' : 'classes';
   const [activeTab, setActiveTab] = useState<'classes' | 'medspa'>(initialTab);
@@ -83,17 +86,20 @@ const Wellness: React.FC = () => {
       });
       
       if (res.ok) {
+        showToast(`RSVP confirmed for ${classData.title}!`, 'success');
         setConfirmationMessage(`RSVP confirmed for ${classData.title}!`);
         setShowConfirmation(true);
         setTimeout(() => setShowConfirmation(false), 2500);
       } else {
         const err = await res.json();
+        showToast(err.error || 'Failed to book. Please try again.', 'error');
         setConfirmationMessage(err.error || 'Failed to book. Please try again.');
         setShowConfirmation(true);
         setTimeout(() => setShowConfirmation(false), 2500);
       }
     } catch (err) {
       console.error('Booking error:', err);
+      showToast('Failed to book. Please try again.', 'error');
       setConfirmationMessage('Failed to book. Please try again.');
       setShowConfirmation(true);
       setTimeout(() => setShowConfirmation(false), 2500);
@@ -224,9 +230,7 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
                     );
                 })
             ) : (
-                <div className={`text-center py-10 ${isDark ? 'opacity-60' : 'text-primary/60'}`}>
-                    <p>No classes scheduled yet. Check back soon!</p>
-                </div>
+                <EmptyEvents message="No classes scheduled yet. Check back soon!" />
             )}
         </MotionList>
         </section>
