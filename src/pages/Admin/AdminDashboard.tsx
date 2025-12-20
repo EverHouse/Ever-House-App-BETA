@@ -77,9 +77,9 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'conflicts' && actualUser?.role === 'admin' && <DataConflictsAdmin />}
       </main>
 
-      {/* Bottom Nav - Fixed with iOS Safe Area */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#293515] border-t border-[#293515] pt-3 px-6 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] rounded-t-2xl safe-area-bottom" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-        <ul className="flex justify-between items-center text-white/50 w-full max-w-md mx-auto">
+      {/* Bottom Nav - Floating Pill with Liquid Glass */}
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 py-3 px-4 z-30 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full">
+        <ul className="flex justify-between items-center text-white/50 w-full">
             <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
             <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
             <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
@@ -97,9 +97,9 @@ const AdminDashboard: React.FC = () => {
 // --- Sub-Components ---
 
 const NavItem: React.FC<{icon: string; label: string; active?: boolean; onClick: () => void}> = ({ icon, label, active, onClick }) => (
-    <li onClick={onClick} className={`flex-1 flex flex-col items-center gap-1 cursor-pointer transition-colors ${active ? 'text-white' : 'hover:text-white'}`}>
-      <span className={`material-symbols-outlined ${active ? 'filled' : ''}`}>{icon}</span>
-      <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'} tracking-wide`}>{label}</span>
+    <li onClick={onClick} className={`flex-1 flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 rounded-xl py-1.5 px-1 ${active ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(41,53,21,0.4)]' : 'hover:text-white hover:bg-white/5'}`}>
+      <span className={`material-symbols-outlined text-xl ${active ? 'filled' : ''}`}>{icon}</span>
+      <span className={`text-[9px] ${active ? 'font-bold' : 'font-medium'} tracking-wide`}>{label}</span>
     </li>
 );
 
