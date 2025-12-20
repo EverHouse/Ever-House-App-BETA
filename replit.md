@@ -36,15 +36,15 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 ### Motion Architecture
 - **Framer Motion**: Used for page transitions and animations across the app.
 - **Lenis Smooth Scroll**: Premium smooth scrolling with weighted easing (duration 1.2s, easing: `Math.min(1, 1.001 - Math.pow(2, -10 * t))`).
-- **Page Transitions**: 
-  - Exit: Scale to 0.98, fade out (0.3s)
-  - Enter: Blur(20px) clearing to blur(0px), vertical offset 20px → 0 (0.5s)
-  - Easing: [0.25, 0.46, 0.45, 0.94] (premium weighted feel)
-- **Liquid Glass Overlay**: Brand green (#293515) at 15% opacity with clip-path wipe animation during route transitions.
+- **Physics-Based Directional Page Transitions**: iOS-style slide animations for native app feel:
+  - **Direction Detection**: Route index map tracks member routes (dashboard: 0, book: 1, sims: 1.5, wellness: 2, events: 3, cafe: 4, profile: 5)
+  - **Forward Navigation**: New page slides in from right (x: 100% → 0), old page slides left (x: 0 → -20%)
+  - **Backward Navigation**: New page slides in from left (x: -100% → 0), old page slides right (x: 0 → 20%)
+  - **Spring Physics**: stiffness 280, damping 30, mass scaled by distance (mass = 1 + distance * 0.1)
+  - **TransitionContext**: React Context propagates direction/distance to both entering and exiting pages
 - **Motion Components** (`src/components/motion/`):
   - `SmoothScroll.tsx` - Lenis provider with context for scrollTo
-  - `PageTransition.tsx` - Framer Motion page wrapper
-  - `LiquidGlassOverlay.tsx` - Transition overlay with AnimatePresence
+  - `DirectionalPageTransition.tsx` - Physics-based directional slide wrapper with TransitionContext
 - **Persistent UI**: Bottom nav bar and header stay outside AnimatePresence to prevent flicker during transitions.
 
 ### Technical Implementations
