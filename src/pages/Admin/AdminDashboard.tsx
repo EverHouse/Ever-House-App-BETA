@@ -23,7 +23,7 @@ const AdminDashboard: React.FC = () => {
   if (!actualUser || (actualUser.role !== 'admin' && actualUser.role !== 'staff')) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col">
+    <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col relative">
       
       {/* Header */}
       <header className="sticky top-0 flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40">
@@ -52,7 +52,7 @@ const AdminDashboard: React.FC = () => {
       </header>
 
       {/* Main Content Area - No top padding needed */}
-      <main className="flex-1 pb-40 px-4 md:px-8 max-w-4xl mx-auto pt-6 w-full">
+      <main className="flex-1 pb-40 px-4 md:px-8 max-w-4xl mx-auto pt-6 w-full relative z-0">
         <div className="mb-6 animate-pop-in">
            <span className="text-xs font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 block mb-1">Staff Portal</span>
            <h1 className="text-2xl font-bold text-primary dark:text-white">
