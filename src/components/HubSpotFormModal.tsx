@@ -141,10 +141,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
           <span className="material-symbols-outlined text-xl text-primary dark:text-white">close</span>
         </button>
 
-        <div 
-          className="min-h-0 flex-1 overflow-y-scroll px-6 py-8 pt-16"
-          style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
-        >
+        <div className="min-h-0 flex-1 modal-scroll-content px-6 py-8 pt-16">
           {success ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
