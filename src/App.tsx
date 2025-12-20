@@ -5,8 +5,7 @@ import { AnimatePresence } from 'framer-motion';
 import { DataProvider, useData } from './contexts/DataContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { SmoothScrollProvider, useSmoothScroll } from './components/motion/SmoothScroll';
-import PageTransition from './components/motion/PageTransition';
-import LiquidGlassOverlay from './components/motion/LiquidGlassOverlay';
+import DirectionalPageTransition, { TransitionContext } from './components/motion/DirectionalPageTransition';
 
 const useDebugLayout = () => {
   useEffect(() => {
@@ -166,82 +165,104 @@ interface UserNotification {
   related_id?: number;
 }
 
+const ROUTE_INDICES: Record<string, number> = {
+  '/dashboard': 0,
+  '/book': 1,
+  '/sims': 1.5,
+  '/member-wellness': 2,
+  '/member-events': 3,
+  '/cafe': 4,
+  '/profile': 5,
+};
+
 const AnimatedRoutes: React.FC = () => {
   const location = useLocation();
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevPathRef = useRef(location.pathname);
+  
+  const transitionState = useMemo(() => {
+    const prevPath = prevPathRef.current;
+    const currentPath = location.pathname;
+    
+    const prevIndex = ROUTE_INDICES[prevPath] ?? -1;
+    const currentIndex = ROUTE_INDICES[currentPath] ?? -1;
+    
+    if (prevIndex >= 0 && currentIndex >= 0 && prevPath !== currentPath) {
+      const direction = currentIndex > prevIndex ? 1 : -1;
+      const distance = Math.abs(currentIndex - prevIndex);
+      return { direction, distance: Math.max(0.1, distance) };
+    }
+    return { direction: 1, distance: 1 };
+  }, [location.pathname]);
   
   useEffect(() => {
-    setIsTransitioning(true);
-    const timer = setTimeout(() => setIsTransitioning(false), 600);
-    return () => clearTimeout(timer);
+    prevPathRef.current = location.pathname;
   }, [location.pathname]);
 
   return (
-    <>
-      <LiquidGlassOverlay isTransitioning={isTransitioning} />
+    <TransitionContext.Provider value={transitionState}>
       <AnimatePresence mode="wait" initial={false}>
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
-          <Route path="/membership/*" element={<PageTransition><Membership /></PageTransition>} />
-          <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-          <Route path="/gallery" element={<PageTransition><Gallery /></PageTransition>} />
-          <Route path="/whats-on" element={<PageTransition><WhatsOn /></PageTransition>} />
-          <Route path="/private-hire" element={<PageTransition><PrivateHire /></PageTransition>} />
-          <Route path="/private-events" element={<PageTransition><PrivateEvents /></PageTransition>} />
-          <Route path="/wellness" element={<PageTransition><PublicWellness /></PageTransition>} />
-          <Route path="/menu" element={<PageTransition><PublicCafe /></PageTransition>} />
-          <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
-          <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-          <Route path="/verify" element={<PageTransition><VerifyMagicLink /></PageTransition>} />
-          <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
-          <Route path="/reset-password" element={<PageTransition><Login /></PageTransition>} />
+          <Route path="/" element={<DirectionalPageTransition><Landing /></DirectionalPageTransition>} />
+          <Route path="/membership/*" element={<DirectionalPageTransition><Membership /></DirectionalPageTransition>} />
+          <Route path="/contact" element={<DirectionalPageTransition><Contact /></DirectionalPageTransition>} />
+          <Route path="/gallery" element={<DirectionalPageTransition><Gallery /></DirectionalPageTransition>} />
+          <Route path="/whats-on" element={<DirectionalPageTransition><WhatsOn /></DirectionalPageTransition>} />
+          <Route path="/private-hire" element={<DirectionalPageTransition><PrivateHire /></DirectionalPageTransition>} />
+          <Route path="/private-events" element={<DirectionalPageTransition><PrivateEvents /></DirectionalPageTransition>} />
+          <Route path="/wellness" element={<DirectionalPageTransition><PublicWellness /></DirectionalPageTransition>} />
+          <Route path="/menu" element={<DirectionalPageTransition><PublicCafe /></DirectionalPageTransition>} />
+          <Route path="/faq" element={<DirectionalPageTransition><FAQ /></DirectionalPageTransition>} />
+          <Route path="/login" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
+          <Route path="/verify" element={<DirectionalPageTransition><VerifyMagicLink /></DirectionalPageTransition>} />
+          <Route path="/auth/callback" element={<DirectionalPageTransition><AuthCallback /></DirectionalPageTransition>} />
+          <Route path="/reset-password" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
 
           <Route path="/admin" element={
             <AdminProtectedRoute>
-              <PageTransition><AdminDashboard /></PageTransition>
+              <DirectionalPageTransition><AdminDashboard /></DirectionalPageTransition>
             </AdminProtectedRoute>
           } />
 
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <PageTransition><Dashboard /></PageTransition>
+              <DirectionalPageTransition><Dashboard /></DirectionalPageTransition>
             </ProtectedRoute>
           } />
           <Route path="/book" element={
             <ProtectedRoute>
-              <PageTransition><BookGolf /></PageTransition>
+              <DirectionalPageTransition><BookGolf /></DirectionalPageTransition>
             </ProtectedRoute>
           } />
           <Route path="/member-events" element={
             <ProtectedRoute>
-              <PageTransition><MemberEvents /></PageTransition>
+              <DirectionalPageTransition><MemberEvents /></DirectionalPageTransition>
             </ProtectedRoute>
           } />
           <Route path="/member-wellness" element={
             <ProtectedRoute>
-              <PageTransition><MemberWellness /></PageTransition>
+              <DirectionalPageTransition><MemberWellness /></DirectionalPageTransition>
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
             <ProtectedRoute>
-              <PageTransition><Profile /></PageTransition>
+              <DirectionalPageTransition><Profile /></DirectionalPageTransition>
             </ProtectedRoute>
           } />
           <Route path="/cafe" element={
             <ProtectedRoute>
-              <PageTransition><Cafe /></PageTransition>
+              <DirectionalPageTransition><Cafe /></DirectionalPageTransition>
             </ProtectedRoute>
           } />
           <Route path="/sims" element={
             <ProtectedRoute>
-              <PageTransition><Sims /></PageTransition>
+              <DirectionalPageTransition><Sims /></DirectionalPageTransition>
             </ProtectedRoute>
           } />
           
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AnimatePresence>
-    </>
+    </TransitionContext.Provider>
   );
 };
 
