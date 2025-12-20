@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import MenuOverlay from '../../components/MenuOverlay';
@@ -78,16 +78,11 @@ const AdminDashboard: React.FC = () => {
       </main>
 
       {/* Bottom Nav - Floating Pill with Liquid Glass */}
-      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 py-3 px-4 z-30 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full">
-        <ul className="flex justify-between items-center text-white/50 w-full">
-            <NavItem icon="groups" label="Directory" active={activeTab === 'directory'} onClick={() => setActiveTab('directory')} />
-            <NavItem icon="sports_golf" label="Sims" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
-            <NavItem icon="event" label="Events" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
-            <NavItem icon="spa" label="Wellness" active={activeTab === 'wellness'} onClick={() => setActiveTab('wellness')} />
-            {actualUser?.role === 'admin' && <NavItem icon="shield_person" label="Team" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />}
-            {actualUser?.role === 'admin' && <NavItem icon="sync_problem" label="Conflicts" active={activeTab === 'conflicts'} onClick={() => setActiveTab('conflicts')} />}
-        </ul>
-      </nav>
+      <StaffBottomNav 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isAdmin={actualUser?.role === 'admin'} 
+      />
 
       <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </div>
@@ -96,12 +91,83 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-const NavItem: React.FC<{icon: string; label: string; active?: boolean; onClick: () => void}> = ({ icon, label, active, onClick }) => (
-    <li onClick={onClick} className={`flex-1 flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 rounded-xl py-1.5 px-1 ${active ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(41,53,21,0.4)]' : 'hover:text-white hover:bg-white/5'}`}>
-      <span className={`material-symbols-outlined text-xl ${active ? 'filled' : ''}`}>{icon}</span>
-      <span className={`text-[9px] ${active ? 'font-bold' : 'font-medium'} tracking-wide`}>{label}</span>
-    </li>
-);
+type TabType = 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'conflicts';
+
+interface NavItemData {
+  id: TabType;
+  icon: string;
+  label: string;
+  adminOnly?: boolean;
+}
+
+const NAV_ITEMS: NavItemData[] = [
+  { id: 'directory', icon: 'groups', label: 'Directory' },
+  { id: 'simulator', icon: 'sports_golf', label: 'Sims' },
+  { id: 'events', icon: 'event', label: 'Events' },
+  { id: 'wellness', icon: 'spa', label: 'Wellness' },
+  { id: 'team', icon: 'shield_person', label: 'Team', adminOnly: true },
+  { id: 'conflicts', icon: 'sync_problem', label: 'Conflicts', adminOnly: true },
+];
+
+const StaffBottomNav: React.FC<{
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
+  isAdmin?: boolean;
+}> = ({ activeTab, setActiveTab, isAdmin }) => {
+  const [pressedIndex, setPressedIndex] = useState<number | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  
+  const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
+  const activeIndex = visibleItems.findIndex(item => item.id === activeTab);
+  const itemCount = visibleItems.length;
+  
+  const blobWidth = 100 / itemCount;
+  const blobLeft = activeIndex * blobWidth;
+  
+  return (
+    <nav 
+      ref={navRef}
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 z-30 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full"
+    >
+      <div className="relative flex items-center w-full">
+        {/* Animated Blob Indicator */}
+        <div 
+          className="absolute top-0 bottom-0 rounded-full bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+          style={{ 
+            width: `${blobWidth}%`, 
+            left: `${blobLeft}%`,
+          }}
+        />
+        
+        {/* Nav Items */}
+        {visibleItems.map((item, index) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            onMouseDown={() => setPressedIndex(index)}
+            onMouseUp={() => setPressedIndex(null)}
+            onMouseLeave={() => setPressedIndex(null)}
+            onTouchStart={() => setPressedIndex(index)}
+            onTouchEnd={() => setPressedIndex(null)}
+            className={`
+              flex-1 flex flex-col items-center gap-0.5 py-2 px-1 relative z-10 cursor-pointer
+              transition-all duration-300 ease-out
+              ${activeTab === item.id ? 'text-white' : 'text-white/50 hover:text-white/80'}
+              ${pressedIndex === index ? 'scale-90' : 'scale-100'}
+            `}
+          >
+            <span className={`material-symbols-outlined text-xl transition-all duration-300 ${activeTab === item.id ? 'filled scale-110' : ''}`}>
+              {item.icon}
+            </span>
+            <span className={`text-[9px] tracking-wide transition-all duration-300 ${activeTab === item.id ? 'font-bold' : 'font-medium'}`}>
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+};
 
 // --- CAFE ADMIN ---
 
