@@ -137,16 +137,16 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
       data-lenis-prevent
       onClick={handleClose}
     >
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm pointer-events-none" />
+      <div className="fixed inset-0 glass-modal-backdrop pointer-events-none" />
       
       <div className="flex min-h-full items-center justify-center p-4">
         <div 
-          className="relative bg-white dark:bg-[#1a1f14] w-full max-w-md rounded-3xl shadow-2xl"
+          className="relative glass-modal w-full max-w-md"
           onClick={(e) => e.stopPropagation()}
         >
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 z-10"
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full glass-button border border-white/50 dark:border-white/20 z-10 hover:scale-110 transition-all duration-[400ms] ease-in-out"
           >
             <span className="material-symbols-outlined text-xl text-gray-600 dark:text-white">close</span>
           </button>
