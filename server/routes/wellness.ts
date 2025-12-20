@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
 import { isStaffOrAdmin } from '../core/middleware';
 import { syncWellnessCalendarEvents, discoverCalendarIds, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
+import { db } from '../db';
+import { wellnessEnrollments, wellnessClasses } from '../../shared/schema';
+import { eq, and, gte, sql } from 'drizzle-orm';
 
 const router = Router();
 
@@ -204,6 +207,101 @@ router.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
     res.status(500).json({ error: 'Failed to update wellness class' });
+  }
+});
+
+// Wellness enrollments endpoints
+router.get('/api/wellness-enrollments', async (req, res) => {
+  try {
+    const { user_email } = req.query;
+    
+    if (!user_email) {
+      return res.status(400).json({ error: 'User email is required' });
+    }
+    
+    const conditions = [
+      eq(wellnessEnrollments.status, 'confirmed'),
+      eq(wellnessEnrollments.userEmail, user_email as string),
+      gte(wellnessClasses.date, sql`CURRENT_DATE`)
+    ];
+    
+    const result = await db.select({
+      id: wellnessEnrollments.id,
+      class_id: wellnessEnrollments.classId,
+      user_email: wellnessEnrollments.userEmail,
+      status: wellnessEnrollments.status,
+      created_at: wellnessEnrollments.createdAt,
+      title: wellnessClasses.title,
+      date: wellnessClasses.date,
+      time: wellnessClasses.time,
+      instructor: wellnessClasses.instructor,
+      duration: wellnessClasses.duration,
+      category: wellnessClasses.category,
+      spots: wellnessClasses.spots
+    })
+    .from(wellnessEnrollments)
+    .innerJoin(wellnessClasses, eq(wellnessEnrollments.classId, wellnessClasses.id))
+    .where(and(...conditions))
+    .orderBy(wellnessClasses.date, wellnessClasses.time);
+    
+    res.json(result);
+  } catch (error: any) {
+    if (!isProduction) console.error('Wellness enrollments error:', error);
+    res.status(500).json({ error: 'Failed to fetch enrollments' });
+  }
+});
+
+router.post('/api/wellness-enrollments', async (req, res) => {
+  try {
+    const { class_id, user_email } = req.body;
+    
+    if (!class_id || !user_email) {
+      return res.status(400).json({ error: 'Missing class_id or user_email' });
+    }
+    
+    // Check if already enrolled using Drizzle
+    const existing = await db.select({ id: wellnessEnrollments.id })
+      .from(wellnessEnrollments)
+      .where(and(
+        eq(wellnessEnrollments.classId, class_id),
+        eq(wellnessEnrollments.userEmail, user_email),
+        eq(wellnessEnrollments.status, 'confirmed')
+      ));
+    
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Already enrolled in this class' });
+    }
+    
+    const result = await db.insert(wellnessEnrollments)
+      .values({
+        classId: class_id,
+        userEmail: user_email,
+        status: 'confirmed'
+      })
+      .returning();
+    
+    res.status(201).json(result[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Wellness enrollment error:', error);
+    res.status(500).json({ error: 'Failed to enroll in class' });
+  }
+});
+
+router.delete('/api/wellness-enrollments/:class_id/:user_email', async (req, res) => {
+  try {
+    const { class_id, user_email } = req.params;
+    
+    await db.update(wellnessEnrollments)
+      .set({ status: 'cancelled' })
+      .where(and(
+        eq(wellnessEnrollments.classId, parseInt(class_id)),
+        eq(wellnessEnrollments.userEmail, user_email)
+      ));
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    if (!isProduction) console.error('Wellness enrollment cancellation error:', error);
+    res.status(500).json({ error: 'Failed to cancel enrollment' });
   }
 });
 

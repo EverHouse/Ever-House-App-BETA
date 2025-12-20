@@ -68,26 +68,36 @@ const MemberEvents: React.FC = () => {
     setSelectedDateIndex(selectedDateIndex === index ? null : index);
   };
 
-  const handleRSVP = () => {
+  const handleRSVP = async () => {
     if (selectedEvent?.source === 'eventbrite' && selectedEvent.externalLink) {
         window.open(selectedEvent.externalLink, '_blank');
         return;
     }
 
-    if (selectedEvent) {
-        addBooking({
-            id: Date.now().toString(),
-            type: 'event',
-            title: selectedEvent.title,
-            date: selectedEvent.date.split(',')[1].trim(),
-            time: selectedEvent.time,
-            details: selectedEvent.location,
-            color: 'accent'
-        });
+    if (selectedEvent && user?.email) {
+        try {
+            const res = await fetch('/api/rsvps', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_id: selectedEvent.id,
+                    user_email: user.email
+                })
+            });
+            
+            if (res.ok) {
+                showToast('You are on the list!', 'success');
+            } else {
+                const err = await res.json();
+                showToast(err.error || 'Failed to RSVP. Please try again.', 'error');
+            }
+        } catch (err) {
+            console.error('RSVP error:', err);
+            showToast('Failed to RSVP. Please try again.', 'error');
+        }
     }
 
     setSelectedEvent(null);
-    showToast('You are on the list!', 'success');
   };
 
   return (

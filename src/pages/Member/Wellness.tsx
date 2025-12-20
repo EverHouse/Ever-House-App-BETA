@@ -70,21 +70,13 @@ const Wellness: React.FC = () => {
   const handleBook = async (classData: WellnessClass) => {
     if (!user?.email) return;
     
-    const startTime24 = convertTo24Hour(classData.time);
-    const endTime24 = calculateEndTime(startTime24, classData.duration);
-    
     try {
-      const res = await fetch('/api/bookings', {
+      const res = await fetch('/api/wellness-enrollments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resource_type: 'wellness_class',
-          resource_name: classData.title,
-          user_email: user.email,
-          booking_date: classData.date,
-          start_time: startTime24,
-          end_time: endTime24,
-          notes: `${classData.category} with ${classData.instructor} - ${classData.duration}`
+          class_id: classData.id,
+          user_email: user.email
         })
       });
       
@@ -95,15 +87,15 @@ const Wellness: React.FC = () => {
         setTimeout(() => setShowConfirmation(false), 2500);
       } else {
         const err = await res.json();
-        showToast(err.error || 'Failed to book. Please try again.', 'error');
-        setConfirmationMessage(err.error || 'Failed to book. Please try again.');
+        showToast(err.error || 'Failed to enroll. Please try again.', 'error');
+        setConfirmationMessage(err.error || 'Failed to enroll. Please try again.');
         setShowConfirmation(true);
         setTimeout(() => setShowConfirmation(false), 2500);
       }
     } catch (err) {
-      console.error('Booking error:', err);
-      showToast('Failed to book. Please try again.', 'error');
-      setConfirmationMessage('Failed to book. Please try again.');
+      console.error('Enrollment error:', err);
+      showToast('Failed to enroll. Please try again.', 'error');
+      setConfirmationMessage('Failed to enroll. Please try again.');
       setShowConfirmation(true);
       setTimeout(() => setShowConfirmation(false), 2500);
     }

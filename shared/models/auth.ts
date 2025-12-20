@@ -194,6 +194,15 @@ export const eventRsvps = pgTable("event_rsvps", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Wellness enrollments table - class registrations
+export const wellnessEnrollments = pgTable("wellness_enrollments", {
+  id: serial("id").primaryKey(),
+  classId: integer("class_id"),
+  userEmail: varchar("user_email").notNull(),
+  status: varchar("status").default("confirmed"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Guest passes table - member guest pass tracking
 export const guestPasses = pgTable("guest_passes", {
   id: serial("id").primaryKey(),
@@ -311,3 +320,5 @@ export type AdminUser = typeof adminUsers.$inferSelect;
 export type InsertAdminUser = typeof adminUsers.$inferInsert;
 export type WellnessClass = typeof wellnessClasses.$inferSelect;
 export type InsertWellnessClass = typeof wellnessClasses.$inferInsert;
+export type WellnessEnrollment = typeof wellnessEnrollments.$inferSelect;
+export type InsertWellnessEnrollment = typeof wellnessEnrollments.$inferInsert;

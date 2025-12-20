@@ -43,6 +43,19 @@ interface DBRSVP {
   event?: DBEvent;
 }
 
+interface DBWellnessEnrollment {
+  id: number;
+  class_id: number;
+  user_email: string;
+  status: string;
+  title: string;
+  date: string;
+  time: string;
+  instructor: string;
+  duration: string;
+  category: string;
+}
+
 const formatTime12 = (time24: string): string => {
   if (!time24) return '';
   const [hours, minutes] = time24.split(':').map(Number);
@@ -64,6 +77,7 @@ const Dashboard: React.FC = () => {
   
   const [dbBookings, setDbBookings] = useState<DBBooking[]>([]);
   const [dbRSVPs, setDbRSVPs] = useState<DBRSVP[]>([]);
+  const [dbWellnessEnrollments, setDbWellnessEnrollments] = useState<DBWellnessEnrollment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -81,9 +95,10 @@ const Dashboard: React.FC = () => {
       setError(null);
       
       try {
-        const [bookingsRes, rsvpsRes] = await Promise.all([
+        const [bookingsRes, rsvpsRes, wellnessRes] = await Promise.all([
           fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
-          fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`)
+          fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`),
+          fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`)
         ]);
         
         if (bookingsRes.ok) {
@@ -94,6 +109,11 @@ const Dashboard: React.FC = () => {
         if (rsvpsRes.ok) {
           const rsvps = await rsvpsRes.json();
           setDbRSVPs(rsvps);
+        }
+        
+        if (wellnessRes.ok) {
+          const enrollments = await wellnessRes.json();
+          setDbWellnessEnrollments(enrollments);
         }
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -132,15 +152,34 @@ const Dashboard: React.FC = () => {
       details: r.event ? `${r.event.location}` : '',
       sortKey: r.event ? `${r.event.event_date}T${r.event.start_time}` : '',
       raw: r
+    })),
+    ...dbWellnessEnrollments.map(w => ({
+      id: `wellness-${w.id}`,
+      dbId: w.id,
+      classId: w.class_id,
+      type: 'wellness' as const,
+      title: w.title || 'Wellness Class',
+      resourceType: 'wellness_class',
+      date: formatDate(w.date),
+      time: w.time,
+      endTime: '',
+      details: `${w.category} with ${w.instructor}`,
+      sortKey: `${w.date}T${w.time}`,
+      raw: w
     }))
   ].sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
   const todayStr = getTodayString();
   
   const upcomingItems = allItems.filter(item => {
-    const itemDate = item.type === 'booking' 
-      ? (item.raw as DBBooking).booking_date.split('T')[0]
-      : (item.raw as DBRSVP).event?.event_date.split('T')[0];
+    let itemDate: string | undefined;
+    if (item.type === 'booking') {
+      itemDate = (item.raw as DBBooking).booking_date.split('T')[0];
+    } else if (item.type === 'rsvp') {
+      itemDate = (item.raw as DBRSVP).event?.event_date.split('T')[0];
+    } else if (item.type === 'wellness') {
+      itemDate = (item.raw as DBWellnessEnrollment).date.split('T')[0];
+    }
     return itemDate && itemDate >= todayStr;
   });
 
@@ -197,6 +236,27 @@ const Dashboard: React.FC = () => {
     } catch (err) {
       console.error('Error cancelling RSVP:', err);
       showToast('Failed to cancel RSVP', 'error');
+    }
+  };
+
+  const handleCancelWellness = async (classId: number) => {
+    if (!window.confirm("Are you sure you want to cancel this enrollment?")) return;
+    if (!user?.email) return;
+    
+    try {
+      const res = await fetch(`/api/wellness-enrollments/${classId}/${encodeURIComponent(user.email)}`, {
+        method: 'DELETE'
+      });
+      
+      if (res.ok) {
+        setDbWellnessEnrollments(prev => prev.filter(w => w.class_id !== classId));
+        showToast('Enrollment cancelled', 'success');
+      } else {
+        showToast('Failed to cancel enrollment', 'error');
+      }
+    } catch (err) {
+      console.error('Error cancelling enrollment:', err);
+      showToast('Failed to cancel enrollment', 'error');
     }
   };
 
@@ -356,21 +416,27 @@ const Dashboard: React.FC = () => {
                 <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Upcoming</h3>
               </div>
               <div className="space-y-3">
-                {laterItems.length > 0 ? laterItems.map((item, idx) => (
-                  <GlassRow 
-                    key={item.id} 
-                    title={item.title} 
-                    subtitle={`${item.date} • ${item.details}`} 
-                    icon={getIconForType(item.resourceType)} 
-                    color={isDark ? "text-[#E7E7DC]" : "text-primary"}
-                    actions={item.type === 'booking' ? [
-                      { icon: 'close', label: 'Cancel', onClick: () => handleCancelBooking(item.dbId) }
-                    ] : [
-                      { icon: 'close', label: 'Cancel RSVP', onClick: () => handleCancelRSVP((item.raw as DBRSVP).event_id) }
-                    ]}
-                    delay={`${0.3 + (idx * 0.1)}s`}
-                  />
-                )) : (
+                {laterItems.length > 0 ? laterItems.map((item, idx) => {
+                  let actions;
+                  if (item.type === 'booking') {
+                    actions = [{ icon: 'close', label: 'Cancel', onClick: () => handleCancelBooking(item.dbId) }];
+                  } else if (item.type === 'rsvp') {
+                    actions = [{ icon: 'close', label: 'Cancel RSVP', onClick: () => handleCancelRSVP((item.raw as DBRSVP).event_id) }];
+                  } else {
+                    actions = [{ icon: 'close', label: 'Cancel', onClick: () => handleCancelWellness((item.raw as DBWellnessEnrollment).class_id) }];
+                  }
+                  return (
+                    <GlassRow 
+                      key={item.id} 
+                      title={item.title} 
+                      subtitle={`${item.date} • ${item.details}`} 
+                      icon={getIconForType(item.resourceType)} 
+                      color={isDark ? "text-[#E7E7DC]" : "text-primary"}
+                      actions={actions}
+                      delay={`${0.3 + (idx * 0.1)}s`}
+                    />
+                  );
+                }) : (
                   <EmptyBookings onBook={() => navigate('/book')} />
                 )}
               </div>
