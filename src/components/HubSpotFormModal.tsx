@@ -53,13 +53,29 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      const scrollY = window.scrollY;
+      const body = document.body;
+      const html = document.documentElement;
+      
+      body.style.position = 'fixed';
+      body.style.top = `-${scrollY}px`;
+      body.style.left = '0';
+      body.style.right = '0';
+      body.style.width = '100%';
+      body.style.overflow = 'hidden';
+      html.style.overflow = 'hidden';
+      
+      return () => {
+        body.style.position = '';
+        body.style.top = '';
+        body.style.left = '';
+        body.style.right = '';
+        body.style.width = '';
+        body.style.overflow = '';
+        html.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -124,10 +140,10 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 pointer-events-auto">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-md pointer-events-none" onClick={handleClose} />
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4" onClick={handleClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
       
-      <div className="relative glass-modal w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+      <div className="relative glass-modal w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleClose}
           className="flex-shrink-0 self-end m-4 w-10 h-10 flex items-center justify-center rounded-full glass-button z-10 bg-white/80 dark:bg-black/60 backdrop-blur-md shadow-lg"
@@ -135,7 +151,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
           <span className="material-symbols-outlined text-xl text-primary dark:text-white">close</span>
         </button>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="flex-1 overflow-y-auto px-6 pb-6 overscroll-contain touch-pan-y">
           {success ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
