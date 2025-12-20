@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSmoothScroll } from './motion/SmoothScroll';
 
 interface MenuOverlayProps {
   isOpen: boolean;
@@ -14,6 +15,19 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const { user, actualUser } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
+  const { stop, start } = useSmoothScroll();
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      stop();
+      
+      return () => {
+        document.body.style.overflow = '';
+        start();
+      };
+    }
+  }, [isOpen, stop, start]);
 
   const handleNav = (path: string) => {
     navigate(path);
