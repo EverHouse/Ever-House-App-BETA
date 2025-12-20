@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import { motion, Variants } from 'framer-motion';
+import { motion, Variants, useReducedMotion } from 'framer-motion';
 
 export interface TransitionCustom {
   direction: number;
@@ -21,42 +21,57 @@ const pageVariants: Variants = {
     x: (custom?.direction ?? 1) > 0 ? '100%' : '-100%',
     opacity: 0,
   }),
-  animate: (custom: TransitionCustom = defaultCustom) => ({
+  animate: {
     x: 0,
     opacity: 1,
     transition: {
       type: 'spring',
-      stiffness: 280,
-      damping: 30,
-      mass: 1 + ((custom?.distance ?? 1) * 0.1),
+      stiffness: 350,
+      damping: 35,
+      mass: 0.8,
     },
-  }),
+  },
   exit: (custom: TransitionCustom = defaultCustom) => ({
-    x: (custom?.direction ?? 1) > 0 ? '-20%' : '20%',
+    x: (custom?.direction ?? 1) > 0 ? '-15%' : '15%',
     opacity: 0,
     transition: {
-      type: 'spring',
-      stiffness: 280,
-      damping: 30,
-      mass: 1 + ((custom?.distance ?? 1) * 0.1),
+      type: 'tween',
+      duration: 0.2,
+      ease: 'easeOut',
     },
   }),
 };
 
+const reducedMotionVariants: Variants = {
+  initial: { opacity: 0 },
+  animate: { 
+    opacity: 1,
+    transition: { duration: 0.15 }
+  },
+  exit: { 
+    opacity: 0,
+    transition: { duration: 0.1 }
+  },
+};
+
 const DirectionalPageTransition: React.FC<DirectionalPageTransitionProps> = ({ children }) => {
   const transitionState = useTransitionState();
+  const prefersReducedMotion = useReducedMotion();
+  
+  const variants = prefersReducedMotion ? reducedMotionVariants : pageVariants;
   
   return (
     <motion.div
       custom={transitionState}
-      variants={pageVariants}
+      variants={variants}
       initial="initial"
       animate="animate"
       exit="exit"
       style={{
         willChange: 'transform, opacity',
         minHeight: '100%',
-        overflow: 'hidden',
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
       }}
     >
       {children}

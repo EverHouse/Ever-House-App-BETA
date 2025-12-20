@@ -567,3 +567,74 @@ html.dark .glass-input:focus {
     transform: translateX(100%);
   }
 }
+
+/* GPU Acceleration Hints for Animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Reduced Motion Support - Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .animate-spin {
+    animation: none !important;
+  }
+  
+  .animate-pulse,
+  .animate-pulse-slow {
+    animation: none !important;
+  }
+  
+  .animate-icon-morph,
+  .animate-slide-up-stagger,
+  .animate-pop-in,
+  .animate-page-enter,
+  .animate-content-enter,
+  .animate-content-enter-delay-1,
+  .animate-content-enter-delay-2,
+  .animate-content-enter-delay-3 {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  
+  .glass-button:hover,
+  .glass-card:hover {
+    transform: none !important;
+  }
+}
+
+/* Optimized Transitions - Use transform/opacity only */
+.transition-gpu {
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Faster liquid glass transition for snappier feel */
+.liquid-fast {
+  transition: all 0.2s ease-out;
+}
+
+/* Content visibility optimization for off-screen elements */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Image loading optimization */
+img {
+  content-visibility: auto;
+}
+
+img[loading="lazy"] {
+  contain-intrinsic-size: 200px 200px;
+}

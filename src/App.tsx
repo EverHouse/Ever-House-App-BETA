@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -7,6 +7,41 @@ import { DataProvider, useData } from './contexts/DataContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { SmoothScrollProvider, useSmoothScroll } from './components/motion/SmoothScroll';
 import DirectionalPageTransition, { TransitionContext } from './components/motion/DirectionalPageTransition';
+import Logo from './components/Logo';
+import MenuOverlay from './components/MenuOverlay';
+import ViewAsBanner from './components/ViewAsBanner';
+import { ToastProvider } from './components/Toast';
+
+const Dashboard = lazy(() => import('./pages/Member/Dashboard'));
+const BookGolf = lazy(() => import('./pages/Member/BookGolf'));
+const MemberEvents = lazy(() => import('./pages/Member/Events'));
+const MemberWellness = lazy(() => import('./pages/Member/Wellness'));
+const Profile = lazy(() => import('./pages/Member/Profile'));
+const Cafe = lazy(() => import('./pages/Member/Cafe'));
+const Sims = lazy(() => import('./pages/Member/Sims'));
+const Landing = lazy(() => import('./pages/Public/Landing'));
+const Membership = lazy(() => import('./pages/Public/Membership'));
+const Contact = lazy(() => import('./pages/Public/Contact'));
+const Gallery = lazy(() => import('./pages/Public/Gallery'));
+const WhatsOn = lazy(() => import('./pages/Public/WhatsOn'));
+const PrivateHire = lazy(() => import('./pages/Public/PrivateHire'));
+const PrivateEvents = lazy(() => import('./pages/Public/PrivateEvents'));
+const PublicWellness = lazy(() => import('./pages/Public/Wellness'));
+const PublicCafe = lazy(() => import('./pages/Public/Cafe'));
+const FAQ = lazy(() => import('./pages/Public/FAQ'));
+const Login = lazy(() => import('./pages/Public/Login'));
+const VerifyMagicLink = lazy(() => import('./pages/Public/VerifyMagicLink'));
+const AuthCallback = lazy(() => import('./pages/Public/AuthCallback'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
+
+const PageLoader: React.FC = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-8 h-8 border-3 border-current border-t-transparent rounded-full animate-spin opacity-60" />
+      <span className="text-sm opacity-50">Loading...</span>
+    </div>
+  </div>
+);
 
 const useDebugLayout = () => {
   useEffect(() => {
@@ -44,32 +79,6 @@ const useDebugLayout = () => {
     return undefined;
   }, []);
 };
-
-import Logo from './components/Logo';
-import Dashboard from './pages/Member/Dashboard';
-import BookGolf from './pages/Member/BookGolf';
-import MemberEvents from './pages/Member/Events';
-import MemberWellness from './pages/Member/Wellness';
-import Profile from './pages/Member/Profile';
-import Cafe from './pages/Member/Cafe';
-import Sims from './pages/Member/Sims';
-import Landing from './pages/Public/Landing';
-import Membership from './pages/Public/Membership';
-import Contact from './pages/Public/Contact';
-import Gallery from './pages/Public/Gallery';
-import WhatsOn from './pages/Public/WhatsOn';
-import PrivateHire from './pages/Public/PrivateHire';
-import PrivateEvents from './pages/Public/PrivateEvents';
-import PublicWellness from './pages/Public/Wellness';
-import PublicCafe from './pages/Public/Cafe';
-import FAQ from './pages/Public/FAQ';
-import Login from './pages/Public/Login';
-import VerifyMagicLink from './pages/Public/VerifyMagicLink';
-import AuthCallback from './pages/Public/AuthCallback';
-import MenuOverlay from './components/MenuOverlay';
-import ViewAsBanner from './components/ViewAsBanner';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import { ToastProvider } from './components/Toast';
 
 interface ErrorBoundaryProps {
   children?: React.ReactNode;
@@ -201,68 +210,70 @@ const AnimatedRoutes: React.FC = () => {
 
   return (
     <TransitionContext.Provider value={transitionState}>
-      <AnimatePresence mode="wait" initial={false}>
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<DirectionalPageTransition><Landing /></DirectionalPageTransition>} />
-          <Route path="/membership/*" element={<DirectionalPageTransition><Membership /></DirectionalPageTransition>} />
-          <Route path="/contact" element={<DirectionalPageTransition><Contact /></DirectionalPageTransition>} />
-          <Route path="/gallery" element={<DirectionalPageTransition><Gallery /></DirectionalPageTransition>} />
-          <Route path="/whats-on" element={<DirectionalPageTransition><WhatsOn /></DirectionalPageTransition>} />
-          <Route path="/private-hire" element={<DirectionalPageTransition><PrivateHire /></DirectionalPageTransition>} />
-          <Route path="/private-events" element={<DirectionalPageTransition><PrivateEvents /></DirectionalPageTransition>} />
-          <Route path="/wellness" element={<DirectionalPageTransition><PublicWellness /></DirectionalPageTransition>} />
-          <Route path="/menu" element={<DirectionalPageTransition><PublicCafe /></DirectionalPageTransition>} />
-          <Route path="/faq" element={<DirectionalPageTransition><FAQ /></DirectionalPageTransition>} />
-          <Route path="/login" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
-          <Route path="/verify" element={<DirectionalPageTransition><VerifyMagicLink /></DirectionalPageTransition>} />
-          <Route path="/auth/callback" element={<DirectionalPageTransition><AuthCallback /></DirectionalPageTransition>} />
-          <Route path="/reset-password" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
+      <Suspense fallback={<PageLoader />}>
+        <AnimatePresence mode="wait" initial={false}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<DirectionalPageTransition><Landing /></DirectionalPageTransition>} />
+            <Route path="/membership/*" element={<DirectionalPageTransition><Membership /></DirectionalPageTransition>} />
+            <Route path="/contact" element={<DirectionalPageTransition><Contact /></DirectionalPageTransition>} />
+            <Route path="/gallery" element={<DirectionalPageTransition><Gallery /></DirectionalPageTransition>} />
+            <Route path="/whats-on" element={<DirectionalPageTransition><WhatsOn /></DirectionalPageTransition>} />
+            <Route path="/private-hire" element={<DirectionalPageTransition><PrivateHire /></DirectionalPageTransition>} />
+            <Route path="/private-events" element={<DirectionalPageTransition><PrivateEvents /></DirectionalPageTransition>} />
+            <Route path="/wellness" element={<DirectionalPageTransition><PublicWellness /></DirectionalPageTransition>} />
+            <Route path="/menu" element={<DirectionalPageTransition><PublicCafe /></DirectionalPageTransition>} />
+            <Route path="/faq" element={<DirectionalPageTransition><FAQ /></DirectionalPageTransition>} />
+            <Route path="/login" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
+            <Route path="/verify" element={<DirectionalPageTransition><VerifyMagicLink /></DirectionalPageTransition>} />
+            <Route path="/auth/callback" element={<DirectionalPageTransition><AuthCallback /></DirectionalPageTransition>} />
+            <Route path="/reset-password" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
 
-          <Route path="/admin" element={
-            <AdminProtectedRoute>
-              <DirectionalPageTransition><AdminDashboard /></DirectionalPageTransition>
-            </AdminProtectedRoute>
-          } />
+            <Route path="/admin" element={
+              <AdminProtectedRoute>
+                <DirectionalPageTransition><AdminDashboard /></DirectionalPageTransition>
+              </AdminProtectedRoute>
+            } />
 
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DirectionalPageTransition><Dashboard /></DirectionalPageTransition>
-            </ProtectedRoute>
-          } />
-          <Route path="/book" element={
-            <ProtectedRoute>
-              <DirectionalPageTransition><BookGolf /></DirectionalPageTransition>
-            </ProtectedRoute>
-          } />
-          <Route path="/member-events" element={
-            <ProtectedRoute>
-              <DirectionalPageTransition><MemberEvents /></DirectionalPageTransition>
-            </ProtectedRoute>
-          } />
-          <Route path="/member-wellness" element={
-            <ProtectedRoute>
-              <DirectionalPageTransition><MemberWellness /></DirectionalPageTransition>
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <DirectionalPageTransition><Profile /></DirectionalPageTransition>
-            </ProtectedRoute>
-          } />
-          <Route path="/cafe" element={
-            <ProtectedRoute>
-              <DirectionalPageTransition><Cafe /></DirectionalPageTransition>
-            </ProtectedRoute>
-          } />
-          <Route path="/sims" element={
-            <ProtectedRoute>
-              <DirectionalPageTransition><Sims /></DirectionalPageTransition>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AnimatePresence>
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DirectionalPageTransition><Dashboard /></DirectionalPageTransition>
+              </ProtectedRoute>
+            } />
+            <Route path="/book" element={
+              <ProtectedRoute>
+                <DirectionalPageTransition><BookGolf /></DirectionalPageTransition>
+              </ProtectedRoute>
+            } />
+            <Route path="/member-events" element={
+              <ProtectedRoute>
+                <DirectionalPageTransition><MemberEvents /></DirectionalPageTransition>
+              </ProtectedRoute>
+            } />
+            <Route path="/member-wellness" element={
+              <ProtectedRoute>
+                <DirectionalPageTransition><MemberWellness /></DirectionalPageTransition>
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <DirectionalPageTransition><Profile /></DirectionalPageTransition>
+              </ProtectedRoute>
+            } />
+            <Route path="/cafe" element={
+              <ProtectedRoute>
+                <DirectionalPageTransition><Cafe /></DirectionalPageTransition>
+              </ProtectedRoute>
+            } />
+            <Route path="/sims" element={
+              <ProtectedRoute>
+                <DirectionalPageTransition><Sims /></DirectionalPageTransition>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
+      </Suspense>
     </TransitionContext.Provider>
   );
 };
