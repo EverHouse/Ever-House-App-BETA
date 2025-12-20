@@ -90,15 +90,15 @@ const MembershipOverview: React.FC = () => {
           ]}
           onClick={() => setShowApplicationForm(true)} 
         />
-        {/* Core Card - Dark Green (Popular) */}
-        <div className="relative flex flex-col p-6 bg-primary rounded-3xl shadow-xl overflow-hidden text-white border border-white/10">
+        {/* Core Card - Dark Green with Liquid Glass */}
+        <div className="relative flex flex-col p-6 backdrop-blur-xl bg-primary/90 rounded-[2rem] overflow-hidden text-white border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_0_20px_rgba(41,53,21,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none"></div>
           <div className="flex justify-between items-start mb-4 relative z-10">
             <div className="pr-2">
               <h3 className="text-xl font-semibold mb-2">Core Membership</h3>
               <p className="text-sm text-white/70 leading-relaxed font-light">Your all-access pass to the Even House experience. From the cafe and lounges to the putting course and conference room.</p>
             </div>
-            <span className="shrink-0 px-3 py-1 bg-accent text-primary text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm mt-1">
+            <span className="shrink-0 px-3 py-1 bg-accent/90 backdrop-blur text-primary text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm border border-white/20 mt-1">
               Popular
             </span>
           </div>
@@ -121,7 +121,7 @@ const MembershipOverview: React.FC = () => {
           </ul>
           <button 
             onClick={() => setShowApplicationForm(true)}
-            className="w-full relative z-10 py-4 px-6 rounded-2xl bg-white text-primary font-bold text-sm tracking-widest uppercase hover:scale-[1.02] transition-transform active:scale-[0.98] shadow-lg"
+            className="w-full relative z-10 py-4 px-6 rounded-2xl bg-white/95 backdrop-blur text-primary font-bold text-sm tracking-widest uppercase hover:bg-white transition-all duration-300 active:scale-[0.98] shadow-[0_4px_16px_rgba(0,0,0,0.2)]"
           >
             Apply
           </button>
@@ -179,7 +179,7 @@ const MembershipOverview: React.FC = () => {
 };
 
 const MembershipCard: React.FC<any> = ({ title, price, suffix="/mo", desc, features, onClick, btnText="Apply" }) => (
-  <div className="relative flex flex-col p-6 bg-white/40 backdrop-blur-xl rounded-3xl shadow-sm border border-white/60 hover:border-white transition-all duration-300">
+  <div className="relative flex flex-col p-6 bg-white/50 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.6)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
     <div className="mb-4">
       <h3 className="text-xl font-semibold text-primary mb-2">{title}</h3>
       <p className="text-sm text-primary/70 leading-relaxed font-light">{desc}</p>
@@ -196,7 +196,7 @@ const MembershipCard: React.FC<any> = ({ title, price, suffix="/mo", desc, featu
         </li>
       ))}
     </ul>
-    <button onClick={onClick} className="w-full py-4 px-6 rounded-2xl bg-primary text-white font-bold text-sm tracking-widest uppercase hover:bg-primary/90 transition-transform active:scale-[0.98] shadow-md">
+    <button onClick={onClick} className="w-full py-4 px-6 rounded-2xl bg-primary text-white font-bold text-sm tracking-widest uppercase hover:bg-primary/90 transition-all duration-300 active:scale-[0.98] shadow-[0_4px_16px_rgba(41,53,21,0.3)]">
       {btnText}
     </button>
   </div>

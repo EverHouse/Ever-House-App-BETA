@@ -100,19 +100,20 @@ const PrivateHire: React.FC = () => {
 };
 
 const SpaceCard: React.FC<any> = ({ title, cap, img, tags, desc }) => (
-  <div className="group relative flex flex-col bg-white rounded-2xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.06)] transition-all duration-300 border border-black/5">
-     <div className="h-56 bg-cover bg-center" style={{backgroundImage: `url("${img}")`}}>
-        <div className="absolute top-4 right-4 bg-[#6e5e48] backdrop-blur px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-           <span className="material-symbols-outlined text-sm text-white">groups</span>
-           <span className="text-[10px] font-bold text-white uppercase">{cap}</span>
+  <div className="group relative flex flex-col rounded-[2rem] overflow-hidden backdrop-blur-xl bg-white/40 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.6)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
+     <div className="h-56 bg-cover bg-center relative" style={{backgroundImage: `url("${img}")`}}>
+        <div className="absolute inset-0 bg-gradient-to-t from-white/40 to-transparent"></div>
+        <div className="absolute top-4 right-4 bg-black/30 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-[0_0_12px_rgba(0,0,0,0.2)]">
+           <span className="material-symbols-outlined text-sm text-white drop-shadow">groups</span>
+           <span className="text-[10px] font-bold text-white uppercase drop-shadow">{cap}</span>
         </div>
      </div>
-     <div className="p-5">
+     <div className="p-5 bg-white/30 backdrop-blur-sm">
         <h4 className="text-xl font-bold text-primary mb-2">{title}</h4>
         <p className="text-sm text-primary/60 mb-4 line-clamp-2 leading-relaxed">{desc}</p>
         <div className="flex flex-wrap gap-2">
            {tags.map((tag: string) => (
-             <span key={tag} className="px-3 py-1 bg-[#F2F2EC] border border-black/5 rounded-full text-[10px] font-bold uppercase tracking-wide text-primary">{tag}</span>
+             <span key={tag} className="px-3 py-1 bg-white/60 backdrop-blur border border-white/80 rounded-full text-[10px] font-bold uppercase tracking-wide text-primary shadow-sm">{tag}</span>
            ))}
         </div>
      </div>

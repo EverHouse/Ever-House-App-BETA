@@ -82,7 +82,7 @@ const Landing: React.FC = () => {
          </div>
          
          <div className="flex flex-col gap-4">
-            <div className="bg-white p-6 rounded-2xl border border-black/5 shadow-sm">
+            <div className="backdrop-blur-xl bg-white/50 p-6 rounded-[2rem] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.6)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="text-xl font-bold text-[#293515]">Social</h3>
                     <span className="text-lg font-bold text-[#293515]">$180<span className="text-xs font-medium opacity-60">/mo</span></span>
@@ -92,14 +92,14 @@ const Landing: React.FC = () => {
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Lounge & Cowork Access</li>
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Member Events</li>
                 </ul>
-                <button onClick={() => navigate('/membership')} className="w-full py-3 rounded-xl border border-[#293515]/10 text-[#293515] font-bold text-xs hover:bg-[#293515]/5">View Details</button>
+                <button onClick={() => navigate('/membership')} className="w-full py-3 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-[#293515] font-bold text-xs hover:bg-white/80 transition-all duration-300">View Details</button>
             </div>
 
-            <div className="bg-[#293515] p-6 rounded-2xl shadow-xl relative overflow-hidden">
+            <div className="backdrop-blur-xl bg-[#293515]/90 p-6 rounded-[2rem] border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_0_20px_rgba(41,53,21,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms] relative overflow-hidden">
                 <div className="flex justify-between items-start mb-2 relative z-10">
                     <div className="flex items-center gap-2">
                         <h3 className="text-xl font-bold text-white">Core</h3>
-                        <span className="bg-[#CCB8E4] text-[#293515] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">Popular</span>
+                        <span className="bg-[#CCB8E4]/90 backdrop-blur text-[#293515] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm border border-white/20">Popular</span>
                     </div>
                     <span className="text-lg font-bold text-white">$250<span className="text-xs font-medium opacity-60">/mo</span></span>
                 </div>
@@ -108,10 +108,10 @@ const Landing: React.FC = () => {
                     <li className="flex gap-2 text-xs font-bold text-white/90"><span className="material-symbols-outlined text-sm text-[#CCB8E4]">check</span> 60min Daily Sim Time</li>
                     <li className="flex gap-2 text-xs font-bold text-white/90"><span className="material-symbols-outlined text-sm text-[#CCB8E4]">check</span> 60min Conf Room</li>
                 </ul>
-                <button onClick={() => navigate('/membership')} className="w-full py-3 rounded-xl bg-white text-[#293515] font-bold text-xs hover:bg-gray-100 relative z-10">View Details</button>
+                <button onClick={() => navigate('/membership')} className="w-full py-3 rounded-xl bg-white/95 backdrop-blur text-[#293515] font-bold text-xs hover:bg-white transition-all duration-300 relative z-10 shadow-md">View Details</button>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-black/5 shadow-sm">
+            <div className="backdrop-blur-xl bg-white/50 p-6 rounded-[2rem] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.6)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="text-xl font-bold text-[#293515]">Corporate</h3>
                     <span className="text-lg font-bold text-[#293515]">$350<span className="text-xs font-medium opacity-60">/mo</span></span>
@@ -121,7 +121,7 @@ const Landing: React.FC = () => {
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 90min Daily Sim Time</li>
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 10-Day Advance Booking</li>
                 </ul>
-                <button onClick={() => navigate('/membership/corporate')} className="w-full py-3 rounded-xl border border-[#293515]/10 text-[#293515] font-bold text-xs hover:bg-[#293515]/5">View Details</button>
+                <button onClick={() => navigate('/membership/corporate')} className="w-full py-3 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-[#293515] font-bold text-xs hover:bg-white/80 transition-all duration-300">View Details</button>
             </div>
 
             <button onClick={() => navigate('/membership/compare')} className="w-full mt-2 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-[#293515]/60 hover:text-[#293515] transition-colors py-2">
@@ -133,13 +133,13 @@ const Landing: React.FC = () => {
 
       {/* Private Events Inquiry Section */}
       <div className="px-4 pb-12">
-         <div className="relative rounded-[2rem] overflow-hidden h-[400px] group">
-            <div className="absolute inset-0 bg-[url('/images/events-crowd-optimized.webp')] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"></div>
-            <div className="absolute inset-0 bg-black/40"></div>
+         <div className="relative rounded-[2rem] overflow-hidden h-[400px] group backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-[1.01] transition-all duration-[400ms]">
+            <div className="absolute inset-0 bg-[url('/images/events-crowd-optimized.webp')] bg-cover bg-center opacity-70 transition-transform duration-700 group-hover:scale-105"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20"></div>
             <div className="absolute inset-0 p-8 flex flex-col justify-center items-center text-center">
-                <span className="text-white/80 text-xs font-bold uppercase tracking-[0.2em] mb-4">Host with Us</span>
-                <h2 className="text-4xl font-bold text-white mb-6 leading-tight">Private Events &<br/>Full Buyouts</h2>
-                <button onClick={() => navigate('/private-hire')} className="px-8 py-3 bg-white text-[#293515] rounded-xl font-bold text-sm hover:scale-105 transition-transform shadow-lg">
+                <span className="px-4 py-1.5 bg-white/15 backdrop-blur-md border border-white/30 rounded-full text-white/90 text-xs font-bold uppercase tracking-[0.2em] mb-4 shadow-[0_0_12px_rgba(255,255,255,0.1)]">Host with Us</span>
+                <h2 className="text-4xl font-bold text-white mb-6 leading-tight drop-shadow-lg">Private Events &<br/>Full Buyouts</h2>
+                <button onClick={() => navigate('/private-hire')} className="px-8 py-3 bg-white/95 backdrop-blur text-[#293515] rounded-xl font-bold text-sm hover:scale-105 hover:bg-white transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
                     Inquire Now
                 </button>
             </div>
@@ -162,14 +162,17 @@ const Landing: React.FC = () => {
 };
 
 const FeatureCard: React.FC<{image: string; icon: string; title: string; desc: string; delay: string}> = ({ image, icon, title, desc, delay }) => (
-  <div className="relative h-[240px] rounded-2xl overflow-hidden group shadow-md animate-pop-in" style={{animationDelay: delay}}>
-     <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style={{backgroundImage: `url('${image}')`}}></div>
-     <div className="absolute inset-0 bg-gradient-to-t from-[#293515]/90 via-[#293515]/40 to-transparent"></div>
+  <div 
+    className="relative h-[240px] rounded-[2rem] overflow-hidden group animate-pop-in backdrop-blur-xl bg-black/20 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]" 
+    style={{animationDelay: delay}}
+  >
+     <div className="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-110" style={{backgroundImage: `url('${image}')`}}></div>
+     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
      <div className="absolute bottom-0 left-0 right-0 p-4">
-        <div className="mb-2">
-            <span className="material-symbols-outlined text-white text-2xl drop-shadow-md">{icon}</span>
+        <div className="mb-2 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-[0_0_12px_rgba(255,255,255,0.1)]">
+            <span className="material-symbols-outlined text-white text-xl">{icon}</span>
         </div>
-        <h3 className="font-bold text-white text-base leading-tight mb-1">{title}</h3>
+        <h3 className="font-bold text-white text-base leading-tight mb-1 drop-shadow-md">{title}</h3>
         <p className="text-[10px] text-white/80 leading-snug">{desc}</p>
      </div>
   </div>
