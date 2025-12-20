@@ -38,6 +38,7 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
       gestureOrientation: 'vertical',
       smoothWheel: true,
       touchMultiplier: 2,
+      autoResize: true,
     });
 
     setLenis(lenisInstance);

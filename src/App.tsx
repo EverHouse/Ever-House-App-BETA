@@ -377,7 +377,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
 
   return (
-    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} h-screen w-screen overflow-hidden flex justify-center transition-colors duration-500 font-sans`}>
+    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-screen flex justify-center transition-colors duration-500 font-sans`}>
       
       {isDarkTheme ? (
         <>
@@ -594,7 +594,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
   const blobLeft = activeIndex >= 0 ? activeIndex * blobWidth : 0;
   
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30 px-4 pb-4 safe-area-bottom">
+    <div className="fixed bottom-0 left-0 right-0 flex justify-center z-[100] px-4 pb-4 safe-area-bottom">
       <nav 
         className={`w-full max-w-md rounded-full p-1.5 ${
           isDarkTheme 

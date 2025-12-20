@@ -36,7 +36,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-[60] flex justify-start overflow-hidden">
       <div 
-        className="absolute inset-0 transition-opacity duration-500" 
+        className="absolute inset-0 bg-black/20 backdrop-blur-xl transition-opacity duration-500" 
         onClick={onClose}
       ></div>
 
