@@ -26,6 +26,9 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
+  const [isTouchDevice, setIsTouchDevice] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+  );
   const rafRef = useRef<number>();
 
   useEffect(() => {
@@ -38,7 +41,16 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
   }, []);
 
   useEffect(() => {
-    if (prefersReducedMotion) {
+    const touchQuery = window.matchMedia('(pointer: coarse)');
+    const handleTouchChange = (e: MediaQueryListEvent) => {
+      setIsTouchDevice(e.matches);
+    };
+    touchQuery.addEventListener('change', handleTouchChange);
+    return () => touchQuery.removeEventListener('change', handleTouchChange);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion || isTouchDevice) {
       if (lenis) {
         lenis.destroy();
         setLenis(null);
@@ -90,7 +102,7 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
       window.removeEventListener('scroll', handleNativeScroll);
       lenisInstance.destroy();
     };
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, isTouchDevice]);
 
   const scrollTo = useCallback((target: number | string | HTMLElement, options?: { offset?: number; duration?: number }) => {
     if (lenis) {
