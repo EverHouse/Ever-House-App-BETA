@@ -133,25 +133,24 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[10001] overflow-y-auto overflow-x-hidden overscroll-contain -webkit-overflow-scrolling-touch" 
-      style={{ WebkitOverflowScrolling: 'touch' }}
+      className="fixed inset-0 z-[10001] flex items-center justify-center p-4"
       onClick={handleClose}
     >
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-md pointer-events-none" />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
       
-      <div className="min-h-full py-4 px-4 pb-8 flex items-start justify-center">
-        <div 
-          className="relative glass-modal w-full max-w-md mt-4 mb-8" 
-          onClick={(e) => e.stopPropagation()}
+      <div 
+        className="relative bg-white dark:bg-[#1a1f14] w-full max-w-md rounded-3xl shadow-2xl max-h-[90vh] max-h-[90dvh] overflow-y-auto overscroll-contain"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 z-10"
         >
-          <button
-            onClick={handleClose}
-            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full glass-button z-10 bg-white/80 dark:bg-black/60 backdrop-blur-md shadow-lg"
-          >
-            <span className="material-symbols-outlined text-xl text-primary dark:text-white">close</span>
-          </button>
+          <span className="material-symbols-outlined text-xl text-gray-600 dark:text-white">close</span>
+        </button>
 
-          <div className="px-6 py-8 pt-16">
+        <div className="px-6 py-8 pt-14">
           {success ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -239,7 +238,6 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
               </form>
             </>
           )}
-          </div>
         </div>
       </div>
     </div>
