@@ -111,7 +111,7 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
         duration: options?.duration ?? 1.0,
       });
     } else if (typeof target === 'number') {
-      window.scrollTo({ top: target, behavior: prefersReducedMotion.current ? 'auto' : 'smooth' });
+      window.scrollTo({ top: target, behavior: 'smooth' });
     }
   }, [lenis]);
 
