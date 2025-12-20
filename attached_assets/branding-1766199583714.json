@@ -1,0 +1,70 @@
+{
+  "colorScheme": "dark",
+  "fonts": [
+    {
+      "family": "RulesWeb",
+      "count": 53
+    },
+    {
+      "family": "sans-serif",
+      "count": 53
+    },
+    {
+      "family": "Arial",
+      "count": 1
+    }
+  ],
+  "colors": {
+    "primary": "#000066",
+    "accent": "#000033",
+    "background": "#000000",
+    "textPrimary": "#000000",
+    "link": "#000033"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "RulesWeb",
+      "heading": "RulesWeb"
+    },
+    "fontStacks": {
+      "body": [
+        "RulesWeb",
+        "sans-serif"
+      ],
+      "heading": [
+        "RulesWeb",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "RulesWeb",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "14px",
+      "h2": "14px",
+      "body": "14px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "0px"
+  },
+  "components": {},
+  "images": {
+    "logo": "File saved at: attached_assets/logo.svg",
+    "favicon": "https://fix.studio/favicons/apple-touch-icon.png",
+    "ogImage": "File saved at: attached_assets/ogImage.jpg"
+  },
+  "__framework_hints": [],
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Strong indicators: variant bonus (+23), header logo linking to homepage, header location, top-left position, highest logo on page, src contains logo, class contains logo, too small (likely icon, penalty), small square icon (likely UI icon, heavy penalty), SVG format, not visible (penalty). Score: 98 (clear winner by 110 points)",
+    "confidence": 0.9
+  },
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  }
+}
