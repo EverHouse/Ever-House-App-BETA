@@ -36,15 +36,16 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
     const lenisInstance = new Lenis({
       wrapper: window as any,
       content: document.body,
-      duration: 1.0,
+      duration: 1.4,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
-      touchMultiplier: 1.5,
+      touchMultiplier: 1.0,
+      wheelMultiplier: 0.8,
       autoResize: true,
       syncTouch: true,
-      syncTouchLerp: 0.075,
+      syncTouchLerp: 0.06,
     });
 
     setLenis(lenisInstance);
