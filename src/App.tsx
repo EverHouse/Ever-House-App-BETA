@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -371,10 +372,74 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   const headerClasses = isMemberRoute 
     ? (isDarkTheme 
-        ? "bg-[#0f120a] text-[#F2F2EC] shadow-md relative z-40 border-b border-white/5"
-        : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 relative z-40 border-b border-[#1e2810]")
-    : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 relative z-40";
+        ? "bg-[#0f120a] text-[#F2F2EC] shadow-md border-b border-white/5"
+        : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 border-b border-[#1e2810]")
+    : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20";
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
+
+  const headerContent = showHeader ? (
+    <header className={`fixed top-0 left-0 right-0 flex items-center justify-between px-6 py-4 z-[9998] pointer-events-auto ${headerClasses}`} role="banner">
+      <button 
+        onClick={handleTopLeftClick}
+        className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
+        aria-label="Open menu"
+      >
+        <span className="material-symbols-outlined text-[24px]">menu</span>
+      </button>
+      
+      {isMemberRoute ? (
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+          <span 
+            key={getCenterIcon()}
+            className={`material-symbols-outlined text-[32px] animate-icon-morph ${isDarkTheme ? 'text-[#F2F2EC]' : 'text-[#F2F2EC]'}`}
+          >
+            {getCenterIcon()}
+          </span>
+        </div>
+      ) : (
+        <button 
+          className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
+          onClick={() => navigate('/')}
+          aria-label="Go to home"
+        >
+          <Logo 
+            isMemberRoute={isMemberRoute} 
+            isDarkBackground={true} 
+            className="h-14 w-auto"
+          />
+        </button>
+      )}
+
+      <div className="flex items-center gap-1 ml-auto">
+        {isMemberRoute && user && (
+          <button 
+            onClick={() => setIsNotificationsOpen(true)}
+            className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg relative`}
+            aria-label="Notifications"
+          >
+            <span className="material-symbols-outlined text-[24px]">notifications</span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+        )}
+        <button 
+          onClick={handleTopRightClick}
+          className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
+          aria-label={user ? (isMemberRoute ? 'View profile' : 'Go to dashboard') : 'Login'}
+        >
+          <span 
+            key={getTopRightIcon()}
+            className="material-symbols-outlined text-[24px] animate-icon-morph"
+          >
+             {getTopRightIcon()}
+          </span>
+        </button>
+      </div>
+    </header>
+  ) : null;
 
   return (
     <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
@@ -396,75 +461,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <NotificationContext.Provider value={{ openNotifications }}>
         <ViewAsBanner />
         
+        {/* Header rendered via portal to escape transform context */}
+        {headerContent && createPortal(headerContent, document.body)}
+        
         <div className={`relative w-full min-h-screen flex flex-col ${isDarkTheme ? 'text-white' : 'text-primary'}`}>
-            
-            {showHeader && (
-              <header className={`flex items-center justify-between px-6 py-4 flex-shrink-0 ${headerClasses}`} role="banner">
-                <button 
-                  onClick={handleTopLeftClick}
-                  className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
-                  aria-label="Open menu"
-                >
-                  <span className="material-symbols-outlined text-[24px]">menu</span>
-                </button>
-                
-                {isMemberRoute ? (
-                  <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-                    <span 
-                      key={getCenterIcon()}
-                      className={`material-symbols-outlined text-[32px] animate-icon-morph ${isDarkTheme ? 'text-[#F2F2EC]' : 'text-[#F2F2EC]'}`}
-                    >
-                      {getCenterIcon()}
-                    </span>
-                  </div>
-                ) : (
-                  <button 
-                    className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
-                    onClick={() => navigate('/')}
-                    aria-label="Go to home"
-                  >
-                    <Logo 
-                      isMemberRoute={isMemberRoute} 
-                      isDarkBackground={true} 
-                      className="h-14 w-auto"
-                    />
-                  </button>
-                )}
-
-                <div className="flex items-center gap-1 ml-auto">
-                  {isMemberRoute && user && (
-                    <button 
-                      onClick={() => setIsNotificationsOpen(true)}
-                      className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg relative`}
-                      aria-label="Notifications"
-                    >
-                      <span className="material-symbols-outlined text-[24px]">notifications</span>
-                      {unreadCount > 0 && (
-                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      )}
-                    </button>
-                  )}
-                  <button 
-                    onClick={handleTopRightClick}
-                    className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
-                    aria-label={user ? (isMemberRoute ? 'View profile' : 'Go to dashboard') : 'Login'}
-                  >
-                    <span 
-                      key={getTopRightIcon()}
-                      className="material-symbols-outlined text-[24px] animate-icon-morph"
-                    >
-                       {getTopRightIcon()}
-                    </span>
-                  </button>
-                </div>
-              </header>
-            )}
 
             <main 
                 id="main-content"
-                className={`flex-1 relative ${isMemberRoute && !isAdminRoute ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
+                className={`flex-1 relative ${showHeader ? 'pt-[72px]' : ''} ${isMemberRoute && !isAdminRoute ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
             >
                 {children}
             </main>
