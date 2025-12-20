@@ -640,23 +640,19 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
                 className={`
                   flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer
                   transition-all duration-300 ease-out
-                  ${isActive ? 'rounded-lg' : ''}
                   ${isActive 
-                    ? (isDarkTheme ? 'bg-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]' : 'bg-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]') 
-                    : ''
+                    ? (isDarkTheme ? 'text-white' : 'text-white') 
+                    : (isDarkTheme ? 'text-white/50 hover:text-white/80' : 'text-white/60 hover:text-white/80')
                   }
                   ${pressedIndex === index ? 'scale-90' : 'scale-100'}
                 `}
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
               >
-                {isActive && (
-                  <div className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1/3 h-0.5 border-b ${isDarkTheme ? 'border-white/30' : 'border-white/40'}`} />
-                )}
-                <span className={`material-symbols-outlined text-xl transition-all duration-300 ${shouldFill ? 'filled' : ''} ${isActive ? 'scale-110 drop-shadow-md' : ''} ${isActive ? 'text-white' : (isDarkTheme ? 'text-white/50 hover:text-white/80' : 'text-white/60 hover:text-white/80')}`}>
+                <span className={`material-symbols-outlined text-xl transition-all duration-300 ${shouldFill ? 'filled' : ''} ${isActive ? 'scale-110' : ''}`}>
                   {item.icon}
                 </span>
-                <span className={`text-[9px] tracking-wide transition-all duration-300 ${isActive ? 'font-bold text-white' : (isDarkTheme ? 'text-white/50' : 'text-white/60')} font-medium`}>
+                <span className={`text-[9px] tracking-wide transition-all duration-300 ${isActive ? 'font-bold' : 'font-medium'}`}>
                   {item.label}
                 </span>
               </button>
