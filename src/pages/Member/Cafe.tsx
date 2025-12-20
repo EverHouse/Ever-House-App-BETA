@@ -157,7 +157,7 @@ const Cafe: React.FC = () => {
                 <button
                 key={cat.category}
                 onClick={() => setActiveCategory(cat.category)}
-                className={`snap-start flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-bold transition-all border active:scale-95 ${activeCategory === cat.category ? 'bg-[#E7E7DC] text-[#293515] shadow-glow border-[#E7E7DC]' : (isDark ? 'glass-button text-white border-white/10 hover:bg-white/10' : 'bg-white text-primary border-black/10 hover:bg-black/5')}`}
+                className={`snap-start flex-shrink-0 px-5 py-2.5 min-h-[44px] rounded-lg text-sm font-bold transition-all border active:scale-95 ${activeCategory === cat.category ? 'bg-[#E7E7DC] text-[#293515] shadow-glow border-[#E7E7DC]' : (isDark ? 'glass-button text-white border-white/10 hover:bg-white/10' : 'bg-white text-primary border-black/10 hover:bg-black/5')}`}
                 >
                 {cat.category}
                 </button>

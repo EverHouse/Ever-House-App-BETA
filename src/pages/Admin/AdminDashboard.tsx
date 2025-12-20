@@ -472,7 +472,9 @@ const EventsAdmin: React.FC = () => {
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return 'TBD';
-        const date = new Date(dateStr);
+        const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        const date = new Date(datePart + 'T12:00:00');
+        if (isNaN(date.getTime())) return 'Invalid Date';
         return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     };
 
@@ -1117,7 +1119,10 @@ const formatTime12 = (time24: string): string => {
 };
 
 const formatDateShort = (dateStr: string): string => {
-    const date = new Date(dateStr);
+    if (!dateStr) return 'No Date';
+    const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+    const date = new Date(datePart + 'T12:00:00');
+    if (isNaN(date.getTime())) return 'Invalid Date';
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 };
 
@@ -1740,7 +1745,10 @@ const WellnessAdmin: React.FC = () => {
     };
 
     const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr + 'T12:00:00');
+        if (!dateStr) return 'No Date';
+        const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        const date = new Date(datePart + 'T12:00:00');
+        if (isNaN(date.getTime())) return 'Invalid Date';
         return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     };
 
@@ -1780,7 +1788,7 @@ const WellnessAdmin: React.FC = () => {
                         <button
                             onClick={handleSyncCalendars}
                             disabled={isSyncing}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
                             <span className={`material-symbols-outlined text-lg ${isSyncing ? 'animate-spin' : ''}`}>
                                 {isSyncing ? 'progress_activity' : 'calendar_month'}
@@ -1789,7 +1797,7 @@ const WellnessAdmin: React.FC = () => {
                         </button>
                         <button
                             onClick={openCreate}
-                            className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                            className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity"
                         >
                             <span className="material-symbols-outlined text-lg">add</span>
                             Class
@@ -1999,24 +2007,24 @@ const TeamAdmin: React.FC = () => {
             <div className="flex gap-2 mb-6">
                 <button
                     onClick={() => setSubTab('staff')}
-                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+                    className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
                         subTab === 'staff' 
                             ? 'bg-primary text-white' 
                             : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
                     }`}
                 >
-                    <span className="material-symbols-outlined text-[16px] mr-1 align-middle">badge</span>
+                    <span className="material-symbols-outlined text-[18px]">badge</span>
                     Staff
                 </button>
                 <button
                     onClick={() => setSubTab('admins')}
-                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+                    className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
                         subTab === 'admins' 
                             ? 'bg-primary text-white' 
                             : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
                     }`}
                 >
-                    <span className="material-symbols-outlined text-[16px] mr-1 align-middle">shield_person</span>
+                    <span className="material-symbols-outlined text-[18px]">shield_person</span>
                     Admins
                 </button>
             </div>
@@ -2159,7 +2167,7 @@ const StaffAdmin: React.FC = () => {
                     </div>
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                        className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity"
                     >
                         <span className="material-symbols-outlined text-lg">person_add</span>
                         Staff

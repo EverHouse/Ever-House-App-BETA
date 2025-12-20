@@ -80,12 +80,17 @@ const WhatsOn: React.FC = () => {
     return items.sort((a, b) => {
       const dateA = a.type === 'event' ? a.event_date : a.date;
       const dateB = b.type === 'event' ? b.event_date : b.date;
-      return new Date(dateA).getTime() - new Date(dateB).getTime();
+      const cleanA = dateA?.includes('T') ? dateA.split('T')[0] : dateA || '';
+      const cleanB = dateB?.includes('T') ? dateB.split('T')[0] : dateB || '';
+      return cleanA.localeCompare(cleanB);
     });
   }, [events, wellnessClasses, filter]);
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    if (!dateString) return { day: '--', month: '---', weekday: '---', full: 'No Date' };
+    const datePart = dateString.includes('T') ? dateString.split('T')[0] : dateString;
+    const date = new Date(datePart + 'T12:00:00');
+    if (isNaN(date.getTime())) return { day: '--', month: '---', weekday: '---', full: 'Invalid Date' };
     return {
       day: date.getDate().toString().padStart(2, '0'),
       month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
@@ -119,7 +124,7 @@ const WhatsOn: React.FC = () => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+            className={`px-4 py-2 min-h-[44px] rounded-full text-sm font-bold whitespace-nowrap transition-all flex-shrink-0 ${
               filter === f
                 ? 'bg-[#293515] text-white'
                 : 'bg-white text-[#293515] hover:bg-[#293515]/10'
