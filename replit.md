@@ -33,6 +33,20 @@ The application is built with a React 19 frontend using Vite, styled with Tailwi
 - **Responsive Design**: Targets various iPhone, iPad, and Desktop viewports, utilizing `safe-area-bottom` and `tap-target` classes.
 - **Theme System**: Supports Light, Dark, and System themes, persisted via `localStorage`.
 
+### Motion Architecture
+- **Framer Motion**: Used for page transitions and animations across the app.
+- **Lenis Smooth Scroll**: Premium smooth scrolling with weighted easing (duration 1.2s, easing: `Math.min(1, 1.001 - Math.pow(2, -10 * t))`).
+- **Page Transitions**: 
+  - Exit: Scale to 0.98, fade out (0.3s)
+  - Enter: Blur(20px) clearing to blur(0px), vertical offset 20px → 0 (0.5s)
+  - Easing: [0.25, 0.46, 0.45, 0.94] (premium weighted feel)
+- **Liquid Glass Overlay**: Brand green (#293515) at 15% opacity with clip-path wipe animation during route transitions.
+- **Motion Components** (`src/components/motion/`):
+  - `SmoothScroll.tsx` - Lenis provider with context for scrollTo
+  - `PageTransition.tsx` - Framer Motion page wrapper
+  - `LiquidGlassOverlay.tsx` - Transition overlay with AnimatePresence
+- **Persistent UI**: Bottom nav bar and header stay outside AnimatePresence to prevent flicker during transitions.
+
 ### Technical Implementations
 - **Frontend**: React 19 with React Router DOM, Vite (port 5000).
 - **Backend**: Express.js (port 3001) providing a REST API with modular route architecture.
