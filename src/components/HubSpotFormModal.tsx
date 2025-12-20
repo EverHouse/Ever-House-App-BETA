@@ -53,20 +53,10 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = '0';
-      document.body.style.right = '0';
       document.body.style.overflow = 'hidden';
       
       return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
         document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
       };
     }
   }, [isOpen]);
@@ -143,14 +133,15 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[10001] overflow-y-auto overscroll-contain" 
+      className="fixed inset-0 z-[10001] overflow-y-auto overflow-x-hidden overscroll-contain -webkit-overflow-scrolling-touch" 
+      style={{ WebkitOverflowScrolling: 'touch' }}
       onClick={handleClose}
     >
       <div className="fixed inset-0 bg-black/40 backdrop-blur-md pointer-events-none" />
       
-      <div className="min-h-full py-8 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] flex items-start justify-center">
+      <div className="min-h-full py-4 px-4 pb-8 flex items-start justify-center">
         <div 
-          className="relative glass-modal w-full max-w-md my-auto" 
+          className="relative glass-modal w-full max-w-md mt-4 mb-8" 
           onClick={(e) => e.stopPropagation()}
         >
           <button

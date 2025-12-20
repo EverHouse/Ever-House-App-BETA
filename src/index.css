@@ -258,10 +258,6 @@ html.dark .glass-button:active {
     var(--liquid-glass-inner-shadow),
     0 25px 50px rgba(0, 0, 0, 0.2), 0 10px 20px rgba(0, 0, 0, 0.1);
   transition: var(--liquid-transition);
-  max-height: calc(100vh - 4rem);
-  max-height: calc(100dvh - 4rem);
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 html.dark .glass-modal {
