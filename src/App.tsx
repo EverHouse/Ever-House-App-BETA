@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo } from 'react';
+import React, { useState, useEffect, useContext, createContext, ErrorInfo, useMemo, useRef } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './contexts/DataContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -379,25 +379,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
             </main>
 
-            {/* Member Dock - Full Width with iOS Safe Area */}
+            {/* Member Dock - Floating Pill with Animated Blob */}
             {isMemberRoute && !isAdminRoute && user && (
-              <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30 px-4 pb-4 safe-area-bottom">
-                 <nav 
-                   className={`w-full max-w-md rounded-2xl p-1.5 flex items-stretch justify-between h-16 ${
-                     isDarkTheme 
-                       ? 'glass-card bg-[#0f120a]/80 border border-white/10 shadow-glass backdrop-blur-2xl' 
-                       : 'bg-[#293515] shadow-lg'
-                   }`} 
-                   role="navigation" 
-                   aria-label="Member navigation"
-                 >
-                    <NavItem to="/dashboard" icon="dashboard" isActive={location.pathname === '/dashboard'} label="Dashboard" isDarkTheme={isDarkTheme} />
-                    <NavItem to="/book" icon="sports_golf" isActive={location.pathname === '/book'} label="Book Golf" isDarkTheme={isDarkTheme} />
-                    <NavItem to="/member-wellness" icon="spa" isActive={location.pathname === '/member-wellness'} label="Wellness" isDarkTheme={isDarkTheme} />
-                    <NavItem to="/member-events" icon="calendar_month" isActive={location.pathname === '/member-events'} label="Events" isDarkTheme={isDarkTheme} />
-                    <NavItem to="/cafe" icon="local_cafe" isActive={location.pathname === '/cafe'} label="Cafe" isDarkTheme={isDarkTheme} />
-                 </nav>
-              </div>
+              <MemberBottomNav currentPath={location.pathname} isDarkTheme={isDarkTheme} />
             )}
 
             <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
@@ -497,28 +481,96 @@ const NotifItem: React.FC<{icon: string; title: string; desc: string; time: stri
   </div>
 );
 
-const NavItem: React.FC<{ to: string; icon: string; isActive: boolean; label: string; isDarkTheme: boolean }> = ({ to, icon, isActive, label, isDarkTheme }) => {
+interface MemberNavItem {
+  path: string;
+  icon: string;
+  label: string;
+}
+
+const MEMBER_NAV_ITEMS: MemberNavItem[] = [
+  { path: '/dashboard', icon: 'dashboard', label: 'Home' },
+  { path: '/book', icon: 'sports_golf', label: 'Golf' },
+  { path: '/member-wellness', icon: 'spa', label: 'Wellness' },
+  { path: '/member-events', icon: 'calendar_month', label: 'Events' },
+  { path: '/cafe', icon: 'local_cafe', label: 'Cafe' },
+];
+
+const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> = ({ currentPath, isDarkTheme }) => {
   const navigate = useNavigate();
-  const isGolfIcon = icon === 'sports_golf';
-  const shouldFill = isActive && !isGolfIcon;
-
-  const activeClasses = isDarkTheme 
-    ? 'bg-[#E7E7DC] text-[#293515] shadow-glow scale-105' 
-    : 'bg-white text-[#293515] shadow-md scale-105';
+  const [pressedIndex, setPressedIndex] = useState<number | null>(null);
   
-  const inactiveClasses = isDarkTheme
-    ? 'text-white/60 hover:text-white hover:bg-white/5 active:scale-95'
-    : 'text-white/70 hover:text-white hover:bg-white/10 active:scale-95';
-
+  const activeIndex = MEMBER_NAV_ITEMS.findIndex(item => item.path === currentPath);
+  const itemCount = MEMBER_NAV_ITEMS.length;
+  
+  const blobWidth = 100 / itemCount;
+  const blobLeft = activeIndex >= 0 ? activeIndex * blobWidth : 0;
+  
   return (
-    <button 
-      onClick={() => navigate(to)} 
-      className={`flex-1 h-full flex items-center justify-center rounded-xl transition-all duration-300 focus:ring-2 focus:ring-accent focus:outline-none ${isActive ? activeClasses : inactiveClasses}`}
-      aria-label={label}
-      aria-current={isActive ? 'page' : undefined}
-    >
-      <span className={`material-symbols-outlined text-[24px] ${shouldFill ? 'filled' : ''}`}>{icon}</span>
-    </button>
+    <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30 px-4 pb-4 safe-area-bottom">
+      <nav 
+        className={`w-full max-w-md rounded-full p-1.5 ${
+          isDarkTheme 
+            ? 'bg-black/60 backdrop-blur-xl border border-[#293515]/80' 
+            : 'bg-[#293515]/90 backdrop-blur-xl border border-[#293515]'
+        } shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]`}
+        role="navigation"
+        aria-label="Member navigation"
+      >
+        <div className="relative flex items-center w-full">
+          {/* Animated Blob Indicator */}
+          {activeIndex >= 0 && (
+            <div 
+              className={`absolute top-0 bottom-0 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                isDarkTheme
+                  ? 'bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]'
+                  : 'bg-gradient-to-b from-white/40 to-white/20 shadow-[0_0_16px_rgba(255,255,255,0.3),inset_0_1px_1px_rgba(255,255,255,0.4)]'
+              }`}
+              style={{ 
+                width: `${blobWidth}%`, 
+                left: `${blobLeft}%`,
+              }}
+            />
+          )}
+          
+          {/* Nav Items */}
+          {MEMBER_NAV_ITEMS.map((item, index) => {
+            const isActive = currentPath === item.path;
+            const isGolfIcon = item.icon === 'sports_golf';
+            const shouldFill = isActive && !isGolfIcon;
+            
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                onMouseDown={() => setPressedIndex(index)}
+                onMouseUp={() => setPressedIndex(null)}
+                onMouseLeave={() => setPressedIndex(null)}
+                onTouchStart={() => setPressedIndex(index)}
+                onTouchEnd={() => setPressedIndex(null)}
+                className={`
+                  flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer
+                  transition-all duration-300 ease-out
+                  ${isActive 
+                    ? (isDarkTheme ? 'text-white' : 'text-white') 
+                    : (isDarkTheme ? 'text-white/50 hover:text-white/80' : 'text-white/60 hover:text-white/80')
+                  }
+                  ${pressedIndex === index ? 'scale-90' : 'scale-100'}
+                `}
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <span className={`material-symbols-outlined text-xl transition-all duration-300 ${shouldFill ? 'filled' : ''} ${isActive ? 'scale-110' : ''}`}>
+                  {item.icon}
+                </span>
+                <span className={`text-[9px] tracking-wide transition-all duration-300 ${isActive ? 'font-bold' : 'font-medium'}`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 };
 
