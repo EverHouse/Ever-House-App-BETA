@@ -10,7 +10,7 @@ const ViewAsBanner: React.FC = () => {
   if (!isAdmin) return null;
   
   return (
-    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-[100] bg-accent text-brand-green px-4 py-2 flex items-center justify-between shadow-[0_-2px_10px_rgba(0,0,0,0.15)]">
+    <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-4 right-4 z-[100] bg-accent text-brand-green px-4 py-2 rounded-xl flex items-center justify-between shadow-lg">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-lg">visibility</span>
         <span className="text-sm font-bold">
