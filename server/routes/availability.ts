@@ -12,7 +12,8 @@ router.get('/api/availability', async (req, res) => {
     }
     
     const durationMinutes = parseInt(duration as string) || 60;
-    const slotDurationHours = Math.ceil(durationMinutes / 60);
+    // Slot increment matches duration: 30, 60, or 90 minutes
+    const slotIncrement = durationMinutes;
     
     const bookedSlots = await pool.query(
       `SELECT start_time, end_time FROM booking_requests 
@@ -27,13 +28,18 @@ router.get('/api/availability', async (req, res) => {
     );
     
     const slots = [];
-    const openHour = 8;
-    const closeHour = 22;
+    const openMinutes = 8 * 60; // 8:00 AM
+    const closeMinutes = 22 * 60; // 10:00 PM
     
-    for (let hour = openHour; hour <= closeHour - slotDurationHours; hour++) {
-      const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
-      const endHour = hour + slotDurationHours;
-      const endTime = `${endHour.toString().padStart(2, '0')}:00:00`;
+    for (let startMins = openMinutes; startMins + durationMinutes <= closeMinutes; startMins += slotIncrement) {
+      const startHour = Math.floor(startMins / 60);
+      const startMin = startMins % 60;
+      const endMins = startMins + durationMinutes;
+      const endHour = Math.floor(endMins / 60);
+      const endMin = endMins % 60;
+      
+      const startTime = `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}:00`;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}:00`;
       
       const hasBookingConflict = bookedSlots.rows.some((booking: any) => {
         const bookStart = booking.start_time;
