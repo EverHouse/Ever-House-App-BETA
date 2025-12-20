@@ -15,6 +15,13 @@ router.get('/api/availability', async (req, res) => {
     // Slot increment matches duration: 30, 60, or 90 minutes
     const slotIncrement = durationMinutes;
     
+    // Get resource type to determine business hours
+    const resourceResult = await pool.query(
+      `SELECT type FROM resources WHERE id = $1`,
+      [resource_id]
+    );
+    const resourceType = resourceResult.rows[0]?.type || 'simulator';
+    
     const bookedSlots = await pool.query(
       `SELECT start_time, end_time FROM booking_requests 
        WHERE bay_id = $1 AND request_date = $2 AND status = 'approved'`,
@@ -28,8 +35,9 @@ router.get('/api/availability', async (req, res) => {
     );
     
     const slots = [];
+    // Different business hours based on resource type
     const openMinutes = 8 * 60; // 8:00 AM
-    const closeMinutes = 22 * 60; // 10:00 PM
+    const closeMinutes = resourceType === 'conference_room' ? 18 * 60 : 22 * 60; // 6PM for conference, 10PM for simulators
     
     for (let startMins = openMinutes; startMins + durationMinutes <= closeMinutes; startMins += slotIncrement) {
       const startHour = Math.floor(startMins / 60);

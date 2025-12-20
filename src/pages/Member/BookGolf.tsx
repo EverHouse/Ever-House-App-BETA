@@ -99,6 +99,7 @@ const BookGolf: React.FC = () => {
 
   const tierPermissions = getTierPermissions(user?.tier || 'Social');
   const canBookSimulators = canAccessResource(user?.tier || 'Social', 'simulator');
+  const isTierLoaded = Boolean(user?.tier);
   
   const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
   const [selectedDateObj, setSelectedDateObj] = useState(dates[0]);
@@ -207,7 +208,7 @@ const BookGolf: React.FC = () => {
     };
     
     fetchAvailability();
-  }, [resources, selectedDateObj, duration]);
+  }, [resources, selectedDateObj, duration, user?.email]);
 
   const getAvailableResourcesForSlot = (slot: TimeSlot): Resource[] => {
     return resources.filter(r => slot.availableResourceDbIds.includes(r.dbId));
@@ -288,7 +289,7 @@ const BookGolf: React.FC = () => {
         </div>
       </section>
 
-      {activeTab === 'simulator' && !canBookSimulators ? (
+      {activeTab === 'simulator' && isTierLoaded && !canBookSimulators ? (
         <section className={`rounded-2xl p-6 border text-center ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
           <span className="material-symbols-outlined text-4xl text-accent mb-4">lock</span>
           <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Upgrade to Book Simulators</h3>
