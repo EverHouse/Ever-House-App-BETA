@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -33,8 +34,8 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 
   const actionBtn = getActionButtonConfig();
 
-  return (
-    <div className="fixed inset-0 z-[10000] flex justify-start overflow-hidden">
+  const menuContent = (
+    <div className="fixed inset-0 z-[12000] flex justify-start overflow-hidden pointer-events-auto">
       <div 
         className="absolute inset-0 bg-black/20 backdrop-blur-xl transition-opacity duration-500" 
         onClick={onClose}
@@ -88,6 +89,8 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
+
+  return createPortal(menuContent, document.body);
 };
 
 const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string; isDark: boolean }> = ({ label, onClick, delay, isDark }) => (
