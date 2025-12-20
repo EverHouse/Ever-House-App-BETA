@@ -9,6 +9,7 @@ import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { getDateString, formatDateShort, parseLocalDate } from '../../utils/dateUtils';
+import { MotionList, MotionListItem } from '../../components/motion';
 
 const generateUpcomingDates = (days: number = 14): { day: string; date: string; dateNum: string; fullDate: string }[] => {
   const dates = [];
@@ -91,11 +92,11 @@ const MemberEvents: React.FC = () => {
   return (
     <SwipeablePage className="px-6 pt-2 relative min-h-screen pb-24 overflow-hidden">
       <section className="mb-4 pt-2">
-        <h1 className={`text-3xl font-bold leading-tight drop-shadow-md animate-pop-in ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Events</h1>
-        <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/70' : 'text-primary/70'}`} style={{animationDelay: '0.05s'}}>Discover what's happening at the House.</p>
+        <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Events</h1>
+        <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Discover what's happening at the House.</p>
       </section>
 
-      <section className={`mb-8 border-b -mx-6 px-6 animate-pop-in ${isDark ? 'border-white/10' : 'border-black/10'}`} style={{animationDelay: '0.1s', animationFillMode: 'both'}}>
+      <section className={`mb-8 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide">
           {['All', 'Social', 'Dining', 'Wellness', 'Sport'].map(cat => (
             <TabButton 
@@ -110,7 +111,7 @@ const MemberEvents: React.FC = () => {
       </section>
 
       <div className="relative z-10">
-         <section className="mb-8 animate-pop-in" style={{animationDelay: '0.15s', animationFillMode: 'both'}}>
+         <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
                 {selectedDateIndex !== null ? 'Showing' : 'Filter by Date'}
@@ -142,24 +143,20 @@ const MemberEvents: React.FC = () => {
         </section>
 
          <section className="mb-6">
-            <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 animate-pop-in ${isDark ? 'text-white/80' : 'text-primary/80'}`} style={{animationDelay: '0.2s', animationFillMode: 'both'}}>Events</h3>
-            <div className="space-y-4">
-                {isLoading ? (
-                    <div className="grid grid-cols-1 gap-4">
-                        <SkeletonList count={4} Component={EventCardSkeleton} isDark={isDark} className="grid grid-cols-1 gap-4" />
-                    </div>
-                ) : filteredEvents.length === 0 ? (
-                    <p className={`text-sm italic ${isDark ? 'text-white/60' : 'text-primary/60'}`}>No events found in this category.</p>
-                ) : (
-                    filteredEvents.map((event, index) => (
-                    <div 
+            <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Events</h3>
+            {isLoading ? (
+                <div className="grid grid-cols-1 gap-4">
+                    <SkeletonList count={4} Component={EventCardSkeleton} isDark={isDark} className="grid grid-cols-1 gap-4" />
+                </div>
+            ) : filteredEvents.length === 0 ? (
+                <p className={`text-sm italic ${isDark ? 'text-white/60' : 'text-primary/60'}`}>No events found in this category.</p>
+            ) : (
+                <MotionList className="space-y-4">
+                    {filteredEvents.map((event) => (
+                    <MotionListItem 
                         key={event.id} 
                         onClick={() => setSelectedEvent(event)}
-                        className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all animate-pop-in ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
-                        style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
-                        tabIndex={0}
-                        role="button"
-                        onKeyDown={(e) => { if (e.key === 'Enter') setSelectedEvent(event); }}
+                        className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
                     >
                         <div className={`w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden relative ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
                             <img src={event.image} alt={event.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-90" />
@@ -183,10 +180,10 @@ const MemberEvents: React.FC = () => {
                             <p className={`text-xs mb-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{event.date} • {event.time}</p>
                             <p className={`text-xs truncate ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{event.location}</p>
                         </div>
-                    </div>
-                    ))
-                )}
-            </div>
+                    </MotionListItem>
+                    ))}
+                </MotionList>
+            )}
          </section>
       </div>
 

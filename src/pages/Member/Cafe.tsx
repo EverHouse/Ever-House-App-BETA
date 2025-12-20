@@ -4,6 +4,7 @@ import { useData, CafeItem } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Skeleton from '../../components/Skeleton';
 import SwipeablePage from '../../components/SwipeablePage';
+import { MotionList, MotionListItem } from '../../components/motion';
 
 interface CartItem {
   id: string;
@@ -190,16 +191,15 @@ const Cafe: React.FC = () => {
             itemsByCategory.map(cat => (
             <div 
                 key={cat.category} 
-                className={activeCategory === cat.category ? 'block animate-slide-in-right' : 'hidden'}
+                className={activeCategory === cat.category ? 'block' : 'hidden'}
             >
-                <div className="space-y-4">
-                {cat.items.map((item, index) => {
+                <MotionList className="space-y-4">
+                {cat.items.map((item) => {
                     const isExpanded = expandedItemId === item.id;
                     return (
-                    <div 
+                    <MotionListItem 
                     key={item.id} 
-                    className={`rounded-xl transition-all animate-pop-in overflow-hidden ${isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered'}`}
-                    style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
+                    className={`rounded-xl transition-all overflow-hidden ${isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered'}`}
                     >
                     <div 
                         onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
@@ -244,10 +244,10 @@ const Cafe: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                    </div>
+                    </MotionListItem>
                     );
                 })}
-                </div>
+                </MotionList>
             </div>
             ))
         )}

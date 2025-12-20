@@ -4,6 +4,7 @@ import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
+import { MotionList, MotionListItem } from '../../components/motion';
 
 interface WellnessClass {
     id: number;
@@ -113,7 +114,7 @@ const Wellness: React.FC = () => {
         </div>
       </section>
 
-      <div className="relative z-10 animate-pop-in">
+      <div className="relative z-10">
         {activeTab === 'classes' && <ClassesView onBook={handleBook} isDark={isDark} />}
         {activeTab === 'medspa' && <MedSpaView isDark={isDark} />}
       </div>
@@ -191,7 +192,7 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
   }
 
   return (
-    <div className="animate-pop-in">
+    <div>
         <section className="mb-6">
         <div className="flex gap-3 overflow-x-auto -mx-6 px-6 scrollbar-hide items-center mb-4">
             {categories.map(cat => (
@@ -205,12 +206,12 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
             ))}
         </div>
         
-        <div className="space-y-4">
+        <MotionList className="space-y-4">
             {sortedClasses.length > 0 ? (
-                sortedClasses.map((cls, index) => {
+                sortedClasses.map((cls) => {
                     const isExpanded = expandedId === cls.id;
                     return (
-                    <div key={cls.id} className="animate-pop-in" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}>
+                    <MotionListItem key={cls.id}>
                         <ClassCard 
                             {...cls}
                             date={formatDateForDisplay(cls.date)}
@@ -219,7 +220,7 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
                             onBook={() => onBook(cls)}
                             isDark={isDark}
                         />
-                    </div>
+                    </MotionListItem>
                     );
                 })
             ) : (
@@ -227,14 +228,14 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
                     <p>No classes scheduled yet. Check back soon!</p>
                 </div>
             )}
-        </div>
+        </MotionList>
         </section>
     </div>
   );
 };
 
 const MedSpaView: React.FC<{isDark?: boolean}> = ({ isDark = true }) => (
-  <div className="animate-pop-in space-y-8">
+  <div className="space-y-8">
     <div className="text-center space-y-2 mb-6">
       <p className={`text-xs uppercase tracking-[0.2em] ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Powered by</p>
       <h2 className={`font-bold text-3xl ${isDark ? 'text-white' : 'text-primary'}`}>Amarie Aesthetics</h2>
