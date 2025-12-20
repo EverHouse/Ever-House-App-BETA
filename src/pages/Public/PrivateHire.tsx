@@ -24,7 +24,7 @@ const PrivateHire: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
        <div className="relative w-full h-[420px] bg-primary flex flex-col justify-end overflow-hidden group rounded-b-[2rem]">
          <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" 
-              style={{backgroundImage: 'url("/images/venue-wide.jpg")'}}></div>
+              style={{backgroundImage: 'url("/images/venue-wide-optimized.webp")'}}></div>
          <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent"></div>
          <div className="relative z-10 p-6 pb-12">
             <span className="inline-block px-3 py-1 mb-3 text-[10px] font-bold tracking-widest text-white uppercase bg-white/20 backdrop-blur-sm rounded-full border border-white/10">Events</span>
@@ -46,21 +46,21 @@ const PrivateHire: React.FC = () => {
           <SpaceCard 
             title="The Main Hall"
             cap="150 Max"
-            img="/images/events-crowd.jpg"
+            img="/images/events-crowd-optimized.webp"
             tags={['AV System', 'Full Bar', 'Stage']}
             desc="Our signature space featuring vaulted ceilings, abundant natural light, and a dedicated stage area."
           />
           <SpaceCard 
             title="The Private Dining Room"
             cap="20 Seated"
-            img="/images/private-dining.jpg"
+            img="/images/private-dining-optimized.webp"
             tags={['Private Service', 'Custom Menu']}
             desc="An exclusive enclave for business meetings or family gatherings, offering complete privacy."
           />
           <SpaceCard 
             title="The Terrace"
             cap="60 Standing"
-            img="/images/terrace.jpg"
+            img="/images/terrace-optimized.webp"
             tags={['Outdoor Heating', 'Fire Pit']}
             desc="Enjoy the California breeze in our lush outdoor setting, perfect for cocktail hours."
           />

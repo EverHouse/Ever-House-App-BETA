@@ -47,28 +47,28 @@ const Landing: React.FC = () => {
         <h2 className="text-3xl font-bold text-[#293515] mb-8 font-sans">Why Even House</h2>
         <div className="grid grid-cols-2 gap-4">
           <FeatureCard 
-            image="/images/golf-sims.jpg"
+            image="/images/golf-sims-optimized.webp"
             icon="sports_golf"
             title="Golf all year"
             desc="4 TrackMan bays, putting course, private/group lessons"
             delay="0.1s"
           />
           <FeatureCard 
-            image="/images/cowork.jpg"
+            image="/images/cowork-optimized.webp"
             icon="work"
             title="Work from the club"
             desc="Luxury work spaces, conference room, wifi, cafe"
             delay="0.2s"
           />
           <FeatureCard 
-            image="/images/wellness-yoga.jpg"
+            image="/images/wellness-yoga-optimized.webp"
             icon="spa"
             title="Wellness & classes"
             desc="Med spa, fitness, yoga, recovery options"
             delay="0.3s"
           />
           <FeatureCard 
-            image="/images/events-crowd.jpg"
+            image="/images/events-crowd-optimized.webp"
             icon="groups"
             title="Events & community"
             desc="Member events, watch parties, mixers"
@@ -137,7 +137,7 @@ const Landing: React.FC = () => {
       {/* Private Events Inquiry Section */}
       <div className="px-4 pb-12">
          <div className="relative rounded-[2rem] overflow-hidden h-[400px] group">
-            <div className="absolute inset-0 bg-[url('/images/events-crowd.jpg')] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"></div>
+            <div className="absolute inset-0 bg-[url('/images/events-crowd-optimized.webp')] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"></div>
             <div className="absolute inset-0 bg-black/40"></div>
             <div className="absolute inset-0 p-8 flex flex-col justify-center items-center text-center">
                 <span className="text-white/80 text-xs font-bold uppercase tracking-[0.2em] mb-4">Host with Us</span>

@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { Footer } from '../../components/Footer';
 
 const INITIAL_DATA = [
-    { img: "/images/golf-sims.jpg", category: "Golf Bays" },
-    { img: "/images/hero-lounge.jpg", category: "Lounge" },
-    { img: "/images/venue-wide.jpg", category: "Golf Bays" },
-    { img: "/images/wellness-yoga.jpg", category: "Wellness" },
-    { img: "/images/events-crowd.jpg", category: "Events" },
-    { img: "/images/terrace.jpg", category: "Lounge" },
-    { img: "/images/private-dining.jpg", category: "Events" },
-    { img: "/images/cowork.jpg", category: "Lounge" },
-    { img: "/images/indoor-outdoor.png", category: "Lounge" },
-    { img: "/images/cafe-bar.png", category: "Lounge" }
+    { img: "/images/golf-sims-optimized.webp", category: "Golf Bays" },
+    { img: "/images/hero-lounge-optimized.webp", category: "Lounge" },
+    { img: "/images/venue-wide-optimized.webp", category: "Golf Bays" },
+    { img: "/images/wellness-yoga-optimized.webp", category: "Wellness" },
+    { img: "/images/events-crowd-optimized.webp", category: "Events" },
+    { img: "/images/terrace-optimized.webp", category: "Lounge" },
+    { img: "/images/private-dining-optimized.webp", category: "Events" },
+    { img: "/images/cowork-optimized.webp", category: "Lounge" },
+    { img: "/images/indoor-outdoor-optimized.webp", category: "Lounge" },
+    { img: "/images/cafe-bar-optimized.webp", category: "Lounge" }
 ];
 
 const Gallery: React.FC = () => {
