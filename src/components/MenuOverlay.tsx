@@ -34,7 +34,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const actionBtn = getActionButtonConfig();
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-start overflow-hidden">
+    <div className="fixed inset-0 z-[10000] flex justify-start overflow-hidden">
       <div 
         className="absolute inset-0 bg-black/20 backdrop-blur-xl transition-opacity duration-500" 
         onClick={onClose}
