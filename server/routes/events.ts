@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { isProduction } from '../core/db';
+import { isStaffOrAdmin } from '../core/middleware';
 import { db } from '../db';
 import { events, eventRsvps } from '../../shared/schema';
 import { eq, and, sql, gte } from 'drizzle-orm';
-import { syncGoogleCalendarEvents, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
+import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 
 const router = Router();
 
@@ -42,6 +43,38 @@ router.post('/api/events/sync', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Event sync error:', error);
     res.status(500).json({ error: 'Failed to sync events' });
+  }
+});
+
+router.post('/api/calendars/sync-all', isStaffOrAdmin, async (req, res) => {
+  try {
+    const [eventsResult, wellnessResult] = await Promise.all([
+      syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' })),
+      syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }))
+    ]);
+    
+    const eventsSynced = eventsResult?.synced || 0;
+    const wellnessSynced = wellnessResult?.synced || 0;
+    
+    res.json({
+      success: true,
+      events: {
+        synced: eventsSynced,
+        created: eventsResult?.created || 0,
+        updated: eventsResult?.updated || 0,
+        error: eventsResult?.error
+      },
+      wellness: {
+        synced: wellnessSynced,
+        created: wellnessResult?.created || 0,
+        updated: wellnessResult?.updated || 0,
+        error: wellnessResult?.error
+      },
+      message: `Synced ${eventsSynced} events and ${wellnessSynced} wellness classes from Google Calendar`
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Calendar sync error:', error);
+    res.status(500).json({ error: 'Failed to sync calendars' });
   }
 });
 

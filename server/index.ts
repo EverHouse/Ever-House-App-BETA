@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { getSession, registerAuthRoutes } from './replit_integrations/auth';
 import { setupSupabaseAuthRoutes } from './supabase/auth';
 import { pool, isProduction } from './core/db';
-import { syncGoogleCalendarEvents } from './core/calendar';
+import { syncGoogleCalendarEvents, syncWellnessCalendarEvents } from './core/calendar';
 
 import resourcesRouter from './routes/resources';
 import calendarRouter from './routes/calendar';
@@ -128,6 +128,22 @@ async function startServer() {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`API Server running on port ${PORT}`);
   });
+
+  const SYNC_INTERVAL_MS = 5 * 60 * 1000;
+  setInterval(async () => {
+    try {
+      const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' }));
+      const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }));
+      if (!isProduction) {
+        const eventsMsg = eventsResult.error ? eventsResult.error : `${eventsResult.synced} synced`;
+        const wellnessMsg = wellnessResult.error ? wellnessResult.error : `${wellnessResult.synced} synced`;
+        console.log(`[Auto-sync] Events: ${eventsMsg}, Wellness: ${wellnessMsg}`);
+      }
+    } catch (err) {
+      if (!isProduction) console.error('[Auto-sync] Calendar sync failed:', err);
+    }
+  }, SYNC_INTERVAL_MS);
+  console.log('Background calendar sync enabled (every 5 minutes)');
 }
 
 startServer().catch(console.error);

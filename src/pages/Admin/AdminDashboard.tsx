@@ -376,6 +376,27 @@ const EventsAdmin: React.FC = () => {
         }
     };
 
+    const handleSyncCalendars = async () => {
+        setIsSyncing(true);
+        setSyncMessage(null);
+        try {
+            const res = await fetch('/api/calendars/sync-all', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setSyncMessage(data.message);
+                await fetchEvents();
+            } else {
+                setSyncMessage(`Error: ${data.error}`);
+            }
+        } catch (err) {
+            console.error('Failed to sync calendars:', err);
+            setSyncMessage('Failed to sync with Google Calendar');
+        } finally {
+            setIsSyncing(false);
+            setTimeout(() => setSyncMessage(null), 5000);
+        }
+    };
+
     const formatDate = (dateStr: string) => {
         if (!dateStr) return 'TBD';
         const date = new Date(dateStr);
@@ -419,7 +440,17 @@ const EventsAdmin: React.FC = () => {
                 </div>
             )}
 
-            <div className="flex justify-end gap-2 mb-4">
+            <div className="flex justify-end gap-2 mb-4 flex-wrap">
+                <button 
+                    onClick={handleSyncCalendars} 
+                    disabled={isSyncing}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md disabled:opacity-50"
+                >
+                    <span className={`material-symbols-outlined text-[16px] ${isSyncing ? 'animate-spin' : ''}`}>
+                        {isSyncing ? 'progress_activity' : 'calendar_month'}
+                    </span> 
+                    {isSyncing ? 'Syncing...' : 'Sync Calendars'}
+                </button>
                 <button 
                     onClick={handleSyncEventbrite} 
                     disabled={isSyncing}
@@ -1541,6 +1572,7 @@ const WellnessAdmin: React.FC = () => {
     });
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     const categories = ['Yoga', 'Pilates', 'Meditation', 'HIIT', 'Stretch'];
 
@@ -1639,6 +1671,28 @@ const WellnessAdmin: React.FC = () => {
         return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     };
 
+    const handleSyncCalendars = async () => {
+        setIsSyncing(true);
+        setSuccess(null);
+        setError(null);
+        try {
+            const res = await fetch('/api/calendars/sync-all', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setSuccess(data.message);
+                await fetchClasses();
+            } else {
+                setError(`Sync failed: ${data.error}`);
+            }
+        } catch (err) {
+            console.error('Failed to sync calendars:', err);
+            setError('Failed to sync with Google Calendar');
+        } finally {
+            setIsSyncing(false);
+            setTimeout(() => { setSuccess(null); setError(null); }, 5000);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
@@ -1649,18 +1703,36 @@ const WellnessAdmin: React.FC = () => {
                             Schedule and manage wellness classes for members
                         </p>
                     </div>
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                    >
-                        <span className="material-symbols-outlined text-lg">add</span>
-                        Class
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleSyncCalendars}
+                            disabled={isSyncing}
+                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                        >
+                            <span className={`material-symbols-outlined text-lg ${isSyncing ? 'animate-spin' : ''}`}>
+                                {isSyncing ? 'progress_activity' : 'calendar_month'}
+                            </span>
+                            {isSyncing ? 'Syncing...' : 'Sync'}
+                        </button>
+                        <button
+                            onClick={openCreate}
+                            className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                        >
+                            <span className="material-symbols-outlined text-lg">add</span>
+                            Class
+                        </button>
+                    </div>
                 </div>
 
                 {success && (
                     <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
                         {success}
+                    </div>
+                )}
+
+                {error && !isEditing && (
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                        {error}
                     </div>
                 )}
 
