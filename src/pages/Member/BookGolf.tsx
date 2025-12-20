@@ -220,16 +220,17 @@ const BookGolf: React.FC = () => {
     setError(null);
     
     try {
-      const res = await fetch(`/api/bookings`, {
+      const res = await fetch(`/api/booking-requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resource_id: selectedResource.dbId,
           user_email: user.email,
-          booking_date: selectedDateObj.date,
+          user_name: user.name,
+          bay_id: selectedResource.dbId,
+          request_date: selectedDateObj.date,
           start_time: selectedSlot.startTime24,
-          end_time: selectedSlot.endTime24,
-          notes: `${duration} min booking`
+          duration_minutes: duration,
+          notes: activeTab === 'conference' ? 'Conference room booking' : null
         })
       });
       

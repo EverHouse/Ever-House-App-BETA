@@ -15,8 +15,14 @@ router.get('/api/availability', async (req, res) => {
     const slotDurationHours = Math.ceil(durationMinutes / 60);
     
     const bookedSlots = await pool.query(
-      `SELECT start_time, end_time FROM bookings 
-       WHERE resource_id = $1 AND booking_date = $2 AND status = 'confirmed'`,
+      `SELECT start_time, end_time FROM booking_requests 
+       WHERE bay_id = $1 AND request_date = $2 AND status = 'approved'`,
+      [resource_id, date]
+    );
+    
+    const blockedSlots = await pool.query(
+      `SELECT start_time, end_time FROM availability_blocks 
+       WHERE bay_id = $1 AND block_date = $2`,
       [resource_id, date]
     );
     
@@ -29,16 +35,22 @@ router.get('/api/availability', async (req, res) => {
       const endHour = hour + slotDurationHours;
       const endTime = `${endHour.toString().padStart(2, '0')}:00:00`;
       
-      const hasConflict = bookedSlots.rows.some((booking: any) => {
+      const hasBookingConflict = bookedSlots.rows.some((booking: any) => {
         const bookStart = booking.start_time;
         const bookEnd = booking.end_time;
         return (startTime < bookEnd && endTime > bookStart);
       });
       
+      const hasBlockConflict = blockedSlots.rows.some((block: any) => {
+        const blockStart = block.start_time;
+        const blockEnd = block.end_time;
+        return (startTime < blockEnd && endTime > blockStart);
+      });
+      
       slots.push({
         start_time: startTime,
         end_time: endTime,
-        available: !hasConflict
+        available: !hasBookingConflict && !hasBlockConflict
       });
     }
     
