@@ -1,5 +1,6 @@
 import React from 'react';
 import { useData } from '../contexts/DataContext';
+import { getBaseTier } from '../utils/permissions';
 
 const ViewAsBanner: React.FC = () => {
   const { isViewingAs, viewAsUser, clearViewAsUser, actualUser } = useData();
@@ -17,7 +18,7 @@ const ViewAsBanner: React.FC = () => {
           Viewing as: {viewAsUser.name}
         </span>
         <span className="text-xs opacity-70 truncate hidden sm:inline">
-          ({viewAsUser.tier})
+          ({getBaseTier(viewAsUser.tier || '')})
         </span>
       </div>
       <button 

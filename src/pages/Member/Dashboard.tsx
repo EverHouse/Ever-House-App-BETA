@@ -9,6 +9,7 @@ import WelcomeBanner from '../../components/WelcomeBanner';
 import { formatDateShort, getTodayString } from '../../utils/dateUtils';
 import { BookingCardSkeleton, SkeletonList } from '../../components/skeletons';
 import { EmptyBookings } from '../../components/EmptyState';
+import { getBaseTier } from '../../utils/permissions';
 
 
 interface DBBooking {
@@ -234,7 +235,7 @@ const Dashboard: React.FC = () => {
           </h1>
           {user?.tier && (
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getTierBadgeStyle(user.tier)}`}>
-              {user.tier}
+              {getBaseTier(user.tier)}
             </span>
           )}
         </div>
