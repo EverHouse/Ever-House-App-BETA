@@ -648,6 +648,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
                 onMouseLeave={() => setPressedIndex(null)}
                 onTouchStart={() => setPressedIndex(index)}
                 onTouchEnd={() => setPressedIndex(null)}
+                style={{ touchAction: 'manipulation' }}
                 className={`
                   flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer
                   transition-all duration-300 ease-out
