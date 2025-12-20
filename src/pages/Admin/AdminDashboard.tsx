@@ -23,37 +23,41 @@ const AdminDashboard: React.FC = () => {
 
   if (!actualUser || (actualUser.role !== 'admin' && actualUser.role !== 'staff')) return null;
 
+  const headerContent = (
+    <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-[9998] pointer-events-auto">
+      <button 
+        onClick={() => setIsMenuOpen(true)}
+        className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
+      >
+        <span className="material-symbols-outlined text-[24px]">menu</span>
+      </button>
+      
+      <div className="cursor-pointer flex items-center justify-center" onClick={() => navigate('/')}>
+        <img 
+          src="/assets/logos/EH-guy logo white.png" 
+          alt="Even House" 
+          className="h-14 w-auto"
+        />
+      </div>
+
+      {/* Top Right - Exit to Member Dashboard */}
+      <button 
+        onClick={() => navigate('/dashboard')}
+        className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
+      >
+        <span className="material-symbols-outlined text-[24px]">account_circle</span>
+      </button>
+    </header>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col relative">
       
-      {/* Header */}
-      <header className="sticky top-0 flex-shrink-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-40">
-        <button 
-          onClick={() => setIsMenuOpen(true)}
-          className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
-        >
-          <span className="material-symbols-outlined text-[24px]">menu</span>
-        </button>
-        
-        <div className="cursor-pointer flex items-center justify-center" onClick={() => navigate('/')}>
-          <img 
-            src="/assets/logos/EH-guy logo white.png" 
-            alt="Even House" 
-            className="h-14 w-auto"
-          />
-        </div>
+      {/* Header - rendered via portal to escape transform context */}
+      {createPortal(headerContent, document.body)}
 
-        {/* Top Right - Exit to Member Dashboard */}
-        <button 
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
-        >
-          <span className="material-symbols-outlined text-[24px]">account_circle</span>
-        </button>
-      </header>
-
-      {/* Main Content Area - No top padding needed */}
-      <main className="flex-1 pb-40 px-4 md:px-8 max-w-4xl mx-auto pt-6 w-full relative z-0">
+      {/* Main Content Area - add top padding for fixed header */}
+      <main className="flex-1 pb-40 px-4 md:px-8 max-w-4xl mx-auto pt-24 w-full relative z-0">
         <div className="mb-6 animate-pop-in">
            <span className="text-xs font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 block mb-1">Staff Portal</span>
            <h1 className="text-2xl font-bold text-primary dark:text-white">
