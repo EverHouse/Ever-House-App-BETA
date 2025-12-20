@@ -43,6 +43,38 @@ export async function sendPushNotification(userEmail: string, payload: { title: 
   }
 }
 
+export async function sendPushNotificationToStaff(payload: { title: string; body: string; url?: string }) {
+  try {
+    const staffResult = await pool.query(
+      `SELECT DISTINCT ps.* FROM push_subscriptions ps
+       INNER JOIN users u ON ps.user_email = u.email
+       WHERE u.role IN ('admin', 'staff')`
+    );
+    
+    const notifications = staffResult.rows.map(async (sub) => {
+      const pushSubscription = {
+        endpoint: sub.endpoint,
+        keys: {
+          p256dh: sub.p256dh,
+          auth: sub.auth
+        }
+      };
+      
+      try {
+        await webpush.sendNotification(pushSubscription, JSON.stringify(payload));
+      } catch (err: any) {
+        if (err.statusCode === 410) {
+          await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [sub.endpoint]);
+        }
+      }
+    });
+    
+    await Promise.all(notifications);
+  } catch (error) {
+    console.error('Failed to send push notification to staff:', error);
+  }
+}
+
 router.get('/api/push/vapid-public-key', (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });

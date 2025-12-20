@@ -5,7 +5,7 @@ import { eq, and, or, gte, lte, gt, lt, desc, asc, ne } from 'drizzle-orm';
 import { isProduction } from '../core/db';
 import { getGoogleCalendarClient } from '../core/integrations';
 import { CALENDAR_CONFIG, getCalendarIdByName, createCalendarEvent, createCalendarEventOnCalendar, deleteCalendarEvent } from '../core/calendar';
-import { sendPushNotification } from './push';
+import { sendPushNotification, sendPushNotificationToStaff } from './push';
 
 const router = Router();
 
@@ -171,6 +171,20 @@ router.post('/api/booking-requests', async (req, res) => {
     }).returning();
     
     const row = result[0];
+    
+    const formattedDate = new Date(row.requestDate).toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    const formattedTime = row.startTime.substring(0, 5);
+    
+    sendPushNotificationToStaff({
+      title: 'New Golf Booking Request',
+      body: `${row.userName || row.userEmail} requested ${formattedDate} at ${formattedTime}`,
+      url: '/#/admin'
+    }).catch(err => console.error('Staff notification failed:', err));
+    
     res.status(201).json({
       id: row.id,
       user_email: row.userEmail,
