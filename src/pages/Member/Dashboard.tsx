@@ -322,10 +322,10 @@ const Dashboard: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => navigate('/book')} 
-                  className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-green via-brand-green to-emerald-700 flex items-center justify-center text-white shadow-lg shadow-brand-green/30 active:scale-90 transition-transform focus:ring-2 focus:ring-accent focus:outline-none ring-1 ring-inset ring-white/20"
+                  className="w-14 h-14 rounded-full bg-[#E7E7DC] flex items-center justify-center text-[#293515] shadow-glow active:scale-90 transition-transform focus:ring-2 focus:ring-accent focus:outline-none"
                   aria-label="Make a new booking"
                 >
-                  <span className="material-symbols-outlined text-2xl drop-shadow-sm">add</span>
+                  <span className="material-symbols-outlined text-2xl">add</span>
                 </button>
               </div>
             )}
