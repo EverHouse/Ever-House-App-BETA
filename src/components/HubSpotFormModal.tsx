@@ -143,14 +143,14 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[10001] modal-scroll-content" 
+      className="fixed inset-0 z-[10001] overflow-y-auto overscroll-contain" 
       onClick={handleClose}
     >
       <div className="fixed inset-0 bg-black/40 backdrop-blur-md pointer-events-none" />
       
-      <div className="min-h-full py-8 px-4 flex items-start justify-center">
+      <div className="min-h-full py-8 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] flex items-start justify-center">
         <div 
-          className="relative glass-modal w-full max-w-md" 
+          className="relative glass-modal w-full max-w-md my-auto" 
           onClick={(e) => e.stopPropagation()}
         >
           <button
