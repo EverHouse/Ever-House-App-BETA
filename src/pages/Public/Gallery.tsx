@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Footer } from '../../components/Footer';
 
 const INITIAL_DATA = [
@@ -188,13 +189,13 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ images, currentIndex, onClose
     if (isRightSwipe) onPrev();
   };
 
-  return (
+  const viewerContent = (
     <div 
-      className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center animate-in fade-in duration-200"
+      className="fixed inset-0 z-[10002] bg-black/90 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-200 pointer-events-auto"
       onClick={onClose}
     >
       <button
-        className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+        className="absolute top-6 right-4 z-10 w-12 h-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm safe-area-top"
         onClick={(e) => { e.stopPropagation(); onClose(); }}
       >
         <span className="material-symbols-outlined text-white text-2xl">close</span>
@@ -232,13 +233,15 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ images, currentIndex, onClose
         />
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 rounded-full">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full">
         <span className="text-white/80 text-sm font-medium">
           {currentIndex + 1} / {images.length}
         </span>
       </div>
     </div>
   );
+
+  return createPortal(viewerContent, document.body);
 };
 
 export default Gallery;
