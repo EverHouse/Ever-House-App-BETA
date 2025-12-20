@@ -327,18 +327,54 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const isViewingAs = viewAsUser !== null;
   const user = viewAsUser || actualUser;
 
-  // Check for saved member session on mount
+  // Check for saved member session on mount and refresh if tier is missing
   useEffect(() => {
-    const savedMember = localStorage.getItem('eh_member');
-    if (savedMember) {
-      try {
-        const member = JSON.parse(savedMember);
-        setActualUser(member);
-      } catch (err) {
-        localStorage.removeItem('eh_member');
+    const initializeUser = async () => {
+      const savedMember = localStorage.getItem('eh_member');
+      if (savedMember) {
+        try {
+          const member = JSON.parse(savedMember);
+          setActualUser(member);
+          
+          // If tier is missing or undefined, refresh user data from server
+          if (!member.tier && member.email) {
+            try {
+              const res = await fetch('/api/auth/verify-member', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: member.email })
+              });
+              
+              if (res.ok) {
+                const { member: freshMember } = await res.json();
+                const updatedProfile = {
+                  id: freshMember.id,
+                  name: [freshMember.firstName, freshMember.lastName].filter(Boolean).join(' ') || freshMember.email || 'Member',
+                  tier: freshMember.tier || 'Core',
+                  tags: freshMember.tags || [],
+                  status: 'Active',
+                  email: freshMember.email,
+                  phone: freshMember.phone || '',
+                  role: freshMember.role || 'member',
+                  mindbodyClientId: freshMember.mindbodyClientId || '',
+                  lifetimeVisits: freshMember.lifetimeVisits || 0,
+                  lastBookingDate: freshMember.lastBookingDate || undefined
+                };
+                localStorage.setItem('eh_member', JSON.stringify(updatedProfile));
+                setActualUser(updatedProfile);
+              }
+            } catch (refreshErr) {
+              console.error('Failed to refresh user data:', refreshErr);
+            }
+          }
+        } catch (err) {
+          localStorage.removeItem('eh_member');
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+    
+    initializeUser();
   }, []);
   
   // View As Functions - only for admins
