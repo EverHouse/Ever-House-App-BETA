@@ -52,7 +52,7 @@ const AdminDashboard: React.FC = () => {
       </header>
 
       {/* Main Content Area - No top padding needed */}
-      <main className="flex-1 overflow-y-auto pb-28 px-4 md:px-8 max-w-4xl mx-auto pt-6 w-full">
+      <main className="flex-1 pb-40 px-4 md:px-8 max-w-4xl mx-auto pt-6 w-full">
         <div className="mb-6 animate-pop-in">
            <span className="text-xs font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 block mb-1">Staff Portal</span>
            <h1 className="text-2xl font-bold text-primary dark:text-white">
@@ -127,7 +127,7 @@ const StaffBottomNav: React.FC<{
   return (
     <nav 
       ref={navRef}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 z-30 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full"
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 z-[9999] shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full"
     >
       <div className="relative flex items-center w-full">
         {/* Animated Blob Indicator */}

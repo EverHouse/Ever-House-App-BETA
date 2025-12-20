@@ -594,7 +594,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
   const blobLeft = activeIndex >= 0 ? activeIndex * blobWidth : 0;
   
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex justify-center z-[100] px-4 pb-4 safe-area-bottom">
+    <div className="fixed bottom-0 left-0 right-0 flex justify-center z-[9999] px-4 pb-4 safe-area-bottom">
       <nav 
         className={`w-full max-w-md rounded-full p-1.5 ${
           isDarkTheme 
