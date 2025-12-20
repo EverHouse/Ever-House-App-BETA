@@ -40,7 +40,11 @@ interface DBRSVP {
   id: number;
   event_id: number;
   status: string;
-  event?: DBEvent;
+  title: string;
+  event_date: string;
+  start_time: string;
+  location: string;
+  category: string;
 }
 
 interface DBWellnessEnrollment {
@@ -144,13 +148,13 @@ const Dashboard: React.FC = () => {
       id: `rsvp-${r.id}`,
       dbId: r.id,
       type: 'rsvp' as const,
-      title: r.event?.title || 'Event',
+      title: r.title || 'Event',
       resourceType: 'event',
-      date: r.event ? formatDate(r.event.event_date) : '',
-      time: r.event ? formatTime12(r.event.start_time) : '',
-      endTime: r.event ? formatTime12(r.event.end_time) : '',
-      details: r.event ? `${r.event.location}` : '',
-      sortKey: r.event ? `${r.event.event_date}T${r.event.start_time}` : '',
+      date: formatDate(r.event_date),
+      time: formatTime12(r.start_time),
+      endTime: '',
+      details: r.location || '',
+      sortKey: `${r.event_date}T${r.start_time}`,
       raw: r
     })),
     ...dbWellnessEnrollments.map(w => ({
@@ -176,7 +180,7 @@ const Dashboard: React.FC = () => {
     if (item.type === 'booking') {
       itemDate = (item.raw as DBBooking).booking_date.split('T')[0];
     } else if (item.type === 'rsvp') {
-      itemDate = (item.raw as DBRSVP).event?.event_date.split('T')[0];
+      itemDate = (item.raw as DBRSVP).event_date.split('T')[0];
     } else if (item.type === 'wellness') {
       itemDate = (item.raw as DBWellnessEnrollment).date.split('T')[0];
     }
