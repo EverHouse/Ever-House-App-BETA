@@ -22,16 +22,9 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
   const rafRef = useRef<number>();
 
   useEffect(() => {
-    const mainContent = document.querySelector('#main-content') as HTMLElement;
-    
-    if (!mainContent) {
-      console.warn('SmoothScroll: #main-content not found');
-      return;
-    }
-
     const lenisInstance = new Lenis({
-      wrapper: mainContent,
-      content: mainContent,
+      wrapper: window as any,
+      content: document.body,
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',

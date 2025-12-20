@@ -24,8 +24,18 @@
   box-sizing: border-box;
 }
 
+html, body, #root {
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+html.lenis {
+  height: auto !important;
+}
+
 html, body {
-  min-height: 100%;
   width: 100%;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
@@ -76,11 +86,6 @@ html, body {
   overflow-x: hidden;
 }
 
-#root {
-  width: 100%;
-  min-height: 100%;
-  overflow-x: hidden;
-}
 
 /* Minimum tap target size helper */
 .tap-target {

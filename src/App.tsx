@@ -377,7 +377,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
 
   return (
-    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-screen flex justify-center transition-colors duration-500 font-sans`}>
+    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
       
       {isDarkTheme ? (
         <>
@@ -396,7 +396,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <NotificationContext.Provider value={{ openNotifications }}>
         <ViewAsBanner />
         
-        <div className={`relative w-full h-full flex flex-col overflow-hidden ${isDarkTheme ? 'text-white' : 'text-primary'}`}>
+        <div className={`relative w-full min-h-screen flex flex-col ${isDarkTheme ? 'text-white' : 'text-primary'}`}>
             
             {showHeader && (
               <header className={`flex items-center justify-between px-6 py-4 flex-shrink-0 ${headerClasses}`} role="banner">
@@ -464,7 +464,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <main 
                 id="main-content"
-                className={`flex-1 overflow-y-auto overscroll-contain relative scrollbar-hide ${isMemberRoute && !isAdminRoute ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
+                className={`flex-1 relative ${isMemberRoute && !isAdminRoute ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
             >
                 {children}
             </main>
