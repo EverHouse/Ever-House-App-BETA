@@ -109,8 +109,17 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Submission failed');
+        let errorMessage = 'Submission failed';
+        const contentType = response.headers.get('Content-Type') || '';
+        if (contentType.includes('application/json')) {
+          try {
+            const data = await response.json();
+            errorMessage = data.error || errorMessage;
+          } catch (parseErr) {
+            // Response was not valid JSON, use default error message
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       triggerHaptic('success');

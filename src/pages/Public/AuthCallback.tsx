@@ -20,10 +20,17 @@ const AuthCallback: React.FC = () => {
           try {
             const res = await fetch(`/api/auth/check-staff-admin?email=${encodeURIComponent(session.user.email || '')}`);
             if (res.ok) {
-              const data = await res.json();
-              if (data.isStaffOrAdmin) {
-                navigate('/admin');
-                return;
+              const contentType = res.headers.get('Content-Type') || '';
+              if (contentType.includes('application/json')) {
+                try {
+                  const data = await res.json();
+                  if (data.isStaffOrAdmin) {
+                    navigate('/admin');
+                    return;
+                  }
+                } catch (parseErr) {
+                  console.error('Failed to parse staff/admin response');
+                }
               }
             }
           } catch (err) {

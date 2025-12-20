@@ -42,9 +42,14 @@ export async function getUncachableHubSpotClient() {
 }
 
 export async function getContacts(limit = 10) {
-  const client = await getUncachableHubSpotClient();
-  const response = await client.crm.contacts.basicApi.getPage(limit);
-  return response.results;
+  try {
+    const client = await getUncachableHubSpotClient();
+    const response = await client.crm.contacts.basicApi.getPage(limit);
+    return response.results;
+  } catch (error: any) {
+    console.error('Failed to fetch HubSpot contacts:', error.message);
+    throw error;
+  }
 }
 
 export async function createContact(properties: { email: string; firstname?: string; lastname?: string; phone?: string }) {
@@ -72,13 +77,23 @@ export async function deleteContact(contactId: string) {
 }
 
 export async function getDeals(limit = 10) {
-  const client = await getUncachableHubSpotClient();
-  const response = await client.crm.deals.basicApi.getPage(limit);
-  return response.results;
+  try {
+    const client = await getUncachableHubSpotClient();
+    const response = await client.crm.deals.basicApi.getPage(limit);
+    return response.results;
+  } catch (error: any) {
+    console.error('Failed to fetch HubSpot deals:', error.message);
+    throw error;
+  }
 }
 
 export async function getCompanies(limit = 10) {
-  const client = await getUncachableHubSpotClient();
-  const response = await client.crm.companies.basicApi.getPage(limit);
-  return response.results;
+  try {
+    const client = await getUncachableHubSpotClient();
+    const response = await client.crm.companies.basicApi.getPage(limit);
+    return response.results;
+  } catch (error: any) {
+    console.error('Failed to fetch HubSpot companies:', error.message);
+    throw error;
+  }
 }
