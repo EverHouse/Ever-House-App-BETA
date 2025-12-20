@@ -407,14 +407,7 @@ const Dashboard: React.FC = () => {
             )}
           </div>
 
-          <div className="mb-8 flex justify-center gap-4">
-            <QuickAction icon="sports_golf" label="Golf" onClick={() => navigate('/book')} delay="0.15s" isDark={isDark} />
-            <QuickAction icon="spa" label="Wellness" onClick={() => navigate('/member-wellness')} delay="0.20s" isDark={isDark} />
-            <QuickAction icon="calendar_month" label="Events" onClick={() => navigate('/member-events')} delay="0.25s" isDark={isDark} />
-            <QuickAction icon="local_cafe" label="Cafe" onClick={() => navigate('/cafe')} delay="0.30s" isDark={isDark} />
-          </div>
-
-          <div className="space-y-8 animate-pop-in" style={{animationDelay: '0.3s'}}>
+          <div className="space-y-8 animate-pop-in" style={{animationDelay: '0.15s'}}>
             <div>
               <div className="flex justify-between items-center mb-4 px-1">
                 <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Upcoming</h3>
@@ -451,19 +444,5 @@ const Dashboard: React.FC = () => {
     </div>
   );
 };
-
-const QuickAction: React.FC<{icon: string; label: string; onClick: () => void; delay: string; isDark: boolean}> = ({ icon, label, onClick, delay, isDark }) => (
-  <button 
-    onClick={onClick}
-    className="flex flex-col items-center gap-2 min-w-[72px] group focus:outline-none animate-slide-up-stagger"
-    style={{animationDelay: delay}}
-    aria-label={label}
-  >
-    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center group-active:scale-95 transition-all group-focus:ring-2 group-focus:ring-accent ${isDark ? 'glass-button border-0 shadow-layered-dark text-white group-hover:bg-white/10' : 'bg-white shadow-layered text-brand-green group-hover:bg-black/5'}`}>
-      <span className="material-symbols-outlined text-[28px]">{icon}</span>
-    </div>
-    <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-white/70' : 'text-primary/70'}`}>{label}</span>
-  </button>
-);
 
 export default Dashboard;
