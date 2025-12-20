@@ -201,10 +201,20 @@ export async function createCalendarEventOnCalendar(
   endTime: string
 ): Promise<string | null> {
   try {
+    if (!date || !startTime) {
+      console.error('Error creating calendar event: Missing date or startTime');
+      return null;
+    }
+    
     const calendar = await getGoogleCalendarClient();
     
     const startDateTime = new Date(`${date}T${startTime}`);
-    const endDateTime = new Date(`${date}T${endTime}`);
+    const endDateTime = new Date(`${date}T${endTime || startTime}`);
+    
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      console.error('Error creating calendar event: Invalid date/time values');
+      return null;
+    }
     
     const event = {
       summary,
@@ -255,10 +265,20 @@ export async function updateCalendarEvent(
   endTime: string
 ): Promise<boolean> {
   try {
+    if (!date || !startTime) {
+      console.error('Error updating calendar event: Missing date or startTime');
+      return false;
+    }
+    
     const calendar = await getGoogleCalendarClient();
     
     const startDateTime = new Date(`${date}T${startTime}`);
-    const endDateTime = new Date(`${date}T${endTime}`);
+    const endDateTime = new Date(`${date}T${endTime || startTime}`);
+    
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      console.error('Error updating calendar event: Invalid date/time values');
+      return false;
+    }
     
     await calendar.events.update({
       calendarId,

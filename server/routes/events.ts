@@ -130,6 +130,35 @@ router.post('/api/events', async (req, res) => {
   try {
     const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility, requires_rsvp } = req.body;
     
+    const trimmedTitle = title?.toString().trim();
+    const trimmedEventDate = event_date?.toString().trim();
+    const trimmedStartTime = start_time?.toString().trim();
+    const trimmedEndTime = end_time?.toString().trim() || null;
+    
+    if (!trimmedTitle || !trimmedEventDate || !trimmedStartTime) {
+      return res.status(400).json({ error: 'Missing required fields: title, event_date, and start_time are required' });
+    }
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
+    
+    if (!dateRegex.test(trimmedEventDate)) {
+      return res.status(400).json({ error: 'Invalid event_date format. Use YYYY-MM-DD' });
+    }
+    
+    if (!timeRegex.test(trimmedStartTime)) {
+      return res.status(400).json({ error: 'Invalid start_time format. Use HH:MM or HH:MM:SS' });
+    }
+    
+    if (trimmedEndTime && !timeRegex.test(trimmedEndTime)) {
+      return res.status(400).json({ error: 'Invalid end_time format. Use HH:MM or HH:MM:SS' });
+    }
+    
+    const testDate = new Date(`${trimmedEventDate}T${trimmedStartTime}`);
+    if (isNaN(testDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date/time combination' });
+    }
+    
     let googleCalendarId: string | null = null;
     try {
       const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
@@ -137,11 +166,11 @@ router.post('/api/events', async (req, res) => {
         const eventDescription = [description, location ? `Location: ${location}` : ''].filter(Boolean).join('\n');
         googleCalendarId = await createCalendarEventOnCalendar(
           calendarId,
-          title,
+          trimmedTitle,
           eventDescription,
-          event_date,
-          start_time,
-          end_time || start_time
+          trimmedEventDate,
+          trimmedStartTime,
+          trimmedEndTime || trimmedStartTime
         );
       }
     } catch (calError) {
@@ -149,11 +178,11 @@ router.post('/api/events', async (req, res) => {
     }
     
     const result = await db.insert(events).values({
-      title,
+      title: trimmedTitle,
       description,
-      eventDate: event_date,
-      startTime: start_time,
-      endTime: end_time,
+      eventDate: trimmedEventDate,
+      startTime: trimmedStartTime,
+      endTime: trimmedEndTime,
       location,
       category,
       imageUrl: image_url,
@@ -176,14 +205,43 @@ router.put('/api/events/:id', async (req, res) => {
     const { id } = req.params;
     const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees } = req.body;
     
+    const trimmedTitle = title?.toString().trim();
+    const trimmedEventDate = event_date?.toString().trim();
+    const trimmedStartTime = start_time?.toString().trim();
+    const trimmedEndTime = end_time?.toString().trim() || null;
+    
+    if (!trimmedTitle || !trimmedEventDate || !trimmedStartTime) {
+      return res.status(400).json({ error: 'Missing required fields: title, event_date, and start_time are required' });
+    }
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
+    
+    if (!dateRegex.test(trimmedEventDate)) {
+      return res.status(400).json({ error: 'Invalid event_date format. Use YYYY-MM-DD' });
+    }
+    
+    if (!timeRegex.test(trimmedStartTime)) {
+      return res.status(400).json({ error: 'Invalid start_time format. Use HH:MM or HH:MM:SS' });
+    }
+    
+    if (trimmedEndTime && !timeRegex.test(trimmedEndTime)) {
+      return res.status(400).json({ error: 'Invalid end_time format. Use HH:MM or HH:MM:SS' });
+    }
+    
+    const testDate = new Date(`${trimmedEventDate}T${trimmedStartTime}`);
+    if (isNaN(testDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date/time combination' });
+    }
+    
     const existing = await db.select({ googleCalendarId: events.googleCalendarId }).from(events).where(eq(events.id, parseInt(id)));
     
     const result = await db.update(events).set({
-      title,
+      title: trimmedTitle,
       description,
-      eventDate: event_date,
-      startTime: start_time,
-      endTime: end_time,
+      eventDate: trimmedEventDate,
+      startTime: trimmedStartTime,
+      endTime: trimmedEndTime,
       location,
       category,
       imageUrl: image_url,
@@ -202,11 +260,11 @@ router.put('/api/events/:id', async (req, res) => {
           await updateCalendarEvent(
             existing[0].googleCalendarId,
             calendarId,
-            title,
+            trimmedTitle,
             eventDescription,
-            event_date,
-            start_time,
-            end_time || start_time
+            trimmedEventDate,
+            trimmedStartTime,
+            trimmedEndTime || trimmedStartTime
           );
         }
       } catch (calError) {
