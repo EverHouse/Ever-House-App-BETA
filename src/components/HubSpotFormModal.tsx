@@ -140,18 +140,19 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4" onClick={handleClose}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+    <div className="fixed inset-0 z-[10001] overflow-y-auto" onClick={handleClose}>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-md" />
       
-      <div className="relative glass-modal w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={handleClose}
-          className="flex-shrink-0 self-end m-4 w-10 h-10 flex items-center justify-center rounded-full glass-button z-10 bg-white/80 dark:bg-black/60 backdrop-blur-md shadow-lg"
-        >
-          <span className="material-symbols-outlined text-xl text-primary dark:text-white">close</span>
-        </button>
+      <div className="relative min-h-full flex items-center justify-center p-4">
+        <div className="relative glass-modal w-full max-w-md my-8" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full glass-button z-10 bg-white/80 dark:bg-black/60 backdrop-blur-md shadow-lg"
+          >
+            <span className="material-symbols-outlined text-xl text-primary dark:text-white">close</span>
+          </button>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6 overscroll-contain touch-pan-y">
+          <div className="px-6 py-8 pt-16">
           {success ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -239,6 +240,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
               </form>
             </>
           )}
+          </div>
         </div>
       </div>
     </div>
