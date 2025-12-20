@@ -18,9 +18,9 @@ const Landing: React.FC = () => {
   const [showTourForm, setShowTourForm] = useState(false);
 
   return (
-    <div className="bg-[#F2F2EC] min-h-screen pb-0 overflow-x-hidden">
+    <div className="bg-[#293515] min-h-screen pb-0 overflow-x-hidden">
       {/* Hero Section */}
-      <div className="relative h-[85vh] flex flex-col justify-end p-6 pb-16 overflow-hidden rounded-b-[2.5rem] shadow-sm">
+      <div className="relative h-[85vh] min-h-[600px] flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))] overflow-hidden rounded-b-[2.5rem] shadow-sm">
         {/* Hero Background Image - Even House interior lounge (optimized WebP) */}
         <div className="absolute inset-0 bg-[url('/images/hero-lounge-optimized.webp')] bg-cover bg-center"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
@@ -40,6 +40,8 @@ const Landing: React.FC = () => {
         </div>
       </div>
 
+      {/* Content wrapper with cream background */}
+      <div className="bg-[#F2F2EC]">
       {/* Features Section - "Why Even House" (Moved to First Position) */}
       <div className="px-6 py-12">
         <h2 className="text-3xl font-bold text-[#293515] mb-8 font-sans">Why Even House</h2>
@@ -145,6 +147,7 @@ const Landing: React.FC = () => {
                 </button>
             </div>
          </div>
+      </div>
       </div>
 
       <Footer />

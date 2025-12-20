@@ -153,15 +153,12 @@ const BookGolf: React.FC = () => {
     const fetchAvailability = async () => {
       console.log('[BookGolf] fetchAvailability called. resources:', resources.length, 'date:', selectedDateObj?.date);
       if (!resources || resources.length === 0 || !selectedDateObj?.date) {
-        console.log('[BookGolf] Aborting fetchAvailability - missing data');
-        setAvailableSlots([]);
+        console.log('[BookGolf] Skipping fetchAvailability - waiting for resources/date');
         return;
       }
       
       setIsLoading(true);
       setError(null);
-      setSelectedSlot(null);
-      setSelectedResource(null);
       
       try {
         const allSlots: Map<string, { slot: TimeSlot; resourceIds: number[] }> = new Map();
