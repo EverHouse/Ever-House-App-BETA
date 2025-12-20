@@ -115,10 +115,12 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const fetchResources = async () => {
+      console.log('[BookGolf] Fetching resources for tab:', activeTab, 'effectiveUser:', effectiveUser?.email, 'tier:', effectiveUser?.tier);
       try {
         const res = await fetch(`/api/resources`);
         if (!res.ok) throw new Error('Failed to fetch resources');
         const data: APIResource[] = await res.json();
+        console.log('[BookGolf] Resources API response:', data.length, 'resources');
         
         const typeMap: Record<string, string> = {
           simulator: 'simulator',
@@ -136,19 +138,22 @@ const BookGolf: React.FC = () => {
             icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
           }));
         
+        console.log('[BookGolf] Filtered resources:', filtered.length);
         setResources(filtered);
       } catch (err) {
-        console.error('Error fetching resources:', err);
+        console.error('[BookGolf] Error fetching resources:', err);
         setError('Unable to load resources');
       }
     };
     
     fetchResources();
-  }, [activeTab]);
+  }, [activeTab, effectiveUser?.email, effectiveUser?.tier]);
 
   useEffect(() => {
     const fetchAvailability = async () => {
+      console.log('[BookGolf] fetchAvailability called. resources:', resources.length, 'date:', selectedDateObj?.date);
       if (!resources || resources.length === 0 || !selectedDateObj?.date) {
+        console.log('[BookGolf] Aborting fetchAvailability - missing data');
         setAvailableSlots([]);
         return;
       }
@@ -200,9 +205,10 @@ const BookGolf: React.FC = () => {
           }))
           .sort((a, b) => a.startTime24.localeCompare(b.startTime24));
         
+        console.log('[BookGolf] Setting availableSlots:', sortedSlots.length, 'slots');
         setAvailableSlots(sortedSlots);
       } catch (err) {
-        console.error('Error fetching availability:', err);
+        console.error('[BookGolf] Error fetching availability:', err);
         setError('Unable to load availability');
       } finally {
         setIsLoading(false);
@@ -210,7 +216,7 @@ const BookGolf: React.FC = () => {
     };
     
     fetchAvailability();
-  }, [resources, selectedDateObj, duration, effectiveUser?.email]);
+  }, [resources, selectedDateObj, duration, effectiveUser?.email, effectiveUser?.tier]);
 
   const getAvailableResourcesForSlot = (slot: TimeSlot): Resource[] => {
     return resources.filter(r => slot.availableResourceDbIds.includes(r.dbId));

@@ -144,10 +144,12 @@ const Sims: React.FC = () => {
 
   useEffect(() => {
     const fetchBays = async () => {
+      console.log('[Sims] Fetching bays for effectiveUser:', effectiveUser?.email, 'tier:', effectiveUser?.tier);
       try {
         const res = await fetch('/api/bays');
         if (res.ok) {
           const data = await res.json();
+          console.log('[Sims] Fetched', data.length, 'bays');
           setBays(data);
           if (data.length > 0 && !selectedBay) {
             setSelectedBay(data[0].id);
@@ -158,7 +160,7 @@ const Sims: React.FC = () => {
       }
     };
     fetchBays();
-  }, []);
+  }, [effectiveUser?.email, effectiveUser?.tier]);
 
   useEffect(() => {
     const fetchAvailability = async () => {
