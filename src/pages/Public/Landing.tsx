@@ -25,12 +25,9 @@ const Landing: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
         
         <div className="relative z-10 animate-pop-in flex flex-col items-center text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.1] mb-6 text-white text-shadow-sm">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.1] mb-8 sm:mb-10 text-white text-shadow-sm">
             A new kind of <br/> members club — <br/> rooted in golf, built <br/> for community.
           </h1>
-          <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-xs sm:max-w-sm mb-8 sm:mb-10 font-medium">
-            Even House combines TrackMan golf simulators, cowork space, wellness classes, and curated events in one members club.
-          </p>
           <div className="flex flex-col gap-3 w-full max-w-xs">
              <button onClick={() => navigate('/membership')} className="w-full py-4 rounded-xl bg-[#F2F2EC] text-[#293515] font-bold text-sm shadow-lg hover:scale-[1.02] transition-transform">
                 Apply for Membership
