@@ -20,8 +20,8 @@ const Landing: React.FC = () => {
     <div className="bg-[#F2F2EC] min-h-screen pb-0 overflow-x-hidden">
       {/* Hero Section */}
       <div className="relative h-[85vh] flex flex-col justify-end p-6 pb-16 overflow-hidden rounded-b-[2.5rem] shadow-sm">
-        {/* Hero Background Image - Even House interior lounge */}
-        <div className="absolute inset-0 bg-[url('/images/hero-lounge.jpg')] bg-cover bg-center"></div>
+        {/* Hero Background Image - Even House interior lounge (optimized WebP) */}
+        <div className="absolute inset-0 bg-[url('/images/hero-lounge-optimized.webp')] bg-cover bg-center"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
         
         <div className="relative z-10 animate-pop-in flex flex-col items-center text-center">
