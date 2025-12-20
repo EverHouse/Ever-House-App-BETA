@@ -43,6 +43,8 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
       smoothWheel: true,
       touchMultiplier: 1.5,
       autoResize: true,
+      syncTouch: true,
+      syncTouchLerp: 0.075,
     });
 
     setLenis(lenisInstance);
@@ -54,10 +56,20 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
 
     rafRef.current = requestAnimationFrame(raf);
 
+    let lastScrollY = window.scrollY;
+    const handleNativeScroll = () => {
+      if (window.scrollY === 0 && lastScrollY > 100) {
+        lenisInstance.scrollTo(0, { immediate: true });
+      }
+      lastScrollY = window.scrollY;
+    };
+    window.addEventListener('scroll', handleNativeScroll, { passive: true });
+
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
+      window.removeEventListener('scroll', handleNativeScroll);
       lenisInstance.destroy();
     };
   }, []);
