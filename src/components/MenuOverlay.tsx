@@ -41,12 +41,12 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
         
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-multiply"></div>
 
-        <div className="relative z-10 flex flex-col h-full py-8 text-[#293515] safe-area-inset-menu">
+        <div className="relative z-10 flex flex-col h-full py-8 text-[#293515] dark:text-[#F2F2EC] safe-area-inset-menu">
             
             <div className="flex items-center justify-end mb-8">
                 <button 
                   onClick={onClose} 
-                  className="w-10 h-10 flex items-center justify-center text-[#293515] hover:rotate-90 transition-transform duration-300 rounded-full hover:bg-black/5 active:scale-90"
+                  className="w-10 h-10 flex items-center justify-center text-[#293515] dark:text-[#F2F2EC] hover:rotate-90 transition-transform duration-300 rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:scale-90"
                 >
                     <span className="material-symbols-outlined text-3xl">close</span>
                 </button>
@@ -62,20 +62,20 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                 <MenuLink label="FAQ" onClick={() => handleNav('/faq')} delay="0.35s" />
             </nav>
             
-            <div className="mt-4 pt-6 border-t border-[#293515]/10 space-y-4 animate-pop-in" style={{ animationDelay: '0.4s' }}>
+            <div className="mt-4 pt-6 border-t border-[#293515]/10 dark:border-[#F2F2EC]/10 space-y-4 animate-pop-in" style={{ animationDelay: '0.4s' }}>
                 <button 
                     onClick={() => handleNav('/contact')}
-                    className="w-full group flex items-center justify-between px-4 py-3 rounded-[2rem] glass-button border border-white/50"
+                    className="w-full group flex items-center justify-between px-4 py-3 rounded-[2rem] glass-button border border-white/50 dark:border-white/20"
                 >
-                    <span className="text-xl font-bold text-[#293515]">Contact Us</span>
+                    <span className="text-xl font-bold text-[#293515] dark:text-[#F2F2EC]">Contact Us</span>
                     <span className="w-10 h-10 rounded-full glass-button flex items-center justify-center group-hover:scale-110 transition-all duration-[400ms] ease-in-out">
-                        <span className="material-symbols-outlined text-[#293515]">arrow_forward</span>
+                        <span className="material-symbols-outlined text-[#293515] dark:text-[#F2F2EC]">arrow_forward</span>
                     </span>
                 </button>
 
                 <button 
                     onClick={actionBtn.action}
-                    className="w-full bg-[#293515] text-[#F2F2EC] py-4 rounded-[2rem] font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out"
+                    className="w-full bg-[#293515] dark:bg-accent text-[#F2F2EC] dark:text-[#293515] py-4 rounded-[2rem] font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out"
                 >
                     <span className="material-symbols-outlined text-lg">{actionBtn.icon}</span>
                     {actionBtn.label}
@@ -90,7 +90,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string }> = ({ label, onClick, delay }) => (
   <button 
     onClick={onClick} 
-    className="text-left text-[32px] font-display font-medium text-[#293515] hover:text-[#293515]/60 transition-all duration-300 tracking-tight animate-pop-in leading-tight hover:translate-x-2"
+    className="text-left text-[32px] font-display font-medium text-[#293515] dark:text-[#F2F2EC] hover:text-[#293515]/60 dark:hover:text-[#F2F2EC]/60 transition-all duration-300 tracking-tight animate-pop-in leading-tight hover:translate-x-2"
     style={{ animationDelay: delay, animationFillMode: 'both' }}
   >
     {label}
