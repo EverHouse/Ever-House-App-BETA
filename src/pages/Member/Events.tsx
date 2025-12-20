@@ -201,7 +201,7 @@ const MemberEvents: React.FC = () => {
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
-                <div className="absolute top-4 right-4 bg-accent text-brand-green px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-glow">
+                <div className="absolute top-4 right-4 bg-[#E7E7DC] text-[#293515] px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-glow">
                   {selectedEvent.category}
                 </div>
              </div>

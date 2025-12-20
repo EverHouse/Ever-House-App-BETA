@@ -400,7 +400,7 @@ const Sims: React.FC = () => {
                         disabled={!available}
                         className={`py-3 rounded-xl text-sm font-medium transition-all ${
                           selectedTime === time
-                            ? 'bg-accent text-brand-green shadow-lg ring-2 ring-brand-green'
+                            ? 'bg-[#E7E7DC] text-[#293515] shadow-lg ring-2 ring-[#293515]'
                             : available
                               ? 'bg-white/50 text-brand-green border border-brand-green/10 hover:bg-white'
                               : 'bg-gray-200/50 text-gray-400 cursor-not-allowed line-through'
