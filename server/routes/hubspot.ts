@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
 import { getHubSpotClient } from '../core/integrations';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const router = Router();
 
@@ -182,6 +184,178 @@ router.post('/api/hubspot/forms/:formType', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('HubSpot form submission error:', error);
     res.status(500).json({ error: 'Form submission failed' });
+  }
+});
+
+// CSV parsing helper
+function parseCSV(content: string): Record<string, string>[] {
+  const lines = content.trim().split('\n');
+  if (lines.length < 2) return [];
+  
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const rows: Record<string, string>[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const values: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (const char of lines[i]) {
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim());
+    
+    const row: Record<string, string> = {};
+    headers.forEach((header, idx) => {
+      row[header] = values[idx] || '';
+    });
+    rows.push(row);
+  }
+  
+  return rows;
+}
+
+// Sync membership tiers from CSV to HubSpot
+router.post('/api/hubspot/sync-tiers', async (req, res) => {
+  try {
+    const { dryRun = true } = req.body;
+    const hubspot = await getHubSpotClient();
+    
+    // Find the latest cleaned CSV file
+    const assetsDir = path.join(process.cwd(), 'attached_assets');
+    const files = fs.readdirSync(assetsDir)
+      .filter(f => f.startsWith('even_house_cleaned_member_data') && f.endsWith('.csv'))
+      .sort()
+      .reverse();
+    
+    if (files.length === 0) {
+      return res.status(404).json({ error: 'No cleaned member data CSV found' });
+    }
+    
+    const csvPath = path.join(assetsDir, files[0]);
+    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    const csvRows = parseCSV(csvContent);
+    
+    console.log(`[Tier Sync] Loaded ${csvRows.length} rows from ${files[0]}`);
+    
+    // Build lookup map from CSV by email (normalized)
+    const csvByEmail = new Map<string, { tier: string; mindbodyId: string; name: string }>();
+    for (const row of csvRows) {
+      const email = (row.real_email || '').toLowerCase().trim();
+      if (email) {
+        csvByEmail.set(email, {
+          tier: row.membership_tier || '',
+          mindbodyId: row.mindbody_id || '',
+          name: `${row.first_name || ''} ${row.last_name || ''}`.trim()
+        });
+      }
+    }
+    
+    // Fetch all HubSpot contacts
+    const properties = ['firstname', 'lastname', 'email', 'membership_tier', 'mindbody_client_id'];
+    let allContacts: any[] = [];
+    let after: string | undefined = undefined;
+    
+    do {
+      const response = await hubspot.crm.contacts.basicApi.getPage(100, after, properties);
+      allContacts = allContacts.concat(response.results);
+      after = response.paging?.next?.after;
+    } while (after);
+    
+    console.log(`[Tier Sync] Fetched ${allContacts.length} contacts from HubSpot`);
+    
+    // Match and prepare updates
+    const results = {
+      matched: 0,
+      updated: 0,
+      skipped: 0,
+      notFound: 0,
+      errors: [] as string[],
+      updates: [] as { email: string; name: string; oldTier: string; newTier: string }[]
+    };
+    
+    const updateBatch: { id: string; properties: { membership_tier: string } }[] = [];
+    
+    for (const contact of allContacts) {
+      const hubspotEmail = (contact.properties.email || '').toLowerCase().trim();
+      if (!hubspotEmail) continue;
+      
+      const csvData = csvByEmail.get(hubspotEmail);
+      if (!csvData) {
+        results.notFound++;
+        continue;
+      }
+      
+      results.matched++;
+      const currentTier = contact.properties.membership_tier || '';
+      const newTier = csvData.tier;
+      
+      // Skip if tiers match (case-insensitive comparison)
+      if (currentTier.toLowerCase() === newTier.toLowerCase()) {
+        results.skipped++;
+        continue;
+      }
+      
+      // Queue for update
+      results.updates.push({
+        email: hubspotEmail,
+        name: csvData.name,
+        oldTier: currentTier || '(empty)',
+        newTier: newTier
+      });
+      
+      updateBatch.push({
+        id: contact.id,
+        properties: { membership_tier: newTier }
+      });
+    }
+    
+    // Execute updates if not dry run
+    if (!dryRun && updateBatch.length > 0) {
+      const batchSize = 100;
+      for (let i = 0; i < updateBatch.length; i += batchSize) {
+        const batch = updateBatch.slice(i, i + batchSize);
+        try {
+          await hubspot.crm.contacts.batchApi.update({
+            inputs: batch
+          });
+          results.updated += batch.length;
+          console.log(`[Tier Sync] Updated batch ${Math.floor(i / batchSize) + 1}: ${batch.length} contacts`);
+        } catch (err: any) {
+          results.errors.push(`Batch ${Math.floor(i / batchSize) + 1} failed: ${err.message}`);
+          console.error(`[Tier Sync] Batch update error:`, err);
+        }
+      }
+    } else if (dryRun) {
+      results.updated = 0;
+    }
+    
+    console.log(`[Tier Sync] Complete - Matched: ${results.matched}, Updates: ${results.updates.length}, Errors: ${results.errors.length}`);
+    
+    res.json({
+      success: true,
+      dryRun,
+      csvFile: files[0],
+      csvRowCount: csvRows.length,
+      hubspotContactCount: allContacts.length,
+      matched: results.matched,
+      toUpdate: results.updates.length,
+      updated: results.updated,
+      skipped: results.skipped,
+      notFoundInCSV: results.notFound,
+      errors: results.errors,
+      updates: results.updates.slice(0, 50) // Limit preview to first 50
+    });
+  } catch (error: any) {
+    console.error('[Tier Sync] Error:', error);
+    res.status(500).json({ error: 'Tier sync failed: ' + error.message });
   }
 });
 
