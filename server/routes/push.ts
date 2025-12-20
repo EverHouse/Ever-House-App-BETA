@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import webpush from 'web-push';
 import { pool, isProduction } from '../core/db';
+import { db } from '../db';
+import { pushSubscriptions, users } from '../../shared/schema';
+import { eq, inArray } from 'drizzle-orm';
 
 const router = Router();
 
@@ -45,13 +48,19 @@ export async function sendPushNotification(userEmail: string, payload: { title: 
 
 export async function sendPushNotificationToStaff(payload: { title: string; body: string; url?: string }) {
   try {
-    const staffResult = await pool.query(
-      `SELECT DISTINCT ps.* FROM push_subscriptions ps
-       INNER JOIN users u ON ps.user_email = u.email
-       WHERE u.role IN ('admin', 'staff')`
-    );
+    const staffSubscriptions = await db
+      .selectDistinct({
+        id: pushSubscriptions.id,
+        userEmail: pushSubscriptions.userEmail,
+        endpoint: pushSubscriptions.endpoint,
+        p256dh: pushSubscriptions.p256dh,
+        auth: pushSubscriptions.auth,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userEmail, users.email))
+      .where(inArray(users.role, ['admin', 'staff']));
     
-    const notifications = staffResult.rows.map(async (sub) => {
+    const notifications = staffSubscriptions.map(async (sub) => {
       const pushSubscription = {
         endpoint: sub.endpoint,
         keys: {
