@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import MenuOverlay from '../../components/MenuOverlay';
@@ -124,10 +125,10 @@ const StaffBottomNav: React.FC<{
   const blobWidth = 100 / itemCount;
   const blobLeft = activeIndex * blobWidth;
   
-  return (
+  const navContent = (
     <nav 
       ref={navRef}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 z-[9999] shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full"
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 z-[9999] shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full pointer-events-auto"
     >
       <div className="relative flex items-center w-full">
         {/* Animated Blob Indicator */}
@@ -167,6 +168,8 @@ const StaffBottomNav: React.FC<{
       </div>
     </nav>
   );
+  
+  return createPortal(navContent, document.body);
 };
 
 // --- CAFE ADMIN ---
