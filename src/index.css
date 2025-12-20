@@ -249,7 +249,7 @@ html.dark .glass-button:active {
 }
 
 .glass-modal {
-  background: var(--liquid-glass-bg-light);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(var(--liquid-glass-blur));
   -webkit-backdrop-filter: blur(var(--liquid-glass-blur));
   border: 1px solid var(--liquid-glass-border);
@@ -258,10 +258,14 @@ html.dark .glass-button:active {
     var(--liquid-glass-inner-shadow),
     0 25px 50px rgba(0, 0, 0, 0.2), 0 10px 20px rgba(0, 0, 0, 0.1);
   transition: var(--liquid-transition);
+  max-height: calc(100vh - 4rem);
+  max-height: calc(100dvh - 4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 html.dark .glass-modal {
-  background: var(--liquid-glass-bg-dark);
+  background: rgba(20, 25, 15, 0.95);
   border-color: var(--liquid-glass-border-dark);
   box-shadow: 
     var(--liquid-glass-inner-shadow-dark),
