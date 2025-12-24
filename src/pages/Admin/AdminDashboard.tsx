@@ -332,6 +332,18 @@ const CafeAdmin: React.FC = () => {
     );
 };
 
+// --- SHARED TYPES ---
+
+interface Participant {
+    id: number;
+    userEmail: string;
+    status: string;
+    createdAt: string;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+}
+
 // --- EVENTS ADMIN ---
 
 interface DBEvent {
@@ -368,6 +380,10 @@ const EventsAdmin: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [syncMessage, setSyncMessage] = useState<string | null>(null);
+    const [isViewingRsvps, setIsViewingRsvps] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<DBEvent | null>(null);
+    const [rsvps, setRsvps] = useState<Participant[]>([]);
+    const [isLoadingRsvps, setIsLoadingRsvps] = useState(false);
 
     const fetchEvents = async () => {
         try {
@@ -505,6 +521,23 @@ const EventsAdmin: React.FC = () => {
         } finally {
             setIsSyncing(false);
             setTimeout(() => setSyncMessage(null), 5000);
+        }
+    };
+
+    const handleViewRsvps = async (event: DBEvent) => {
+        setSelectedEvent(event);
+        setIsViewingRsvps(true);
+        setIsLoadingRsvps(true);
+        try {
+            const res = await fetch(`/api/events/${event.id}/rsvps`);
+            if (res.ok) {
+                const data = await res.json();
+                setRsvps(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch RSVPs:', err);
+        } finally {
+            setIsLoadingRsvps(false);
         }
     };
 
@@ -661,6 +694,12 @@ const EventsAdmin: React.FC = () => {
                             <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
                                 <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
                                 <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleViewRsvps(event); }} 
+                                        className="text-blue-600 text-xs font-bold uppercase tracking-wider hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded flex items-center gap-1"
+                                    >
+                                        <span className="material-symbols-outlined text-[14px]">group</span> RSVPs
+                                    </button>
                                     {event.eventbrite_url && (
                                         <a 
                                             href={event.eventbrite_url} 
@@ -679,7 +718,119 @@ const EventsAdmin: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            <ParticipantDetailsModal
+                isOpen={isViewingRsvps}
+                onClose={() => { setIsViewingRsvps(false); setSelectedEvent(null); setRsvps([]); }}
+                title={selectedEvent?.title || 'Event RSVPs'}
+                subtitle={selectedEvent ? `${formatDate(selectedEvent.event_date)} at ${formatTime(selectedEvent.start_time)}` : undefined}
+                participants={rsvps}
+                isLoading={isLoadingRsvps}
+                type="rsvp"
+            />
         </div>
+    );
+};
+
+// --- PARTICIPANT DETAILS MODAL ---
+
+interface ParticipantDetailsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    subtitle?: string;
+    participants: Participant[];
+    isLoading: boolean;
+    type: 'rsvp' | 'enrollment';
+}
+
+const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
+    isOpen,
+    onClose,
+    title,
+    subtitle,
+    participants,
+    isLoading,
+    type
+}) => {
+    if (!isOpen) return null;
+
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    return createPortal(
+        <div className="fixed inset-0 z-[10001] overflow-y-auto">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 max-h-[90vh] overflow-y-auto pointer-events-auto">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="font-bold text-lg text-primary dark:text-white">{title}</h3>
+                            {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
+                        </div>
+                        <button 
+                            onClick={onClose}
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-gray-500">close</span>
+                        </button>
+                    </div>
+
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <span className="material-symbols-outlined animate-spin text-2xl text-gray-400">progress_activity</span>
+                        </div>
+                    ) : participants.length === 0 ? (
+                        <div className="text-center py-12 text-gray-400">
+                            <span className="material-symbols-outlined text-4xl mb-2 block">
+                                {type === 'rsvp' ? 'event_busy' : 'person_off'}
+                            </span>
+                            <p>No {type === 'rsvp' ? 'RSVPs' : 'enrollments'} yet</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
+                                {participants.length} {type === 'rsvp' ? 'RSVP' : 'Enrolled'}{participants.length !== 1 ? 's' : ''}
+                            </div>
+                            {participants.map((p) => (
+                                <div 
+                                    key={p.id}
+                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-100 dark:border-white/10"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-brand-green font-bold">
+                                            {(p.firstName?.[0] || p.userEmail[0]).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-primary dark:text-white text-sm">
+                                                {p.firstName && p.lastName 
+                                                    ? `${p.firstName} ${p.lastName}` 
+                                                    : p.userEmail}
+                                            </p>
+                                            {p.firstName && p.lastName && (
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{p.userEmail}</p>
+                                            )}
+                                            {p.phone && (
+                                                <p className="text-xs text-gray-400">{p.phone}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded">
+                                            {p.status}
+                                        </span>
+                                        <p className="text-[10px] text-gray-400 mt-1">{formatDate(p.createdAt)}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>,
+        document.body
     );
 };
 
@@ -1701,6 +1852,10 @@ const WellnessAdmin: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [isViewingEnrollments, setIsViewingEnrollments] = useState(false);
+    const [selectedClass, setSelectedClass] = useState<WellnessClass | null>(null);
+    const [enrollments, setEnrollments] = useState<Participant[]>([]);
+    const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
 
     const categories = ['Yoga', 'Pilates', 'Meditation', 'HIIT', 'Stretch'];
 
@@ -1824,6 +1979,23 @@ const WellnessAdmin: React.FC = () => {
         }
     };
 
+    const handleViewEnrollments = async (cls: WellnessClass) => {
+        setSelectedClass(cls);
+        setIsViewingEnrollments(true);
+        setIsLoadingEnrollments(true);
+        try {
+            const res = await fetch(`/api/wellness-classes/${cls.id}/enrollments`);
+            if (res.ok) {
+                const data = await res.json();
+                setEnrollments(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch enrollments:', err);
+        } finally {
+            setIsLoadingEnrollments(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
@@ -1901,6 +2073,13 @@ const WellnessAdmin: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
+                                        onClick={() => handleViewEnrollments(cls)}
+                                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                        title="View Enrollments"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">group</span>
+                                    </button>
+                                    <button
                                         onClick={() => openEdit(cls)}
                                         className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                                         title="Edit"
@@ -1920,6 +2099,16 @@ const WellnessAdmin: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <ParticipantDetailsModal
+                isOpen={isViewingEnrollments}
+                onClose={() => { setIsViewingEnrollments(false); setSelectedClass(null); setEnrollments([]); }}
+                title={selectedClass?.title || 'Class Enrollments'}
+                subtitle={selectedClass ? `${formatDate(selectedClass.date)} at ${selectedClass.time}` : undefined}
+                participants={enrollments}
+                isLoading={isLoadingEnrollments}
+                type="enrollment"
+            />
 
             {isEditing && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">

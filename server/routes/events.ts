@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { isProduction } from '../core/db';
 import { isStaffOrAdmin } from '../core/middleware';
 import { db } from '../db';
-import { events, eventRsvps } from '../../shared/schema';
-import { eq, and, sql, gte } from 'drizzle-orm';
+import { events, eventRsvps, users } from '../../shared/schema';
+import { eq, and, sql, gte, desc } from 'drizzle-orm';
 import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, backfillWellnessToCalendar, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 
 const router = Router();
@@ -487,6 +487,34 @@ router.delete('/api/rsvps/:event_id/:user_email', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
     res.status(500).json({ error: 'Request failed' });
+  }
+});
+
+router.get('/api/events/:id/rsvps', isStaffOrAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await db.select({
+      id: eventRsvps.id,
+      userEmail: eventRsvps.userEmail,
+      status: eventRsvps.status,
+      createdAt: eventRsvps.createdAt,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      phone: users.phone,
+    })
+    .from(eventRsvps)
+    .leftJoin(users, eq(eventRsvps.userEmail, users.email))
+    .where(and(
+      eq(eventRsvps.eventId, parseInt(id)),
+      eq(eventRsvps.status, 'confirmed')
+    ))
+    .orderBy(desc(eventRsvps.createdAt));
+    
+    res.json(result);
+  } catch (error: any) {
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Failed to fetch RSVPs' });
   }
 });
 

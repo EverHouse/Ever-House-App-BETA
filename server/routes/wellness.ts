@@ -3,8 +3,8 @@ import { pool, isProduction } from '../core/db';
 import { isStaffOrAdmin } from '../core/middleware';
 import { syncWellnessCalendarEvents, discoverCalendarIds, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { db } from '../db';
-import { wellnessEnrollments, wellnessClasses } from '../../shared/schema';
-import { eq, and, gte, sql, isNull, asc } from 'drizzle-orm';
+import { wellnessEnrollments, wellnessClasses, users } from '../../shared/schema';
+import { eq, and, gte, sql, isNull, asc, desc } from 'drizzle-orm';
 
 const router = Router();
 
@@ -438,6 +438,34 @@ router.delete('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
     res.status(500).json({ error: 'Failed to delete wellness class' });
+  }
+});
+
+router.get('/api/wellness-classes/:id/enrollments', isStaffOrAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await db.select({
+      id: wellnessEnrollments.id,
+      userEmail: wellnessEnrollments.userEmail,
+      status: wellnessEnrollments.status,
+      createdAt: wellnessEnrollments.createdAt,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      phone: users.phone,
+    })
+    .from(wellnessEnrollments)
+    .leftJoin(users, eq(wellnessEnrollments.userEmail, users.email))
+    .where(and(
+      eq(wellnessEnrollments.classId, parseInt(id)),
+      eq(wellnessEnrollments.status, 'confirmed')
+    ))
+    .orderBy(desc(wellnessEnrollments.createdAt));
+    
+    res.json(result);
+  } catch (error: any) {
+    if (!isProduction) console.error('API error:', error);
+    res.status(500).json({ error: 'Failed to fetch enrollments' });
   }
 });
 
