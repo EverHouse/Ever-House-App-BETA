@@ -1,7 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Footer } from '../../components/Footer';
 
+interface FaqItem {
+  id: number;
+  question: string;
+  answer: string;
+  category?: string;
+}
+
+const FALLBACK_FAQS: FaqItem[] = [
+  { id: 1, question: "What is included in the membership?", answer: "Membership includes access to our lounge areas, coworking spaces, and the onsite cafe. Core and Premium memberships also include monthly hours for our TrackMan golf simulators and conference room bookings." },
+  { id: 2, question: "Can I bring guests?", answer: "Yes, members are welcome to bring guests. Social and Core members have a daily guest limit, while Premium members enjoy enhanced guest privileges. Guests must be accompanied by a member at all times." },
+  { id: 3, question: "How do I book a simulator?", answer: "Members can book simulator bays directly through the Even House app or member portal. Reservations can be made up to 14 days in advance depending on your membership tier." },
+  { id: 4, question: "Is there a dress code?", answer: "We encourage a 'smart casual' dress code. Golf attire is always welcome. We ask that members avoid athletic wear that is overly casual (e.g., gym tank tops) in the lounge areas." },
+  { id: 5, question: "Are the golf simulators suitable for beginners?", answer: "Absolutely! Our TrackMan 4 simulators are perfect for all skill levels, from beginners looking to learn the basics to professionals analyzing their swing data. We also offer introductory sessions." },
+  { id: 6, question: "Can I host a private event?", answer: "Yes, Even House offers several spaces for private hire, including the Main Hall and Private Dining Room. Visit our Private Hire page or contact our events team for more details." },
+  { id: 7, question: "What are the operating hours?", answer: "We are open Tuesday through Thursday from 8:30 AM to 8:00 PM, Friday and Saturday from 8:30 AM to 10:00 PM, and Sunday from 8:30 AM to 6:00 PM. We are closed on Mondays." },
+  { id: 8, question: "Is there parking available?", answer: "Yes, ample complimentary parking is available for all members and guests at our Tustin location." },
+];
+
 const FAQ: React.FC = () => {
+  const [faqs, setFaqs] = useState<FaqItem[]>(FALLBACK_FAQS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/faqs')
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then((data: FaqItem[]) => {
+        if (data.length > 0) setFaqs(data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
       <div className="px-6 pt-8 pb-6 animate-pop-in">
@@ -10,38 +41,15 @@ const FAQ: React.FC = () => {
       </div>
 
       <div className="px-6 pb-12 flex-1 space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
-        <AccordionItem 
-          question="What is included in the membership?" 
-          answer="Membership includes access to our lounge areas, coworking spaces, and the onsite cafe. Core and Premium memberships also include monthly hours for our TrackMan golf simulators and conference room bookings." 
-        />
-        <AccordionItem 
-          question="Can I bring guests?" 
-          answer="Yes, members are welcome to bring guests. Social and Core members have a daily guest limit, while Premium members enjoy enhanced guest privileges. Guests must be accompanied by a member at all times." 
-        />
-        <AccordionItem 
-          question="How do I book a simulator?" 
-          answer="Members can book simulator bays directly through the Even House app or member portal. Reservations can be made up to 14 days in advance depending on your membership tier." 
-        />
-        <AccordionItem 
-          question="Is there a dress code?" 
-          answer="We encourage a 'smart casual' dress code. Golf attire is always welcome. We ask that members avoid athletic wear that is overly casual (e.g., gym tank tops) in the lounge areas." 
-        />
-        <AccordionItem 
-          question="Are the golf simulators suitable for beginners?" 
-          answer="Absolutely! Our TrackMan 4 simulators are perfect for all skill levels, from beginners looking to learn the basics to professionals analyzing their swing data. We also offer introductory sessions." 
-        />
-        <AccordionItem 
-          question="Can I host a private event?" 
-          answer="Yes, Even House offers several spaces for private hire, including the Main Hall and Private Dining Room. Visit our Private Hire page or contact our events team for more details." 
-        />
-        <AccordionItem 
-          question="What are the operating hours?" 
-          answer="We are open Tuesday through Thursday from 8:30 AM to 8:00 PM, Friday and Saturday from 8:30 AM to 10:00 PM, and Sunday from 8:30 AM to 6:00 PM. We are closed on Mondays." 
-        />
-        <AccordionItem 
-          question="Is there parking available?" 
-          answer="Yes, ample complimentary parking is available for all members and guests at our Tustin location." 
-        />
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          faqs.map((faq) => (
+            <AccordionItem key={faq.id} question={faq.question} answer={faq.answer} />
+          ))
+        )}
       </div>
 
       <Footer />

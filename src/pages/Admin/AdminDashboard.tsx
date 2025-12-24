@@ -14,7 +14,7 @@ import BackToTop from '../../components/BackToTop';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
-  const [activeTab, setActiveTab] = useState<'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'conflicts'>('directory');
+  const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Protect route - use actualUser so admins can still access while viewing as member
@@ -39,9 +39,8 @@ const AdminDashboard: React.FC = () => {
         <Logo type="mascot" variant="white" className="h-14 w-auto" />
       </div>
 
-      {/* Top Right - Exit to Member Dashboard */}
       <button 
-        onClick={() => navigate('/dashboard')}
+        onClick={() => navigate('/profile')}
         className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
       >
         <span className="material-symbols-outlined text-[24px]">account_circle</span>
@@ -60,6 +59,7 @@ const AdminDashboard: React.FC = () => {
         <div className="mb-6 animate-pop-in">
            <span className="text-xs font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 block mb-1">Staff Portal</span>
            <h1 className="text-2xl font-bold text-primary dark:text-white">
+               {activeTab === 'home' && 'Dashboard'}
                {activeTab === 'cafe' && 'Manage Cafe Menu'}
                {activeTab === 'events' && 'Manage Events'}
                {activeTab === 'announcements' && 'Manage Updates'}
@@ -68,9 +68,13 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'team' && 'Manage Team Access'}
                {activeTab === 'wellness' && 'Manage Wellness Classes'}
                {activeTab === 'conflicts' && 'Data Conflicts'}
+               {activeTab === 'faqs' && 'Manage FAQs'}
+               {activeTab === 'inquiries' && 'Inquiries'}
+               {activeTab === 'gallery' && 'Manage Gallery'}
            </h1>
         </div>
         
+        {activeTab === 'home' && <StaffDashboardHome setActiveTab={setActiveTab} isAdmin={actualUser?.role === 'admin'} />}
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsAdmin />}
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
@@ -98,7 +102,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'conflicts';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'conflicts' | 'faqs' | 'inquiries' | 'gallery';
 
 interface NavItemData {
   id: TabType;
@@ -108,13 +112,11 @@ interface NavItemData {
 }
 
 const NAV_ITEMS: NavItemData[] = [
-  { id: 'directory', icon: 'groups', label: 'Directory' },
+  { id: 'home', icon: 'home', label: 'Home' },
   { id: 'simulator', icon: 'sports_golf', label: 'Sims' },
   { id: 'events', icon: 'event', label: 'Events' },
   { id: 'wellness', icon: 'spa', label: 'Wellness' },
   { id: 'announcements', icon: 'campaign', label: 'News' },
-  { id: 'cafe', icon: 'local_cafe', label: 'Cafe' },
-  { id: 'team', icon: 'shield_person', label: 'Team', adminOnly: true },
 ];
 
 const StaffBottomNav: React.FC<{
@@ -169,6 +171,38 @@ const StaffBottomNav: React.FC<{
   );
   
   return <SafeAreaBottomOverlay>{navContent}</SafeAreaBottomOverlay>;
+};
+
+// --- STAFF DASHBOARD HOME ---
+
+const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdmin?: boolean }> = ({ setActiveTab, isAdmin }) => {
+  const quickLinks = [
+    { id: 'directory' as TabType, icon: 'groups', label: 'Directory', description: 'Search and manage members' },
+    { id: 'cafe' as TabType, icon: 'local_cafe', label: 'Cafe Menu', description: 'Update menu items and prices' },
+    { id: 'team' as TabType, icon: 'shield_person', label: 'Team Access', description: 'Manage staff and admins', adminOnly: true },
+    { id: 'gallery' as TabType, icon: 'photo_library', label: 'Gallery', description: 'Manage venue photos' },
+    { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
+    { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
+    { id: 'conflicts' as TabType, icon: 'warning', label: 'Data Conflicts', description: 'Review membership discrepancies', adminOnly: true },
+  ];
+
+  const visibleLinks = quickLinks.filter(link => !link.adminOnly || isAdmin);
+
+  return (
+    <div className="grid grid-cols-2 gap-4 animate-pop-in">
+      {visibleLinks.map((link) => (
+        <button
+          key={link.id}
+          onClick={() => setActiveTab(link.id)}
+          className="flex flex-col items-start p-5 rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-lg border border-primary/10 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 transition-all text-left group shadow-sm"
+        >
+          <span className="material-symbols-outlined text-3xl text-primary dark:text-white mb-3 group-hover:scale-110 transition-transform">{link.icon}</span>
+          <span className="font-bold text-primary dark:text-white text-sm">{link.label}</span>
+          <span className="text-xs text-primary/60 dark:text-white/60 mt-1">{link.description}</span>
+        </button>
+      ))}
+    </div>
+  );
 };
 
 // --- CAFE ADMIN ---
