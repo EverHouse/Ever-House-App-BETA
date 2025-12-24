@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { formatDateShort } from '../utils/dateUtils';
 import { useUserStore } from '../stores/userStore';
+import { getCached, fetchAndCache, startBackgroundSync } from '../lib/backgroundSync';
 
 // --- Types ---
 
@@ -453,76 +454,72 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     fetchMembers();
   }, [actualUser]);
 
-  // Fetch cafe menu
+  // Start background sync
   useEffect(() => {
-    const fetchCafeMenu = async () => {
-      try {
-        const res = await fetch('/api/cafe-menu');
-        if (res.ok) {
-          const data = await res.json();
-          const formatted = data.map((item: any) => ({
-            id: item.id.toString(),
-            category: item.category,
-            name: item.name,
-            price: parseFloat(item.price) || 0,
-            desc: item.description || '',
-            icon: item.icon || '',
-            image: item.image_url || ''
-          }));
-          setCafeMenu(formatted);
-        } else {
-          setCafeMenu(INITIAL_CAFE);
-        }
-      } catch (err) {
-        console.error('Failed to fetch cafe menu:', err);
-        setCafeMenu(INITIAL_CAFE);
-      }
-    };
-    fetchCafeMenu();
+    startBackgroundSync();
   }, []);
 
-  // Fetch events from API (for members, all events are visible)
+  // Fetch cafe menu with background sync
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const res = await fetch('/api/events');
-        if (res.ok) {
-          const data = await res.json();
-          const normalizeCategory = (cat: string | null | undefined): string => {
-            if (!cat) return 'Social';
-            const lower = cat.toLowerCase();
-            const categoryMap: Record<string, string> = {
-              'wellness': 'Wellness',
-              'social': 'Social',
-              'dining': 'Dining',
-              'sport': 'Sport',
-              'sports': 'Sport',
-            };
-            return categoryMap[lower] || cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
-          };
-          
-          const formatted: EventData[] = data.map((event: any) => ({
-            id: event.id.toString(),
-            source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
-            externalLink: event.eventbrite_url || undefined,
-            title: event.title,
-            category: normalizeCategory(event.category),
-            date: formatDateShort(event.event_date),
-            time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
-            location: event.location || 'Even House',
-            image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',
-            description: event.description || '',
-            attendees: [],
-            capacity: event.max_attendees || undefined,
-            ticketsSold: undefined
-          }));
-          setEvents(formatted);
-        }
-      } catch (err) {
-        console.error('Failed to fetch events:', err);
-      }
+    const formatCafeData = (data: any[]) => data.map((item: any) => ({
+      id: item.id.toString(),
+      category: item.category,
+      name: item.name,
+      price: parseFloat(item.price) || 0,
+      desc: item.description || '',
+      icon: item.icon || '',
+      image: item.image_url || ''
+    }));
+
+    const cached = getCached<any[]>('cafe_menu');
+    if (cached?.length) {
+      setCafeMenu(formatCafeData(cached));
+    }
+
+    fetchAndCache<any[]>('cafe_menu', '/api/cafe-menu', (data) => {
+      if (data?.length) setCafeMenu(formatCafeData(data));
+    });
+  }, []);
+
+  // Fetch events with background sync
+  useEffect(() => {
+    const normalizeCategory = (cat: string | null | undefined): string => {
+      if (!cat) return 'Social';
+      const lower = cat.toLowerCase();
+      const categoryMap: Record<string, string> = {
+        'wellness': 'Wellness',
+        'social': 'Social',
+        'dining': 'Dining',
+        'sport': 'Sport',
+        'sports': 'Sport',
+      };
+      return categoryMap[lower] || cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
     };
-    fetchEvents();
+
+    const formatEventData = (data: any[]) => data.map((event: any) => ({
+      id: event.id.toString(),
+      source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
+      externalLink: event.eventbrite_url || undefined,
+      title: event.title,
+      category: normalizeCategory(event.category),
+      date: formatDateShort(event.event_date),
+      time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
+      location: event.location || 'Even House',
+      image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',
+      description: event.description || '',
+      attendees: [],
+      capacity: event.max_attendees || undefined,
+      ticketsSold: undefined
+    })) as EventData[];
+
+    const cached = getCached<any[]>('events');
+    if (cached?.length) {
+      setEvents(formatEventData(cached));
+    }
+
+    fetchAndCache<any[]>('events', '/api/events', (data) => {
+      if (data?.length) setEvents(formatEventData(data));
+    });
   }, []);
 
   // Auth Logic - verify member email
