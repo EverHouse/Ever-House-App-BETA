@@ -5,7 +5,7 @@ packages = ["imagemagick", "unzip", "libwebp"]
 
 [agent]
 expertMode = true
-integrations = ["hubspot:1.0.0", "google-calendar:1.0.0", "javascript_replit_auth:2.0.0"]
+integrations = ["hubspot:1.0.0", "google-calendar:1.0.0", "javascript_replit_auth:2.0.0", "javascript_openai_ai_integrations:2.0.0"]
 
 [workflows]
 runButton = "Project"
