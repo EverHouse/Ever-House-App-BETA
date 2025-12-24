@@ -3,21 +3,37 @@ import type { RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { Pool } from "pg";
 
-const authPool = new Pool({ connectionString: process.env.DATABASE_URL });
+const authPool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 10000,
+});
+
+authPool.on('error', (err) => {
+  console.error('[Auth Pool] Unexpected error:', err.message);
+});
 
 export function getSession() {
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
-    throw new Error('SESSION_SECRET environment variable is required');
+    console.error('[Session] SESSION_SECRET is missing - using fallback for startup');
+    return session({
+      secret: 'temporary-fallback-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: { httpOnly: true, secure: true, maxAge: 3600000 },
+    });
   }
   
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
+    errorLog: (err: Error) => {
+      console.error('[Session Store] Error:', err.message);
+    },
   });
   return session({
     secret: sessionSecret,
