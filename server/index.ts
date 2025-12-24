@@ -243,8 +243,16 @@ async function startServer() {
     process.exit(1);
   }
 
-  // Use PORT env for Autoscale (maps internal 5001 to external 3000), fallback to 3001 for dev
-  const PORT = Number(process.env.PORT) || (isProduction ? 5001 : 3001);
+  // For Autoscale: use PORT env directly in production (no fallback)
+  // In development: fallback to 3001
+  const PORT = isProduction 
+    ? Number(process.env.PORT) 
+    : (Number(process.env.PORT) || 3001);
+  
+  if (isProduction && !process.env.PORT) {
+    console.error('[Startup] FATAL: PORT environment variable required in production');
+    process.exit(1);
+  }
   
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Startup] API Server running on port ${PORT}`);
@@ -255,46 +263,51 @@ async function startServer() {
     process.exit(1);
   });
 
-  setTimeout(async () => {
-    try {
-      await autoSeedResources();
-    } catch (err) {
-      console.error('[Startup] Auto-seed resources failed:', err);
-    }
-    
-    try {
-      await autoSeedCafeMenu();
-    } catch (err) {
-      console.error('[Startup] Auto-seed cafe menu failed:', err);
-    }
-
-    try {
-      const gcalResult = await syncGoogleCalendarEvents();
-      if (gcalResult.error) {
-        console.log(`[Startup] Google Calendar sync skipped: ${gcalResult.error}`);
-      } else {
-        console.log(`[Startup] Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated)`);
-      }
-    } catch (err) {
-      console.log('[Startup] Google Calendar sync failed:', err);
-    }
-
-    const SYNC_INTERVAL_MS = 5 * 60 * 1000;
-    setInterval(async () => {
+  // Only run auto-seeding and background sync in development
+  // In production (Autoscale), use `npm run seed` and manual sync endpoints instead
+  if (!isProduction) {
+    setTimeout(async () => {
       try {
-        const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' }));
-        const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }));
-        if (!isProduction) {
+        await autoSeedResources();
+      } catch (err) {
+        console.error('[Startup] Auto-seed resources failed:', err);
+      }
+      
+      try {
+        await autoSeedCafeMenu();
+      } catch (err) {
+        console.error('[Startup] Auto-seed cafe menu failed:', err);
+      }
+
+      try {
+        const gcalResult = await syncGoogleCalendarEvents();
+        if (gcalResult.error) {
+          console.log(`[Startup] Google Calendar sync skipped: ${gcalResult.error}`);
+        } else {
+          console.log(`[Startup] Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated)`);
+        }
+      } catch (err) {
+        console.log('[Startup] Google Calendar sync failed:', err);
+      }
+
+      const SYNC_INTERVAL_MS = 5 * 60 * 1000;
+      setInterval(async () => {
+        try {
+          const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' }));
+          const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }));
           const eventsMsg = eventsResult.error ? eventsResult.error : `${eventsResult.synced} synced`;
           const wellnessMsg = wellnessResult.error ? wellnessResult.error : `${wellnessResult.synced} synced`;
           console.log(`[Auto-sync] Events: ${eventsMsg}, Wellness: ${wellnessMsg}`);
+        } catch (err) {
+          console.error('[Auto-sync] Calendar sync failed:', err);
         }
-      } catch (err) {
-        if (!isProduction) console.error('[Auto-sync] Calendar sync failed:', err);
-      }
-    }, SYNC_INTERVAL_MS);
-    console.log('[Startup] Background calendar sync enabled (every 5 minutes)');
-  }, 100);
+      }, SYNC_INTERVAL_MS);
+      console.log('[Startup] Background calendar sync enabled (every 5 minutes)');
+    }, 100);
+  } else {
+    console.log('[Startup] Production mode: auto-seeding and background sync disabled');
+    console.log('[Startup] Use POST /api/events/sync/google and POST /api/wellness-classes/sync for manual sync');
+  }
 }
 
 startServer().catch((err) => {
