@@ -269,6 +269,34 @@ export const galleryImages = pgTable("gallery_images", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// FAQs table - frequently asked questions
+export const faqs = pgTable("faqs", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  category: varchar("category"),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Form submissions table - contact/tour/event inquiries
+export const formSubmissions = pgTable("form_submissions", {
+  id: serial("id").primaryKey(),
+  formType: varchar("form_type").notNull(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  email: varchar("email").notNull(),
+  phone: varchar("phone"),
+  message: text("message"),
+  metadata: jsonb("metadata"),
+  status: varchar("status").default("new"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Member referrals table - referral tracking
 export const memberReferrals = pgTable("member_referrals", {
   id: serial("id").primaryKey(),
@@ -332,3 +360,7 @@ export type WellnessEnrollment = typeof wellnessEnrollments.$inferSelect;
 export type InsertWellnessEnrollment = typeof wellnessEnrollments.$inferInsert;
 export type Announcement = typeof announcements.$inferSelect;
 export type InsertAnnouncement = typeof announcements.$inferInsert;
+export type Faq = typeof faqs.$inferSelect;
+export type InsertFaq = typeof faqs.$inferInsert;
+export type FormSubmission = typeof formSubmissions.$inferSelect;
+export type InsertFormSubmission = typeof formSubmissions.$inferInsert;

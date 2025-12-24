@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
 import { getHubSpotClient } from '../core/integrations';
+import { db } from '../db';
+import { formSubmissions } from '../../shared/schema';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -180,6 +182,34 @@ router.post('/api/hubspot/forms/:formType', async (req, res) => {
     }
     
     const result: any = await response.json();
+    
+    const getFieldValue = (name: string): string | undefined => {
+      const field = fields.find((f: { name: string; value: string }) => f.name === name);
+      return field?.value;
+    };
+    
+    try {
+      const metadata: Record<string, string> = {};
+      for (const field of fields) {
+        if (!['firstname', 'lastname', 'email', 'phone', 'message'].includes(field.name)) {
+          metadata[field.name] = field.value;
+        }
+      }
+      
+      await db.insert(formSubmissions).values({
+        formType,
+        firstName: getFieldValue('firstname') || getFieldValue('first_name') || null,
+        lastName: getFieldValue('lastname') || getFieldValue('last_name') || null,
+        email: getFieldValue('email') || '',
+        phone: getFieldValue('phone') || null,
+        message: getFieldValue('message') || null,
+        metadata: Object.keys(metadata).length > 0 ? metadata : null,
+        status: 'new',
+      });
+    } catch (dbError: any) {
+      console.error('Failed to save form submission locally:', dbError);
+    }
+    
     res.json({ success: true, message: result.inlineMessage || 'Form submitted successfully' });
   } catch (error: any) {
     if (!isProduction) console.error('HubSpot form submission error:', error);
