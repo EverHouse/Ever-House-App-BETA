@@ -8,7 +8,6 @@ import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
 import { formatDateShort, getTodayString } from '../../utils/dateUtils';
 import { DashboardSkeleton } from '../../components/skeletons';
-import { EmptyBookings } from '../../components/EmptyState';
 import { getBaseTier } from '../../utils/permissions';
 import PullToRefresh from '../../components/PullToRefresh';
 
@@ -195,6 +194,14 @@ const Dashboard: React.FC = () => {
     return itemDate && itemDate >= todayStr;
   });
 
+  // Separate bookings from events/wellness
+  const upcomingBookings = upcomingItems.filter(item => item.type === 'booking');
+  const upcomingEventsWellness = upcomingItems.filter(item => item.type === 'rsvp' || item.type === 'wellness');
+
+  // Next booking card shows only golf/conference bookings
+  const nextBooking = upcomingBookings[0];
+  
+  // Upcoming section shows events and wellness enrollments
   const nextItem = upcomingItems[0];
   const laterItems = upcomingItems.slice(1);
 
@@ -359,55 +366,52 @@ const Dashboard: React.FC = () => {
         </div>
       ) : (
         <>
+          {/* Upcoming Booking Card - Golf/Conference Room only */}
           <div className="mb-8 animate-pop-in" style={{animationDelay: '0.15s'}}>
-            {nextItem ? (
+            {nextBooking ? (
               <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#E7E7DC] to-[#d4d4cb] p-6 shadow-glow text-brand-green group">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <span className="material-symbols-outlined text-[120px]">{getIconForType(nextItem.resourceType)}</span>
+                  <span className="material-symbols-outlined text-[120px]">{getIconForType(nextBooking.resourceType)}</span>
                 </div>
                 <div className="relative z-10">
-                  <span className="inline-block px-3 py-1 bg-brand-green/10 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 border border-brand-green/10">Next Up</span>
-                  <h2 className="text-2xl font-bold leading-tight mb-1">{nextItem.title}</h2>
-                  <p className="text-sm font-medium opacity-80 mb-1">{nextItem.date}</p>
-                  <p className="text-sm font-medium opacity-60 mb-6">{nextItem.details}</p>
+                  <span className="inline-block px-3 py-1 bg-brand-green/10 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 border border-brand-green/10">Next Booking</span>
+                  <h2 className="text-2xl font-bold leading-tight mb-1">{nextBooking.title}</h2>
+                  <p className="text-sm font-medium opacity-80 mb-1">{nextBooking.date}</p>
+                  <p className="text-sm font-medium opacity-60 mb-6">{nextBooking.details}</p>
                   
                   <div className="flex gap-2">
-                    {nextItem.type === 'booking' && (
-                      <button 
-                        onClick={async () => {
-                          if (navigator.vibrate) navigator.vibrate(10);
-                          try {
-                            const res = await fetch(`/api/bookings/${nextItem.dbId}/checkin`, { method: 'POST' });
-                            if (res.ok) {
-                              setCheckInConfirmed(true);
-                              setTimeout(() => setCheckInConfirmed(false), 3000);
-                            } else {
-                              showToast('Check-in failed. Please try again.', 'error');
-                            }
-                          } catch (e) {
-                            showToast('Connection error during check-in.', 'error');
+                    <button 
+                      onClick={async () => {
+                        if (navigator.vibrate) navigator.vibrate(10);
+                        try {
+                          const res = await fetch(`/api/bookings/${nextBooking.dbId}/checkin`, { method: 'POST' });
+                          if (res.ok) {
+                            setCheckInConfirmed(true);
+                            setTimeout(() => setCheckInConfirmed(false), 3000);
+                          } else {
+                            showToast('Check-in failed. Please try again.', 'error');
                           }
-                        }}
-                        className="flex-1 bg-brand-green text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none"
-                        aria-label="Check in to booking"
-                      >
-                        {checkInConfirmed ? (
-                          <>
-                            <span className="material-symbols-outlined text-lg">check_circle</span>
-                            Checked In
-                          </>
-                        ) : 'Check In'}
-                      </button>
-                    )}
-                    {nextItem.type === 'booking' && (
-                      <button 
-                        onClick={() => handleCancelBooking(nextItem.dbId)}
-                        className="w-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-xl transition-colors text-brand-green border border-brand-green/10 focus:ring-2 focus:ring-accent focus:outline-none"
-                        aria-label="Cancel booking"
-                      >
-                        <span className="material-symbols-outlined">close</span>
-                      </button>
-                    )}
+                        } catch (e) {
+                          showToast('Connection error during check-in.', 'error');
+                        }
+                      }}
+                      className="flex-1 bg-brand-green text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none"
+                      aria-label="Check in to booking"
+                    >
+                      {checkInConfirmed ? (
+                        <>
+                          <span className="material-symbols-outlined text-lg">check_circle</span>
+                          Checked In
+                        </>
+                      ) : 'Check In'}
+                    </button>
+                    <button 
+                      onClick={() => handleCancelBooking(nextBooking.dbId)}
+                      className="w-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-xl transition-colors text-brand-green border border-brand-green/10 focus:ring-2 focus:ring-accent focus:outline-none"
+                      aria-label="Cancel booking"
+                    >
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -415,7 +419,7 @@ const Dashboard: React.FC = () => {
               <div className={`relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`}>
                 <div className="flex items-center gap-4">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm ${isDark ? 'bg-white/20' : 'bg-white/30'}`}>
-                    <span className="material-symbols-outlined text-brand-green text-3xl drop-shadow-sm">calendar_month</span>
+                    <span className="material-symbols-outlined text-brand-green text-3xl drop-shadow-sm">sports_golf</span>
                   </div>
                   <div>
                     <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Bookings</h2>
@@ -433,17 +437,16 @@ const Dashboard: React.FC = () => {
             )}
           </div>
 
+          {/* Upcoming Events & Wellness Section */}
           <div className="space-y-8 animate-pop-in" style={{animationDelay: '0.15s'}}>
             <div>
               <div className="flex justify-between items-center mb-4 px-1">
-                <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Upcoming</h3>
+                <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Upcoming Events & Wellness</h3>
               </div>
               <div className="space-y-3">
-                {laterItems.length > 0 ? laterItems.map((item, idx) => {
+                {upcomingEventsWellness.length > 0 ? upcomingEventsWellness.map((item, idx) => {
                   let actions;
-                  if (item.type === 'booking') {
-                    actions = [{ icon: 'close', label: 'Cancel', onClick: () => handleCancelBooking(item.dbId) }];
-                  } else if (item.type === 'rsvp') {
+                  if (item.type === 'rsvp') {
                     actions = [{ icon: 'close', label: 'Cancel RSVP', onClick: () => handleCancelRSVP((item.raw as DBRSVP).event_id) }];
                   } else {
                     actions = [{ icon: 'close', label: 'Cancel', onClick: () => handleCancelWellness((item.raw as DBWellnessEnrollment).class_id) }];
@@ -460,7 +463,25 @@ const Dashboard: React.FC = () => {
                     />
                   );
                 }) : (
-                  <EmptyBookings onBook={() => navigate('/book')} />
+                  <div className="flex flex-col items-center justify-center text-center py-12 px-6 animate-pop-in">
+                    <div className="relative mb-6">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-bone to-secondary flex items-center justify-center relative">
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/5 to-accent/10 animate-pulse" style={{ animationDuration: '3s' }} />
+                        <span className="material-symbols-outlined text-5xl text-primary/40 dark:text-white/40">self_improvement</span>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-primary dark:text-white mb-2">No upcoming events</h3>
+                    <p className="text-sm text-primary/60 dark:text-white/60 max-w-[280px] mb-4">
+                      RSVP to events or enroll in wellness classes to see them here.
+                    </p>
+                    <button
+                      onClick={() => navigate('/wellness')}
+                      className="inline-flex items-center gap-2 px-6 py-3 text-base bg-primary dark:bg-accent text-white dark:text-brand-green rounded-2xl font-semibold hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      <span className="material-symbols-outlined text-lg">add</span>
+                      Book Now
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
