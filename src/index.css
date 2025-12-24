@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 :root {
+  /* Safe Area / Nav Clearance */
+  --nav-bottom-offset: 2rem; /* bottom-8 = 32px = 2rem */
+  --nav-height: 4rem; /* approximate nav bar height */
+  --nav-clearance: calc(var(--nav-height) + var(--nav-bottom-offset) + env(safe-area-inset-bottom, 0px));
+  
   /* Brand Colors */
   --brand-primary: #293515;
   --brand-secondary: #F2F2EC;

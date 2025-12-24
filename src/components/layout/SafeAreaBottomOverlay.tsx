@@ -1,0 +1,25 @@
+import React from 'react';
+import { createPortal } from 'react-dom';
+import { useBottomNav } from '../../contexts/BottomNavContext';
+
+interface SafeAreaBottomOverlayProps {
+  children: React.ReactNode;
+}
+
+export const SafeAreaBottomOverlay: React.FC<SafeAreaBottomOverlayProps> = ({ children }) => {
+  const overlayRoot = document.getElementById('nav-overlay-root');
+  const { isAtBottom } = useBottomNav();
+  
+  if (!overlayRoot) return null;
+  
+  const overlayContent = (
+    <div 
+      className={`fixed inset-x-0 bottom-0 pointer-events-none z-[9999] transition-transform duration-300 ease-out ${isAtBottom ? 'translate-y-[calc(100%+env(safe-area-inset-bottom,0px))]' : 'translate-y-0'}`}
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      {children}
+    </div>
+  );
+  
+  return createPortal(overlayContent, overlayRoot);
+};

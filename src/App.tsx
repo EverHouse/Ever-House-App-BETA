@@ -12,6 +12,9 @@ import ViewAsBanner from './components/ViewAsBanner';
 import { ToastProvider } from './components/Toast';
 import OfflineBanner from './components/OfflineBanner';
 import { NotificationContext } from './contexts/NotificationContext';
+import { SafeAreaBottomOverlay } from './components/layout/SafeAreaBottomOverlay';
+import { BottomNavProvider } from './contexts/BottomNavContext';
+import { BottomSentinel } from './components/layout/BottomSentinel';
 
 const PageSkeleton: React.FC = () => (
   <div className="px-6 pt-4 animate-pulse">
@@ -489,8 +492,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 className={`flex-1 relative ${showHeader ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''}`}
             >
                 {children}
-                {/* Transparent spacer to allow scrolling past nav bar - content visible behind Safari */}
-                {isMemberRoute && !isAdminRoute && <div className="h-24 pointer-events-none" aria-hidden="true" />}
+                {isMemberRoute && !isAdminRoute && <BottomSentinel />}
             </main>
 
             {isMemberRoute && !isAdminRoute && user && (
@@ -634,7 +636,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
   
   const navContent = (
       <nav 
-        className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md rounded-full p-1.5 bg-black/60 backdrop-blur-xl border border-[#293515]/80 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] z-[9999] pointer-events-auto"
+        className="relative mb-8 mx-auto w-[calc(100%-3rem)] max-w-md rounded-full p-1.5 bg-black/60 backdrop-blur-xl border border-[#293515]/80 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] pointer-events-auto"
         role="navigation"
         aria-label="Member navigation"
       >
@@ -691,8 +693,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
       </nav>
   );
   
-  const overlayRoot = document.getElementById('nav-overlay-root');
-  return overlayRoot ? createPortal(navContent, overlayRoot) : null;
+  return <SafeAreaBottomOverlay>{navContent}</SafeAreaBottomOverlay>;
 };
 
 const App: React.FC = () => {
@@ -701,6 +702,7 @@ const App: React.FC = () => {
       <ThemeProvider>
         <DataProvider>
           <ToastProvider>
+          <BottomNavProvider>
           <OfflineBanner />
           <HashRouter>
             <SmoothScrollProvider>
@@ -710,6 +712,7 @@ const App: React.FC = () => {
               </Layout>
             </SmoothScrollProvider>
           </HashRouter>
+          </BottomNavProvider>
           </ToastProvider>
         </DataProvider>
       </ThemeProvider>

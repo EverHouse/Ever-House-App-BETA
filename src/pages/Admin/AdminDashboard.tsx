@@ -7,6 +7,8 @@ import Logo from '../../components/Logo';
 import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
 import { AVAILABLE_TAGS } from '../../utils/tierUtils';
+import { SafeAreaBottomOverlay } from '../../components/layout/SafeAreaBottomOverlay';
+import { BottomSentinel } from '../../components/layout/BottomSentinel';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -76,8 +78,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'team' && actualUser?.role === 'admin' && <TeamAdmin />}
         {activeTab === 'wellness' && <WellnessAdmin />}
         {activeTab === 'conflicts' && actualUser?.role === 'admin' && <DataConflictsAdmin />}
-        {/* Transparent spacer to allow scrolling past nav bar - content visible behind Safari */}
-        <div className="h-24 pointer-events-none" aria-hidden="true" />
+        <BottomSentinel />
       </main>
 
       {/* Bottom Nav - Floating Pill with Liquid Glass */}
@@ -128,7 +129,7 @@ const StaffBottomNav: React.FC<{
   const navContent = (
     <nav 
       ref={navRef}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 z-[9999] shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full pointer-events-auto"
+      className="relative mb-8 mx-auto w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full pointer-events-auto"
     >
       <div className="relative flex items-center w-full">
         <div 
@@ -163,7 +164,7 @@ const StaffBottomNav: React.FC<{
     </nav>
   );
   
-  return createPortal(navContent, document.body);
+  return <SafeAreaBottomOverlay>{navContent}</SafeAreaBottomOverlay>;
 };
 
 // --- CAFE ADMIN ---

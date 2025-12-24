@@ -51,6 +51,12 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Service Worker Caching**: Network First for HTML/navigation (ensures fresh deployments); Cache First for static assets (JS/CSS/images); Network First with cache fallback for API data.
 - **Overscroll Prevention**: `overscroll-behavior-y: none` prevents rubber-banding for native app feel.
 - **Offline Support**: Core pages and API responses cached for offline access.
+- **Safari Toolbar Transparency**: Scroll-aware bottom nav that hides when user reaches bottom of content. Uses:
+  - `SafeAreaBottomOverlay` component: pointer-events-none wrapper that positions nav correctly with safe-area-inset-bottom.
+  - `BottomSentinel` component: IntersectionObserver-based sentinel that detects when user scrolls to bottom.
+  - `BottomNavContext`: Shared state for isAtBottom across member/staff portals.
+  - When at bottom: nav slides down (translateY animation) to reveal content behind Safari's toolbar.
+  - When scrolling: nav floats 2rem above bottom with glass effect.
 
 ### Feature Specifications
 - **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details.
