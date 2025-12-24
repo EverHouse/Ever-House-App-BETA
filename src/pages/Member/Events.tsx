@@ -32,7 +32,7 @@ const generateUpcomingDates = (days: number = 14): { day: string; date: string; 
 };
 
 const MemberEvents: React.FC = () => {
-  const { events, addBooking, isLoading } = useData();
+  const { events, addBooking, isLoading, user } = useData();
   const { effectiveTheme } = useTheme();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
