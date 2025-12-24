@@ -1,0 +1,66 @@
+You have access to the repo. Do NOT redo completed work unless it is causing the issues below. Fix the remaining iPhone Add-to-Home-Screen (iOS PWA) interaction bugs and the empty Member Café page.
+
+DO NOT request or modify secrets. Keep changes minimal. Provide: files changed + brief reasoning + how to verify on iOS PWA.
+
+ISSUE 1 — iOS PWA “double-tap to click” still happening (bottom nav, hamburger menu, tabs)
+Goal: single-tap should work everywhere.
+
+Root suspects to address:
+A) Remove touch-prefetch handlers that can consume first tap
+- Find any `onTouchStart` used only for route/code prefetching (bottom nav buttons, <Link> components, menu items).
+- Remove `onTouchStart` prefetch triggers entirely. Keep `onMouseEnter` prefetch for desktop only.
+- If you still want mobile prefetching, do it passively: run a `requestIdleCallback` (or setTimeout 0) prefetch when the nav/menu renders, not on touch events.
+
+B) Ensure overlays and decorative layers never intercept taps
+- Audit bottom nav and hamburger menu overlays/backdrops/highlight blobs.
+- Any absolutely-positioned decorative elements MUST have `pointer-events: none`.
+- Ensure the side menu backdrop overlay doesn’t sit above buttons when it shouldn’t (z-index + pointer-events).
+
+C) Add iOS-friendly tap behavior globally
+- Add CSS:
+  - `a, button { touch-action: manipulation; }`
+  - remove 300ms/delay patterns and reduce tap ambiguity
+- Ensure ALL clickable components are real buttons/links (not divs). If any div has onClick, convert to <button type="button">.
+
+D) Remove/avoid custom touch handlers that can suppress click
+- Search for `onTouchStart/onTouchMove/onTouchEnd` used for UI interactions (tabs, menus, carousels).
+- Ensure none of those call `preventDefault()` in a way that cancels click.
+- Prefer pointer events: `onPointerDown/Up` and only for visuals, not navigation.
+
+ISSUE 2 — Member Café page is empty while Public Café shows items
+Goal: member Café must show the same menu items as public (same endpoint).
+
+Steps:
+1) Confirm both public + member call the same endpoint: GET `/api/cafe-menu`.
+2) In `src/contexts/DataContext.tsx`, add logging (dev-only) to confirm what cafe-menu returns.
+3) Make the cache layer robust:
+- In `fetchAndCache` and in DataContext update handlers, validate response:
+  - If response is not an array OR length is 0 unexpectedly, do not overwrite the last good menu.
+  - Do not cache HTML or non-JSON responses.
+- Add a safe fallback: if DataContext cafeMenu ends up empty, the member Cafe page should fetch `/api/cafe-menu` directly (same as public) and render it (without breaking the shared context).
+
+Also check Service Worker caching:
+- Ensure `/api/cafe-menu` is NOT mistakenly treated as a “CORE_PAGES” navigation request.
+- Ensure SW never returns cached HTML for `/api/*`.
+- If needed, add an explicit guard: if url.pathname startsWith('/api/'), never serve from the static/page cache branch.
+
+ISSUE 3 — Safari bottom bar background mismatch (light line / green bar)
+Goal: background behind browser UI should match app background in light and dark.
+
+- Set `html, body, #root` background-color explicitly for light and dark.
+- Ensure theme colors are correct:
+  - Add/verify <meta name="theme-color"> for light and dark (use media queries).
+  - Ensure apple status bar style is set appropriately for PWA.
+- Confirm the side menu overlay/backdrop doesn’t reveal a different background behind it (no green container showing through in dark mode).
+
+VERIFICATION (must do)
+- Run: `npm run build` then `npm run start`
+- On iPhone PWA:
+  - single-tap works: bottom nav (Events/Cafe), hamburger open/close, tabs on Wellness/Book/Events
+  - Member Café renders items (same as public)
+  - no weird green bar / light seam at bottom when menu open
+
+Return:
+- Files changed
+- Exact causes found for double-tap + café empty
+- What you changed to fix each

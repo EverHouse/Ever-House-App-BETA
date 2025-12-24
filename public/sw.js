@@ -29,6 +29,24 @@ self.addEventListener('fetch', function(event) {
 
   if (request.method !== 'GET') return;
 
+  if (url.pathname.startsWith('/api/')) {
+    if (['events', 'wellness-classes', 'cafe-menu', 'hours'].some(ep => url.pathname.includes(ep))) {
+      event.respondWith(
+        fetch(request).then(response => {
+          if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const clone = response.clone();
+              caches.open(API_CACHE).then(cache => cache.put(request, clone));
+            }
+          }
+          return response;
+        }).catch(() => caches.match(request))
+      );
+    }
+    return;
+  }
+
   if (url.pathname.startsWith('/assets/') || STATIC_ASSETS.includes(url.pathname) || CORE_PAGES.includes(url.pathname)) {
     event.respondWith(
       caches.match(request).then(cached => {
@@ -41,19 +59,6 @@ self.addEventListener('fetch', function(event) {
         }).catch(() => cached);
         return cached || fetchPromise;
       })
-    );
-    return;
-  }
-
-  if (url.pathname.startsWith('/api/') && ['events', 'wellness-classes', 'cafe-menu', 'hours'].some(ep => url.pathname.includes(ep))) {
-    event.respondWith(
-      fetch(request).then(response => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(API_CACHE).then(cache => cache.put(request, clone));
-        }
-        return response;
-      }).catch(() => caches.match(request))
     );
     return;
   }

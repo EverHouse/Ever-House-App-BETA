@@ -664,8 +664,6 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
                 key={item.path}
                 onClick={handleNavClick}
                 onMouseEnter={handlePrefetch}
-                onTouchStart={handlePrefetch}
-                onTouchEnd={import.meta.env.DEV ? () => console.log(`[MemberNav] touchend for "${item.label}"`) : undefined}
                 style={{ touchAction: 'manipulation' }}
                 className={`
                   flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer

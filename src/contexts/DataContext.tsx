@@ -471,14 +471,41 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       image: item.image_url || ''
     }));
 
+    const isValidCafeData = (data: any): data is any[] => {
+      return Array.isArray(data) && data.length > 0 && data[0]?.name;
+    };
+
     const cached = getCached<any[]>('cafe_menu');
-    if (cached?.length) {
+    if (isValidCafeData(cached)) {
       setCafeMenu(formatCafeData(cached));
     }
 
     fetchAndCache<any[]>('cafe_menu', '/api/cafe-menu', (data) => {
-      if (data?.length) setCafeMenu(formatCafeData(data));
+      if (isValidCafeData(data)) {
+        setCafeMenu(formatCafeData(data));
+      }
     });
+
+    const directFetch = async () => {
+      try {
+        const res = await fetch('/api/cafe-menu');
+        if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType?.includes('application/json')) {
+            const data = await res.json();
+            if (isValidCafeData(data)) {
+              setCafeMenu(formatCafeData(data));
+            }
+          }
+        }
+      } catch {}
+    };
+
+    const timer = setTimeout(() => {
+      if (cafeMenu.length === 0) directFetch();
+    }, 1500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Fetch events with background sync

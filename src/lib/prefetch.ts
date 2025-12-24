@@ -32,3 +32,11 @@ export const prefetchAdjacentRoutes = (currentPath: string) => {
 export const prefetchAllNavRoutes = () => {
   Object.keys(routeImports).forEach(prefetchRoute);
 };
+
+export const prefetchOnIdle = () => {
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => prefetchAllNavRoutes());
+  } else {
+    setTimeout(prefetchAllNavRoutes, 100);
+  }
+};

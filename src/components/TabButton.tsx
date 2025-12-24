@@ -17,20 +17,10 @@ const TabButton: React.FC<TabButtonProps> = ({ label, active, onClick, isDark = 
     onClick();
   };
 
-  const handleTouchStart = import.meta.env.DEV ? () => {
-    console.log(`[TabButton] touchstart for "${label}"`);
-  } : undefined;
-
-  const handleTouchEnd = import.meta.env.DEV ? () => {
-    console.log(`[TabButton] touchend for "${label}"`);
-  } : undefined;
-
   return (
     <button 
       type="button"
       onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       style={{ touchAction: 'manipulation' }}
       className={`pb-3 border-b-[3px] text-sm whitespace-nowrap transition-colors min-h-[44px] ${
         active 

@@ -73,11 +73,20 @@ html, body {
   width: 100%;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
-  background-color: var(--brand-secondary);
+  background-color: #F2F2EC;
   color: var(--brand-primary);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html.dark, html.dark body {
+  background-color: #0f120a;
+  color: #F2F2EC;
+}
+
+#root {
+  background-color: inherit;
 }
 
 /* Eliminate 300ms tap delay on touch devices */
