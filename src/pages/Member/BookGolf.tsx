@@ -164,39 +164,43 @@ const BookGolf: React.FC = () => {
       try {
         const allSlots: Map<string, { slot: TimeSlot; resourceIds: number[] }> = new Map();
         
-        await Promise.all(resources.map(async (resource) => {
+        const results = await Promise.allSettled(resources.map(async (resource) => {
           const { ok, data: slots } = await apiRequest<APISlot[]>(
             `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
           );
-          if (!ok || !slots) {
-            console.error('[BookGolf] Availability API failed for resource', resource.dbId);
-            return;
-          }
-          
-          slots.forEach(slot => {
-            if (!slot.available) return;
-            
-            const key = slot.start_time;
-            
-            if (allSlots.has(key)) {
-              allSlots.get(key)!.resourceIds.push(resource.dbId);
-            } else {
-              allSlots.set(key, { 
-                slot: {
-                  id: `slot-${slot.start_time}`,
-                  start: formatTime12(slot.start_time),
-                  end: formatTime12(slot.end_time),
-                  startTime24: slot.start_time,
-                  endTime24: slot.end_time,
-                  label: `${formatTime12(slot.start_time)} – ${formatTime12(slot.end_time)}`,
-                  available: true,
-                  availableResourceDbIds: []
-                }, 
-                resourceIds: [resource.dbId] 
-              });
-            }
-          });
+          return { resource, ok, slots };
         }));
+        
+        results.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value.ok && result.value.slots) {
+            const { resource, slots } = result.value;
+            slots.forEach(slot => {
+              if (!slot.available) return;
+              
+              const key = slot.start_time;
+              
+              if (allSlots.has(key)) {
+                allSlots.get(key)!.resourceIds.push(resource.dbId);
+              } else {
+                allSlots.set(key, { 
+                  slot: {
+                    id: `slot-${slot.start_time}`,
+                    start: formatTime12(slot.start_time),
+                    end: formatTime12(slot.end_time),
+                    startTime24: slot.start_time,
+                    endTime24: slot.end_time,
+                    label: `${formatTime12(slot.start_time)} – ${formatTime12(slot.end_time)}`,
+                    available: true,
+                    availableResourceDbIds: []
+                  }, 
+                  resourceIds: [resource.dbId] 
+                });
+              }
+            });
+          } else if (result.status === 'rejected') {
+            console.error('[BookGolf] Availability API failed:', result.reason);
+          }
+        });
         
         const sortedSlots = Array.from(allSlots.values())
           .map(({ slot, resourceIds }) => ({
