@@ -59,9 +59,9 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
   - When scrolling: nav floats 2rem above bottom with glass effect.
 
 ### Feature Specifications
-- **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details.
-- **Member-Only Pages**: Dashboard, Book Golf, Cafe, Events, Profile, Wellness.
-- **Admin Functionality**: Management of members, events, cafe menu, and booking requests.
+- **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details, Cafe Menu (view-only).
+- **Member-Only Pages**: Dashboard, Book Golf, Announcements/News, Events, Profile, Wellness.
+- **Admin Functionality**: Management of members, events, cafe menu, announcements/news, and booking requests.
 - **API Endpoints**: Comprehensive REST API for all core functionalities.
 
 ## External Dependencies
