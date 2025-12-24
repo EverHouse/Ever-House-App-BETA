@@ -1,3 +1,64 @@
+const CACHE_NAME = 'even-house-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+  '/favicon.ico'
+];
+const CORE_PAGES = ['/member-home', '/book', '/events', '/wellness', '/cafe'];
+const API_CACHE = 'api-cache-v1';
+
+self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(keys => 
+      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== API_CACHE).map(k => caches.delete(k)))
+    ).then(() => clients.claim())
+  );
+});
+
+self.addEventListener('fetch', function(event) {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.method !== 'GET') return;
+
+  if (url.pathname.startsWith('/assets/') || STATIC_ASSETS.includes(url.pathname) || CORE_PAGES.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        const fetchPromise = fetch(request).then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/') && ['events', 'wellness-classes', 'cafe-menu', 'hours'].some(ep => url.pathname.includes(ep))) {
+    event.respondWith(
+      fetch(request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(API_CACHE).then(cache => cache.put(request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(request))
+    );
+    return;
+  }
+});
+
 self.addEventListener('push', function(event) {
   if (!event.data) {
     return;
@@ -42,10 +103,3 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-self.addEventListener('install', function(event) {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', function(event) {
-  event.waitUntil(clients.claim());
-});

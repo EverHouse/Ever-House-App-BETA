@@ -10,6 +10,7 @@ import Logo from './components/Logo';
 import MenuOverlay from './components/MenuOverlay';
 import ViewAsBanner from './components/ViewAsBanner';
 import { ToastProvider } from './components/Toast';
+import OfflineBanner from './components/OfflineBanner';
 import { NotificationContext } from './contexts/NotificationContext';
 
 const PageSkeleton: React.FC = () => (
@@ -698,6 +699,7 @@ const App: React.FC = () => {
       <ThemeProvider>
         <DataProvider>
           <ToastProvider>
+          <OfflineBanner />
           <HashRouter>
             <SmoothScrollProvider>
               <ScrollToTop />
