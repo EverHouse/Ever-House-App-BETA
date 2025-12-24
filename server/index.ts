@@ -85,6 +85,26 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb' }));
 app.use(getSession());
 
+app.get('/api/health', async (req, res) => {
+  try {
+    const dbResult = await pool.query('SELECT NOW() as time, COUNT(*) as resource_count FROM resources');
+    res.json({
+      status: 'ok',
+      environment: isProduction ? 'production' : 'development',
+      database: 'connected',
+      timestamp: dbResult.rows[0].time,
+      resourceCount: parseInt(dbResult.rows[0].resource_count)
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      status: 'error',
+      environment: isProduction ? 'production' : 'development',
+      database: 'disconnected',
+      error: error.message
+    });
+  }
+});
+
 if (isProduction) {
   app.use(express.static(path.join(__dirname, '../dist')));
 } else {

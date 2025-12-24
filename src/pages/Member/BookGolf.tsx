@@ -167,7 +167,10 @@ const BookGolf: React.FC = () => {
           const res = await fetch(
             `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
           );
-          if (!res.ok) return;
+          if (!res.ok) {
+            console.error('[BookGolf] Availability API failed:', res.status, res.statusText, 'for resource', resource.dbId);
+            return;
+          }
           const slots: APISlot[] = await res.json();
           
           slots.forEach(slot => {
