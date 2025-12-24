@@ -47,7 +47,22 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  if (url.pathname.startsWith('/assets/') || STATIC_ASSETS.includes(url.pathname) || CORE_PAGES.includes(url.pathname)) {
+  // Network First for HTML/Navigation - always try to get latest version
+  if (request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Cache First for static assets (JS/CSS/images)
+  if (url.pathname.startsWith('/assets/') || CORE_PAGES.includes(url.pathname)) {
     event.respondWith(
       caches.match(request).then(cached => {
         const fetchPromise = fetch(request).then(response => {
