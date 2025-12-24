@@ -166,14 +166,15 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// Members Portal route guard - redirects staff/admin to Staff Portal (unless viewing as member)
-const MemberPortalRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Members Portal route guard - redirects staff/admin to Staff Portal (unless viewing as member or on profile page)
+const MemberPortalRoute: React.FC<{ children: React.ReactNode; allowStaffAccess?: boolean }> = ({ children, allowStaffAccess }) => {
   const { user, actualUser, isViewingAs } = useData();
   if (!user) return <Navigate to="/login" replace />;
   
   // If staff/admin is NOT viewing as a member, redirect to Staff Portal
+  // Exception: allow staff access to profile page for sign out
   const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
-  if (isStaffOrAdmin && !isViewingAs) {
+  if (isStaffOrAdmin && !isViewingAs && !allowStaffAccess) {
     return <Navigate to="/admin" replace />;
   }
   
@@ -276,7 +277,7 @@ const AnimatedRoutes: React.FC = () => {
               </MemberPortalRoute>
             } />
             <Route path="/profile" element={
-              <MemberPortalRoute>
+              <MemberPortalRoute allowStaffAccess>
                 <DirectionalPageTransition><Profile /></DirectionalPageTransition>
               </MemberPortalRoute>
             } />
