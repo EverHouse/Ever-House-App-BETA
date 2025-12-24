@@ -475,7 +475,7 @@ const Dashboard: React.FC = () => {
                       RSVP to events or enroll in wellness classes to see them here.
                     </p>
                     <button
-                      onClick={() => navigate('/wellness')}
+                      onClick={() => navigate('/member-wellness')}
                       className="inline-flex items-center gap-2 px-6 py-3 text-base bg-primary dark:bg-accent text-white dark:text-brand-green rounded-2xl font-semibold hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg hover:shadow-xl"
                     >
                       <span className="material-symbols-outlined text-lg">add</span>
