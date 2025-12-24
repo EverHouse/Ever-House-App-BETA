@@ -155,19 +155,6 @@ const PublicCafe: React.FC = () => {
         )}
       </div>
 
-      <section className="px-4 py-8 mb-4">
-        <div className="bg-[#293515] rounded-2xl p-6 text-center">
-          <h3 className="text-xl font-bold text-white mb-2">Ready to order?</h3>
-          <p className="text-white/70 text-sm mb-4">Members can order directly from the app and pick up at the counter.</p>
-          <button
-            onClick={() => navigate('/membership')}
-            className="bg-[#F2F2EC] text-[#293515] px-6 py-3 rounded-xl font-bold text-sm hover:bg-white transition-colors"
-          >
-            Become a Member
-          </button>
-        </div>
-      </section>
-
       <Footer />
     </div>
   );
