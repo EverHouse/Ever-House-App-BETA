@@ -146,6 +146,38 @@ if (isProduction) {
   });
 }
 
+async function autoSeedResources() {
+  try {
+    const result = await pool.query('SELECT COUNT(*) as count FROM resources');
+    const count = parseInt(result.rows[0].count);
+    
+    if (count === 0) {
+      console.log('Auto-seeding resources...');
+      const resources = [
+        { name: 'Simulator Bay 1', type: 'simulator', description: 'TrackMan Simulator Bay 1', capacity: 4 },
+        { name: 'Simulator Bay 2', type: 'simulator', description: 'TrackMan Simulator Bay 2', capacity: 4 },
+        { name: 'Simulator Bay 3', type: 'simulator', description: 'TrackMan Simulator Bay 3', capacity: 4 },
+        { name: 'Simulator Bay 4', type: 'simulator', description: 'TrackMan Simulator Bay 4', capacity: 4 },
+        { name: 'Conference Room', type: 'conference_room', description: 'Main conference room with AV setup', capacity: 12 },
+        { name: 'Wellness Room 1', type: 'wellness_room', description: 'Private wellness treatment room', capacity: 2 },
+        { name: 'Wellness Room 2', type: 'wellness_room', description: 'Private wellness treatment room', capacity: 2 },
+      ];
+
+      for (const resource of resources) {
+        await pool.query(
+          `INSERT INTO resources (name, type, description, capacity) 
+           VALUES ($1, $2, $3, $4) 
+           ON CONFLICT DO NOTHING`,
+          [resource.name, resource.type, resource.description, resource.capacity]
+        );
+      }
+      console.log(`Auto-seeded ${resources.length} resources`);
+    }
+  } catch (error) {
+    console.log('Resources table may not exist yet, skipping auto-seed');
+  }
+}
+
 async function autoSeedCafeMenu() {
   try {
     const result = await pool.query('SELECT COUNT(*) as count FROM cafe_items');
@@ -193,6 +225,7 @@ async function startServer() {
   setupSupabaseAuthRoutes(app);
   registerAuthRoutes(app);
 
+  await autoSeedResources();
   await autoSeedCafeMenu();
 
   try {
