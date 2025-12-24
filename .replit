@@ -97,5 +97,5 @@ DEV_LOGIN_ENABLED = "true"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["npm", "run", "start"]
-build = ["bash", "-c", "npm install && npm run build"]
+run = ["node", "--import", "tsx", "server/index.ts"]
+build = ["bash", "-c", "npm ci && npm run build"]
