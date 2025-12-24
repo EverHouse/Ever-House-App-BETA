@@ -2103,6 +2103,8 @@ const StaffAdmin: React.FC = () => {
     const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedStaff, setSelectedStaff] = useState<StaffUser | null>(null);
     const [newEmail, setNewEmail] = useState('');
     const [newName, setNewName] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -2206,6 +2208,43 @@ const StaffAdmin: React.FC = () => {
         }
     };
 
+    const openEditModal = (staff: StaffUser) => {
+        setSelectedStaff({...staff});
+        setIsEditing(true);
+        setError(null);
+    };
+
+    const handleEditSave = async () => {
+        if (!selectedStaff) return;
+
+        try {
+            setError(null);
+            const res = await fetch(`/api/staff-users/${selectedStaff.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    name: selectedStaff.name,
+                    email: selectedStaff.email
+                })
+            });
+
+            if (res.ok) {
+                const updated = await res.json();
+                setStaffUsers(prev => prev.map(s => s.id === updated.id ? updated : s));
+                setIsEditing(false);
+                setSelectedStaff(null);
+                setSuccess('Staff member updated');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                const data = await res.json();
+                setError(data.error || 'Failed to update staff member');
+            }
+        } catch (err) {
+            setError('Failed to update staff member');
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
@@ -2248,19 +2287,20 @@ const StaffAdmin: React.FC = () => {
                         {staffUsers.map(staff => (
                             <div 
                                 key={staff.id}
-                                className={`flex items-center justify-between p-4 rounded-xl border ${
+                                onClick={() => openEditModal(staff)}
+                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors hover:border-primary/50 ${
                                     staff.is_active 
-                                        ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
+                                        ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-surface-dark' 
                                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
                                 }`}
                             >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-1">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                                         staff.is_active ? 'bg-brand-green/10 text-brand-green' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
                                     }`}>
                                         <span className="material-symbols-outlined">badge</span>
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <p className="font-medium text-primary dark:text-white">{staff.name || staff.email}</p>
                                         {staff.name && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.email}</p>}
                                         <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -2354,6 +2394,65 @@ const StaffAdmin: React.FC = () => {
                 </div>,
                 document.body
             )}
+
+            {isEditing && selectedStaff && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Staff Member</h3>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={selectedStaff.name || ''}
+                                        onChange={(e) => setSelectedStaff({...selectedStaff, name: e.target.value || null})}
+                                        placeholder="Jane Doe"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={selectedStaff.email}
+                                        onChange={(e) => setSelectedStaff({...selectedStaff, email: e.target.value})}
+                                        placeholder="staff@example.com"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+
+                                {error && (
+                                    <p className="text-red-600 text-sm">{error}</p>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }}
+                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleEditSave}
+                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
@@ -2374,6 +2473,8 @@ const AdminsAdmin: React.FC = () => {
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
     const [newEmail, setNewEmail] = useState('');
     const [newName, setNewName] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -2490,6 +2591,43 @@ const AdminsAdmin: React.FC = () => {
         }
     };
 
+    const openEditModal = (admin: AdminUser) => {
+        setSelectedAdmin({...admin});
+        setIsEditing(true);
+        setError(null);
+    };
+
+    const handleEditSave = async () => {
+        if (!selectedAdmin) return;
+
+        try {
+            setError(null);
+            const res = await fetch(`/api/admin-users/${selectedAdmin.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    name: selectedAdmin.name,
+                    email: selectedAdmin.email
+                })
+            });
+
+            if (res.ok) {
+                const updated = await res.json();
+                setAdminUsers(prev => prev.map(a => a.id === updated.id ? updated : a));
+                setIsEditing(false);
+                setSelectedAdmin(null);
+                setSuccess('Admin updated');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                const data = await res.json();
+                setError(data.error || 'Failed to update admin');
+            }
+        } catch (err) {
+            setError('Failed to update admin');
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
@@ -2532,19 +2670,20 @@ const AdminsAdmin: React.FC = () => {
                         {adminUsers.map(admin => (
                             <div 
                                 key={admin.id}
-                                className={`flex items-center justify-between p-4 rounded-xl border ${
+                                onClick={() => openEditModal(admin)}
+                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors hover:border-primary/50 ${
                                     admin.is_active 
-                                        ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
+                                        ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-surface-dark' 
                                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
                                 }`}
                             >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-1">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                                         admin.is_active ? 'bg-amber-500/10 text-amber-600' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
                                     }`}>
                                         <span className="material-symbols-outlined">shield_person</span>
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <p className="font-medium text-primary dark:text-white">{admin.name || admin.email}</p>
                                         {admin.name && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.email}</p>}
                                         <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -2631,6 +2770,65 @@ const AdminsAdmin: React.FC = () => {
                                     className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
                                 >
                                     Add Admin
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {isEditing && selectedAdmin && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Admin</h3>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={selectedAdmin.name || ''}
+                                        onChange={(e) => setSelectedAdmin({...selectedAdmin, name: e.target.value || null})}
+                                        placeholder="Jane Doe"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={selectedAdmin.email}
+                                        onChange={(e) => setSelectedAdmin({...selectedAdmin, email: e.target.value})}
+                                        placeholder="admin@example.com"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+
+                                {error && (
+                                    <p className="text-red-600 text-sm">{error}</p>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }}
+                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleEditSave}
+                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                                >
+                                    Save
                                 </button>
                             </div>
                         </div>
