@@ -2093,6 +2093,10 @@ interface StaffUser {
   id: number;
   email: string;
   name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  job_title: string | null;
   is_active: boolean;
   created_at: string;
   created_by: string | null;
@@ -2225,7 +2229,11 @@ const StaffAdmin: React.FC = () => {
                 credentials: 'include',
                 body: JSON.stringify({
                     name: selectedStaff.name,
-                    email: selectedStaff.email
+                    email: selectedStaff.email,
+                    first_name: selectedStaff.first_name,
+                    last_name: selectedStaff.last_name,
+                    phone: selectedStaff.phone,
+                    job_title: selectedStaff.job_title
                 })
             });
 
@@ -2403,17 +2411,31 @@ const StaffAdmin: React.FC = () => {
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Staff Member</h3>
                             
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={selectedStaff.name || ''}
-                                        onChange={(e) => setSelectedStaff({...selectedStaff, name: e.target.value || null})}
-                                        placeholder="Jane Doe"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
-                                    />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            First Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={selectedStaff.first_name || ''}
+                                            onChange={(e) => setSelectedStaff({...selectedStaff, first_name: e.target.value || null})}
+                                            placeholder="Jane"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Last Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={selectedStaff.last_name || ''}
+                                            onChange={(e) => setSelectedStaff({...selectedStaff, last_name: e.target.value || null})}
+                                            placeholder="Doe"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        />
+                                    </div>
                                 </div>
                                 
                                 <div>
@@ -2425,6 +2447,32 @@ const StaffAdmin: React.FC = () => {
                                         value={selectedStaff.email}
                                         onChange={(e) => setSelectedStaff({...selectedStaff, email: e.target.value})}
                                         placeholder="staff@example.com"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Phone
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={selectedStaff.phone || ''}
+                                        onChange={(e) => setSelectedStaff({...selectedStaff, phone: e.target.value || null})}
+                                        placeholder="+1 (555) 123-4567"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Job Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={selectedStaff.job_title || ''}
+                                        onChange={(e) => setSelectedStaff({...selectedStaff, job_title: e.target.value || null})}
+                                        placeholder="Manager"
                                         className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
                                     />
                                 </div>
@@ -2463,6 +2511,10 @@ interface AdminUser {
   id: number;
   email: string;
   name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  job_title: string | null;
   is_active: boolean;
   created_at: string;
   created_by: string | null;
@@ -2608,7 +2660,11 @@ const AdminsAdmin: React.FC = () => {
                 credentials: 'include',
                 body: JSON.stringify({
                     name: selectedAdmin.name,
-                    email: selectedAdmin.email
+                    email: selectedAdmin.email,
+                    first_name: selectedAdmin.first_name,
+                    last_name: selectedAdmin.last_name,
+                    phone: selectedAdmin.phone,
+                    job_title: selectedAdmin.job_title
                 })
             });
 
@@ -2786,17 +2842,31 @@ const AdminsAdmin: React.FC = () => {
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Admin</h3>
                             
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={selectedAdmin.name || ''}
-                                        onChange={(e) => setSelectedAdmin({...selectedAdmin, name: e.target.value || null})}
-                                        placeholder="Jane Doe"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
-                                    />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            First Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={selectedAdmin.first_name || ''}
+                                            onChange={(e) => setSelectedAdmin({...selectedAdmin, first_name: e.target.value || null})}
+                                            placeholder="Jane"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Last Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={selectedAdmin.last_name || ''}
+                                            onChange={(e) => setSelectedAdmin({...selectedAdmin, last_name: e.target.value || null})}
+                                            placeholder="Doe"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        />
+                                    </div>
                                 </div>
                                 
                                 <div>
@@ -2808,6 +2878,32 @@ const AdminsAdmin: React.FC = () => {
                                         value={selectedAdmin.email}
                                         onChange={(e) => setSelectedAdmin({...selectedAdmin, email: e.target.value})}
                                         placeholder="admin@example.com"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Phone
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={selectedAdmin.phone || ''}
+                                        onChange={(e) => setSelectedAdmin({...selectedAdmin, phone: e.target.value || null})}
+                                        placeholder="+1 (555) 123-4567"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Job Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={selectedAdmin.job_title || ''}
+                                        onChange={(e) => setSelectedAdmin({...selectedAdmin, job_title: e.target.value || null})}
+                                        placeholder="Director"
                                         className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
                                     />
                                 </div>

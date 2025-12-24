@@ -13,6 +13,10 @@ router.get('/api/staff-users', isStaffOrAdmin, async (req, res) => {
       id: staffUsers.id,
       email: staffUsers.email,
       name: staffUsers.name,
+      first_name: staffUsers.firstName,
+      last_name: staffUsers.lastName,
+      phone: staffUsers.phone,
+      job_title: staffUsers.jobTitle,
       is_active: staffUsers.isActive,
       created_at: staffUsers.createdAt,
       created_by: staffUsers.createdBy
@@ -47,6 +51,10 @@ router.post('/api/staff-users', isAdmin, async (req, res) => {
       id: result[0].id,
       email: result[0].email,
       name: result[0].name,
+      first_name: result[0].firstName,
+      last_name: result[0].lastName,
+      phone: result[0].phone,
+      job_title: result[0].jobTitle,
       is_active: result[0].isActive,
       created_at: result[0].createdAt,
       created_by: result[0].createdBy
@@ -63,11 +71,15 @@ router.post('/api/staff-users', isAdmin, async (req, res) => {
 router.put('/api/staff-users/:id', isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, name, is_active } = req.body;
+    const { email, name, first_name, last_name, phone, job_title, is_active } = req.body;
     
     const updateData: Record<string, any> = {};
     if (email !== undefined) updateData.email = email.toLowerCase().trim();
     if (name !== undefined) updateData.name = name;
+    if (first_name !== undefined) updateData.firstName = first_name;
+    if (last_name !== undefined) updateData.lastName = last_name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (job_title !== undefined) updateData.jobTitle = job_title;
     if (is_active !== undefined) updateData.isActive = is_active;
     
     const result = await db.update(staffUsers)
@@ -83,6 +95,10 @@ router.put('/api/staff-users/:id', isAdmin, async (req, res) => {
       id: result[0].id,
       email: result[0].email,
       name: result[0].name,
+      first_name: result[0].firstName,
+      last_name: result[0].lastName,
+      phone: result[0].phone,
+      job_title: result[0].jobTitle,
       is_active: result[0].isActive,
       created_at: result[0].createdAt,
       created_by: result[0].createdBy
@@ -111,6 +127,10 @@ router.delete('/api/staff-users/:id', isAdmin, async (req, res) => {
         id: result[0].id,
         email: result[0].email,
         name: result[0].name,
+        first_name: result[0].firstName,
+        last_name: result[0].lastName,
+        phone: result[0].phone,
+        job_title: result[0].jobTitle,
         is_active: result[0].isActive,
         created_at: result[0].createdAt,
         created_by: result[0].createdBy
@@ -128,6 +148,10 @@ router.get('/api/admin-users', isAdmin, async (req, res) => {
       id: adminUsers.id,
       email: adminUsers.email,
       name: adminUsers.name,
+      first_name: adminUsers.firstName,
+      last_name: adminUsers.lastName,
+      phone: adminUsers.phone,
+      job_title: adminUsers.jobTitle,
       is_active: adminUsers.isActive,
       created_at: adminUsers.createdAt,
       created_by: adminUsers.createdBy
@@ -162,6 +186,10 @@ router.post('/api/admin-users', isAdmin, async (req, res) => {
       id: result[0].id,
       email: result[0].email,
       name: result[0].name,
+      first_name: result[0].firstName,
+      last_name: result[0].lastName,
+      phone: result[0].phone,
+      job_title: result[0].jobTitle,
       is_active: result[0].isActive,
       created_at: result[0].createdAt,
       created_by: result[0].createdBy
@@ -178,11 +206,15 @@ router.post('/api/admin-users', isAdmin, async (req, res) => {
 router.put('/api/admin-users/:id', isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, name, is_active } = req.body;
+    const { email, name, first_name, last_name, phone, job_title, is_active } = req.body;
     
     const updateData: Record<string, any> = {};
     if (email !== undefined) updateData.email = email.toLowerCase().trim();
     if (name !== undefined) updateData.name = name;
+    if (first_name !== undefined) updateData.firstName = first_name;
+    if (last_name !== undefined) updateData.lastName = last_name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (job_title !== undefined) updateData.jobTitle = job_title;
     if (is_active !== undefined) updateData.isActive = is_active;
     
     const result = await db.update(adminUsers)
@@ -198,6 +230,10 @@ router.put('/api/admin-users/:id', isAdmin, async (req, res) => {
       id: result[0].id,
       email: result[0].email,
       name: result[0].name,
+      first_name: result[0].firstName,
+      last_name: result[0].lastName,
+      phone: result[0].phone,
+      job_title: result[0].jobTitle,
       is_active: result[0].isActive,
       created_at: result[0].createdAt,
       created_by: result[0].createdBy
@@ -234,6 +270,10 @@ router.delete('/api/admin-users/:id', isAdmin, async (req, res) => {
         id: result[0].id,
         email: result[0].email,
         name: result[0].name,
+        first_name: result[0].firstName,
+        last_name: result[0].lastName,
+        phone: result[0].phone,
+        job_title: result[0].jobTitle,
         is_active: result[0].isActive,
         created_at: result[0].createdAt,
         created_by: result[0].createdBy
