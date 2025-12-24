@@ -216,7 +216,7 @@ html.dark body {
 }
 
 .liquid-bg {
-  background: radial-gradient(circle at 50% 0%, #293515 0%, #1a1d15 100%);
+  background: #0f120a;
 }
 
 /* --- Liquid Glass System (Futuristic iOS-inspired) --- */
