@@ -52,19 +52,7 @@ const VerifyMagicLink = lazy(() => import('./pages/Public/VerifyMagicLink'));
 const AuthCallback = lazy(() => import('./pages/Public/AuthCallback'));
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 
-const prefetchRoute = (path: string) => {
-  const routeMap: Record<string, any> = {
-    '/member-events': MemberEvents,
-    '/member-wellness': MemberWellness,
-    '/book': BookGolf,
-    '/profile': Profile,
-    '/cafe': Cafe
-  };
-  const component = routeMap[path];
-  if (component?.prefetch) {
-    component.prefetch();
-  }
-};
+import { prefetchRoute, prefetchAdjacentRoutes } from './lib/prefetch';
 
 const useDebugLayout = () => {
   useEffect(() => {
@@ -619,6 +607,10 @@ const MEMBER_NAV_ITEMS: MemberNavItem[] = [
 const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> = ({ currentPath, isDarkTheme }) => {
   const navigate = useNavigate();
   
+  useEffect(() => {
+    prefetchAdjacentRoutes(currentPath);
+  }, [currentPath]);
+  
   const activeIndex = MEMBER_NAV_ITEMS.findIndex(item => item.path === currentPath);
   const itemCount = MEMBER_NAV_ITEMS.length;
   
@@ -671,7 +663,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
                 key={item.path}
                 onClick={handleNavClick}
                 onMouseEnter={handlePrefetch}
-                onTouchStart={import.meta.env.DEV ? () => console.log(`[MemberNav] touchstart for "${item.label}"`) : undefined}
+                onTouchStart={handlePrefetch}
                 onTouchEnd={import.meta.env.DEV ? () => console.log(`[MemberNav] touchend for "${item.label}"`) : undefined}
                 style={{ touchAction: 'manipulation' }}
                 className={`
