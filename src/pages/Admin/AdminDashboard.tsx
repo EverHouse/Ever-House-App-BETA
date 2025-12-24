@@ -1812,8 +1812,8 @@ const SimulatorAdmin: React.FC = () => {
                         </button>
                     </div>
                     
-                    <div className="overflow-x-auto -mx-4 px-4">
-                        <div>
+                    <div className="flex justify-center">
+                        <div className="w-full max-w-md">
                             <div className="grid gap-0.5" style={{ gridTemplateColumns: `55px repeat(${resources.length}, 1fr)` }}>
                                 <div className="h-10"></div>
                                 {resources.map(resource => (
