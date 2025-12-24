@@ -14,10 +14,12 @@ interface CartItem {
 }
 
 const Cafe: React.FC = () => {
-  const { cafeMenu, isLoading } = useData();
+  const { cafeMenu, isLoading: authLoading } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const categories = useMemo(() => Array.from(new Set(cafeMenu.map(item => item.category))), [cafeMenu]);
+  
+  const isLoading = authLoading || cafeMenu.length === 0;
 
   const [activeCategory, setActiveCategory] = useState(categories[0] || 'Coffee');
   const [cart, setCart] = useState<CartItem[]>([]);
