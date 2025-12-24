@@ -598,7 +598,6 @@ const MEMBER_NAV_ITEMS: MemberNavItem[] = [
 
 const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> = ({ currentPath, isDarkTheme }) => {
   const navigate = useNavigate();
-  const [pressedIndex, setPressedIndex] = useState<number | null>(null);
   
   const activeIndex = MEMBER_NAV_ITEMS.findIndex(item => item.path === currentPath);
   const itemCount = MEMBER_NAV_ITEMS.length;
@@ -620,7 +619,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
         <div className="relative flex items-center w-full">
           {activeIndex >= 0 && (
             <div 
-              className={`absolute top-0 bottom-0 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+              className={`absolute top-0 bottom-0 rounded-full pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                 isDarkTheme
                   ? 'bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]'
                   : 'bg-gradient-to-b from-white/40 to-white/20 shadow-[0_0_16px_rgba(255,255,255,0.3),inset_0_1px_1px_rgba(255,255,255,0.4)]'
@@ -632,29 +631,24 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
             />
           )}
           
-          {MEMBER_NAV_ITEMS.map((item, index) => {
+          {MEMBER_NAV_ITEMS.map((item) => {
             const isActive = currentPath === item.path;
             const isGolfIcon = item.icon === 'sports_golf';
             const shouldFill = isActive && !isGolfIcon;
             
             return (
               <button
+                type="button"
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                onMouseDown={() => setPressedIndex(index)}
-                onMouseUp={() => setPressedIndex(null)}
-                onMouseLeave={() => setPressedIndex(null)}
-                onTouchStart={() => setPressedIndex(index)}
-                onTouchEnd={() => setPressedIndex(null)}
                 style={{ touchAction: 'manipulation' }}
                 className={`
                   flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer
-                  transition-all duration-300 ease-out
+                  transition-all duration-300 ease-out active:scale-90
                   ${isActive 
                     ? (isDarkTheme ? 'text-white' : 'text-white') 
                     : (isDarkTheme ? 'text-white/50 hover:text-white/80' : 'text-white/60 hover:text-white/80')
                   }
-                  ${pressedIndex === index ? 'scale-90' : 'scale-100'}
                 `}
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}

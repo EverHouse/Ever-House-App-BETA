@@ -206,21 +206,12 @@ html.dark body {
   transition: var(--liquid-transition);
 }
 
-.glass-panel:hover {
-  background: rgba(255, 255, 255, 0.5);
-  transform: scale(1.01);
-}
-
 html.dark .glass-panel {
   background: var(--liquid-glass-bg-dark);
   border-color: var(--liquid-glass-border-dark);
   box-shadow: 
     var(--liquid-glass-inner-shadow-dark),
     var(--liquid-glass-outer-shadow-dark);
-}
-
-html.dark .glass-panel:hover {
-  background: rgba(0, 0, 0, 0.5);
 }
 
 /* Liquid Glass Card - for content cards, list items */
@@ -236,14 +227,6 @@ html.dark .glass-panel:hover {
   transition: var(--liquid-transition);
 }
 
-.glass-card:hover {
-  background: rgba(255, 255, 255, 0.5);
-  transform: scale(1.015);
-  box-shadow: 
-    var(--liquid-glass-inner-shadow),
-    0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
 .glass-card:active {
   transform: scale(0.98);
   background: rgba(255, 255, 255, 0.55);
@@ -255,13 +238,6 @@ html.dark .glass-card {
   box-shadow: 
     var(--liquid-glass-inner-shadow-dark),
     var(--liquid-glass-outer-shadow-dark);
-}
-
-html.dark .glass-card:hover {
-  background: rgba(0, 0, 0, 0.5);
-  box-shadow: 
-    var(--liquid-glass-inner-shadow-dark),
-    0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 html.dark .glass-card:active {
@@ -281,15 +257,6 @@ html.dark .glass-card:active {
   transition: var(--liquid-transition);
 }
 
-.glass-button:hover {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(255, 255, 255, 0.7);
-  transform: scale(1.02);
-  box-shadow: 
-    var(--liquid-glass-inner-shadow),
-    0 6px 24px rgba(0, 0, 0, 0.12);
-}
-
 .glass-button:active {
   background: rgba(255, 255, 255, 0.6);
   transform: scale(0.98);
@@ -301,14 +268,6 @@ html.dark .glass-button {
   box-shadow: 
     var(--liquid-glass-inner-shadow-dark),
     0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-html.dark .glass-button:hover {
-  background: rgba(0, 0, 0, 0.55);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 
-    var(--liquid-glass-inner-shadow-dark),
-    0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
 html.dark .glass-button:active {
@@ -688,6 +647,59 @@ html.dark a:focus-visible {
   transform: translateZ(0);
   backface-visibility: hidden;
   will-change: transform, opacity;
+}
+
+/* Hover effects only for pointer devices (not touch) */
+@media (hover: hover) and (pointer: fine) {
+  .glass-panel:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.01);
+  }
+  
+  html.dark .glass-panel:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.015);
+    box-shadow: 
+      var(--liquid-glass-inner-shadow),
+      0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  html.dark .glass-card:hover {
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 
+      var(--liquid-glass-inner-shadow-dark),
+      0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  .glass-button:hover {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(255, 255, 255, 0.7);
+    transform: scale(1.02);
+    box-shadow: 
+      var(--liquid-glass-inner-shadow),
+      0 6px 24px rgba(0, 0, 0, 0.12);
+  }
+  
+  html.dark .glass-button:hover {
+    background: rgba(0, 0, 0, 0.55);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 
+      var(--liquid-glass-inner-shadow-dark),
+      0 6px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Force remove transforms on touch devices */
+@media (hover: none) {
+  .glass-card:hover,
+  .glass-panel:hover,
+  .glass-button:hover {
+    transform: none !important;
+  }
 }
 
 /* Reduced Motion Support - Respect user preferences */

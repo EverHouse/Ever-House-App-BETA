@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Lenis from '@studio-freight/lenis';
+import { useIsTouchDevice } from '../../hooks/useIsTouchDevice';
 
 interface SmoothScrollContextType {
   lenis: Lenis | null;
@@ -26,27 +27,30 @@ export const SmoothScrollProvider: React.FC<SmoothScrollProviderProps> = ({ chil
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
-  const [isTouchDevice, setIsTouchDevice] = useState(
-    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
-  );
+  const isTouchDevice = useIsTouchDevice();
   const rafRef = useRef<number>();
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setPrefersReducedMotion(e.matches);
-    };
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  useEffect(() => {
-    const touchQuery = window.matchMedia('(pointer: coarse)');
-    const handleTouchChange = (e: MediaQueryListEvent) => {
-      setIsTouchDevice(e.matches);
-    };
-    touchQuery.addEventListener('change', handleTouchChange);
-    return () => touchQuery.removeEventListener('change', handleTouchChange);
+    try {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const handleChange = (e: MediaQueryListEvent) => {
+        setPrefersReducedMotion(e.matches);
+      };
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleChange);
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(handleChange);
+      }
+      return () => {
+        if (mediaQuery.removeEventListener) {
+          mediaQuery.removeEventListener('change', handleChange);
+        } else if (mediaQuery.removeListener) {
+          mediaQuery.removeListener(handleChange);
+        }
+      };
+    } catch {
+      return;
+    }
   }, []);
 
   useEffect(() => {

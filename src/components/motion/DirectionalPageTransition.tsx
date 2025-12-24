@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import { motion, Variants, useReducedMotion } from 'framer-motion';
+import { useIsTouchDevice } from '../../hooks/useIsTouchDevice';
 
 export interface TransitionCustom {
   direction: number;
@@ -42,46 +43,11 @@ const pageVariants: Variants = {
   }),
 };
 
-const reducedMotionVariants: Variants = {
-  initial: { opacity: 0 },
-  animate: { 
-    opacity: 1,
-    transition: { duration: 0.15 }
-  },
-  exit: { 
-    opacity: 0,
-    transition: { duration: 0.1 }
-  },
-};
-
 const DirectionalPageTransition: React.FC<DirectionalPageTransitionProps> = ({ children }) => {
   const transitionState = useTransitionState();
   const prefersReducedMotion = useReducedMotion();
-  
-  // Detect touch devices to avoid transform issues that cause double-tap requirement
-  const [isTouchDevice, setIsTouchDevice] = useState(
-    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
-  );
+  const isTouchDevice = useIsTouchDevice();
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(pointer: coarse)');
-    const handleChange = (e: MediaQueryListEvent) => setIsTouchDevice(e.matches);
-    // Support older Safari versions that use deprecated addListener API
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-    } else if (mediaQuery.addListener) {
-      mediaQuery.addListener(handleChange);
-    }
-    return () => {
-      if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener('change', handleChange);
-      } else if (mediaQuery.removeListener) {
-        mediaQuery.removeListener(handleChange);
-      }
-    };
-  }, []);
-
-  // On touch devices, skip motion transforms entirely to ensure single-tap works
   if (isTouchDevice || prefersReducedMotion) {
     return (
       <div style={{ minHeight: '100%' }}>
