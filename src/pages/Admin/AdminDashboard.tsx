@@ -1659,7 +1659,14 @@ const SimulatorAdmin: React.FC = () => {
         }
     };
 
-    const hours = Array.from({ length: 14 }, (_, i) => 8 + i);
+    const timeSlots = useMemo(() => {
+        const slots: string[] = [];
+        for (let hour = 8; hour <= 21; hour++) {
+            slots.push(`${hour.toString().padStart(2, '0')}:00`);
+            if (hour < 21) slots.push(`${hour.toString().padStart(2, '0')}:30`);
+        }
+        return slots;
+    }, []);
 
     return (
         <div>
@@ -1815,24 +1822,31 @@ const SimulatorAdmin: React.FC = () => {
                                     </div>
                                 ))}
                                 
-                                {hours.map(hour => (
-                                    <React.Fragment key={hour}>
-                                        <div className="h-10 flex items-center justify-end pr-1 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                                            {formatTime12(`${hour.toString().padStart(2, '0')}:00`)}
+                                {timeSlots.map(slot => (
+                                    <React.Fragment key={slot}>
+                                        <div className="h-8 flex items-center justify-end pr-1 text-[9px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+                                            {formatTime12(slot)}
                                         </div>
                                         {resources.map(resource => {
+                                            const [slotHour, slotMin] = slot.split(':').map(Number);
+                                            const slotStart = slotHour * 60 + slotMin;
+                                            const slotEnd = slotStart + 30;
+                                            
                                             const booking = approvedBookings.find(b => {
                                                 if (b.bay_id !== resource.id || b.request_date !== calendarDate) return false;
-                                                const [bh] = b.start_time.split(':').map(Number);
-                                                return bh === hour;
+                                                const [bh, bm] = b.start_time.split(':').map(Number);
+                                                const [eh, em] = b.end_time.split(':').map(Number);
+                                                const bookStart = bh * 60 + bm;
+                                                const bookEnd = eh * 60 + em;
+                                                return slotStart < bookEnd && slotEnd > bookStart;
                                             });
                                             
                                             const isConference = resource.type === 'conference_room';
                                             
                                             return (
                                                 <div
-                                                    key={`${resource.id}-${hour}`}
-                                                    className={`h-10 rounded border ${
+                                                    key={`${resource.id}-${slot}`}
+                                                    className={`h-8 rounded border ${
                                                         booking 
                                                             ? isConference
                                                                 ? 'bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-500/30'
