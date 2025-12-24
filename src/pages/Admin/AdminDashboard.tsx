@@ -1806,15 +1806,12 @@ const SimulatorAdmin: React.FC = () => {
                     </div>
                     
                     <div className="overflow-x-auto -mx-4 px-4">
-                        <div style={{ minWidth: `${80 + (resources.length * 70)}px` }}>
-                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `70px repeat(${resources.length}, 1fr)` }}>
+                        <div>
+                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `55px repeat(${resources.length}, 1fr)` }}>
                                 <div className="h-10"></div>
                                 {resources.map(resource => (
-                                    <div key={resource.id} className={`h-10 flex items-center justify-center font-bold text-xs text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10 px-1 ${resource.type === 'conference_room' ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}>
-                                        <span className="material-symbols-outlined text-sm mr-1 opacity-60">
-                                            {resource.type === 'conference_room' ? 'meeting_room' : 'golf_course'}
-                                        </span>
-                                        {resource.type === 'conference_room' ? 'Conf' : resource.name.replace('Simulator ', '')}
+                                    <div key={resource.id} className={`h-10 flex items-center justify-center font-bold text-[10px] text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10 px-0.5 ${resource.type === 'conference_room' ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}>
+                                        {resource.type === 'conference_room' ? 'Conf' : resource.name.replace('Simulator Bay ', 'Bay ')}
                                     </div>
                                 ))}
                                 
