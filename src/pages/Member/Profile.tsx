@@ -197,9 +197,9 @@ const Profile: React.FC = () => {
                 <button 
                   onClick={handlePushToggle}
                   disabled={pushLoading}
-                  className={`w-12 h-7 rounded-full relative transition-colors ${pushEnabled ? 'bg-green-500' : (isDark ? 'bg-white/20' : 'bg-black/20')}`}
+                  className={`w-[51px] h-[31px] rounded-full relative transition-colors flex-shrink-0 ${pushEnabled ? 'bg-green-500' : (isDark ? 'bg-white/20' : 'bg-black/20')}`}
                 >
-                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm transition-all ${pushEnabled ? 'right-1' : 'left-1'}`}></div>
+                  <div className={`absolute top-[2px] w-[27px] h-[27px] bg-white rounded-full shadow-md transition-all ${pushEnabled ? 'right-[2px]' : 'left-[2px]'}`}></div>
                 </button>
               </div>
             )}
