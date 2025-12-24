@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../components/Toast';
+import { apiRequest } from '../../lib/apiRequest';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { MotionList, MotionListItem } from '../../components/motion';
@@ -70,32 +71,23 @@ const Wellness: React.FC = () => {
   const handleBook = async (classData: WellnessClass) => {
     if (!user?.email) return;
     
-    try {
-      const res = await fetch('/api/wellness-enrollments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          class_id: classData.id,
-          user_email: user.email
-        })
-      });
-      
-      if (res.ok) {
-        showToast(`RSVP confirmed for ${classData.title}!`, 'success');
-        setConfirmationMessage(`RSVP confirmed for ${classData.title}!`);
-        setShowConfirmation(true);
-        setTimeout(() => setShowConfirmation(false), 2500);
-      } else {
-        const err = await res.json();
-        showToast(err.error || 'Failed to enroll. Please try again.', 'error');
-        setConfirmationMessage(err.error || 'Failed to enroll. Please try again.');
-        setShowConfirmation(true);
-        setTimeout(() => setShowConfirmation(false), 2500);
-      }
-    } catch (err) {
-      console.error('Enrollment error:', err);
-      showToast('Failed to enroll. Please try again.', 'error');
-      setConfirmationMessage('Failed to enroll. Please try again.');
+    const { ok, error } = await apiRequest('/api/wellness-enrollments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        class_id: classData.id,
+        user_email: user.email
+      })
+    });
+    
+    if (ok) {
+      showToast(`RSVP confirmed for ${classData.title}!`, 'success');
+      setConfirmationMessage(`RSVP confirmed for ${classData.title}!`);
+      setShowConfirmation(true);
+      setTimeout(() => setShowConfirmation(false), 2500);
+    } else {
+      showToast(error || 'Unable to load data. Please try again.', 'error');
+      setConfirmationMessage(error || 'Unable to load data. Please try again.');
       setShowConfirmation(true);
       setTimeout(() => setShowConfirmation(false), 2500);
     }
@@ -136,6 +128,7 @@ const Wellness: React.FC = () => {
 };
 
 const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: boolean}> = ({ onBook, isDark = true }) => {
+  const { showToast } = useToast();
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [classes, setClasses] = useState<WellnessClass[]>([]);
@@ -144,35 +137,33 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
 
   useEffect(() => {
     const fetchClasses = async () => {
-      try {
-        const res = await fetch('/api/wellness-classes?active_only=true');
-        if (res.ok) {
-          const data = await res.json();
-          const formatted = data.map((c: any) => ({
-            id: c.id,
-            title: c.title,
-            date: c.date,
-            time: c.time,
-            instructor: c.instructor,
-            duration: c.duration,
-            category: c.category,
-            spots: c.spots,
-            status: c.status || 'Open',
-            description: c.description
-          }));
-          setClasses(formatted);
-          
-          const uniqueCategories = ['All', ...new Set(formatted.map((c: WellnessClass) => c.category))];
-          setCategories(uniqueCategories as string[]);
-        }
-      } catch (err) {
-        console.error('Failed to fetch wellness classes:', err);
-      } finally {
-        setIsLoading(false);
+      const { ok, data } = await apiRequest<any[]>('/api/wellness-classes?active_only=true');
+      
+      if (ok && data) {
+        const formatted = data.map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          date: c.date,
+          time: c.time,
+          instructor: c.instructor,
+          duration: c.duration,
+          category: c.category,
+          spots: c.spots,
+          status: c.status || 'Open',
+          description: c.description
+        }));
+        setClasses(formatted);
+        
+        const uniqueCategories = ['All', ...new Set(formatted.map((c: WellnessClass) => c.category))];
+        setCategories(uniqueCategories as string[]);
+      } else {
+        showToast('Unable to load data. Please try again.', 'error');
       }
+      
+      setIsLoading(false);
     };
     fetchClasses();
-  }, []);
+  }, [showToast]);
 
   const sortedClasses = classes
     .filter(cls => selectedFilter === 'All' || cls.category === selectedFilter)

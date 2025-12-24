@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useData, EventData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../components/Toast';
+import { apiRequest } from '../../lib/apiRequest';
 import Skeleton from '../../components/Skeleton';
 import { EventCardSkeleton, SkeletonList } from '../../components/skeletons';
 import DateButton from '../../components/DateButton';
@@ -75,25 +76,19 @@ const MemberEvents: React.FC = () => {
     }
 
     if (selectedEvent && user?.email) {
-        try {
-            const res = await fetch('/api/rsvps', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    event_id: selectedEvent.id,
-                    user_email: user.email
-                })
-            });
-            
-            if (res.ok) {
-                showToast('You are on the list!', 'success');
-            } else {
-                const err = await res.json();
-                showToast(err.error || 'Failed to RSVP. Please try again.', 'error');
-            }
-        } catch (err) {
-            console.error('RSVP error:', err);
-            showToast('Failed to RSVP. Please try again.', 'error');
+        const { ok, error } = await apiRequest('/api/rsvps', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event_id: selectedEvent.id,
+                user_email: user.email
+            })
+        });
+        
+        if (ok) {
+            showToast('You are on the list!', 'success');
+        } else {
+            showToast(error || 'Unable to load data. Please try again.', 'error');
         }
     }
 

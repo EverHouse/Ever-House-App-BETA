@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../components/Toast';
+import { apiRequest } from '../../lib/apiRequest';
 import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
@@ -116,38 +117,38 @@ const BookGolf: React.FC = () => {
   useEffect(() => {
     const fetchResources = async () => {
       console.log('[BookGolf] Fetching resources for tab:', activeTab, 'effectiveUser:', effectiveUser?.email, 'tier:', effectiveUser?.tier);
-      try {
-        const res = await fetch(`/api/resources`);
-        if (!res.ok) throw new Error('Failed to fetch resources');
-        const data: APIResource[] = await res.json();
-        console.log('[BookGolf] Resources API response:', data.length, 'resources');
-        
-        const typeMap: Record<string, string> = {
-          simulator: 'simulator',
-          conference: 'conference_room'
-        };
-        
-        const filtered = data
-          .filter(r => r.type === typeMap[activeTab])
-          .map(r => ({
-            id: `resource-${r.id}`,
-            dbId: r.id,
-            name: r.name,
-            meta: r.description || `Capacity: ${r.capacity}`,
-            badge: r.type === 'simulator' ? 'Indoor' : undefined,
-            icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
-          }));
-        
-        console.log('[BookGolf] Filtered resources:', filtered.length);
-        setResources(filtered);
-      } catch (err) {
-        console.error('[BookGolf] Error fetching resources:', err);
-        setError('Unable to load resources');
+      const { ok, data, error } = await apiRequest<APIResource[]>('/api/resources');
+      
+      if (!ok) {
+        showToast('Unable to load data. Please try again.', 'error');
+        setError(error || 'Unable to load resources');
+        return;
       }
+      
+      console.log('[BookGolf] Resources API response:', data!.length, 'resources');
+      
+      const typeMap: Record<string, string> = {
+        simulator: 'simulator',
+        conference: 'conference_room'
+      };
+      
+      const filtered = data!
+        .filter(r => r.type === typeMap[activeTab])
+        .map(r => ({
+          id: `resource-${r.id}`,
+          dbId: r.id,
+          name: r.name,
+          meta: r.description || `Capacity: ${r.capacity}`,
+          badge: r.type === 'simulator' ? 'Indoor' : undefined,
+          icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
+        }));
+      
+      console.log('[BookGolf] Filtered resources:', filtered.length);
+      setResources(filtered);
     };
     
     fetchResources();
-  }, [activeTab, effectiveUser?.email, effectiveUser?.tier]);
+  }, [activeTab, effectiveUser?.email, effectiveUser?.tier, showToast]);
 
   useEffect(() => {
     const fetchAvailability = async () => {
@@ -164,14 +165,13 @@ const BookGolf: React.FC = () => {
         const allSlots: Map<string, { slot: TimeSlot; resourceIds: number[] }> = new Map();
         
         await Promise.all(resources.map(async (resource) => {
-          const res = await fetch(
+          const { ok, data: slots } = await apiRequest<APISlot[]>(
             `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
           );
-          if (!res.ok) {
-            console.error('[BookGolf] Availability API failed:', res.status, res.statusText, 'for resource', resource.dbId);
+          if (!ok || !slots) {
+            console.error('[BookGolf] Availability API failed for resource', resource.dbId);
             return;
           }
-          const slots: APISlot[] = await res.json();
           
           slots.forEach(slot => {
             if (!slot.available) return;
@@ -209,6 +209,7 @@ const BookGolf: React.FC = () => {
         setAvailableSlots(sortedSlots);
       } catch (err) {
         console.error('[BookGolf] Error fetching availability:', err);
+        showToast('Unable to load data. Please try again.', 'error');
         setError('Unable to load availability');
       } finally {
         setIsLoading(false);
@@ -229,7 +230,7 @@ const BookGolf: React.FC = () => {
     setError(null);
     
     try {
-      const res = await fetch(`/api/booking-requests`, {
+      const { ok, data, error } = await apiRequest('/api/booking-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -243,14 +244,13 @@ const BookGolf: React.FC = () => {
         })
       });
       
-      if (!res.ok) {
-        const data = await res.json();
-        if (res.status === 402) {
+      if (!ok) {
+        if (error?.includes('402') || error?.includes('payment')) {
           setError('Please contact the front desk to complete your booking.');
           haptic.error();
           return;
         }
-        throw new Error(data.error || 'Booking failed');
+        throw new Error(error || 'Booking failed');
       }
       
       addBooking({
