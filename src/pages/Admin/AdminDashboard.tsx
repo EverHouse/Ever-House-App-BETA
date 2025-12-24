@@ -107,7 +107,7 @@ const NAV_ITEMS: NavItemData[] = [
   { id: 'events', icon: 'event', label: 'Events' },
   { id: 'wellness', icon: 'spa', label: 'Wellness' },
   { id: 'team', icon: 'shield_person', label: 'Team', adminOnly: true },
-  { id: 'conflicts', icon: 'sync_problem', label: 'Conflicts', adminOnly: true },
+  { id: 'cafe', icon: 'local_cafe', label: 'Cafe' },
 ];
 
 const StaffBottomNav: React.FC<{
@@ -167,12 +167,14 @@ const StaffBottomNav: React.FC<{
 // --- CAFE ADMIN ---
 
 const CafeAdmin: React.FC = () => {
-    const { cafeMenu, addCafeItem, updateCafeItem, deleteCafeItem } = useData();
+    const { cafeMenu, addCafeItem, updateCafeItem, deleteCafeItem, refreshCafeMenu } = useData();
     const categories = useMemo(() => ['All', ...Array.from(new Set(cafeMenu.map(item => item.category)))], [cafeMenu]);
     const [activeCategory, setActiveCategory] = useState('All');
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [newItem, setNewItem] = useState<Partial<CafeItem>>({ category: 'Coffee & Drinks' });
+    const [isSeeding, setIsSeeding] = useState(false);
+    const [seedMessage, setSeedMessage] = useState<string | null>(null);
 
     const filteredMenu = activeCategory === 'All' ? cafeMenu : cafeMenu.filter(item => item.category === activeCategory);
 
@@ -186,6 +188,26 @@ const CafeAdmin: React.FC = () => {
         setNewItem({ category: 'Coffee & Drinks' });
         setEditId(null);
         setIsEditing(true);
+    };
+
+    const handleSeedMenu = async () => {
+        if (isSeeding) return;
+        setIsSeeding(true);
+        setSeedMessage(null);
+        try {
+            const res = await fetch('/api/admin/seed-cafe', { method: 'POST', credentials: 'include' });
+            const data = await res.json();
+            if (res.ok) {
+                setSeedMessage(`${data.message}`);
+                if (refreshCafeMenu) refreshCafeMenu();
+            } else {
+                setSeedMessage(data.error || 'Failed to seed menu');
+            }
+        } catch (err) {
+            setSeedMessage('Network error');
+        } finally {
+            setIsSeeding(false);
+        }
     };
 
     const handleSave = () => {
@@ -213,10 +235,27 @@ const CafeAdmin: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-primary dark:text-white">Menu Items</h2>
-                <button onClick={openCreate} className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap">
-                    <span className="material-symbols-outlined text-sm">add</span> Add
-                </button>
+                <div className="flex gap-2">
+                    {cafeMenu.length === 0 && (
+                        <button 
+                            onClick={handleSeedMenu} 
+                            disabled={isSeeding}
+                            className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap disabled:opacity-50"
+                        >
+                            <span className="material-symbols-outlined text-sm">{isSeeding ? 'sync' : 'database'}</span> 
+                            {isSeeding ? 'Seeding...' : 'Seed Menu'}
+                        </button>
+                    )}
+                    <button onClick={openCreate} className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap">
+                        <span className="material-symbols-outlined text-sm">add</span> Add
+                    </button>
+                </div>
             </div>
+            {seedMessage && (
+                <div className="mb-4 p-3 bg-accent/20 text-primary dark:text-white rounded-lg text-sm">
+                    {seedMessage}
+                </div>
+            )}
             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-1 px-1 mb-4">
                 {categories.map(cat => (
                     <button

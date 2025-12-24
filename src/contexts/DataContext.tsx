@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { formatDateShort } from '../utils/dateUtils';
 import { useUserStore } from '../stores/userStore';
 import { getCached, fetchAndCache, startBackgroundSync } from '../lib/backgroundSync';
@@ -96,6 +96,7 @@ interface DataContextType {
   addCafeItem: (item: CafeItem) => Promise<void>;
   updateCafeItem: (item: CafeItem) => Promise<void>;
   deleteCafeItem: (id: string) => Promise<void>;
+  refreshCafeMenu: () => Promise<void>;
   
   addEvent: (event: EventData) => void;
   updateEvent: (event: EventData) => void;
@@ -508,6 +509,27 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  const refreshCafeMenu = useCallback(async () => {
+    const formatCafeData = (data: any[]) => data.map((item: any) => ({
+      id: item.id.toString(),
+      category: item.category,
+      name: item.name,
+      price: parseFloat(item.price) || 0,
+      desc: item.description || '',
+      icon: item.icon || '',
+      image: item.image_url || ''
+    }));
+    try {
+      const res = await fetch('/api/cafe-menu');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setCafeMenu(formatCafeData(data));
+        }
+      }
+    } catch {}
+  }, []);
+
   // Fetch events with background sync
   useEffect(() => {
     const normalizeCategory = (cat: string | null | undefined): string => {
@@ -760,7 +782,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       user, actualUser, viewAsUser, isViewingAs,
       login, loginWithMember, logout, refreshUser, setViewAsUser, clearViewAsUser,
       cafeMenu, events, announcements, members, bookings, isLoading,
-      addCafeItem, updateCafeItem, deleteCafeItem,
+      addCafeItem, updateCafeItem, deleteCafeItem, refreshCafeMenu,
       addEvent, updateEvent, deleteEvent, syncEventbrite,
       addAnnouncement, updateAnnouncement, deleteAnnouncement,
       updateMember, addBooking, deleteBooking
