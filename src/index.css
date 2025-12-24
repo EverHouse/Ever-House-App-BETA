@@ -390,6 +390,22 @@ html.dark .glass-input:focus {
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
+/* Tab bar horizontal scroll - smooth snap with instant taps */
+.tab-scroll {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  white-space: nowrap;
+  scroll-padding-inline: 24px;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.tab-scroll::-webkit-scrollbar { display: none; }
+.tab-scroll > * {
+  scroll-snap-align: start;
+  touch-action: manipulation;
+}
+
 /* Modal scrollable content - restore scrollbar for accessibility */
 .modal-scroll-content {
   overflow-y: auto !important;
