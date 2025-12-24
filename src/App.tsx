@@ -486,7 +486,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <main 
                 id="main-content"
-                className={`flex-1 relative ${showHeader ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''} ${isMemberRoute && !isAdminRoute ? 'pb-32' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
+                className={`flex-1 relative ${showHeader ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''} ${isMemberRoute && !isAdminRoute ? 'pb-24' : ''} ${isMemberRoute ? (isDarkTheme ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]') : ''}`}
             >
                 {children}
             </main>
@@ -631,9 +631,8 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
   const blobWidth = 100 / itemCount;
   
   const navContent = (
-    <div className="fixed bottom-0 left-0 right-0 flex justify-center z-[9999] px-4 pb-4 safe-area-bottom pointer-events-auto">
       <nav 
-        className="w-full max-w-md rounded-full p-1.5 bg-black/60 backdrop-blur-xl border border-[#293515]/80 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]"
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md rounded-full p-1.5 bg-black/60 backdrop-blur-xl border border-[#293515]/80 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] z-[9999] pointer-events-auto"
         role="navigation"
         aria-label="Member navigation"
       >
@@ -688,7 +687,6 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
           })}
         </div>
       </nav>
-    </div>
   );
   
   const overlayRoot = document.getElementById('nav-overlay-root');
