@@ -112,14 +112,20 @@ const Gallery: React.FC = () => {
       <div className="px-5 flex-1">
         {isLoading ? (
           <div className="columns-2 gap-4 space-y-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="break-inside-avoid w-full aspect-[4/3] bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-2xl mb-4" />
-            ))}
+            {[...Array(8)].map((_, i) => {
+              const heights = ['aspect-[4/3]', 'aspect-[3/4]', 'aspect-square', 'aspect-[4/5]'];
+              return (
+                <div key={i} className={`break-inside-avoid w-full ${heights[i % heights.length]} bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 rounded-2xl mb-4 overflow-hidden`}>
+                  <div className="w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent" 
+                       style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }} />
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="columns-2 gap-4 space-y-4 animate-in fade-in duration-500">
             {filteredItems.map((item, index) => (
-              <GalleryItem key={item.id || item.img} img={item.img} onClick={() => openViewer(index)} />
+              <GalleryItem key={item.id || item.img} img={item.img} onClick={() => openViewer(index)} index={index} />
             ))}
           </div>
         )}
@@ -159,32 +165,64 @@ const FilterButton: React.FC<{label: string; active?: boolean; onClick?: () => v
   </button>
 );
 
-const GalleryItem: React.FC<{img: string; onClick: () => void}> = ({ img, onClick }) => {
+const GalleryItem: React.FC<{img: string; onClick: () => void; index: number}> = ({ img, onClick, index }) => {
   const [loaded, setLoaded] = React.useState(false);
   const [error, setError] = React.useState(false);
+  const [isVisible, setIsVisible] = React.useState(false);
+  const imgRef = React.useRef<HTMLDivElement>(null);
+  
+  // Intersection Observer for lazy loading
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '100px', threshold: 0.1 }
+    );
+    
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // Varying skeleton heights for masonry effect
+  const skeletonHeights = ['aspect-[4/3]', 'aspect-[3/4]', 'aspect-square', 'aspect-[4/5]'];
+  const skeletonHeight = skeletonHeights[index % skeletonHeights.length];
   
   return (
     <div 
+      ref={imgRef}
       className="break-inside-avoid relative group rounded-2xl overflow-hidden shadow-sm cursor-pointer mb-4 border border-white/20 active:scale-[0.98] transition-transform"
       onClick={onClick}
     >
       {!loaded && !error && (
-        <div className="w-full aspect-[4/3] bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-2xl" />
+        <div className={`w-full ${skeletonHeight} bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 rounded-2xl overflow-hidden`}>
+          <div className="w-full h-full animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent" 
+               style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }} />
+        </div>
       )}
-      <img 
-        src={img} 
-        className={`w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out ${loaded ? 'opacity-100' : 'opacity-0 absolute'}`}
-        alt="Gallery"
-        loading="lazy"
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-      />
+      {isVisible && (
+        <img 
+          src={img} 
+          className={`w-full h-auto object-cover transform group-hover:scale-105 transition-all duration-700 ease-out ${loaded ? 'opacity-100' : 'opacity-0 absolute top-0 left-0'}`}
+          alt="Gallery"
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+        />
+      )}
       {error && (
-        <div className="w-full aspect-[4/3] bg-gray-200 flex items-center justify-center rounded-2xl">
+        <div className={`w-full ${skeletonHeight} bg-gray-200 flex items-center justify-center rounded-2xl`}>
           <span className="material-symbols-outlined text-gray-400 text-3xl">broken_image</span>
         </div>
       )}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+      {loaded && <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>}
     </div>
   );
 };
