@@ -30,7 +30,10 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-const getAllowedOrigins = (): string[] | boolean => {
+type CorsCallback = (err: Error | null, allow?: boolean) => void;
+type CorsOriginFunction = (origin: string | undefined, callback: CorsCallback) => void;
+
+const getAllowedOrigins = (): string[] | boolean | CorsOriginFunction => {
   if (!isProduction) {
     return true;
   }
@@ -42,7 +45,32 @@ const getAllowedOrigins = (): string[] | boolean => {
   if (replitDomain) {
     return [`https://${replitDomain}`, `https://${replitDomain.replace('-00-', '-')}`];
   }
-  return false;
+  // In production, frontend and API are same-origin (served from same Express server)
+  // Return function to dynamically check origin - allow same-origin and Replit domains
+  return (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (same-origin, server-to-server, mobile apps)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    try {
+      const url = new URL(origin);
+      const hostname = url.hostname;
+      // Allow Replit deployment domains (strict hostname suffix matching)
+      if (hostname.endsWith('.replit.app') || hostname.endsWith('.replit.dev') || hostname.endsWith('.repl.co')) {
+        callback(null, true);
+        return;
+      }
+      // Allow localhost for testing
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        callback(null, true);
+        return;
+      }
+    } catch {
+      // Invalid URL, deny
+    }
+    callback(new Error('Not allowed by CORS'));
+  };
 };
 
 const corsOptions = {
@@ -76,6 +104,12 @@ app.use(pushRouter);
 app.use(availabilityRouter);
 app.use(cafeRouter);
 app.use(dataConflictsRouter);
+
+if (isProduction) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  });
+}
 
 async function autoSeedCafeMenu() {
   try {
