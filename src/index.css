@@ -46,6 +46,11 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Eliminate 300ms tap delay on touch devices */
+button, a, [role="button"], .tap-target, input[type="button"], input[type="submit"] {
+  touch-action: manipulation;
+}
+
 /* Images default to block display but preserve Tailwind sizing */
 img, video, svg {
   display: block;
