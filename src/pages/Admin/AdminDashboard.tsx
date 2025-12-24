@@ -9,6 +9,7 @@ import TagBadge from '../../components/TagBadge';
 import { AVAILABLE_TAGS } from '../../utils/tierUtils';
 import { SafeAreaBottomOverlay } from '../../components/layout/SafeAreaBottomOverlay';
 import { BottomSentinel } from '../../components/layout/BottomSentinel';
+import BackToTop from '../../components/BackToTop';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -87,6 +88,8 @@ const AdminDashboard: React.FC = () => {
         setActiveTab={setActiveTab} 
         isAdmin={actualUser?.role === 'admin'} 
       />
+
+      <BackToTop threshold={400} />
 
       <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </div>
