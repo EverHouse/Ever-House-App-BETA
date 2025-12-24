@@ -88,19 +88,23 @@ app.use(getSession());
 app.get('/api/health', async (req, res) => {
   try {
     const dbResult = await pool.query('SELECT NOW() as time, COUNT(*) as resource_count FROM resources');
+    const resourceTypes = await pool.query('SELECT type, COUNT(*) as count FROM resources GROUP BY type');
     res.json({
       status: 'ok',
       environment: isProduction ? 'production' : 'development',
       database: 'connected',
       timestamp: dbResult.rows[0].time,
-      resourceCount: parseInt(dbResult.rows[0].resource_count)
+      resourceCount: parseInt(dbResult.rows[0].resource_count),
+      resourcesByType: resourceTypes.rows,
+      databaseUrl: process.env.DATABASE_URL ? 'configured' : 'missing'
     });
   } catch (error: any) {
     res.status(500).json({
       status: 'error',
       environment: isProduction ? 'production' : 'development',
       database: 'disconnected',
-      error: error.message
+      error: error.message,
+      databaseUrl: process.env.DATABASE_URL ? 'configured' : 'missing'
     });
   }
 });
