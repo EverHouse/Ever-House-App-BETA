@@ -109,8 +109,9 @@ const NAV_ITEMS: NavItemData[] = [
   { id: 'simulator', icon: 'sports_golf', label: 'Sims' },
   { id: 'events', icon: 'event', label: 'Events' },
   { id: 'wellness', icon: 'spa', label: 'Wellness' },
-  { id: 'team', icon: 'shield_person', label: 'Team', adminOnly: true },
+  { id: 'announcements', icon: 'campaign', label: 'News' },
   { id: 'cafe', icon: 'local_cafe', label: 'Cafe' },
+  { id: 'team', icon: 'shield_person', label: 'Team', adminOnly: true },
 ];
 
 const StaffBottomNav: React.FC<{

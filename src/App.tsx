@@ -39,7 +39,7 @@ const BookGolf = lazyWithPrefetch(() => import('./pages/Member/BookGolf'));
 const MemberEvents = lazyWithPrefetch(() => import('./pages/Member/Events'));
 const MemberWellness = lazyWithPrefetch(() => import('./pages/Member/Wellness'));
 const Profile = lazyWithPrefetch(() => import('./pages/Member/Profile'));
-const Cafe = lazyWithPrefetch(() => import('./pages/Member/Cafe'));
+const MemberAnnouncements = lazyWithPrefetch(() => import('./pages/Member/Announcements'));
 const Sims = lazy(() => import('./pages/Member/Sims'));
 const Landing = lazy(() => import('./pages/Public/Landing'));
 const Membership = lazy(() => import('./pages/Public/Membership'));
@@ -189,7 +189,7 @@ const ROUTE_INDICES: Record<string, number> = {
   '/sims': 1.5,
   '/member-wellness': 2,
   '/member-events': 3,
-  '/cafe': 4,
+  '/announcements': 4,
   '/profile': 5,
 };
 
@@ -266,9 +266,9 @@ const AnimatedRoutes: React.FC = () => {
                 <DirectionalPageTransition><Profile /></DirectionalPageTransition>
               </ProtectedRoute>
             } />
-            <Route path="/cafe" element={
+            <Route path="/announcements" element={
               <ProtectedRoute>
-                <DirectionalPageTransition><Cafe /></DirectionalPageTransition>
+                <DirectionalPageTransition><MemberAnnouncements /></DirectionalPageTransition>
               </ProtectedRoute>
             } />
             <Route path="/sims" element={
@@ -381,7 +381,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       if (path === '/profile') return 'account_circle';
       if (path.startsWith('/book') || path.startsWith('/sims')) return 'sports_golf';
       if (path.startsWith('/member-wellness')) return 'spa';
-      if (path.startsWith('/cafe')) return 'local_cafe';
+      if (path.startsWith('/announcements')) return 'campaign';
       if (path.startsWith('/member-events')) return 'celebration';
       return 'home';
   };
@@ -606,7 +606,7 @@ const MEMBER_NAV_ITEMS: MemberNavItem[] = [
   { path: '/book', icon: 'sports_golf', label: 'Golf' },
   { path: '/member-wellness', icon: 'spa', label: 'Wellness' },
   { path: '/member-events', icon: 'calendar_month', label: 'Events' },
-  { path: '/cafe', icon: 'local_cafe', label: 'Cafe' },
+  { path: '/announcements', icon: 'campaign', label: 'News' },
 ];
 
 const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> = ({ currentPath, isDarkTheme }) => {
