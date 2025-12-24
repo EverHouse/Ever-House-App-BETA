@@ -150,11 +150,11 @@ const MemberEvents: React.FC = () => {
 
          <section className="mb-6">
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Events</h3>
-            {isLoading ? (
-                <div className="grid grid-cols-1 gap-4">
-                    <SkeletonList count={4} Component={EventCardSkeleton} isDark={isDark} className="grid grid-cols-1 gap-4" />
-                </div>
-            ) : filteredEvents.length === 0 ? (
+            <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-100' : 'opacity-0 hidden'}`}>
+                <SkeletonList count={4} Component={EventCardSkeleton} isDark={isDark} className="space-y-4" />
+            </div>
+            <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-0 hidden' : 'opacity-100'}`}>
+            {filteredEvents.length === 0 ? (
                 <EmptyEvents />
             ) : (
                 <MotionList className="space-y-4">
@@ -190,6 +190,7 @@ const MemberEvents: React.FC = () => {
                     ))}
                 </MotionList>
             )}
+            </div>
          </section>
       </div>
 

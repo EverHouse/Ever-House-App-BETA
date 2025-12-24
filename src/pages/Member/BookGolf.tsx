@@ -360,11 +360,14 @@ const BookGolf: React.FC = () => {
           <section className="min-h-[120px]">
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Available Times</h3>
             
-            {isLoading ? (
-              <div className={`flex justify-center items-center py-12 opacity-50 ${isDark ? 'text-white' : 'text-primary'}`}>
-                <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
+            <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-100' : 'opacity-0 hidden'}`}>
+                <div className="grid grid-cols-2 gap-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />
+                  ))}
+                </div>
               </div>
-            ) : (
+              <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-0 hidden' : 'opacity-100'}`}>
               <div className="grid grid-cols-2 gap-3">
                 {availableSlots.map((slot, index) => (
                   <button
@@ -394,7 +397,7 @@ const BookGolf: React.FC = () => {
                   </div>
                 )}
               </div>
-            )}
+              </div>
           </section>
 
           {selectedSlot && (

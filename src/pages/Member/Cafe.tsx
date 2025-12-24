@@ -145,13 +145,14 @@ const Cafe: React.FC = () => {
     <SwipeablePage className="relative min-h-screen pb-24 overflow-x-hidden">
       <div className="pt-2 px-6">
         <h1 className={`text-3xl font-bold mb-4 drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Café</h1>
-        {isLoading ? (
+        <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-100' : 'opacity-0 hidden'}`}>
            <div className="flex gap-2 overflow-x-hidden pb-4 -mx-6 px-6">
               {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} width={80} height={36} className="flex-shrink-0" />
               ))}
            </div>
-        ) : (
+        </div>
+        <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-0 hidden' : 'opacity-100'}`}>
             <div ref={categoryScrollRef} className="flex gap-2 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide snap-x">
             {itemsByCategory.map(cat => (
                 <button
@@ -163,7 +164,7 @@ const Cafe: React.FC = () => {
                 </button>
             ))}
             </div>
-        )}
+        </div>
       </div>
 
       <div 
@@ -172,23 +173,21 @@ const Cafe: React.FC = () => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {isLoading ? (
+        <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-100' : 'opacity-0 absolute'}`}>
             <div className="space-y-4">
                  {Array.from({ length: 5 }).map((_, i) => (
-                     <div key={i} className="flex gap-4 p-3 rounded-xl border border-white/5 bg-white/5">
-                         <Skeleton width={64} height={64} className="flex-shrink-0" />
+                     <div key={i} className="flex gap-4 p-3 rounded-xl border border-white/5 bg-white/5 animate-pulse">
+                         <div className="w-16 h-16 rounded-lg bg-white/10 flex-shrink-0" />
                          <div className="flex-1 space-y-2 py-1">
-                             <div className="flex justify-between">
-                                 <Skeleton variant="text" width="60%" height={20} />
-                                 <Skeleton variant="text" width={40} height={20} />
-                             </div>
-                             <Skeleton variant="text" width="90%" height={14} />
+                             <div className="h-5 bg-white/10 rounded w-3/4" />
+                             <div className="h-3 bg-white/10 rounded w-1/2" />
                          </div>
                      </div>
                  ))}
             </div>
-        ) : (
-            itemsByCategory.map(cat => (
+        </div>
+        <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+            {itemsByCategory.map(cat => (
             <div 
                 key={cat.category} 
                 className={activeCategory === cat.category ? 'block' : 'hidden'}
@@ -249,8 +248,8 @@ const Cafe: React.FC = () => {
                 })}
                 </MotionList>
             </div>
-            ))
-        )}
+            ))}
+        </div>
       </div>
 
       {lastAddedItem && (
