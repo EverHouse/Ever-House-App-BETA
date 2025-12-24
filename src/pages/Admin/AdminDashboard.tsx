@@ -67,7 +67,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'events' && 'Manage Events'}
                {activeTab === 'announcements' && 'Manage Updates'}
                {activeTab === 'directory' && 'Directory'}
-               {activeTab === 'simulator' && 'Simulator Bookings'}
+               {activeTab === 'simulator' && 'Booking Requests'}
                {activeTab === 'team' && 'Manage Team Access'}
                {activeTab === 'wellness' && 'Manage Wellness Classes'}
                {activeTab === 'conflicts' && 'Data Conflicts'}
@@ -119,7 +119,7 @@ interface NavItemData {
 
 const NAV_ITEMS: NavItemData[] = [
   { id: 'home', icon: 'home', label: 'Home' },
-  { id: 'simulator', icon: 'sports_golf', label: 'Sims' },
+  { id: 'simulator', icon: 'event_note', label: 'Requests' },
   { id: 'events', icon: 'event', label: 'Events' },
   { id: 'wellness', icon: 'spa', label: 'Wellness' },
   { id: 'announcements', icon: 'campaign', label: 'News' },
@@ -1437,11 +1437,19 @@ const formatDateShort = (dateStr: string): string => {
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 };
 
+interface Resource {
+    id: number;
+    name: string;
+    type: string;
+    description: string | null;
+}
+
 const SimulatorAdmin: React.FC = () => {
     const { user } = useData();
     const [activeView, setActiveView] = useState<'requests' | 'calendar'>('requests');
     const [requests, setRequests] = useState<BookingRequest[]>([]);
     const [bays, setBays] = useState<Bay[]>([]);
+    const [resources, setResources] = useState<Resource[]>([]);
     const [approvedBookings, setApprovedBookings] = useState<BookingRequest[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<BookingRequest | null>(null);
@@ -1461,7 +1469,8 @@ const SimulatorAdmin: React.FC = () => {
                 const results = await Promise.allSettled([
                     fetch('/api/booking-requests?include_all=true'),
                     fetch('/api/pending-bookings'),
-                    fetch('/api/bays')
+                    fetch('/api/bays'),
+                    fetch('/api/resources')
                 ]);
                 
                 let allRequests: BookingRequest[] = [];
@@ -1500,6 +1509,11 @@ const SimulatorAdmin: React.FC = () => {
                 if (results[2].status === 'fulfilled' && results[2].value.ok) {
                     const data = await results[2].value.json();
                     setBays(data);
+                }
+                
+                if (results[3].status === 'fulfilled' && results[3].value.ok) {
+                    const data = await results[3].value.json();
+                    setResources(data);
                 }
             } catch (err) {
                 console.error('Failed to fetch data:', err);
@@ -1792,12 +1806,15 @@ const SimulatorAdmin: React.FC = () => {
                     </div>
                     
                     <div className="overflow-x-auto -mx-4 px-4">
-                        <div style={{ minWidth: `${60 + (bays.length * 70)}px` }}>
-                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${bays.length}, 1fr)` }}>
+                        <div style={{ minWidth: `${60 + (resources.length * 70)}px` }}>
+                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, 1fr)` }}>
                                 <div className="h-10"></div>
-                                {bays.map(bay => (
-                                    <div key={bay.id} className="h-10 flex items-center justify-center font-bold text-sm text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10">
-                                        {bay.name}
+                                {resources.map(resource => (
+                                    <div key={resource.id} className={`h-10 flex items-center justify-center font-bold text-xs text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10 px-1 ${resource.type === 'conference_room' ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}>
+                                        <span className="material-symbols-outlined text-sm mr-1 opacity-60">
+                                            {resource.type === 'conference_room' ? 'meeting_room' : 'golf_course'}
+                                        </span>
+                                        {resource.type === 'conference_room' ? 'Conf' : resource.name.replace('Simulator ', '')}
                                     </div>
                                 ))}
                                 
@@ -1806,25 +1823,31 @@ const SimulatorAdmin: React.FC = () => {
                                         <div className="h-10 flex items-center justify-end pr-1 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
                                             {formatTime12(`${hour.toString().padStart(2, '0')}:00`)}
                                         </div>
-                                        {bays.map(bay => {
+                                        {resources.map(resource => {
                                             const booking = approvedBookings.find(b => {
-                                                if (b.bay_id !== bay.id || b.request_date !== calendarDate) return false;
+                                                if (b.bay_id !== resource.id || b.request_date !== calendarDate) return false;
                                                 const [bh] = b.start_time.split(':').map(Number);
                                                 return bh === hour;
                                             });
                                             
+                                            const isConference = resource.type === 'conference_room';
+                                            
                                             return (
                                                 <div
-                                                    key={`${bay.id}-${hour}`}
+                                                    key={`${resource.id}-${hour}`}
                                                     className={`h-10 rounded border ${
                                                         booking 
-                                                            ? 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30' 
-                                                            : 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5'
+                                                            ? isConference
+                                                                ? 'bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-500/30'
+                                                                : 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30' 
+                                                            : isConference
+                                                                ? 'bg-purple-50/50 dark:bg-purple-500/5 border-purple-100 dark:border-purple-500/10 hover:bg-purple-100/50 dark:hover:bg-purple-500/10'
+                                                                : 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5'
                                                     }`}
                                                 >
                                                     {booking && (
                                                         <div className="px-1 h-full flex items-center">
-                                                            <p className="text-[10px] font-medium text-green-700 dark:text-green-300 truncate">
+                                                            <p className={`text-[10px] font-medium truncate ${isConference ? 'text-purple-700 dark:text-purple-300' : 'text-green-700 dark:text-green-300'}`}>
                                                                 {booking.user_name || 'Booked'}
                                                             </p>
                                                         </div>
@@ -1864,15 +1887,17 @@ const SimulatorAdmin: React.FC = () => {
                             
                             {actionModal === 'approve' && (
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign Bay *</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign Resource *</label>
                                     <select
                                         value={selectedBayId || ''}
                                         onChange={(e) => setSelectedBayId(Number(e.target.value))}
                                         className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
                                     >
-                                        <option value="">Select a bay...</option>
-                                        {bays.map(bay => (
-                                            <option key={bay.id} value={bay.id}>{bay.name}</option>
+                                        <option value="">Select a resource...</option>
+                                        {resources.map(resource => (
+                                            <option key={resource.id} value={resource.id}>
+                                                {resource.type === 'conference_room' ? 'Conference Room' : resource.name}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
