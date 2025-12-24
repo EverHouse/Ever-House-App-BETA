@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
+import { isAdmin } from '../core/middleware';
 
 const router = Router();
 
@@ -95,19 +96,8 @@ router.delete('/api/cafe-menu/:id', async (req, res) => {
 });
 
 // Admin-protected seed endpoint for production
-router.post('/api/admin/seed-cafe', async (req, res) => {
+router.post('/api/admin/seed-cafe', isAdmin, async (req, res) => {
   try {
-    // Check if user is admin
-    const session = req.session as any;
-    if (!session?.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-    
-    const userResult = await pool.query('SELECT role FROM users WHERE id = $1', [session.userId]);
-    if (userResult.rows.length === 0 || userResult.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-    
     // Check current count - only seed if table is empty
     const countResult = await pool.query('SELECT COUNT(*) as count FROM cafe_items');
     const existingCount = parseInt(countResult.rows[0].count);
