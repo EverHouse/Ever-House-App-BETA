@@ -83,6 +83,9 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'team' && actualUser?.role === 'admin' && <TeamAdmin />}
         {activeTab === 'wellness' && <WellnessAdmin />}
         {activeTab === 'conflicts' && actualUser?.role === 'admin' && <DataConflictsAdmin />}
+        {activeTab === 'faqs' && <FaqsAdmin />}
+        {activeTab === 'inquiries' && <InquiriesAdmin />}
+        {activeTab === 'gallery' && <GalleryAdmin />}
         <BottomSentinel />
       </main>
 
@@ -3347,6 +3350,1109 @@ const DataConflictsAdmin: React.FC = () => {
                                     >
                                         <span className="material-symbols-outlined text-sm">close</span>
                                         Ignore
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- FAQS ADMIN ---
+
+interface FAQ {
+    id: number;
+    question: string;
+    answer: string;
+    category: string | null;
+    sortOrder: number;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+const FaqsAdmin: React.FC = () => {
+    const [faqs, setFaqs] = useState<FAQ[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
+    const [newItem, setNewItem] = useState<Partial<FAQ>>({ category: 'General', sortOrder: 0, isActive: true });
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSeeding, setIsSeeding] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+    const fetchFaqs = async () => {
+        try {
+            const res = await fetch('/api/admin/faqs', { credentials: 'include' });
+            if (res.ok) {
+                const data = await res.json();
+                setFaqs(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch FAQs:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchFaqs();
+    }, []);
+
+    const openEdit = (faq: FAQ) => {
+        setNewItem(faq);
+        setEditId(faq.id);
+        setIsEditing(true);
+    };
+
+    const openCreate = () => {
+        const maxSortOrder = faqs.length > 0 ? Math.max(...faqs.map(f => f.sortOrder)) : 0;
+        setNewItem({ category: 'General', sortOrder: maxSortOrder + 1, isActive: true });
+        setEditId(null);
+        setIsEditing(true);
+    };
+
+    const handleSave = async () => {
+        if (!newItem.question?.trim() || !newItem.answer?.trim()) {
+            setMessage({ type: 'error', text: 'Question and answer are required' });
+            return;
+        }
+
+        setIsSaving(true);
+        setMessage(null);
+
+        try {
+            const payload = {
+                question: newItem.question.trim(),
+                answer: newItem.answer.trim(),
+                category: newItem.category || null,
+                sortOrder: newItem.sortOrder ?? 0,
+                isActive: newItem.isActive ?? true,
+            };
+
+            const res = editId
+                ? await fetch(`/api/admin/faqs/${editId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload),
+                })
+                : await fetch('/api/admin/faqs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload),
+                });
+
+            if (res.ok) {
+                setMessage({ type: 'success', text: editId ? 'FAQ updated' : 'FAQ created' });
+                await fetchFaqs();
+                setIsEditing(false);
+            } else {
+                const data = await res.json();
+                setMessage({ type: 'error', text: data.error || 'Failed to save' });
+            }
+        } catch (err) {
+            setMessage({ type: 'error', text: 'Network error' });
+        } finally {
+            setIsSaving(false);
+            setTimeout(() => setMessage(null), 3000);
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        try {
+            const res = await fetch(`/api/admin/faqs/${id}`, {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            if (res.ok) {
+                setMessage({ type: 'success', text: 'FAQ deleted' });
+                setFaqs(prev => prev.filter(f => f.id !== id));
+            } else {
+                const data = await res.json();
+                setMessage({ type: 'error', text: data.error || 'Failed to delete' });
+            }
+        } catch (err) {
+            setMessage({ type: 'error', text: 'Network error' });
+        } finally {
+            setDeleteConfirm(null);
+            setTimeout(() => setMessage(null), 3000);
+        }
+    };
+
+    const handleSeedFaqs = async () => {
+        if (isSeeding) return;
+        setIsSeeding(true);
+        setMessage(null);
+        try {
+            const res = await fetch('/api/admin/faqs/seed', {
+                method: 'POST',
+                credentials: 'include',
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setMessage({ type: 'success', text: `Seeded ${data.count} FAQs` });
+                await fetchFaqs();
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Failed to seed FAQs' });
+            }
+        } catch (err) {
+            setMessage({ type: 'error', text: 'Network error' });
+        } finally {
+            setIsSeeding(false);
+            setTimeout(() => setMessage(null), 5000);
+        }
+    };
+
+    const handleReorder = async (id: number, direction: 'up' | 'down') => {
+        const currentIndex = faqs.findIndex(f => f.id === id);
+        if (currentIndex === -1) return;
+        
+        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        if (targetIndex < 0 || targetIndex >= faqs.length) return;
+
+        const currentFaq = faqs[currentIndex];
+        const targetFaq = faqs[targetIndex];
+
+        try {
+            await Promise.all([
+                fetch(`/api/admin/faqs/${currentFaq.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ sortOrder: targetFaq.sortOrder }),
+                }),
+                fetch(`/api/admin/faqs/${targetFaq.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ sortOrder: currentFaq.sortOrder }),
+                }),
+            ]);
+            await fetchFaqs();
+        } catch (err) {
+            console.error('Failed to reorder:', err);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <span className="material-symbols-outlined animate-spin text-4xl text-primary/50">progress_activity</span>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-primary dark:text-white">FAQs ({faqs.length})</h2>
+                <div className="flex gap-2">
+                    {faqs.length === 0 && (
+                        <button
+                            onClick={handleSeedFaqs}
+                            disabled={isSeeding}
+                            className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap disabled:opacity-50"
+                        >
+                            <span className="material-symbols-outlined text-sm">{isSeeding ? 'sync' : 'database'}</span>
+                            {isSeeding ? 'Seeding...' : 'Seed FAQs'}
+                        </button>
+                    )}
+                    <button
+                        onClick={openCreate}
+                        className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap"
+                    >
+                        <span className="material-symbols-outlined text-sm">add</span> Add FAQ
+                    </button>
+                </div>
+            </div>
+
+            {message && (
+                <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${
+                    message.type === 'success'
+                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
+                        : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+                }`}>
+                    {message.text}
+                </div>
+            )}
+
+            {isEditing && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
+                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white">
+                                {editId ? 'Edit FAQ' : 'Add FAQ'}
+                            </h3>
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Question</label>
+                                    <input
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                        placeholder="Enter the question"
+                                        value={newItem.question || ''}
+                                        onChange={e => setNewItem({ ...newItem, question: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Answer</label>
+                                    <textarea
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
+                                        placeholder="Enter the answer"
+                                        rows={4}
+                                        value={newItem.answer || ''}
+                                        onChange={e => setNewItem({ ...newItem, answer: e.target.value })}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                                        <select
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                            value={newItem.category || 'General'}
+                                            onChange={e => setNewItem({ ...newItem, category: e.target.value })}
+                                        >
+                                            <option>General</option>
+                                            <option>Membership</option>
+                                            <option>Booking</option>
+                                            <option>Amenities</option>
+                                            <option>Events</option>
+                                            <option>Policies</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort Order</label>
+                                        <input
+                                            type="number"
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                            value={newItem.sortOrder ?? 0}
+                                            onChange={e => setNewItem({ ...newItem, sortOrder: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="faq-active"
+                                        checked={newItem.isActive ?? true}
+                                        onChange={e => setNewItem({ ...newItem, isActive: e.target.checked })}
+                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    />
+                                    <label htmlFor="faq-active" className="text-sm text-gray-700 dark:text-gray-300">Active (visible on public FAQ page)</label>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 justify-end">
+                                <button
+                                    onClick={() => setIsEditing(false)}
+                                    className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {deleteConfirm !== null && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-sm animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
+                            <h3 className="font-bold text-lg mb-3 text-primary dark:text-white">Delete FAQ?</h3>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+                                This action cannot be undone. Are you sure you want to delete this FAQ?
+                            </p>
+                            <div className="flex gap-3 justify-end">
+                                <button
+                                    onClick={() => setDeleteConfirm(null)}
+                                    className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(deleteConfirm)}
+                                    className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold shadow-md hover:bg-red-700 transition-colors"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {faqs.length === 0 ? (
+                <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-white/5">
+                    <span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600 mb-3 block">help_outline</span>
+                    <h3 className="text-lg font-bold text-primary dark:text-white mb-2">No FAQs Yet</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by seeding default FAQs or adding your own.</p>
+                    <button
+                        onClick={handleSeedFaqs}
+                        disabled={isSeeding}
+                        className="bg-accent text-primary px-4 py-2 rounded-lg font-bold text-sm disabled:opacity-50"
+                    >
+                        {isSeeding ? 'Seeding...' : 'Seed Default FAQs'}
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {faqs.map((faq, index) => (
+                        <div
+                            key={faq.id}
+                            className={`bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border ${
+                                faq.isActive 
+                                    ? 'border-gray-100 dark:border-white/5' 
+                                    : 'border-amber-200 dark:border-amber-800/30 opacity-60'
+                            } transition-all`}
+                        >
+                            <div className="flex items-start gap-3">
+                                <div className="flex flex-col gap-1">
+                                    <button
+                                        onClick={() => handleReorder(faq.id, 'up')}
+                                        disabled={index === 0}
+                                        className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-primary disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">keyboard_arrow_up</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleReorder(faq.id, 'down')}
+                                        disabled={index === faqs.length - 1}
+                                        className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-primary disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+                                    </button>
+                                </div>
+                                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openEdit(faq)}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-bold text-gray-900 dark:text-white line-clamp-1 flex-1">{faq.question}</h4>
+                                        {!faq.isActive && (
+                                            <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded">
+                                                Hidden
+                                            </span>
+                                        )}
+                                    </div>
+                                    {faq.category && (
+                                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60 px-1.5 py-0.5 rounded mb-1">
+                                            {faq.category}
+                                        </span>
+                                    )}
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{faq.answer}</p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => openEdit(faq)}
+                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/10 rounded-full transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">edit</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setDeleteConfirm(faq.id)}
+                                        className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- INQUIRIES ADMIN ---
+
+interface Inquiry {
+    id: number;
+    formType: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    phone: string | null;
+    message: string | null;
+    metadata: Record<string, unknown> | null;
+    status: string;
+    notes: string | null;
+    createdAt: string;
+    updatedAt: string | null;
+}
+
+const STATUS_TABS = [
+    { id: 'all', label: 'All', icon: 'inbox' },
+    { id: 'new', label: 'New', icon: 'mark_email_unread' },
+    { id: 'read', label: 'Read', icon: 'drafts' },
+    { id: 'replied', label: 'Replied', icon: 'reply' },
+    { id: 'archived', label: 'Archived', icon: 'archive' },
+];
+
+const FORM_TYPE_CHIPS = [
+    { id: 'all', label: 'All Types' },
+    { id: 'contact', label: 'Contact' },
+    { id: 'tour-request', label: 'Tour Request' },
+    { id: 'membership', label: 'Membership' },
+    { id: 'private-hire', label: 'Private Hire' },
+    { id: 'guest-checkin', label: 'Guest Check-in' },
+];
+
+const InquiriesAdmin: React.FC = () => {
+    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [activeStatus, setActiveStatus] = useState('all');
+    const [activeFormType, setActiveFormType] = useState('all');
+    const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [notes, setNotes] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const fetchInquiries = async () => {
+        try {
+            const params = new URLSearchParams();
+            if (activeStatus !== 'all') params.append('status', activeStatus);
+            if (activeFormType !== 'all') params.append('formType', activeFormType);
+            
+            const res = await fetch(`/api/admin/inquiries?${params.toString()}`, { credentials: 'include' });
+            if (res.ok) {
+                const data = await res.json();
+                setInquiries(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch inquiries:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        setIsLoading(true);
+        fetchInquiries();
+    }, [activeStatus, activeFormType]);
+
+    const openDetail = async (inquiry: Inquiry) => {
+        setSelectedInquiry(inquiry);
+        setNotes(inquiry.notes || '');
+        setIsDetailOpen(true);
+        
+        if (inquiry.status === 'new') {
+            try {
+                await fetch(`/api/admin/inquiries/${inquiry.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ status: 'read' }),
+                });
+                setInquiries(prev => prev.map(i => i.id === inquiry.id ? { ...i, status: 'read' } : i));
+                setSelectedInquiry(prev => prev ? { ...prev, status: 'read' } : null);
+            } catch (err) {
+                console.error('Failed to mark as read:', err);
+            }
+        }
+    };
+
+    const handleUpdateStatus = async (status: string) => {
+        if (!selectedInquiry) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch(`/api/admin/inquiries/${selectedInquiry.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ status }),
+            });
+            if (res.ok) {
+                setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? { ...i, status } : i));
+                setSelectedInquiry(prev => prev ? { ...prev, status } : null);
+            }
+        } catch (err) {
+            console.error('Failed to update status:', err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveNotes = async () => {
+        if (!selectedInquiry) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch(`/api/admin/inquiries/${selectedInquiry.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ notes }),
+            });
+            if (res.ok) {
+                setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? { ...i, notes } : i));
+                setSelectedInquiry(prev => prev ? { ...prev, notes } : null);
+            }
+        } catch (err) {
+            console.error('Failed to save notes:', err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleArchive = async () => {
+        if (!selectedInquiry) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch(`/api/admin/inquiries/${selectedInquiry.id}?archive=true`, {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            if (res.ok) {
+                setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? { ...i, status: 'archived' } : i));
+                setIsDetailOpen(false);
+                setSelectedInquiry(null);
+            }
+        } catch (err) {
+            console.error('Failed to archive:', err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    };
+
+    const getFormTypeLabel = (type: string) => {
+        const found = FORM_TYPE_CHIPS.find(c => c.id === type);
+        return found ? found.label : type;
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'new': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
+            case 'read': return 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400';
+            case 'replied': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+            case 'archived': return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
+            default: return 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400';
+        }
+    };
+
+    return (
+        <div>
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide -mx-4 px-4">
+                {STATUS_TABS.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveStatus(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-all flex-shrink-0 ${
+                            activeStatus === tab.id 
+                                ? 'bg-primary text-white shadow-md' 
+                                : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-[14px] sm:text-[16px]">{tab.icon}</span>
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4">
+                {FORM_TYPE_CHIPS.map(chip => (
+                    <button
+                        key={chip.id}
+                        onClick={() => setActiveFormType(chip.id)}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                            activeFormType === chip.id 
+                                ? 'bg-accent text-primary shadow-sm' 
+                                : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
+                        }`}
+                    >
+                        {chip.label}
+                    </button>
+                ))}
+            </div>
+
+            {isDetailOpen && selectedInquiry && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 className="font-bold text-lg text-primary dark:text-white">
+                                        {selectedInquiry.firstName || ''} {selectedInquiry.lastName || ''}
+                                    </h3>
+                                    <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded mt-1 ${getStatusColor(selectedInquiry.status)}`}>
+                                        {selectedInquiry.status}
+                                    </span>
+                                </div>
+                                <button onClick={() => setIsDetailOpen(false)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 mb-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Email</label>
+                                        <a href={`mailto:${selectedInquiry.email}`} className="text-sm text-primary dark:text-accent hover:underline">{selectedInquiry.email}</a>
+                                    </div>
+                                    {selectedInquiry.phone && (
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Phone</label>
+                                            <a href={`tel:${selectedInquiry.phone}`} className="text-sm text-primary dark:text-accent hover:underline">{selectedInquiry.phone}</a>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Form Type</label>
+                                        <span className="text-sm text-gray-700 dark:text-gray-300">{getFormTypeLabel(selectedInquiry.formType)}</span>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Submitted</label>
+                                        <span className="text-sm text-gray-700 dark:text-gray-300">{formatDate(selectedInquiry.createdAt)}</span>
+                                    </div>
+                                </div>
+
+                                {selectedInquiry.message && (
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Message</label>
+                                        <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-black/20 p-3 rounded-lg whitespace-pre-wrap">{selectedInquiry.message}</p>
+                                    </div>
+                                )}
+
+                                {selectedInquiry.metadata && Object.keys(selectedInquiry.metadata).length > 0 && (
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Additional Details</label>
+                                        <div className="bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-sm">
+                                            {Object.entries(selectedInquiry.metadata).map(([key, value]) => (
+                                                <div key={key} className="flex gap-2 py-1 border-b border-gray-100 dark:border-white/5 last:border-0">
+                                                    <span className="text-gray-500 dark:text-gray-400 capitalize">{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:</span>
+                                                    <span className="text-gray-700 dark:text-gray-300">{String(value)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Update Status</label>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {['read', 'replied', 'archived'].map(status => (
+                                            <button
+                                                key={status}
+                                                onClick={() => handleUpdateStatus(status)}
+                                                disabled={isSaving || selectedInquiry.status === status}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 ${
+                                                    selectedInquiry.status === status 
+                                                        ? 'bg-primary text-white' 
+                                                        : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                                                }`}
+                                            >
+                                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Staff Notes</label>
+                                    <textarea
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        placeholder="Add internal notes about this inquiry..."
+                                        rows={3}
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none text-sm"
+                                    />
+                                    <button
+                                        onClick={handleSaveNotes}
+                                        disabled={isSaving}
+                                        className="mt-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                    >
+                                        {isSaving ? 'Saving...' : 'Save Notes'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 justify-between border-t border-gray-100 dark:border-white/10 pt-4">
+                                <button
+                                    onClick={handleArchive}
+                                    disabled={isSaving || selectedInquiry.status === 'archived'}
+                                    className="px-4 py-2 text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm disabled:opacity-50"
+                                >
+                                    <span className="material-symbols-outlined text-sm align-middle mr-1">archive</span>
+                                    Archive
+                                </button>
+                                <button onClick={() => setIsDetailOpen(false)} className="px-5 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-bold rounded-lg hover:bg-gray-200 dark:hover:bg-white/20 transition-colors text-sm">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                    <span className="material-symbols-outlined animate-spin text-3xl text-gray-400">progress_activity</span>
+                </div>
+            ) : inquiries.length === 0 ? (
+                <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-white/5">
+                    <span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600 mb-3 block">mail</span>
+                    <h3 className="text-lg font-bold text-primary dark:text-white mb-2">No Inquiries</h3>
+                    <p className="text-gray-500 dark:text-gray-400">No form submissions match your current filters.</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {inquiries.map(inquiry => (
+                        <div
+                            key={inquiry.id}
+                            onClick={() => openDetail(inquiry)}
+                            className={`bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border cursor-pointer hover:border-primary/30 transition-all ${
+                                inquiry.status === 'new' 
+                                    ? 'border-blue-200 dark:border-blue-800/30' 
+                                    : inquiry.status === 'archived'
+                                        ? 'border-gray-100 dark:border-white/5 opacity-60'
+                                        : 'border-gray-100 dark:border-white/5'
+                            }`}
+                        >
+                            <div className="flex items-start gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                    inquiry.status === 'new' 
+                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                                        : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
+                                }`}>
+                                    <span className="material-symbols-outlined text-lg">
+                                        {inquiry.status === 'new' ? 'mark_email_unread' : inquiry.status === 'replied' ? 'reply' : 'mail'}
+                                    </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-bold text-gray-900 dark:text-white truncate flex-1">
+                                            {inquiry.firstName || inquiry.lastName 
+                                                ? `${inquiry.firstName || ''} ${inquiry.lastName || ''}`.trim() 
+                                                : inquiry.email}
+                                        </h4>
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${getStatusColor(inquiry.status)}`}>
+                                            {inquiry.status}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{inquiry.email}</span>
+                                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60 px-1.5 py-0.5 rounded">
+                                            {getFormTypeLabel(inquiry.formType)}
+                                        </span>
+                                    </div>
+                                    {inquiry.message && (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{inquiry.message}</p>
+                                    )}
+                                    <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block">{formatDate(inquiry.createdAt)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- GALLERY ADMIN ---
+
+interface GalleryImage {
+    id: number;
+    title: string | null;
+    imageUrl: string;
+    category: string;
+    sortOrder: number;
+    isActive: boolean;
+}
+
+const GalleryAdmin: React.FC = () => {
+    const [images, setImages] = useState<GalleryImage[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
+    const [newItem, setNewItem] = useState<Partial<GalleryImage>>({ category: 'venue', isActive: true });
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+    const fetchImages = async () => {
+        try {
+            const res = await fetch('/api/gallery?include_inactive=true', { credentials: 'include' });
+            const data = await res.json();
+            setImages(data);
+        } catch (err) {
+            console.error('Failed to fetch gallery images:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchImages();
+    }, []);
+
+    const openEdit = (image: GalleryImage) => {
+        setNewItem(image);
+        setEditId(image.id);
+        setIsEditing(true);
+        setError(null);
+    };
+
+    const openCreate = () => {
+        setNewItem({ category: 'venue', isActive: true, sortOrder: 0 });
+        setEditId(null);
+        setIsEditing(true);
+        setError(null);
+    };
+
+    const handleSave = async () => {
+        setError(null);
+        
+        if (!newItem.imageUrl?.trim()) {
+            setError('Image URL is required');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const payload = {
+                title: newItem.title || null,
+                imageUrl: newItem.imageUrl,
+                category: newItem.category || 'venue',
+                sortOrder: newItem.sortOrder || 0,
+                isActive: newItem.isActive !== false
+            };
+
+            const url = editId ? `/api/admin/gallery/${editId}` : '/api/admin/gallery';
+            const method = editId ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                credentials: 'include'
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to save');
+            }
+
+            await fetchImages();
+            setIsEditing(false);
+        } catch (err: any) {
+            setError(err.message || 'Failed to save image');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleToggleActive = async (image: GalleryImage) => {
+        try {
+            const res = await fetch(`/api/admin/gallery/${image.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isActive: !image.isActive }),
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                await fetchImages();
+            }
+        } catch (err) {
+            console.error('Failed to toggle status:', err);
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        try {
+            const res = await fetch(`/api/admin/gallery/${id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                await fetchImages();
+            }
+        } catch (err) {
+            console.error('Failed to delete image:', err);
+        } finally {
+            setDeleteConfirm(null);
+        }
+    };
+
+    const categories = ['venue', 'events', 'food', 'golf', 'wellness', 'outdoor'];
+
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-primary dark:text-white">Gallery Images</h2>
+                <button onClick={openCreate} className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap">
+                    <span className="material-symbols-outlined text-sm">add</span> Add Image
+                </button>
+            </div>
+
+            {isEditing && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
+                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white">{editId ? 'Edit Image' : 'Add Image'}</h3>
+                            {error && (
+                                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
+                                    {error}
+                                </div>
+                            )}
+                            <div className="space-y-4 mb-6">
+                                <input 
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                    placeholder="Title (Optional)" 
+                                    value={newItem.title || ''} 
+                                    onChange={e => setNewItem({...newItem, title: e.target.value})} 
+                                />
+                                <input 
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                    placeholder="Image URL *" 
+                                    value={newItem.imageUrl || ''} 
+                                    onChange={e => setNewItem({...newItem, imageUrl: e.target.value})} 
+                                />
+                                {newItem.imageUrl && (
+                                    <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5">
+                                        <img src={newItem.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <select 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                        value={newItem.category || 'venue'} 
+                                        onChange={e => setNewItem({...newItem, category: e.target.value})}
+                                    >
+                                        {categories.map(cat => (
+                                            <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                                        ))}
+                                    </select>
+                                    <input 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                        type="number" 
+                                        placeholder="Sort Order" 
+                                        value={newItem.sortOrder || 0} 
+                                        onChange={e => setNewItem({...newItem, sortOrder: parseInt(e.target.value) || 0})} 
+                                    />
+                                </div>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={newItem.isActive !== false} 
+                                        onChange={e => setNewItem({...newItem, isActive: e.target.checked})}
+                                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                    />
+                                    <span className="text-primary dark:text-white font-medium">Active (visible on public gallery)</span>
+                                </label>
+                            </div>
+                            <div className="flex gap-3 justify-end">
+                                <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                                <button onClick={handleSave} disabled={isSaving} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50">
+                                    {isSaving ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {deleteConfirm !== null && createPortal(
+                <div className="fixed inset-0 z-[10002] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-sm animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
+                            <h3 className="font-bold text-lg mb-3 text-primary dark:text-white">Delete Image?</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+                            <div className="flex gap-3 justify-end">
+                                <button onClick={() => setDeleteConfirm(null)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                                <button onClick={() => handleDelete(deleteConfirm)} className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold shadow-md hover:bg-red-700 transition-colors">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                    <span className="material-symbols-outlined animate-spin text-3xl text-gray-400">progress_activity</span>
+                </div>
+            ) : images.length === 0 ? (
+                <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-white/5">
+                    <span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600 mb-3 block">photo_library</span>
+                    <h3 className="text-lg font-bold text-primary dark:text-white mb-2">No Images</h3>
+                    <p className="text-gray-500 dark:text-gray-400">Add images to the gallery to get started.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {images.map(image => (
+                        <div 
+                            key={image.id} 
+                            className={`relative group bg-white dark:bg-surface-dark rounded-xl shadow-sm border overflow-hidden transition-all ${
+                                image.isActive 
+                                    ? 'border-gray-100 dark:border-white/5' 
+                                    : 'border-orange-200 dark:border-orange-800/30 opacity-60'
+                            }`}
+                        >
+                            <div className="aspect-square bg-gray-100 dark:bg-white/5 overflow-hidden cursor-pointer" onClick={() => openEdit(image)}>
+                                <img 
+                                    src={image.imageUrl} 
+                                    alt={image.title || 'Gallery image'} 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                            </div>
+                            <div className="p-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="font-bold text-gray-900 dark:text-white text-sm truncate">{image.title || 'Untitled'}</h4>
+                                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60 px-1.5 py-0.5 rounded mt-1">{image.category}</span>
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">#{image.sortOrder}</span>
+                                </div>
+                                <div className="flex items-center gap-1 mt-2 pt-2 border-t border-gray-100 dark:border-white/10">
+                                    <button 
+                                        onClick={() => handleToggleActive(image)}
+                                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                                            image.isActive 
+                                                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30' 
+                                                : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
+                                        }`}
+                                    >
+                                        {image.isActive ? 'Active' : 'Inactive'}
+                                    </button>
+                                    <button 
+                                        onClick={() => openEdit(image)}
+                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">edit</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => setDeleteConfirm(image.id)}
+                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete</span>
                                     </button>
                                 </div>
                             </div>
