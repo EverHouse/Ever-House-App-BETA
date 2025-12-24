@@ -222,43 +222,72 @@ async function autoSeedCafeMenu() {
 }
 
 async function startServer() {
-  setupSupabaseAuthRoutes(app);
-  registerAuthRoutes(app);
-
-  await autoSeedResources();
-  await autoSeedCafeMenu();
-
+  console.log(`[Startup] Environment: ${isProduction ? 'production' : 'development'}`);
+  console.log(`[Startup] DATABASE_URL: ${process.env.DATABASE_URL ? 'configured' : 'MISSING'}`);
+  console.log(`[Startup] PORT env: ${process.env.PORT || 'not set'}`);
+  
   try {
-    const gcalResult = await syncGoogleCalendarEvents();
-    if (gcalResult.error) {
-      console.log(`Google Calendar sync skipped: ${gcalResult.error}`);
-    } else {
-      console.log(`Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated)`);
-    }
+    setupSupabaseAuthRoutes(app);
+    registerAuthRoutes(app);
   } catch (err) {
-    console.log('Google Calendar sync failed:', err);
+    console.error('[Startup] FATAL: Auth routes setup failed:', err);
+    process.exit(1);
   }
 
   const PORT = Number(process.env.PORT) || 3001;
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`API Server running on port ${PORT}`);
+  
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Startup] API Server running on port ${PORT}`);
   });
 
-  const SYNC_INTERVAL_MS = 5 * 60 * 1000;
-  setInterval(async () => {
+  server.on('error', (err: any) => {
+    console.error(`[Startup] Server failed to start:`, err);
+    process.exit(1);
+  });
+
+  setTimeout(async () => {
     try {
-      const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' }));
-      const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }));
-      if (!isProduction) {
-        const eventsMsg = eventsResult.error ? eventsResult.error : `${eventsResult.synced} synced`;
-        const wellnessMsg = wellnessResult.error ? wellnessResult.error : `${wellnessResult.synced} synced`;
-        console.log(`[Auto-sync] Events: ${eventsMsg}, Wellness: ${wellnessMsg}`);
+      await autoSeedResources();
+    } catch (err) {
+      console.error('[Startup] Auto-seed resources failed:', err);
+    }
+    
+    try {
+      await autoSeedCafeMenu();
+    } catch (err) {
+      console.error('[Startup] Auto-seed cafe menu failed:', err);
+    }
+
+    try {
+      const gcalResult = await syncGoogleCalendarEvents();
+      if (gcalResult.error) {
+        console.log(`[Startup] Google Calendar sync skipped: ${gcalResult.error}`);
+      } else {
+        console.log(`[Startup] Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated)`);
       }
     } catch (err) {
-      if (!isProduction) console.error('[Auto-sync] Calendar sync failed:', err);
+      console.log('[Startup] Google Calendar sync failed:', err);
     }
-  }, SYNC_INTERVAL_MS);
-  console.log('Background calendar sync enabled (every 5 minutes)');
+
+    const SYNC_INTERVAL_MS = 5 * 60 * 1000;
+    setInterval(async () => {
+      try {
+        const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' }));
+        const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }));
+        if (!isProduction) {
+          const eventsMsg = eventsResult.error ? eventsResult.error : `${eventsResult.synced} synced`;
+          const wellnessMsg = wellnessResult.error ? wellnessResult.error : `${wellnessResult.synced} synced`;
+          console.log(`[Auto-sync] Events: ${eventsMsg}, Wellness: ${wellnessMsg}`);
+        }
+      } catch (err) {
+        if (!isProduction) console.error('[Auto-sync] Calendar sync failed:', err);
+      }
+    }, SYNC_INTERVAL_MS);
+    console.log('[Startup] Background calendar sync enabled (every 5 minutes)');
+  }, 100);
 }
 
-startServer().catch(console.error);
+startServer().catch((err) => {
+  console.error('[Startup] Fatal error:', err);
+  process.exit(1);
+});
