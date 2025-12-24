@@ -141,7 +141,7 @@ app.use(cafeRouter);
 app.use(dataConflictsRouter);
 
 if (isProduction) {
-  app.get('/{*path}', (req, res) => {
+  app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
   });
 }

@@ -316,7 +316,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const markAllAsRead = async () => {
     if (!user?.email) return;
     try {
-      await fetch(`/api/notifications/mark-all-read?user_email=${encodeURIComponent(user.email)}`, { method: 'PUT' });
+      await fetch('/api/notifications/mark-all-read', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_email: user.email }),
+      });
       setUserNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
     } catch (err) {

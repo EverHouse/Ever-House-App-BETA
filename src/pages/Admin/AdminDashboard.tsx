@@ -33,11 +33,7 @@ const AdminDashboard: React.FC = () => {
       </button>
       
       <div className="cursor-pointer flex items-center justify-center" onClick={() => navigate('/')}>
-        <img 
-          src="/assets/logos/EH-guy logo white.png" 
-          alt="Even House" 
-          className="h-14 w-auto"
-        />
+        <Logo type="mascot" variant="white" className="h-14 w-auto" />
       </div>
 
       {/* Top Right - Exit to Member Dashboard */}
