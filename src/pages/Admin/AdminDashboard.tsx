@@ -1806,8 +1806,8 @@ const SimulatorAdmin: React.FC = () => {
                     </div>
                     
                     <div className="overflow-x-auto -mx-4 px-4">
-                        <div style={{ minWidth: `${60 + (resources.length * 70)}px` }}>
-                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, 1fr)` }}>
+                        <div style={{ minWidth: `${80 + (resources.length * 70)}px` }}>
+                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `70px repeat(${resources.length}, 1fr)` }}>
                                 <div className="h-10"></div>
                                 {resources.map(resource => (
                                     <div key={resource.id} className={`h-10 flex items-center justify-center font-bold text-xs text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10 px-1 ${resource.type === 'conference_room' ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}>
