@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useContext, ErrorInfo, useMemo, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useContext, ErrorInfo, useMemo, useRef, lazy, Suspense, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -607,10 +607,23 @@ const MEMBER_NAV_ITEMS: MemberNavItem[] = [
 
 const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> = ({ currentPath, isDarkTheme }) => {
   const navigate = useNavigate();
+  const navigatingRef = useRef(false);
   
   useEffect(() => {
     prefetchAdjacentRoutes(currentPath);
+    navigatingRef.current = false;
   }, [currentPath]);
+  
+  const handleNavigation = useCallback((path: string, label: string) => {
+    if (navigatingRef.current) return;
+    if (path === currentPath) return;
+    
+    navigatingRef.current = true;
+    if (import.meta.env.DEV) {
+      console.log(`[MemberNav] navigating to "${label}"`);
+    }
+    navigate(path);
+  }, [navigate, currentPath]);
   
   const activeIndex = MEMBER_NAV_ITEMS.findIndex(item => item.path === currentPath);
   const itemCount = MEMBER_NAV_ITEMS.length;
@@ -649,25 +662,25 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
             const isGolfIcon = item.icon === 'sports_golf';
             const shouldFill = isActive && !isGolfIcon;
             
-            const handleNavClick = () => {
-              if (import.meta.env.DEV) {
-                console.log(`[MemberNav] click fired for "${item.label}"`);
-              }
-              navigate(item.path);
-            };
-
-            const handlePrefetch = () => prefetchRoute(item.path);
-            
             return (
               <button
                 type="button"
                 key={item.path}
-                onClick={handleNavClick}
-                onMouseEnter={handlePrefetch}
-                style={{ touchAction: 'manipulation' }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleNavigation(item.path, item.label);
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleNavigation(item.path, item.label);
+                }}
+                onMouseEnter={() => prefetchRoute(item.path)}
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                 className={`
                   flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer
-                  transition-all duration-300 ease-out active:scale-90
+                  select-none transition-all duration-300 ease-out active:scale-95
                   ${isActive 
                     ? (isDarkTheme ? 'text-white' : 'text-white') 
                     : (isDarkTheme ? 'text-white/50 hover:text-white/80' : 'text-white/60 hover:text-white/80')
@@ -676,10 +689,10 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <span className={`material-symbols-outlined text-xl transition-all duration-300 ${shouldFill ? 'filled' : ''} ${isActive ? 'scale-110' : ''}`}>
+                <span className={`material-symbols-outlined text-xl transition-all duration-300 pointer-events-none ${shouldFill ? 'filled' : ''} ${isActive ? 'scale-110' : ''}`}>
                   {item.icon}
                 </span>
-                <span className={`text-[9px] tracking-wide transition-all duration-300 ${isActive ? 'font-bold' : 'font-medium'}`}>
+                <span className={`text-[9px] tracking-wide transition-all duration-300 pointer-events-none ${isActive ? 'font-bold' : 'font-medium'}`}>
                   {item.label}
                 </span>
               </button>
