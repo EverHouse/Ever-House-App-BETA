@@ -18,6 +18,8 @@ interface WellnessClass {
     duration: string;
     category: string;
     spots: string;
+    spotsRemaining: number | null;
+    enrolledCount: number;
     status: string;
     description?: string;
 }
@@ -102,7 +104,7 @@ const Wellness: React.FC = () => {
 
       <section className={`mb-8 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide">
-          <TabButton label="Upcoming Classes" active={activeTab === 'classes'} onClick={() => setActiveTab('classes')} isDark={isDark} />
+          <TabButton label="Upcoming" active={activeTab === 'classes'} onClick={() => setActiveTab('classes')} isDark={isDark} />
           <TabButton label="MedSpa" active={activeTab === 'medspa'} onClick={() => setActiveTab('medspa')} isDark={isDark} />
         </div>
       </section>
@@ -140,18 +142,24 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
       const { ok, data } = await apiRequest<any[]>('/api/wellness-classes?active_only=true');
       
       if (ok && data) {
-        const formatted = data.map((c: any) => ({
-          id: c.id,
-          title: c.title,
-          date: c.date,
-          time: c.time,
-          instructor: c.instructor,
-          duration: c.duration,
-          category: c.category,
-          spots: c.spots,
-          status: c.status || 'Open',
-          description: c.description
-        }));
+        const formatted = data.map((c: any) => {
+          const spotsRemaining = c.spots_remaining !== null ? parseInt(c.spots_remaining, 10) : null;
+          const enrolledCount = parseInt(c.enrolled_count, 10) || 0;
+          return {
+            id: c.id,
+            title: c.title,
+            date: c.date,
+            time: c.time,
+            instructor: c.instructor,
+            duration: c.duration,
+            category: c.category,
+            spots: c.spots,
+            spotsRemaining,
+            enrolledCount,
+            status: spotsRemaining !== null && spotsRemaining <= 0 ? 'Full' : (c.status || 'Open'),
+            description: c.description
+          };
+        });
         setClasses(formatted);
         
         const uniqueCategories = ['All', ...new Set(formatted.map((c: WellnessClass) => c.category))];
@@ -324,7 +332,7 @@ const FilterPill: React.FC<{label: string; active?: boolean; onClick?: () => voi
   </button>
 );
 
-const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, status, description, isExpanded, onToggle, onBook, isDark = true }) => (
+const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, spotsRemaining, status, description, isExpanded, onToggle, onBook, isDark = true }) => (
   <div 
     className={`rounded-xl relative overflow-hidden transition-all ${isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered'}`}
   >
@@ -358,7 +366,7 @@ const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, cat
         </p>
         <div className={`flex items-center gap-1.5 text-xs font-bold ${status === 'Full' ? 'text-orange-500' : status === 'Confirmed' ? 'text-green-500' : (isDark ? 'text-white/60' : 'text-primary/60')}`}>
           <span className={`w-2 h-2 rounded-full ${status === 'Full' ? 'bg-orange-500' : status === 'Confirmed' ? 'bg-green-500' : 'bg-green-500'}`}></span>
-          {status || spots}
+          {status === 'Confirmed' ? 'Booked' : status === 'Full' ? 'Full' : spotsRemaining !== null ? `${spotsRemaining} spots left` : spots}
         </div>
         <button 
           onClick={(e) => { e.stopPropagation(); onBook(); }}

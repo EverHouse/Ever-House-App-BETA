@@ -32,11 +32,27 @@ router.post('/api/wellness-classes/sync', async (req, res) => {
 router.get('/api/wellness-classes', async (req, res) => {
   try {
     const { active_only } = req.query;
-    let query = 'SELECT * FROM wellness_classes';
+    // Join with enrollments to get remaining spots
+    let query = `
+      SELECT wc.*, 
+        COALESCE(e.enrolled_count, 0)::integer as enrolled_count,
+        GREATEST(0, CASE 
+          WHEN wc.spots ~ '^[0-9]+$' THEN CAST(wc.spots AS INTEGER) - COALESCE(e.enrolled_count, 0)
+          WHEN wc.spots ~ '^[0-9]+' THEN CAST(REGEXP_REPLACE(wc.spots, '[^0-9]', '', 'g') AS INTEGER) - COALESCE(e.enrolled_count, 0)
+          ELSE NULL
+        END)::integer as spots_remaining
+      FROM wellness_classes wc
+      LEFT JOIN (
+        SELECT class_id, COUNT(*)::integer as enrolled_count 
+        FROM wellness_enrollments 
+        WHERE status = 'confirmed' 
+        GROUP BY class_id
+      ) e ON wc.id = e.class_id
+    `;
     if (active_only === 'true') {
-      query += ' WHERE is_active = true AND date >= CURRENT_DATE';
+      query += ' WHERE wc.is_active = true AND wc.date >= CURRENT_DATE';
     }
-    query += ' ORDER BY date ASC, time ASC';
+    query += ' ORDER BY wc.date ASC, wc.time ASC';
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (error: any) {
