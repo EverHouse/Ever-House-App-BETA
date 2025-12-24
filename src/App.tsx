@@ -486,7 +486,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <main 
                 id="main-content"
-                className={`flex-1 relative ${showHeader ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''} ${isMemberRoute && !isAdminRoute ? 'pb-24' : ''}`}
+                className={`flex-1 relative ${showHeader ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''}`}
             >
                 {children}
             </main>
