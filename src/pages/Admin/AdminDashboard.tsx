@@ -224,6 +224,9 @@ const CafeAdmin: React.FC = () => {
     const [newItem, setNewItem] = useState<Partial<CafeItem>>({ category: 'Coffee & Drinks' });
     const [isSeeding, setIsSeeding] = useState(false);
     const [seedMessage, setSeedMessage] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadResult, setUploadResult] = useState<{ originalSize: number; optimizedSize: number } | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const filteredMenu = activeCategory === 'All' ? cafeMenu : cafeMenu.filter(item => item.category === activeCategory);
 
@@ -237,6 +240,29 @@ const CafeAdmin: React.FC = () => {
         setNewItem({ category: 'Coffee & Drinks' });
         setEditId(null);
         setIsEditing(true);
+        setUploadResult(null);
+    };
+
+    const handleImageUpload = async (file: File) => {
+        setIsUploading(true);
+        setUploadResult(null);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const res = await fetch('/api/admin/upload-image', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            });
+            if (!res.ok) throw new Error('Upload failed');
+            const data = await res.json();
+            setNewItem(prev => ({ ...prev, image: data.url }));
+            setUploadResult({ originalSize: data.originalSize, optimizedSize: data.optimizedSize });
+        } catch (err) {
+            console.error('Upload error:', err);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleSeedMenu = async () => {
@@ -337,7 +363,53 @@ const CafeAdmin: React.FC = () => {
                                         <option>Shareables</option>
                                     </select>
                                 </div>
-                                <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Image URL (Optional)" value={newItem.image || ''} onChange={e => setNewItem({...newItem, image: e.target.value})} />
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-white/70">Image (Optional)</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={e => {
+                                                const file = e.target.files?.[0];
+                                                if (file) handleImageUpload(file);
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={isUploading}
+                                            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-white/20 transition-colors disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">{isUploading ? 'sync' : 'upload'}</span>
+                                            {isUploading ? 'Uploading...' : 'Upload'}
+                                        </button>
+                                        <input
+                                            className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                                            placeholder="Or paste image URL"
+                                            value={newItem.image || ''}
+                                            onChange={e => setNewItem({...newItem, image: e.target.value})}
+                                        />
+                                    </div>
+                                    {uploadResult && (
+                                        <p className="text-xs text-green-600 dark:text-green-400">
+                                            Optimized: {(uploadResult.originalSize / 1024).toFixed(0)}KB → {(uploadResult.optimizedSize / 1024).toFixed(0)}KB
+                                        </p>
+                                    )}
+                                    {newItem.image && (
+                                        <div className="mt-2 relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5">
+                                            <img src={newItem.image} alt="Preview" className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => { setNewItem({...newItem, image: ''}); setUploadResult(null); }}
+                                                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">close</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                                 <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
                             </div>
                             <div className="flex gap-3 justify-end">
