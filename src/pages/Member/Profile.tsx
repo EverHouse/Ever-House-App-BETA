@@ -107,6 +107,12 @@ const Profile: React.FC = () => {
                         <TierBadge tier={user.tier || 'Social'} size="sm" />
                      </div>
                      <h3 className="text-xl font-bold tracking-wide" style={{ color: cardTextColor }}>{user.name}</h3>
+                     {user.joinDate && (
+                        <p className="text-xs mt-2" style={{ color: `${cardTextColor}80` }}>Joined {user.joinDate}</p>
+                     )}
+                     {user.lifetimeVisits !== undefined && (
+                        <p className="text-xs" style={{ color: `${cardTextColor}80` }}>{user.lifetimeVisits} {user.lifetimeVisits === 1 ? 'visit' : 'visits'}</p>
+                     )}
                   </div>
                </div>
                {/* Tap Hint */}
