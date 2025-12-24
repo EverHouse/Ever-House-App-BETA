@@ -489,6 +489,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 className={`flex-1 relative ${showHeader ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''}`}
             >
                 {children}
+                {/* Transparent spacer to allow scrolling past nav bar - content visible behind Safari */}
+                {isMemberRoute && !isAdminRoute && <div className="h-24 pointer-events-none" aria-hidden="true" />}
             </main>
 
             {isMemberRoute && !isAdminRoute && user && (

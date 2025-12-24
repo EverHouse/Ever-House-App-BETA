@@ -144,7 +144,7 @@ const Cafe: React.FC = () => {
   };
 
   return (
-    <SwipeablePage className="relative min-h-screen pb-24 overflow-x-hidden">
+    <SwipeablePage className="relative min-h-screen overflow-x-hidden">
       <div className="pt-2 px-6">
         <h1 className={`text-3xl font-bold mb-4 drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Café</h1>
         <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-100' : 'opacity-0 hidden'}`}>

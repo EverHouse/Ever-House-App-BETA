@@ -288,7 +288,7 @@ const BookGolf: React.FC = () => {
   const canBook = Boolean(selectedDateObj && duration && selectedSlot && selectedResource && !isBooking);
 
   return (
-    <SwipeablePage className="px-6 pt-4 relative min-h-screen pb-32">
+    <SwipeablePage className="px-6 pt-4 relative min-h-screen">
       <section className="mb-6 pt-2">
         <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Book</h1>
         <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Reserve simulators or conference room.</p>

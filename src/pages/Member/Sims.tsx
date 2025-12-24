@@ -262,7 +262,7 @@ const Sims: React.FC = () => {
 
   return (
     <SwipeablePage>
-      <div className="min-h-screen bg-bone pb-28">
+      <div className="min-h-screen">
         <div className="px-4 pt-6">
           <h1 className="text-3xl font-bold text-brand-green mb-2">Simulator Booking</h1>
           <p className="text-sm text-brand-green/70 mb-6">Request a bay and we'll confirm your slot</p>

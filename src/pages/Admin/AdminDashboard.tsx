@@ -53,7 +53,7 @@ const AdminDashboard: React.FC = () => {
       {createPortal(headerContent, document.body)}
 
       {/* Main Content Area - add top padding for fixed header */}
-      <main className="flex-1 pb-40 px-4 md:px-8 max-w-4xl mx-auto pt-24 w-full relative z-0">
+      <main className="flex-1 px-4 md:px-8 max-w-4xl mx-auto pt-24 w-full relative z-0">
         <div className="mb-6 animate-pop-in">
            <span className="text-xs font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 block mb-1">Staff Portal</span>
            <h1 className="text-2xl font-bold text-primary dark:text-white">
@@ -76,6 +76,8 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'team' && actualUser?.role === 'admin' && <TeamAdmin />}
         {activeTab === 'wellness' && <WellnessAdmin />}
         {activeTab === 'conflicts' && actualUser?.role === 'admin' && <DataConflictsAdmin />}
+        {/* Transparent spacer to allow scrolling past nav bar - content visible behind Safari */}
+        <div className="h-24 pointer-events-none" aria-hidden="true" />
       </main>
 
       {/* Bottom Nav - Floating Pill with Liquid Glass */}
