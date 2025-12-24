@@ -1812,9 +1812,9 @@ const SimulatorAdmin: React.FC = () => {
                         </button>
                     </div>
                     
-                    <div className="flex justify-center">
-                        <div className="w-full max-w-md">
-                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `55px repeat(${resources.length}, 1fr)` }}>
+                    <div className="flex justify-center px-4">
+                        <div className="inline-block">
+                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, 52px)` }}>
                                 <div className="h-10"></div>
                                 {resources.map(resource => (
                                     <div key={resource.id} className={`h-10 flex items-center justify-center font-bold text-[10px] text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10 px-0.5 ${resource.type === 'conference_room' ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}>
