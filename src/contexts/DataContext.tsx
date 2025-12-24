@@ -712,27 +712,35 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const deleteEvent = (id: string) => setEvents(prev => prev.filter(i => i.id !== id));
   
   const syncEventbrite = async () => {
-    return new Promise<void>((resolve) => {
-        setTimeout(() => {
-            const newEvent: EventData = {
-                id: `eb-${Date.now()}`,
-                source: 'eventbrite',
-                externalLink: 'https://www.eventbrite.com',
-                title: 'Synced: Wine & Jazz Night',
-                category: 'Social',
-                date: 'Fri, 27 Jan',
-                time: '7:00 PM',
-                location: 'The Patio',
-                image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=2940&auto=format&fit=crop',
-                description: 'Imported from Eventbrite. Live jazz trio and wine flight tasting.',
-                attendees: [],
-                capacity: 50,
-                ticketsSold: 12
-            };
-            setEvents(prev => [...prev, newEvent]);
-            resolve();
-        }, 1500);
-    });
+    try {
+      const res = await fetch('/api/eventbrite/sync', { method: 'POST' });
+      if (res.ok) {
+        const eventsRes = await fetch('/api/events');
+        if (eventsRes.ok) {
+          const data = await eventsRes.json();
+          if (data?.length) {
+            const formatEventData = (events: any[]) => events.map((event: any) => ({
+              id: event.id.toString(),
+              source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
+              externalLink: event.eventbrite_url || undefined,
+              title: event.title,
+              category: event.category || 'Social',
+              date: formatDateShort(event.event_date),
+              time: event.start_time || 'TBD',
+              location: event.location || 'Even House',
+              image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',
+              description: event.description || '',
+              attendees: [],
+              capacity: event.max_attendees || undefined,
+              ticketsSold: undefined
+            })) as EventData[];
+            setEvents(formatEventData(data));
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync Eventbrite:', err);
+    }
   };
 
   // Announcement Actions

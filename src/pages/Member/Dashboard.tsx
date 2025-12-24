@@ -90,6 +90,7 @@ const Dashboard: React.FC = () => {
   const [checkInConfirmed, setCheckInConfirmed] = useState(false); 
   const [newTime, setNewTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -99,29 +100,29 @@ const Dashboard: React.FC = () => {
       setError(null);
       
       try {
-        const [bookingsRes, rsvpsRes, wellnessRes] = await Promise.all([
+        const results = await Promise.allSettled([
           fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
           fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`),
           fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`)
         ]);
-        
-        if (bookingsRes.ok) {
-          const bookings = await bookingsRes.json();
-          setDbBookings(bookings);
+
+        if (results[0].status === 'fulfilled' && results[0].value.ok) {
+          setDbBookings(await results[0].value.json());
+        } else {
+          console.error('Bookings failed to load');
+        }
+
+        if (results[1].status === 'fulfilled' && results[1].value.ok) {
+          setDbRSVPs(await results[1].value.json());
+        }
+
+        if (results[2].status === 'fulfilled' && results[2].value.ok) {
+          setDbWellnessEnrollments(await results[2].value.json());
         }
         
-        if (rsvpsRes.ok) {
-          const rsvps = await rsvpsRes.json();
-          setDbRSVPs(rsvps);
-        }
-        
-        if (wellnessRes.ok) {
-          const enrollments = await wellnessRes.json();
-          setDbWellnessEnrollments(enrollments);
-        }
       } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('Unable to load your bookings');
+        console.error('Critical error fetching user data:', err);
+        setError('Some data could not be loaded.');
       } finally {
         setIsLoading(false);
       }
@@ -201,67 +202,79 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleCancelBooking = async (bookingId: number) => {
-    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
-    
-    try {
-      const res = await fetch(`/api/bookings/${bookingId}`, {
-        method: 'DELETE'
-      });
-      
-      if (res.ok) {
-        setDbBookings(prev => prev.filter(b => b.id !== bookingId));
-        setSelectedBooking(null);
-        showToast('Booking cancelled successfully', 'success');
-      } else {
-        showToast('Failed to cancel booking', 'error');
+  const handleCancelBooking = (bookingId: number) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Cancel Booking",
+      message: "Are you sure you want to cancel this booking?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE' });
+          if (res.ok) {
+            setDbBookings(prev => prev.filter(b => b.id !== bookingId));
+            setSelectedBooking(null);
+            showToast('Booking cancelled successfully', 'success');
+          } else {
+            showToast('Failed to cancel booking', 'error');
+          }
+        } catch (err) {
+          showToast('Failed to cancel booking', 'error');
+        }
       }
-    } catch (err) {
-      console.error('Error cancelling booking:', err);
-      showToast('Failed to cancel booking', 'error');
-    }
+    });
   };
 
-  const handleCancelRSVP = async (eventId: number) => {
-    if (!window.confirm("Are you sure you want to cancel your RSVP?")) return;
+  const handleCancelRSVP = (eventId: number) => {
     if (!user?.email) return;
     
-    try {
-      const res = await fetch(`/api/rsvps/${eventId}/${encodeURIComponent(user.email)}`, {
-        method: 'DELETE'
-      });
-      
-      if (res.ok) {
-        setDbRSVPs(prev => prev.filter(r => r.event_id !== eventId));
-        showToast('RSVP cancelled', 'success');
-      } else {
-        showToast('Failed to cancel RSVP', 'error');
+    setConfirmModal({
+      isOpen: true,
+      title: "Cancel RSVP",
+      message: "Are you sure you want to cancel your RSVP?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/rsvps/${eventId}/${encodeURIComponent(user.email)}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            setDbRSVPs(prev => prev.filter(r => r.event_id !== eventId));
+            showToast('RSVP cancelled', 'success');
+          } else {
+            showToast('Failed to cancel RSVP', 'error');
+          }
+        } catch (err) {
+          showToast('Failed to cancel RSVP', 'error');
+        }
       }
-    } catch (err) {
-      console.error('Error cancelling RSVP:', err);
-      showToast('Failed to cancel RSVP', 'error');
-    }
+    });
   };
 
-  const handleCancelWellness = async (classId: number) => {
-    if (!window.confirm("Are you sure you want to cancel this enrollment?")) return;
+  const handleCancelWellness = (classId: number) => {
     if (!user?.email) return;
     
-    try {
-      const res = await fetch(`/api/wellness-enrollments/${classId}/${encodeURIComponent(user.email)}`, {
-        method: 'DELETE'
-      });
-      
-      if (res.ok) {
-        setDbWellnessEnrollments(prev => prev.filter(w => w.class_id !== classId));
-        showToast('Enrollment cancelled', 'success');
-      } else {
-        showToast('Failed to cancel enrollment', 'error');
+    setConfirmModal({
+      isOpen: true,
+      title: "Cancel Enrollment",
+      message: "Are you sure you want to cancel this enrollment?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/wellness-enrollments/${classId}/${encodeURIComponent(user.email)}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            setDbWellnessEnrollments(prev => prev.filter(w => w.class_id !== classId));
+            showToast('Enrollment cancelled', 'success');
+          } else {
+            showToast('Failed to cancel enrollment', 'error');
+          }
+        } catch (err) {
+          showToast('Failed to cancel enrollment', 'error');
+        }
       }
-    } catch (err) {
-      console.error('Error cancelling enrollment:', err);
-      showToast('Failed to cancel enrollment', 'error');
-    }
+    });
   };
 
   const getGreeting = () => {
@@ -357,22 +370,33 @@ const Dashboard: React.FC = () => {
                   <p className="text-sm font-medium opacity-60 mb-6">{nextItem.details}</p>
                   
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => {
-                        if (navigator.vibrate) navigator.vibrate(10);
-                        setCheckInConfirmed(true);
-                        setTimeout(() => setCheckInConfirmed(false), 3000);
-                      }}
-                      className="flex-1 bg-brand-green text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none"
-                      aria-label="Check in to booking"
-                    >
-                      {checkInConfirmed ? (
-                        <>
-                          <span className="material-symbols-outlined text-lg">check_circle</span>
-                          Checked In
-                        </>
-                      ) : 'Check In'}
-                    </button>
+                    {nextItem.type === 'booking' && (
+                      <button 
+                        onClick={async () => {
+                          if (navigator.vibrate) navigator.vibrate(10);
+                          try {
+                            const res = await fetch(`/api/bookings/${nextItem.dbId}/checkin`, { method: 'POST' });
+                            if (res.ok) {
+                              setCheckInConfirmed(true);
+                              setTimeout(() => setCheckInConfirmed(false), 3000);
+                            } else {
+                              showToast('Check-in failed. Please try again.', 'error');
+                            }
+                          } catch (e) {
+                            showToast('Connection error during check-in.', 'error');
+                          }
+                        }}
+                        className="flex-1 bg-brand-green text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none"
+                        aria-label="Check in to booking"
+                      >
+                        {checkInConfirmed ? (
+                          <>
+                            <span className="material-symbols-outlined text-lg">check_circle</span>
+                            Checked In
+                          </>
+                        ) : 'Check In'}
+                      </button>
+                    )}
                     {nextItem.type === 'booking' && (
                       <button 
                         onClick={() => handleCancelBooking(nextItem.dbId)}
@@ -440,6 +464,30 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </>
+      )}
+
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
+          <div className={`relative w-full max-w-sm p-6 rounded-2xl shadow-2xl animate-pop-in ${isDark ? 'bg-[#1e2810] border border-white/10 text-white' : 'bg-white text-primary'}`}>
+            <h3 className="text-xl font-bold mb-2">{confirmModal.title}</h3>
+            <p className={`mb-6 text-sm ${isDark ? 'opacity-70' : 'opacity-70'}`}>{confirmModal.message}</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setConfirmModal(null)}
+                className={`flex-1 py-3 rounded-xl font-bold text-sm ${isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}
+              >
+                Keep it
+              </button>
+              <button 
+                onClick={confirmModal.onConfirm}
+                className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-500 hover:bg-red-600 text-white shadow-lg"
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
