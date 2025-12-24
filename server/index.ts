@@ -87,6 +87,17 @@ app.use(getSession());
 
 if (isProduction) {
   app.use(express.static(path.join(__dirname, '../dist')));
+} else {
+  // In development, redirect root to Vite dev server (port 5000) for mobile preview
+  app.get('/', (req, res) => {
+    const devDomain = process.env.REPLIT_DEV_DOMAIN;
+    if (devDomain) {
+      // Redirect to Vite dev server via Replit proxy
+      res.redirect(`https://${devDomain}`);
+    } else {
+      res.send('API Server running. Frontend is at port 5000.');
+    }
+  });
 }
 
 app.use(resourcesRouter);
