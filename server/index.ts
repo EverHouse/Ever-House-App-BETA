@@ -22,6 +22,7 @@ import pushRouter from './routes/push';
 import availabilityRouter from './routes/availability';
 import cafeRouter from './routes/cafe';
 import dataConflictsRouter from './routes/dataConflicts';
+import galleryRouter from './routes/gallery';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -144,6 +145,7 @@ app.use(pushRouter);
 app.use(availabilityRouter);
 app.use(cafeRouter);
 app.use(dataConflictsRouter);
+app.use(galleryRouter);
 
 // SPA catch-all using middleware (avoids Express 5 path-to-regexp issues)
 if (isProduction) {

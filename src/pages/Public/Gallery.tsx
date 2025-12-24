@@ -1,29 +1,47 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Footer } from '../../components/Footer';
 
-const INITIAL_DATA = [
-    { img: "/images/golf-sims-optimized.webp", category: "Golf Bays" },
-    { img: "/images/hero-lounge-optimized.webp", category: "Lounge" },
-    { img: "/images/venue-wide-optimized.webp", category: "Golf Bays" },
-    { img: "/images/wellness-yoga-optimized.webp", category: "Wellness" },
-    { img: "/images/events-crowd-optimized.webp", category: "Events" },
-    { img: "/images/terrace-optimized.webp", category: "Lounge" },
-    { img: "/images/private-dining-optimized.webp", category: "Events" },
-    { img: "/images/cowork-optimized.webp", category: "Lounge" },
-    { img: "/images/indoor-outdoor-optimized.webp", category: "Lounge" },
-    { img: "/images/cafe-bar-optimized.webp", category: "Lounge" }
-];
+interface GalleryImage {
+  id: number;
+  img: string;
+  category: string;
+  title?: string;
+}
 
 const Gallery: React.FC = () => {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [viewerState, setViewerState] = useState<{images: string[], index: number} | null>(null);
 
-  const filteredItems = filter === 'All' ? INITIAL_DATA : INITIAL_DATA.filter(item => item.category === filter);
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const res = await fetch('/api/gallery');
+        if (res.ok) {
+          const data = await res.json();
+          setImages(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch gallery:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchGallery();
+  }, []);
+
+  const categories = useMemo(() => {
+    const cats = new Set(images.map(img => img.category));
+    return ['All', ...Array.from(cats)];
+  }, [images]);
+
+  const filteredItems = filter === 'All' ? images : images.filter(item => item.category === filter);
 
   const openViewer = useCallback((index: number) => {
-    const images = filteredItems.map(item => item.img);
-    setViewerState({ images, index });
+    const imgs = filteredItems.map(item => item.img);
+    setViewerState({ images: imgs, index });
   }, [filteredItems]);
 
   const handleClose = useCallback(() => {
@@ -79,22 +97,36 @@ const Gallery: React.FC = () => {
 
       <div className="pl-5 pr-5 py-2 w-full overflow-x-auto scrollbar-hide mb-6">
         <div className="flex gap-3 min-w-max pr-5">
-           <FilterButton label="All" active={filter === 'All'} onClick={() => setFilter('All')} disabled={isModalOpen} />
-           <FilterButton label="Golf Bays" active={filter === 'Golf Bays'} onClick={() => setFilter('Golf Bays')} disabled={isModalOpen} />
-           <FilterButton label="Lounge" active={filter === 'Lounge'} onClick={() => setFilter('Lounge')} disabled={isModalOpen} />
-           <FilterButton label="Wellness" active={filter === 'Wellness'} onClick={() => setFilter('Wellness')} disabled={isModalOpen} />
-           <FilterButton label="Events" active={filter === 'Events'} onClick={() => setFilter('Events')} disabled={isModalOpen} />
+          {categories.map(cat => (
+            <FilterButton 
+              key={cat} 
+              label={cat.charAt(0).toUpperCase() + cat.slice(1)} 
+              active={filter === cat} 
+              onClick={() => setFilter(cat)} 
+              disabled={isModalOpen} 
+            />
+          ))}
         </div>
       </div>
 
       <div className="px-5 flex-1">
-        <div className="columns-2 gap-4 space-y-4 animate-in fade-in duration-500">
-           {filteredItems.map((item, index) => (
-               <GalleryItem key={item.img} img={item.img} onClick={() => openViewer(index)} />
-           ))}
-        </div>
+        {isLoading ? (
+          <div className="columns-2 gap-4 space-y-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="break-inside-avoid w-full aspect-[4/3] bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-2xl mb-4" />
+            ))}
+          </div>
+        ) : (
+          <div className="columns-2 gap-4 space-y-4 animate-in fade-in duration-500">
+            {filteredItems.map((item, index) => (
+              <GalleryItem key={item.id || item.img} img={item.img} onClick={() => openViewer(index)} />
+            ))}
+          </div>
+        )}
         <div className="mt-12 flex justify-center pb-8">
-            <p className="text-xs text-primary/40 font-medium">End of Gallery</p>
+          <p className="text-xs text-primary/40 font-medium">
+            {filteredItems.length} {filteredItems.length === 1 ? 'image' : 'images'}
+          </p>
         </div>
       </div>
 
