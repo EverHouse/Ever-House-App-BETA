@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { formatDateShort } from '../utils/dateUtils';
+import { useUserStore } from '../stores/userStore';
 
 // --- Types ---
 
@@ -315,6 +316,11 @@ const formatTimeString = (timeString: string): string => {
 };
 
 export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+  const storeUser = useUserStore((s) => s.user);
+  const setStoreUser = useUserStore((s) => s.setUser);
+  const clearStoreUser = useUserStore((s) => s.clearUser);
+  const isHydrated = useUserStore((s) => s.isHydrated);
+  
   const [actualUser, setActualUser] = useState<MemberProfile | null>(null);
   const [viewAsUser, setViewAsUserState] = useState<MemberProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -327,16 +333,28 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const isViewingAs = viewAsUser !== null;
   const user = viewAsUser || actualUser;
 
-  // Check for saved member session on mount and refresh if tier is missing
+  useEffect(() => {
+    if (storeUser && !actualUser) {
+      setActualUser(storeUser as MemberProfile);
+      setIsLoading(false);
+    }
+  }, [storeUser, actualUser]);
+
   useEffect(() => {
     const initializeUser = async () => {
+      if (storeUser) {
+        setActualUser(storeUser as MemberProfile);
+        setIsLoading(false);
+        return;
+      }
+      
       const savedMember = localStorage.getItem('eh_member');
       if (savedMember) {
         try {
           const member = JSON.parse(savedMember);
           setActualUser(member);
+          setStoreUser(member);
           
-          // If tier is missing or undefined, refresh user data from server
           if (!member.tier && member.email) {
             try {
               const res = await fetch('/api/auth/verify-member', {
@@ -362,6 +380,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
                 };
                 localStorage.setItem('eh_member', JSON.stringify(updatedProfile));
                 setActualUser(updatedProfile);
+                setStoreUser(updatedProfile);
               }
             } catch (refreshErr) {
               console.error('Failed to refresh user data:', refreshErr);
@@ -375,7 +394,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     };
     
     initializeUser();
-  }, []);
+  }, [storeUser, setStoreUser]);
   
   // View As Functions - only for admins
   const setViewAsUser = async (member: MemberProfile) => {

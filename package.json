@@ -36,7 +36,8 @@
     "resend": "^6.6.0",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
