@@ -691,7 +691,8 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
     </div>
   );
   
-  return createPortal(navContent, document.body);
+  const overlayRoot = document.getElementById('nav-overlay-root');
+  return overlayRoot ? createPortal(navContent, overlayRoot) : null;
 };
 
 const App: React.FC = () => {
