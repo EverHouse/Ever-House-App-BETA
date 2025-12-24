@@ -1813,7 +1813,7 @@ const SimulatorAdmin: React.FC = () => {
                     </div>
                     
                     <div className="flex justify-center px-4">
-                        <div className="inline-block" style={{ marginLeft: '-25px' }}>
+                        <div className="inline-block" style={{ marginLeft: '-40px' }}>
                             <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, 52px)` }}>
                                 <div className="h-10"></div>
                                 {resources.map(resource => (
