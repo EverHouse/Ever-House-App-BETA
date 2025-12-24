@@ -322,3 +322,5 @@ export type WellnessClass = typeof wellnessClasses.$inferSelect;
 export type InsertWellnessClass = typeof wellnessClasses.$inferInsert;
 export type WellnessEnrollment = typeof wellnessEnrollments.$inferSelect;
 export type InsertWellnessEnrollment = typeof wellnessEnrollments.$inferInsert;
+export type Announcement = typeof announcements.$inferSelect;
+export type InsertAnnouncement = typeof announcements.$inferInsert;

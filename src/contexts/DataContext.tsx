@@ -103,9 +103,9 @@ interface DataContextType {
   deleteEvent: (id: string) => void;
   syncEventbrite: () => Promise<void>;
 
-  addAnnouncement: (ann: Announcement) => void;
-  updateAnnouncement: (ann: Announcement) => void;
-  deleteAnnouncement: (id: string) => void;
+  addAnnouncement: (ann: Announcement) => Promise<void>;
+  updateAnnouncement: (ann: Announcement) => Promise<void>;
+  deleteAnnouncement: (id: string) => Promise<void>;
 
   updateMember: (member: MemberProfile) => void;
 
@@ -224,10 +224,7 @@ const INITIAL_EVENTS: EventData[] = [
   }
 ];
 
-const INITIAL_ANNOUNCEMENTS: Announcement[] = [
-  { id: '1', title: "Course Maintenance", desc: "Holes 1-9 closed for aeration next Tuesday.", type: 'announcement', date: '1d ago' },
-  { id: '2', title: "Summer Party", desc: "Tickets are now available.", type: 'update', date: '2d ago' },
-];
+const INITIAL_ANNOUNCEMENTS: Announcement[] = [];
 
 const INITIAL_MEMBERS: MemberProfile[] = [
   { 
@@ -509,6 +506,24 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Fetch announcements from API
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await fetch('/api/announcements');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setAnnouncements(data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch announcements:', err);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
+
   const refreshCafeMenu = useCallback(async () => {
     const formatCafeData = (data: any[]) => data.map((item: any) => ({
       id: item.id.toString(),
@@ -765,10 +780,66 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     }
   };
 
-  // Announcement Actions
-  const addAnnouncement = (item: Announcement) => setAnnouncements(prev => [item, ...prev]);
-  const updateAnnouncement = (item: Announcement) => setAnnouncements(prev => prev.map(i => i.id === item.id ? item : i));
-  const deleteAnnouncement = (id: string) => setAnnouncements(prev => prev.filter(i => i.id !== id));
+  // Announcement Actions - API backed
+  const addAnnouncement = async (item: Announcement) => {
+    try {
+      const res = await fetch('/api/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: item.title,
+          description: item.desc,
+          type: item.type,
+          startDate: item.startDate || null,
+          endDate: item.endDate || null
+        })
+      });
+      if (res.ok) {
+        const newItem = await res.json();
+        setAnnouncements(prev => [newItem, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to add announcement:', err);
+    }
+  };
+  
+  const updateAnnouncement = async (item: Announcement) => {
+    try {
+      const res = await fetch(`/api/announcements/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: item.title,
+          description: item.desc,
+          type: item.type,
+          startDate: item.startDate || null,
+          endDate: item.endDate || null
+        })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setAnnouncements(prev => prev.map(i => i.id === updated.id ? updated : i));
+      }
+    } catch (err) {
+      console.error('Failed to update announcement:', err);
+    }
+  };
+  
+  const deleteAnnouncement = async (id: string) => {
+    try {
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        setAnnouncements(prev => prev.filter(i => i.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete announcement:', err);
+    }
+  };
 
   // Member Actions
   const updateMember = (item: MemberProfile) => setMembers(prev => prev.map(m => m.id === item.id ? item : m));
