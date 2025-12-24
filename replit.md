@@ -67,7 +67,7 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Admin Functionality**: Management of members, events, cafe menu, announcements/news, booking requests, FAQs, gallery photos, and inquiry submissions.
 - **FAQ Admin**: Full CRUD for managing FAQs with seeding capability. FAQs stored in PostgreSQL and served via API.
 - **Inquiries Admin**: View and manage form submissions (contact, tour-request, membership, private-hire, guest-checkin). Filter by status (new/read/replied/archived) and form type. Add staff notes.
-- **Gallery Admin**: Manage venue photos with soft-delete support. Images stored in PostgreSQL with category, sort order, and active status.
+- **Gallery Admin**: Manage venue photos with soft-delete support. Images stored in PostgreSQL with category, sort order, and active status. Includes image upload with automatic WebP optimization using sharp (resizes to max 1920px, 80% quality).
 - **API Endpoints**: Comprehensive REST API for all core functionalities.
 
 ## External Dependencies

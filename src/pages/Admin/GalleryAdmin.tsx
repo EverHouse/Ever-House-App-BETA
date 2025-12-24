@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 interface GalleryImage {
@@ -19,6 +19,9 @@ const GalleryAdmin: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<string>('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchImages = async () => {
         try {
@@ -41,6 +44,10 @@ const GalleryAdmin: React.FC = () => {
         setEditId(image.id);
         setIsEditing(true);
         setError(null);
+        setUploadProgress('');
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     const openCreate = () => {
@@ -48,6 +55,32 @@ const GalleryAdmin: React.FC = () => {
         setEditId(null);
         setIsEditing(true);
         setError(null);
+        setUploadProgress('');
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileUpload = async (file: File) => {
+        setUploading(true);
+        setUploadProgress('Converting to WebP...');
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const res = await fetch('/api/admin/upload-image', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData,
+            });
+            if (!res.ok) throw new Error('Upload failed');
+            const data = await res.json();
+            setNewItem({ ...newItem, imageUrl: data.imageUrl });
+            setUploadProgress(`Optimized: ${Math.round(data.originalSize/1024)}KB → ${Math.round(data.optimizedSize/1024)}KB`);
+        } catch (err) {
+            setUploadProgress('Upload failed. Please try again.');
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleSave = async () => {
@@ -155,6 +188,43 @@ const GalleryAdmin: React.FC = () => {
                                     value={newItem.title || ''} 
                                     onChange={e => setNewItem({...newItem, title: e.target.value})} 
                                 />
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Image</label>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 file:cursor-pointer"
+                                            disabled={uploading}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const file = fileInputRef.current?.files?.[0];
+                                                if (file) handleFileUpload(file);
+                                            }}
+                                            disabled={uploading}
+                                            className="px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                        >
+                                            {uploading ? 'Uploading...' : 'Upload'}
+                                        </button>
+                                    </div>
+                                    {uploadProgress && (
+                                        <p className={`text-sm ${uploadProgress.includes('failed') ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+                                            {uploadProgress}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Images are automatically optimized to WebP format</p>
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <div className="w-full border-t border-gray-200 dark:border-white/10"></div>
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase">
+                                        <span className="bg-white dark:bg-[#1a1d15] px-2 text-gray-500 dark:text-gray-400">or paste URL</span>
+                                    </div>
+                                </div>
                                 <input 
                                     className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
                                     placeholder="Image URL *" 
