@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import BackToTop from '../../components/BackToTop';
@@ -22,7 +22,12 @@ const Landing: React.FC = () => {
       {/* Hero Section */}
       <div className="relative h-[85vh] min-h-[600px] flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))] overflow-hidden rounded-b-[2.5rem] shadow-sm">
         {/* Hero Background Image - Even House interior lounge (optimized WebP) */}
-        <div className="absolute inset-0 bg-[url('/images/hero-lounge-optimized.webp')] bg-cover bg-center"></div>
+        <img 
+          src="/images/hero-lounge-optimized.webp" 
+          alt="Even House Lounge" 
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
         
         <div className="relative z-10 animate-pop-in flex flex-col items-center text-center">
@@ -30,9 +35,9 @@ const Landing: React.FC = () => {
             A new kind of <br/> members club — <br/> rooted in golf, built <br/> for community.
           </h1>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-             <button onClick={() => navigate('/membership')} className="w-full py-4 rounded-xl bg-[#F2F2EC] text-[#293515] font-bold text-sm shadow-lg hover:scale-[1.02] transition-transform">
+             <Link to="/membership" className="w-full py-4 rounded-xl bg-[#F2F2EC] text-[#293515] font-bold text-sm shadow-lg hover:scale-[1.02] transition-transform text-center">
                 Apply for Membership
-             </button>
+             </Link>
              <button onClick={() => setShowTourForm(true)} className="w-full py-4 rounded-xl border border-white/30 bg-white/5 backdrop-blur-sm text-white font-bold text-sm hover:bg-white/10 transition-colors">
                 Book a Tour
              </button>
@@ -95,7 +100,7 @@ const Landing: React.FC = () => {
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Lounge & Cowork Access</li>
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Member Events</li>
                 </ul>
-                <button onClick={() => navigate('/membership')} className="w-full py-3 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-[#293515] font-bold text-xs hover:bg-white/80 transition-all duration-300">View Details</button>
+                <Link to="/membership" className="w-full py-3 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-[#293515] font-bold text-xs hover:bg-white/80 transition-all duration-300 block text-center">View Details</Link>
             </div>
 
             <div className="backdrop-blur-xl bg-[#293515]/90 p-6 rounded-[2rem] border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_0_20px_rgba(41,53,21,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms] relative overflow-hidden">
@@ -111,7 +116,7 @@ const Landing: React.FC = () => {
                     <li className="flex gap-2 text-xs font-bold text-white/90"><span className="material-symbols-outlined text-sm text-[#CCB8E4]">check</span> 60min Daily Sim Time</li>
                     <li className="flex gap-2 text-xs font-bold text-white/90"><span className="material-symbols-outlined text-sm text-[#CCB8E4]">check</span> 60min Conf Room</li>
                 </ul>
-                <button onClick={() => navigate('/membership')} className="w-full py-3 rounded-xl bg-white/95 backdrop-blur text-[#293515] font-bold text-xs hover:bg-white transition-all duration-300 relative z-10 shadow-md">View Details</button>
+                <Link to="/membership" className="w-full py-3 rounded-xl bg-white/95 backdrop-blur text-[#293515] font-bold text-xs hover:bg-white transition-all duration-300 relative z-10 shadow-md block text-center">View Details</Link>
             </div>
 
             <div className="backdrop-blur-xl bg-white/50 p-6 rounded-[2rem] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.6)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
@@ -124,13 +129,13 @@ const Landing: React.FC = () => {
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 90min Daily Sim Time</li>
                     <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 10-Day Advance Booking</li>
                 </ul>
-                <button onClick={() => navigate('/membership/corporate')} className="w-full py-3 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-[#293515] font-bold text-xs hover:bg-white/80 transition-all duration-300">View Details</button>
+                <Link to="/membership/corporate" className="w-full py-3 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-[#293515] font-bold text-xs hover:bg-white/80 transition-all duration-300 block text-center">View Details</Link>
             </div>
 
-            <button onClick={() => navigate('/membership/compare')} className="w-full mt-2 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-[#293515]/60 hover:text-[#293515] transition-colors py-2">
+            <Link to="/membership/compare" className="w-full mt-2 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-[#293515]/60 hover:text-[#293515] transition-colors py-2">
               Compare all tiers
               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-            </button>
+            </Link>
          </div>
       </div>
 
@@ -142,9 +147,9 @@ const Landing: React.FC = () => {
             <div className="absolute inset-0 p-8 flex flex-col justify-center items-center text-center">
                 <span className="px-4 py-1.5 bg-white/15 backdrop-blur-md border border-white/30 rounded-full text-white/90 text-xs font-bold uppercase tracking-[0.2em] mb-4 shadow-[0_0_12px_rgba(255,255,255,0.1)]">Host with Us</span>
                 <h2 className="text-4xl font-bold text-white mb-6 leading-tight drop-shadow-lg">Private Events &<br/>Full Buyouts</h2>
-                <button onClick={() => navigate('/private-hire')} className="px-8 py-3 bg-white/95 backdrop-blur text-[#293515] rounded-xl font-bold text-sm hover:scale-105 hover:bg-white transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+                <Link to="/private-hire" className="px-8 py-3 bg-white/95 backdrop-blur text-[#293515] rounded-xl font-bold text-sm hover:scale-105 hover:bg-white transition-all duration-300 shadow-[0_8px_24px_rgba(0,0,0,0.2)] inline-block">
                     Inquire Now
-                </button>
+                </Link>
             </div>
          </div>
       </div>

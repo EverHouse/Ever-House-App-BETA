@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import BackToTop from '../../components/BackToTop';
@@ -70,12 +70,12 @@ const MembershipOverview: React.FC = () => {
               </div>
            </button>
         </div>
-        <button 
-            onClick={() => navigate('/contact')}
-            className="w-full mt-4 py-3 text-sm font-semibold text-primary border-t border-primary/5 hover:bg-primary/5 transition-colors rounded-b-xl -mb-2 tracking-wide uppercase"
+        <Link 
+            to="/contact"
+            className="w-full mt-4 py-3 text-sm font-semibold text-primary border-t border-primary/5 hover:bg-primary/5 transition-colors rounded-b-xl -mb-2 tracking-wide uppercase block text-center"
         >
            Request a Pass
-        </button>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -159,10 +159,10 @@ const MembershipOverview: React.FC = () => {
         />
       </div>
       
-      <button onClick={() => navigate('compare')} className="w-full mt-4 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-primary transition-colors py-2">
+      <Link to="compare" className="w-full mt-4 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-primary transition-colors py-2">
         Compare full feature table
         <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-      </button>
+      </Link>
 
       <Footer />
 
@@ -277,10 +277,10 @@ const Corporate: React.FC = () => {
         </div>
 
         {/* Apply Button */}
-        <button onClick={() => navigate('/contact')} className="w-full py-5 px-6 rounded-2xl bg-primary text-white font-bold text-sm uppercase tracking-widest hover:bg-primary/90 shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-4 mb-8 group">
+        <Link to="/contact" className="w-full py-5 px-6 rounded-2xl bg-primary text-white font-bold text-sm uppercase tracking-widest hover:bg-primary/90 shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-4 mb-8 group">
             Apply for Corporate Membership
             <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-        </button>
+        </Link>
       </div>
     );
 };

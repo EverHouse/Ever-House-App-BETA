@@ -1147,7 +1147,7 @@ const SimulatorAdmin: React.FC = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const [reqRes, pendingRes, bayRes] = await Promise.all([
+                const results = await Promise.allSettled([
                     fetch('/api/booking-requests?include_all=true'),
                     fetch('/api/pending-bookings'),
                     fetch('/api/bays')
@@ -1155,13 +1155,13 @@ const SimulatorAdmin: React.FC = () => {
                 
                 let allRequests: BookingRequest[] = [];
                 
-                if (reqRes.ok) {
-                    const data = await reqRes.json();
+                if (results[0].status === 'fulfilled' && results[0].value.ok) {
+                    const data = await results[0].value.json();
                     allRequests = data.map((r: any) => ({ ...r, source: 'booking_request' as const }));
                 }
                 
-                if (pendingRes.ok) {
-                    const pendingBookings = await pendingRes.json();
+                if (results[1].status === 'fulfilled' && results[1].value.ok) {
+                    const pendingBookings = await results[1].value.json();
                     const mappedBookings = pendingBookings.map((b: any) => ({
                         id: b.id,
                         user_email: b.user_email,
@@ -1186,8 +1186,8 @@ const SimulatorAdmin: React.FC = () => {
                 
                 setRequests(allRequests);
                 
-                if (bayRes.ok) {
-                    const data = await bayRes.json();
+                if (results[2].status === 'fulfilled' && results[2].value.ok) {
+                    const data = await results[2].value.json();
                     setBays(data);
                 }
             } catch (err) {

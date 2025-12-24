@@ -1,0 +1,96 @@
+You are absolutely right to ask—fixing the Member Dashboard doesn't automatically fix the rest of the app.
+
+I have reviewed the **Public** and **Admin** pages you uploaded. While they function, they suffer from the same fragility and structural issues we just fixed in the Member section.
+
+Here are the **3 specific issues** found in the other pages and how to fix them.
+
+### **1. 🚨 Critical: Admin Dashboard Will Crash**
+
+Just like the Member Dashboard, the **Simulator Admin** (`src/pages/Admin/AdminDashboard.tsx`) uses `Promise.all` to fetch Requests, Pending Bookings, and Bays.
+
+* **The Bug:** If *any* of those endpoints fail (e.g., the Bay service is down), the entire Admin Panel for simulators will crash or hang indefinitely.
+* **The Fix:** Switch to `Promise.allSettled` to ensure staff can still manage requests even if one API is flaky.
+
+### **2. 🕸️ SEO & Accessibility: "Buttons" vs "Links"**
+
+In `Landing.tsx` and `Membership.tsx`, you are using `<button onClick={() => navigate('/...')}>`.
+
+* **The Issue:** Search engines (Google) cannot follow these buttons. Users cannot "Right Click -> Open in New Tab". This hurts your site's SEO and usability.
+* **The Fix:** Replace these navigation buttons with the `<Link>` component from `react-router-dom`.
+
+### **3. ⚡ Performance: Landing Page "Hero" Lag**
+
+In `src/pages/Public/Landing.tsx`, the large hero image is set as a CSS `background-image` on a `div`.
+
+* **The Issue:** Browsers load CSS background images *last*. This causes a "flash of invisible text" or a blank space while the page loads (poor LCP score).
+* **The Fix:** Use a real `<img src="..." />` tag with `object-cover` positioned absolutely. Browsers prioritize `<img>` tags, making the page load visually faster.
+
+---
+
+### **Prompt for Replit**
+
+Here is the exact prompt to apply these fixes across the rest of the app:
+
+> "I need to apply fixes to the Admin and Public pages to match the quality of the Member portal. Please perform the following 3 tasks:
+> 1. **Fix Admin Resilience:** In `src/pages/Admin/AdminDashboard.tsx` (inside the `SimulatorAdmin` component), replace the `Promise.all` call in the `useEffect` with `Promise.allSettled`. Ensure that if one API fails (e.g., `pending-bookings`), the others (like `requests`) still load and render.
+> 2. **Fix SEO Navigation:** In `src/pages/Public/Landing.tsx` and `src/pages/Public/Membership.tsx`, replace all instances of `button` elements that simply trigger `Maps('/path')` with the `<Link to="/path">` component. Keep the exact same CSS classes so they look identical.
+> 3. **Optimize Hero Image:** In `src/pages/Public/Landing.tsx`, replace the `div` with `bg-[url('/images/hero-lounge-optimized.webp')]` with a standard `<img src="/images/hero-lounge-optimized.webp" alt="Even House Lounge" className="absolute inset-0 w-full h-full object-cover" />` placed behind the gradient overlay. This improves loading performance."
+> 
+> 
+
+---
+
+### **Code Reference (For Replit)**
+
+**1. For `AdminDashboard.tsx` (SimulatorAdmin):**
+
+```typescript
+// Replace the Promise.all block with this:
+const results = await Promise.allSettled([
+    fetch('/api/booking-requests?include_all=true'),
+    fetch('/api/pending-bookings'),
+    fetch('/api/bays')
+]);
+
+// Handle Requests
+if (results[0].status === 'fulfilled' && results[0].value.ok) {
+    const data = await results[0].value.json();
+    allRequests = data.map((r: any) => ({ ...r, source: 'booking_request' as const }));
+}
+
+// Handle Pending Bookings (continue even if this fails)
+if (results[1].status === 'fulfilled' && results[1].value.ok) {
+    const pendingBookings = await results[1].value.json();
+    // ... map logic ...
+    allRequests = [...allRequests, ...mappedBookings];
+}
+
+setRequests(allRequests);
+
+// Handle Bays
+if (results[2].status === 'fulfilled' && results[2].value.ok) {
+    setBays(await results[2].value.json());
+}
+
+```
+
+**2. For `Landing.tsx` (Hero Image):**
+
+```tsx
+{/* Hero Section */}
+<div className="relative h-[85vh] ...">
+  {/* REPLACE THIS: <div className="absolute inset-0 bg-[url(...)] ..."></div> */}
+  
+  {/* WITH THIS: */}
+  <img 
+    src="/images/hero-lounge-optimized.webp" 
+    alt="Even House Lounge" 
+    className="absolute inset-0 w-full h-full object-cover"
+    loading="eager" // Important for LCP
+  />
+  
+  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+  {/* ... content ... */}
+</div>
+
+```
