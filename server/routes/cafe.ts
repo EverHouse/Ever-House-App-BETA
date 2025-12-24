@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
-import { isAdmin } from '../core/middleware';
+import { isAdmin, isStaffOrAdmin } from '../core/middleware';
 
 const router = Router();
 
@@ -33,7 +33,7 @@ router.get('/api/cafe-menu', async (req, res) => {
   }
 });
 
-router.post('/api/cafe-menu', async (req, res) => {
+router.post('/api/cafe-menu', isStaffOrAdmin, async (req, res) => {
   try {
     const { category, name, price, description, icon, image_url, is_active, sort_order } = req.body;
     
@@ -54,7 +54,7 @@ router.post('/api/cafe-menu', async (req, res) => {
   }
 });
 
-router.put('/api/cafe-menu/:id', async (req, res) => {
+router.put('/api/cafe-menu/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { category, name, price, description, icon, image_url, is_active, sort_order } = req.body;
@@ -84,7 +84,7 @@ router.put('/api/cafe-menu/:id', async (req, res) => {
   }
 });
 
-router.delete('/api/cafe-menu/:id', async (req, res) => {
+router.delete('/api/cafe-menu/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM cafe_items WHERE id = $1', [id]);

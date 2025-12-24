@@ -126,7 +126,7 @@ router.get('/api/events', async (req, res) => {
   }
 });
 
-router.post('/api/events', async (req, res) => {
+router.post('/api/events', isStaffOrAdmin, async (req, res) => {
   try {
     const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility, requires_rsvp } = req.body;
     
@@ -200,7 +200,7 @@ router.post('/api/events', async (req, res) => {
   }
 });
 
-router.put('/api/events/:id', async (req, res) => {
+router.put('/api/events/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees } = req.body;
@@ -279,7 +279,7 @@ router.put('/api/events/:id', async (req, res) => {
   }
 });
 
-router.delete('/api/events/:id', async (req, res) => {
+router.delete('/api/events/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     

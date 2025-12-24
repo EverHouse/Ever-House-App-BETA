@@ -4,6 +4,7 @@ import { db } from '../db';
 import { bookings, resources, users } from '../../shared/schema';
 import { isProduction } from '../core/db';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
+import { isStaffOrAdmin } from '../core/middleware';
 
 const router = Router();
 
@@ -220,6 +221,24 @@ router.delete('/api/bookings/:id', async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
     res.status(500).json({ error: 'Request failed' });
+  }
+});
+
+router.post('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.update(bookings)
+      .set({ status: 'checked_in' })
+      .where(eq(bookings.id, parseInt(id)))
+      .returning();
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    res.json({ success: true, booking: result[0] });
+  } catch (error: any) {
+    if (!isProduction) console.error('Check-in error:', error);
+    res.status(500).json({ error: 'Failed to check in' });
   }
 });
 
