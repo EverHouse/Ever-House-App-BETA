@@ -163,13 +163,11 @@ async function autoSeedResources() {
     if (count === 0) {
       console.log('Auto-seeding resources...');
       const resources = [
-        { name: 'Simulator Bay 1', type: 'simulator', description: 'TrackMan Simulator Bay 1', capacity: 4 },
-        { name: 'Simulator Bay 2', type: 'simulator', description: 'TrackMan Simulator Bay 2', capacity: 4 },
-        { name: 'Simulator Bay 3', type: 'simulator', description: 'TrackMan Simulator Bay 3', capacity: 4 },
-        { name: 'Simulator Bay 4', type: 'simulator', description: 'TrackMan Simulator Bay 4', capacity: 4 },
+        { name: 'Simulator Bay 1', type: 'simulator', description: 'TrackMan Simulator Bay 1', capacity: 6 },
+        { name: 'Simulator Bay 2', type: 'simulator', description: 'TrackMan Simulator Bay 2', capacity: 6 },
+        { name: 'Simulator Bay 3', type: 'simulator', description: 'TrackMan Simulator Bay 3', capacity: 6 },
+        { name: 'Simulator Bay 4', type: 'simulator', description: 'TrackMan Simulator Bay 4', capacity: 6 },
         { name: 'Conference Room', type: 'conference_room', description: 'Main conference room with AV setup', capacity: 12 },
-        { name: 'Wellness Room 1', type: 'wellness_room', description: 'Private wellness treatment room', capacity: 2 },
-        { name: 'Wellness Room 2', type: 'wellness_room', description: 'Private wellness treatment room', capacity: 2 },
       ];
 
       for (const resource of resources) {
@@ -180,7 +178,7 @@ async function autoSeedResources() {
           [resource.name, resource.type, resource.description, resource.capacity]
         );
       }
-      console.log(`Auto-seeded ${resources.length} resources`);
+      console.log(`Auto-seeded ${resources.length} resources (4 simulators + 1 conference room)`);
     }
   } catch (error) {
     console.log('Resources table may not exist yet, skipping auto-seed');

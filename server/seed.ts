@@ -9,12 +9,13 @@ async function seed() {
   console.log('🌱 Seeding database...\n');
 
   try {
-    // Seed Simulator Bays
+    // Seed Simulator Bays (4 bays)
     console.log('Creating simulator bays...');
     const bays = [
-      { name: 'Bay 1', description: 'TrackMan simulator bay with premium setup', is_active: true },
-      { name: 'Bay 2', description: 'TrackMan simulator bay with premium setup', is_active: true },
-      { name: 'Bay 3', description: 'TrackMan simulator bay with premium setup', is_active: true },
+      { name: 'Bay 1', description: 'TrackMan simulator with premium setup', is_active: true },
+      { name: 'Bay 2', description: 'TrackMan simulator with lounge seating', is_active: true },
+      { name: 'Bay 3', description: 'TrackMan simulator with full bar access', is_active: true },
+      { name: 'Bay 4', description: 'TrackMan simulator - private room', is_active: true },
     ];
 
     for (const bay of bays) {
@@ -27,12 +28,14 @@ async function seed() {
     }
     console.log('✓ Bays created\n');
 
-    // Seed Resources
+    // Seed Resources (4 simulator bays + 1 conference room)
     console.log('Creating resources...');
     const resources = [
+      { name: 'Simulator Bay 1', type: 'simulator', description: 'TrackMan Simulator Bay 1', capacity: 6 },
+      { name: 'Simulator Bay 2', type: 'simulator', description: 'TrackMan Simulator Bay 2', capacity: 6 },
+      { name: 'Simulator Bay 3', type: 'simulator', description: 'TrackMan Simulator Bay 3', capacity: 6 },
+      { name: 'Simulator Bay 4', type: 'simulator', description: 'TrackMan Simulator Bay 4', capacity: 6 },
       { name: 'Conference Room', type: 'conference_room', description: 'Main conference room with AV setup', capacity: 12 },
-      { name: 'Wellness Studio', type: 'wellness_room', description: 'Multi-purpose wellness and yoga studio', capacity: 15 },
-      { name: 'Meditation Room', type: 'wellness_room', description: 'Quiet space for meditation and relaxation', capacity: 8 },
     ];
 
     for (const resource of resources) {
@@ -44,6 +47,23 @@ async function seed() {
       );
     }
     console.log('✓ Resources created\n');
+
+    // Seed Admin Users
+    console.log('Creating admin users...');
+    const admins = [
+      { email: 'adam@evenhouse.club', first_name: 'Adam', last_name: 'Even House', role: 'admin' },
+      { email: 'nick@evenhouse.club', first_name: 'Nick', last_name: 'Luu', role: 'admin' },
+    ];
+
+    for (const admin of admins) {
+      await pool.query(
+        `INSERT INTO users (email, first_name, last_name, role) 
+         VALUES ($1, $2, $3, $4) 
+         ON CONFLICT (email) DO UPDATE SET role = $4`,
+        [admin.email, admin.first_name, admin.last_name, admin.role]
+      );
+    }
+    console.log('✓ Admin users created\n');
 
     // Seed Cafe Menu Items - Real Even House Menu
     console.log('Creating cafe menu...');
@@ -99,68 +119,13 @@ async function seed() {
     }
     console.log('✓ Cafe menu created\n');
 
-    // Seed Sample Events (upcoming dates)
-    console.log('Creating sample events...');
-    const today = new Date();
-    const events = [
-      {
-        title: 'New Member Welcome',
-        description: 'Join us to meet fellow members and learn about all Even House has to offer. Light refreshments provided.',
-        event_date: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        start_time: '18:00:00',
-        end_time: '20:00:00',
-        location: 'Main Lounge',
-        category: 'Social',
-        max_attendees: 30,
-      },
-      {
-        title: 'Morning Yoga Flow',
-        description: 'Start your day with an energizing yoga session led by our resident instructor. All levels welcome.',
-        event_date: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        start_time: '07:00:00',
-        end_time: '08:00:00',
-        location: 'Wellness Studio',
-        category: 'Wellness',
-        max_attendees: 15,
-      },
-      {
-        title: 'Golf Clinic: Short Game',
-        description: 'Improve your chipping and putting with tips from our TrackMan pros. Bring your wedge and putter.',
-        event_date: new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        start_time: '16:00:00',
-        end_time: '18:00:00',
-        location: 'Simulator Bay 1',
-        category: 'Golf',
-        max_attendees: 8,
-      },
-      {
-        title: 'Wine Tasting Night',
-        description: 'Explore wines from Napa Valley with our sommelier. Paired with artisan cheese and charcuterie.',
-        event_date: new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        start_time: '19:00:00',
-        end_time: '21:00:00',
-        location: 'Private Dining Room',
-        category: 'Social',
-        max_attendees: 20,
-      },
-    ];
-
-    for (const event of events) {
-      await pool.query(
-        `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, max_attendees) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-         ON CONFLICT DO NOTHING`,
-        [event.title, event.description, event.event_date, event.start_time, event.end_time, event.location, event.category, event.max_attendees]
-      );
-    }
-    console.log('✓ Sample events created\n');
-
     console.log('✅ Database seeded successfully!');
     console.log('\nSeeded:');
     console.log(`  • ${bays.length} simulator bays`);
-    console.log(`  • ${resources.length} bookable resources`);
+    console.log(`  • ${resources.length} bookable resources (4 simulators + 1 conference room)`);
+    console.log(`  • ${admins.length} admin users`);
     console.log(`  • ${cafeItems.length} cafe menu items`);
-    console.log(`  • ${events.length} sample events`);
+    console.log('\nNote: Events and wellness classes sync from Google Calendar.');
 
   } catch (error) {
     console.error('❌ Seed error:', error);
