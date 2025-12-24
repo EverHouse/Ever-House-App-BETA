@@ -85,6 +85,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb' }));
 app.use(getSession());
 
+// DB-independent health check for Autoscale
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.get('/api/health', async (req, res) => {
   try {
     const dbResult = await pool.query('SELECT NOW() as time, COUNT(*) as resource_count FROM resources');
@@ -140,9 +145,13 @@ app.use(availabilityRouter);
 app.use(cafeRouter);
 app.use(dataConflictsRouter);
 
+// SPA catch-all using middleware (avoids Express 5 path-to-regexp issues)
 if (isProduction) {
-  app.get('/{*splat}', (req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/healthz')) {
+      return res.sendFile(path.join(__dirname, '../dist/index.html'));
+    }
+    next();
   });
 }
 
@@ -234,7 +243,8 @@ async function startServer() {
     process.exit(1);
   }
 
-  const PORT = Number(process.env.PORT) || 3001;
+  // Use PORT env for Autoscale (maps internal 5001 to external 3000), fallback to 3001 for dev
+  const PORT = Number(process.env.PORT) || (isProduction ? 5001 : 3001);
   
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Startup] API Server running on port ${PORT}`);
