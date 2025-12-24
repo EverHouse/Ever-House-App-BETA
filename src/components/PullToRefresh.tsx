@@ -78,7 +78,10 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{ touchAction: pullDistance > 0 ? 'none' : 'auto' }}
+      style={{ 
+        touchAction: pullDistance > 0 ? 'none' : 'pan-y',
+        overscrollBehaviorY: 'contain'
+      }}
     >
       <div 
         className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center transition-all duration-300 z-50"
