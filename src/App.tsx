@@ -342,7 +342,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   useDebugLayout();
   
-  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe', '/sims'].some(path => location.pathname.startsWith(path));
+  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe', '/sims', '/announcements'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isDarkTheme = isAdminRoute || (isMemberRoute && effectiveTheme === 'dark');
   const showHeader = !isAdminRoute;
