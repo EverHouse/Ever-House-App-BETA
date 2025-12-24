@@ -633,22 +633,14 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
   const navContent = (
     <div className="fixed bottom-0 left-0 right-0 flex justify-center z-[9999] px-4 pb-4 safe-area-bottom pointer-events-auto">
       <nav 
-        className={`w-full max-w-md rounded-full p-1.5 ${
-          isDarkTheme 
-            ? 'bg-black/60 backdrop-blur-xl border border-[#293515]/80' 
-            : 'bg-[#293515]/90 backdrop-blur-xl border border-[#293515]'
-        } shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]`}
+        className="w-full max-w-md rounded-full p-1.5 bg-black/60 backdrop-blur-xl border border-[#293515]/80 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]"
         role="navigation"
         aria-label="Member navigation"
       >
         <div className="relative flex items-center w-full">
           {activeIndex >= 0 && (
             <div 
-              className={`absolute top-0 bottom-0 left-0 rounded-full pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
-                isDarkTheme
-                  ? 'bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]'
-                  : 'bg-gradient-to-b from-white/40 to-white/20 shadow-[0_0_16px_rgba(255,255,255,0.3),inset_0_1px_1px_rgba(255,255,255,0.4)]'
-              }`}
+              className="absolute top-0 bottom-0 left-0 rounded-full pointer-events-none bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
               style={{ 
                 width: `${blobWidth}%`, 
                 transform: `translateX(${activeIndex * 100}%)`,
@@ -680,10 +672,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
                 className={`
                   flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer
                   select-none transition-all duration-300 ease-out active:scale-95
-                  ${isActive 
-                    ? (isDarkTheme ? 'text-white' : 'text-white') 
-                    : (isDarkTheme ? 'text-white/50 hover:text-white/80' : 'text-white/60 hover:text-white/80')
-                  }
+                  ${isActive ? 'text-white' : 'text-white/50 hover:text-white/80'}
                 `}
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}

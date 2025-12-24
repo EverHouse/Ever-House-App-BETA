@@ -1,0 +1,73 @@
+
+"The Member Portal bottom navigation currently turns green in light mode, but it needs to match the seamless 'Dark Glass' look of the Staff Portal exactly.
+Please update src/App.tsx. Inside the MemberBottomNav component, replace the <nav> className logic and the active indicator div styling to remove the theme conditionals (isDarkTheme ? ... : ...) and instead use the fixed dark styles from the Admin Dashboard.
+1. Container: Make the <nav> always bg-black/60 backdrop-blur-xl border border-[#293515]/80.
+2. Indicator: Make the active blob always bg-gradient-to-b from-white/20 to-white/10.
+3. Icons: Make the text always text-white (active) or text-white/50 (inactive)."
+Exact Code Replacement
+File: src/App.tsx
+Find the MemberBottomNav component and replace the entire navContent variable with this code:
+TypeScript
+
+
+
+  const navContent = (
+    <div className="fixed bottom-0 left-0 right-0 flex justify-center z-[9999] px-4 pb-4 safe-area-bottom pointer-events-auto">
+      <nav 
+        className="w-full max-w-md rounded-full p-1.5 bg-black/60 backdrop-blur-xl border border-[#293515]/80 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]"
+        role="navigation"
+        aria-label="Member navigation"
+      >
+        <div className="relative flex items-center w-full">
+          {activeIndex >= 0 && (
+            <div 
+              className="absolute top-0 bottom-0 left-0 rounded-full pointer-events-none bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+              style={{ 
+                width: `${blobWidth}%`, 
+                transform: `translateX(${activeIndex * 100}%)`,
+              }}
+            />
+          )}
+          
+          {MEMBER_NAV_ITEMS.map((item) => {
+            const isActive = currentPath === item.path;
+            const isGolfIcon = item.icon === 'sports_golf';
+            const shouldFill = isActive && !isGolfIcon;
+            
+            return (
+              <button
+                type="button"
+                key={item.path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleNavigation(item.path, item.label);
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleNavigation(item.path, item.label);
+                }}
+                onMouseEnter={() => prefetchRoute(item.path)}
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                className={`
+                  flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer
+                  select-none transition-all duration-300 ease-out active:scale-95
+                  ${isActive ? 'text-white' : 'text-white/50 hover:text-white/80'}
+                `}
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <span className={`material-symbols-outlined text-xl transition-all duration-300 pointer-events-none ${shouldFill ? 'filled' : ''} ${isActive ? 'scale-110' : ''}`}>
+                  {item.icon}
+                </span>
+                <span className={`text-[9px] tracking-wide transition-all duration-300 pointer-events-none ${isActive ? 'font-bold' : 'font-medium'}`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
+  );
