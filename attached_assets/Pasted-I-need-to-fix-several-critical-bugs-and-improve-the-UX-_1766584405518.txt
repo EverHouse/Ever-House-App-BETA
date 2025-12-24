@@ -1,0 +1,222 @@
+I need to fix several critical bugs and improve the UX of the app. Please apply the following changes:
+1. Fix Fake Check-In: In src/pages/Member/Dashboard.tsx, the 'Check In' button currently only vibrates. Update it to call a real backend endpoint (POST /api/bookings/:id/checkin) before confirming.
+2. Fix Fragile Dashboard Loading: In src/pages/Member/Dashboard.tsx, change Promise.all to Promise.allSettled so that if the Wellness or RSVP APIs fail, the Golf bookings still load.
+3. Fix Mock Sync: In src/contexts/DataContext.tsx, replace the mock syncEventbrite setTimeout with a real fetch call to the backend.
+4. Security Hardening: In server/index.ts, reduce the express.json body limit from 10mb to 1mb to prevent DoS issues.
+5. UX Improvement (Login): In src/pages/Public/Login.tsx, add a visual spinner SVG to the buttons when loading is true, instead of just changing the text.
+6. UX Improvement (Alerts): In src/pages/Member/Dashboard.tsx, replace the native window.confirm dialogs with a custom Modal UI for cancellations.
+Use the exact code provided below."
+
+The Exact Code Changes
+1. Update server/index.ts (Security Fix)
+Locate the middleware setup lines and update the limit:
+TypeScript
+
+
+
+// server/index.ts
+
+// ... imports
+
+const app = express();
+
+app.set('trust proxy', 1);
+
+// ... CORS setup
+
+app.use(cors(corsOptions));
+
+// CHANGE: Reduce limit from 10mb to 1mb for security
+app.use(express.json({ limit: '1mb' })); 
+app.use(express.urlencoded({ limit: '1mb' }));
+app.use(getSession());
+
+// ... rest of file
+2. Update src/contexts/DataContext.tsx (Fix Mock Sync)
+Replace the syncEventbrite function:
+TypeScript
+
+
+
+// src/contexts/DataContext.tsx
+
+// REPLACE the existing syncEventbrite function with this:
+const syncEventbrite = async () => {
+  try {
+    const res = await fetch('/api/events/sync/eventbrite', { method: 'POST' });
+    if (res.ok) {
+      const syncedEvents = await res.json();
+      // Optimistically update the events list with the new data
+      setEvents(prev => {
+        // Filter out old eventbrite events to avoid duplicates if necessary, 
+        // or just merge based on your logic. Here we append/replace.
+        const internalEvents = prev.filter(e => e.source !== 'eventbrite');
+        return [...internalEvents, ...syncedEvents];
+      });
+    }
+  } catch (err) {
+    console.error('Failed to sync Eventbrite:', err);
+  }
+};
+3. Update src/pages/Public/Login.tsx (Add Loading Spinner)
+Add this simple Spinner component at the top of the file (or import it if you have one), and update the buttons.
+TypeScript
+
+
+
+// src/pages/Public/Login.tsx
+
+// ADD this helper component at the top:
+const Spinner = () => (
+  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
+
+// UPDATE the "Sign In" button inside the form:
+<button
+  type="submit"
+  disabled={loading || !password}
+  className="flex w-full justify-center items-center gap-3 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98] disabled:opacity-50"
+>
+  {loading ? <Spinner /> : <span className="material-symbols-outlined">login</span>}
+  {loading ? 'Signing in...' : 'Sign In'}
+</button>
+
+// UPDATE the "Send Sign-In Link" button:
+<button
+  type="submit"
+  disabled={loading}
+  className="flex w-full justify-center items-center gap-3 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98] disabled:opacity-50"
+>
+  {loading ? <Spinner /> : <span className="material-symbols-outlined">mail</span>}
+  {loading ? 'Sending...' : 'Send Sign-In Link'}
+</button>
+4. Update src/pages/Member/Dashboard.tsx (Fix Check-In, Resilience, & Alerts)
+This is the largest change. Replace the useEffect for data fetching, the handleCancel... functions, and the "Check In" button.
+TypeScript
+
+
+
+// src/pages/Member/Dashboard.tsx
+
+// 1. ADD this state for the custom confirmation modal
+const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
+
+// 2. REPLACE the useEffect that fetches data with this Promise.allSettled version:
+useEffect(() => {
+  const fetchUserData = async () => {
+    if (!user?.email) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const results = await Promise.allSettled([
+        fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
+        fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`),
+        fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`)
+      ]);
+
+      // Handle Bookings
+      if (results[0].status === 'fulfilled' && results[0].value.ok) {
+        setDbBookings(await results[0].value.json());
+      } else {
+        console.error('Bookings failed to load');
+      }
+
+      // Handle RSVPs
+      if (results[1].status === 'fulfilled' && results[1].value.ok) {
+        setDbRSVPs(await results[1].value.json());
+      }
+
+      // Handle Wellness
+      if (results[2].status === 'fulfilled' && results[2].value.ok) {
+        setDbWellnessEnrollments(await results[2].value.json());
+      }
+      
+    } catch (err) {
+      console.error('Critical error fetching user data:', err);
+      setError('Some data could not be loaded.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  fetchUserData();
+}, [user?.email]);
+
+// 3. REPLACE handleCancelBooking (and others) to use the custom modal state:
+const handleCancelBooking = (bookingId: number) => {
+  setConfirmModal({
+    isOpen: true,
+    title: "Cancel Booking",
+    message: "Are you sure you want to cancel this booking?",
+    onConfirm: async () => {
+      setConfirmModal(null); // Close modal
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE' });
+        if (res.ok) {
+          setDbBookings(prev => prev.filter(b => b.id !== bookingId));
+          setSelectedBooking(null);
+          showToast('Booking cancelled successfully', 'success');
+        } else {
+          showToast('Failed to cancel booking', 'error');
+        }
+      } catch (err) {
+        showToast('Failed to cancel booking', 'error');
+      }
+    }
+  });
+};
+
+// ... apply similar logic to handleCancelRSVP and handleCancelWellness ...
+
+// 4. REPLACE the "Check In" button logic inside the return JSX:
+<button 
+  onClick={async () => {
+    if (navigator.vibrate) navigator.vibrate(10);
+    try {
+      // Call real API
+      const res = await fetch(`/api/bookings/${nextItem.dbId}/checkin`, { method: 'POST' });
+      if (res.ok) {
+        setCheckInConfirmed(true);
+        setTimeout(() => setCheckInConfirmed(false), 3000);
+      } else {
+         showToast('Check-in failed. Please try again.', 'error');
+      }
+    } catch (e) {
+      showToast('Connection error during check-in.', 'error');
+    }
+  }}
+  className="flex-1 bg-brand-green text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none"
+>
+  {/* ... existing button content ... */}
+</button>
+
+
+// 5. ADD the Modal UI at the bottom of the return statement (before the closing </div>):
+{confirmModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
+    <div className={`relative w-full max-w-sm p-6 rounded-2xl shadow-2xl animate-pop-in ${isDark ? 'bg-[#1e2810] border border-white/10 text-white' : 'bg-white text-primary'}`}>
+      <h3 className="text-xl font-bold mb-2">{confirmModal.title}</h3>
+      <p className={`mb-6 text-sm ${isDark ? 'opacity-70' : 'opacity-70'}`}>{confirmModal.message}</p>
+      <div className="flex gap-3">
+        <button 
+          onClick={() => setConfirmModal(null)}
+          className={`flex-1 py-3 rounded-xl font-bold text-sm ${isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}
+        >
+          Keep it
+        </button>
+        <button 
+          onClick={confirmModal.onConfirm}
+          className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-500 hover:bg-red-600 text-white shadow-lg"
+        >
+          Yes, Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
