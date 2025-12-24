@@ -115,7 +115,6 @@ const StaffBottomNav: React.FC<{
   setActiveTab: (tab: TabType) => void;
   isAdmin?: boolean;
 }> = ({ activeTab, setActiveTab, isAdmin }) => {
-  const [pressedIndex, setPressedIndex] = useState<number | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
   
   const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
@@ -131,30 +130,24 @@ const StaffBottomNav: React.FC<{
       className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 z-[9999] shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full pointer-events-auto"
     >
       <div className="relative flex items-center w-full">
-        {/* Animated Blob Indicator */}
         <div 
-          className="absolute top-0 bottom-0 rounded-full bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+          className="absolute top-0 bottom-0 rounded-full pointer-events-none bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
           style={{ 
             width: `${blobWidth}%`, 
             left: `${blobLeft}%`,
           }}
         />
         
-        {/* Nav Items */}
-        {visibleItems.map((item, index) => (
+        {visibleItems.map((item) => (
           <button
+            type="button"
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            onMouseDown={() => setPressedIndex(index)}
-            onMouseUp={() => setPressedIndex(null)}
-            onMouseLeave={() => setPressedIndex(null)}
-            onTouchStart={() => setPressedIndex(index)}
-            onTouchEnd={() => setPressedIndex(null)}
+            style={{ touchAction: 'manipulation' }}
             className={`
               flex-1 flex flex-col items-center gap-0.5 py-2 px-1 relative z-10 cursor-pointer
-              transition-all duration-300 ease-out
+              transition-all duration-300 ease-out active:scale-90
               ${activeTab === item.id ? 'text-white' : 'text-white/50 hover:text-white/80'}
-              ${pressedIndex === index ? 'scale-90' : 'scale-100'}
             `}
           >
             <span className={`material-symbols-outlined text-xl transition-all duration-300 ${activeTab === item.id ? 'filled scale-110' : ''}`}>

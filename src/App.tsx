@@ -636,11 +636,20 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
             const isGolfIcon = item.icon === 'sports_golf';
             const shouldFill = isActive && !isGolfIcon;
             
+            const handleNavClick = () => {
+              if (import.meta.env.DEV) {
+                console.log(`[MemberNav] click fired for "${item.label}"`);
+              }
+              navigate(item.path);
+            };
+            
             return (
               <button
                 type="button"
                 key={item.path}
-                onClick={() => navigate(item.path)}
+                onClick={handleNavClick}
+                onTouchStart={import.meta.env.DEV ? () => console.log(`[MemberNav] touchstart for "${item.label}"`) : undefined}
+                onTouchEnd={import.meta.env.DEV ? () => console.log(`[MemberNav] touchend for "${item.label}"`) : undefined}
                 style={{ touchAction: 'manipulation' }}
                 className={`
                   flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 relative z-10 cursor-pointer

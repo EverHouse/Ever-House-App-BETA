@@ -109,13 +109,10 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 
 const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string; isDark: boolean }> = ({ label, onClick, delay, isDark }) => (
   <button 
+    type="button"
     onClick={onClick}
-    onTouchEnd={(e) => {
-      e.preventDefault();
-      onClick();
-    }}
-    className={`text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight min-h-[44px] touch-manipulation hover:translate-x-2 active:translate-x-2 ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/60' : 'text-[#293515] hover:text-[#293515]/60'}`}
-    style={{ animationDelay: delay, animationFillMode: 'both' }}
+    style={{ touchAction: 'manipulation', animationDelay: delay, animationFillMode: 'both' }}
+    className={`text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight min-h-[44px] hover:translate-x-2 active:translate-x-2 ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/60' : 'text-[#293515] hover:text-[#293515]/60'}`}
   >
     {label}
   </button>
