@@ -4,7 +4,7 @@ import { isStaffOrAdmin } from '../core/middleware';
 import { syncWellnessCalendarEvents, discoverCalendarIds, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { db } from '../db';
 import { wellnessEnrollments, wellnessClasses } from '../../shared/schema';
-import { eq, and, gte, sql } from 'drizzle-orm';
+import { eq, and, gte, sql, isNull, asc } from 'drizzle-orm';
 
 const router = Router();
 
@@ -38,9 +38,12 @@ router.post('/api/wellness-classes/backfill-calendar', isStaffOrAdmin, async (re
       return res.status(404).json({ error: 'Wellness calendar not found' });
     }
     
-    const classesWithoutCalendar = await pool.query(
-      `SELECT * FROM wellness_classes WHERE google_calendar_id IS NULL AND date >= CURRENT_DATE ORDER BY date ASC`
-    );
+    const classesWithoutCalendar = await db.select().from(wellnessClasses)
+      .where(and(
+        isNull(wellnessClasses.googleCalendarId),
+        gte(wellnessClasses.date, sql`CURRENT_DATE`)
+      ))
+      .orderBy(asc(wellnessClasses.date));
     
     const convertTo24Hour = (timeStr: string): string => {
       const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -75,7 +78,7 @@ router.post('/api/wellness-classes/backfill-calendar', isStaffOrAdmin, async (re
     let created = 0;
     const errors: string[] = [];
     
-    for (const wc of classesWithoutCalendar.rows) {
+    for (const wc of classesWithoutCalendar) {
       try {
         const calendarTitle = `${wc.category} - ${wc.title} with ${wc.instructor}`;
         const calendarDescription = [wc.description, `Duration: ${wc.duration}`, `Spots: ${wc.spots}`].filter(Boolean).join('\n');
@@ -92,7 +95,9 @@ router.post('/api/wellness-classes/backfill-calendar', isStaffOrAdmin, async (re
         );
         
         if (googleCalendarId) {
-          await pool.query('UPDATE wellness_classes SET google_calendar_id = $1 WHERE id = $2', [googleCalendarId, wc.id]);
+          await db.update(wellnessClasses)
+            .set({ googleCalendarId })
+            .where(eq(wellnessClasses.id, wc.id));
           created++;
         }
       } catch (err: any) {
@@ -103,7 +108,7 @@ router.post('/api/wellness-classes/backfill-calendar', isStaffOrAdmin, async (re
     res.json({
       message: `Created ${created} calendar events for existing wellness classes`,
       created,
-      total: classesWithoutCalendar.rows.length,
+      total: classesWithoutCalendar.length,
       errors: errors.length > 0 ? errors : undefined
     });
   } catch (error: any) {
