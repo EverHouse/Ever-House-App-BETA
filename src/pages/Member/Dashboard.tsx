@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, Booking } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -7,9 +7,10 @@ import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
 import { formatDateShort, getTodayString } from '../../utils/dateUtils';
-import { BookingCardSkeleton, SkeletonList } from '../../components/skeletons';
+import { DashboardSkeleton } from '../../components/skeletons';
 import { EmptyBookings } from '../../components/EmptyState';
 import { getBaseTier } from '../../utils/permissions';
+import PullToRefresh from '../../components/PullToRefresh';
 
 
 interface DBBooking {
@@ -92,44 +93,50 @@ const Dashboard: React.FC = () => {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user?.email) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const results = await Promise.allSettled([
-          fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
-          fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`),
-          fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`)
-        ]);
-
-        if (results[0].status === 'fulfilled' && results[0].value.ok) {
-          setDbBookings(await results[0].value.json());
-        } else {
-          console.error('Bookings failed to load');
-        }
-
-        if (results[1].status === 'fulfilled' && results[1].value.ok) {
-          setDbRSVPs(await results[1].value.json());
-        }
-
-        if (results[2].status === 'fulfilled' && results[2].value.ok) {
-          setDbWellnessEnrollments(await results[2].value.json());
-        }
-        
-      } catch (err) {
-        console.error('Critical error fetching user data:', err);
-        setError('Some data could not be loaded.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchUserData = useCallback(async (showLoadingState = true) => {
+    if (!user?.email) return;
     
-    fetchUserData();
+    if (showLoadingState) {
+      setIsLoading(true);
+    }
+    setError(null);
+    
+    try {
+      const results = await Promise.allSettled([
+        fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
+        fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`),
+        fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`)
+      ]);
+
+      if (results[0].status === 'fulfilled' && results[0].value.ok) {
+        setDbBookings(await results[0].value.json());
+      } else {
+        console.error('Bookings failed to load');
+      }
+
+      if (results[1].status === 'fulfilled' && results[1].value.ok) {
+        setDbRSVPs(await results[1].value.json());
+      }
+
+      if (results[2].status === 'fulfilled' && results[2].value.ok) {
+        setDbWellnessEnrollments(await results[2].value.json());
+      }
+      
+    } catch (err) {
+      console.error('Critical error fetching user data:', err);
+      setError('Some data could not be loaded.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [user?.email]);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
+
+  const handleRefresh = useCallback(async () => {
+    await fetchUserData(false);
+  }, [fetchUserData]);
 
   const allItems = [
     ...dbBookings.map(b => ({
@@ -300,57 +307,52 @@ const Dashboard: React.FC = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  if (isLoading) {
+    return <DashboardSkeleton isDark={isDark} />;
+  }
+
   return (
-    <div className="px-6 pt-4 pb-32 font-sans relative min-h-full">
-      {/* Welcome banner for new members */}
-      <WelcomeBanner />
-      
-      <div className="mb-6">
-        <div className="flex items-center gap-3 animate-pop-in">
-          <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-primary'}`}>
-            {getGreeting()}, {user?.name.split(' ')[0]}
-          </h1>
-          {user?.tier && (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getTierBadgeStyle(user.tier)}`}>
-              {getBaseTier(user.tier)}
-            </span>
+    <>
+    <PullToRefresh onRefresh={handleRefresh} className="h-screen overflow-y-auto">
+      <div className="px-6 pt-4 pb-32 font-sans relative min-h-full">
+        <WelcomeBanner />
+        
+        <div className="mb-6">
+          <div className="flex items-center gap-3 animate-pop-in">
+            <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-primary'}`}>
+              {getGreeting()}, {user?.name.split(' ')[0]}
+            </h1>
+            {user?.tier && (
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getTierBadgeStyle(user.tier)}`}>
+                {getBaseTier(user.tier)}
+              </span>
+            )}
+          </div>
+          <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/60' : 'text-primary/60'}`} style={{animationDelay: '0.1s'}}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+
+        <div className={`mb-6 p-5 rounded-3xl animate-pop-in backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`} style={{animationDelay: '0.12s'}}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm ${isDark ? 'bg-white/20' : 'bg-white/30'}`}>
+                <span className="material-symbols-outlined text-brand-green text-3xl drop-shadow-sm">schedule</span>
+              </div>
+              <div>
+                <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user?.lifetimeVisits || 0}</p>
+                <p className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Lifetime Visits</p>
+              </div>
+            </div>
+          </div>
+          {user?.lastBookingDate && (
+            <p className={`mt-4 pt-3 text-xs border-t ${isDark ? 'border-white/15 text-white/50' : 'border-white/30 text-primary/50'}`}>
+              Last visited: {formatLastVisit(user.lastBookingDate)}
+            </p>
           )}
         </div>
-        <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/60' : 'text-primary/60'}`} style={{animationDelay: '0.1s'}}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </p>
-      </div>
 
-      {/* Stats Card - Liquid Glass */}
-      <div className={`mb-6 p-5 rounded-3xl animate-pop-in backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`} style={{animationDelay: '0.12s'}}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm ${isDark ? 'bg-white/20' : 'bg-white/30'}`}>
-              <span className="material-symbols-outlined text-brand-green text-3xl drop-shadow-sm">schedule</span>
-            </div>
-            <div>
-              <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user?.lifetimeVisits || 0}</p>
-              <p className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Lifetime Visits</p>
-            </div>
-          </div>
-        </div>
-        {user?.lastBookingDate && (
-          <p className={`mt-4 pt-3 text-xs border-t ${isDark ? 'border-white/15 text-white/50' : 'border-white/30 text-primary/50'}`}>
-            Last visited: {formatLastVisit(user.lastBookingDate)}
-          </p>
-        )}
-      </div>
-
-      {isLoading ? (
-        <div className="space-y-6">
-          <div className={`rounded-3xl p-6 ${isDark ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
-            <div className={`animate-pulse h-6 w-24 rounded mb-4 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-            <div className={`animate-pulse h-8 w-2/3 rounded mb-2 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-            <div className={`animate-pulse h-5 w-1/2 rounded ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-          </div>
-          <SkeletonList count={3} Component={BookingCardSkeleton} isDark={isDark} />
-        </div>
-      ) : error ? (
+        {error ? (
         <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm flex items-center gap-3 mb-6">
           <span className="material-symbols-outlined">error</span>
           {error}
@@ -465,31 +467,33 @@ const Dashboard: React.FC = () => {
           </div>
         </>
       )}
+      </div>
+    </PullToRefresh>
 
-      {confirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
-          <div className={`relative w-full max-w-sm p-6 rounded-2xl shadow-2xl animate-pop-in ${isDark ? 'bg-[#1e2810] border border-white/10 text-white' : 'bg-white text-primary'}`}>
-            <h3 className="text-xl font-bold mb-2">{confirmModal.title}</h3>
-            <p className={`mb-6 text-sm ${isDark ? 'opacity-70' : 'opacity-70'}`}>{confirmModal.message}</p>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setConfirmModal(null)}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm ${isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}
-              >
-                Keep it
-              </button>
-              <button 
-                onClick={confirmModal.onConfirm}
-                className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-500 hover:bg-red-600 text-white shadow-lg"
-              >
-                Yes, Cancel
-              </button>
-            </div>
+    {confirmModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
+        <div className={`relative w-full max-w-sm p-6 rounded-2xl shadow-2xl animate-pop-in ${isDark ? 'bg-[#1e2810] border border-white/10 text-white' : 'bg-white text-primary'}`}>
+          <h3 className="text-xl font-bold mb-2">{confirmModal.title}</h3>
+          <p className={`mb-6 text-sm ${isDark ? 'opacity-70' : 'opacity-70'}`}>{confirmModal.message}</p>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setConfirmModal(null)}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm ${isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}
+            >
+              Keep it
+            </button>
+            <button 
+              onClick={confirmModal.onConfirm}
+              className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-500 hover:bg-red-600 text-white shadow-lg"
+            >
+              Yes, Cancel
+            </button>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    )}
+  </>
   );
 };
 

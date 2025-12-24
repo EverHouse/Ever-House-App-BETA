@@ -122,7 +122,6 @@ const StaffBottomNav: React.FC<{
   const itemCount = visibleItems.length;
   
   const blobWidth = 100 / itemCount;
-  const blobLeft = activeIndex * blobWidth;
   
   const navContent = (
     <nav 
@@ -131,10 +130,10 @@ const StaffBottomNav: React.FC<{
     >
       <div className="relative flex items-center w-full">
         <div 
-          className="absolute top-0 bottom-0 rounded-full pointer-events-none bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+          className="absolute top-0 bottom-0 left-0 rounded-full pointer-events-none bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
           style={{ 
             width: `${blobWidth}%`, 
-            left: `${blobLeft}%`,
+            transform: `translateX(${activeIndex * 100}%)`,
           }}
         />
         

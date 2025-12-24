@@ -629,7 +629,6 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
   const itemCount = MEMBER_NAV_ITEMS.length;
   
   const blobWidth = 100 / itemCount;
-  const blobLeft = activeIndex >= 0 ? activeIndex * blobWidth : 0;
   
   const navContent = (
     <div className="fixed bottom-0 left-0 right-0 flex justify-center z-[9999] px-4 pb-4 safe-area-bottom pointer-events-auto">
@@ -645,14 +644,14 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
         <div className="relative flex items-center w-full">
           {activeIndex >= 0 && (
             <div 
-              className={`absolute top-0 bottom-0 rounded-full pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+              className={`absolute top-0 bottom-0 left-0 rounded-full pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                 isDarkTheme
                   ? 'bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]'
                   : 'bg-gradient-to-b from-white/40 to-white/20 shadow-[0_0_16px_rgba(255,255,255,0.3),inset_0_1px_1px_rgba(255,255,255,0.4)]'
               }`}
               style={{ 
                 width: `${blobWidth}%`, 
-                left: `${blobLeft}%`,
+                transform: `translateX(${activeIndex * 100}%)`,
               }}
             />
           )}
