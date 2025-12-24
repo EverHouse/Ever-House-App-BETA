@@ -507,3 +507,81 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
     return { synced: 0, created: 0, updated: 0, error: 'Failed to sync wellness classes' };
   }
 }
+
+export async function backfillWellnessToCalendar(): Promise<{ created: number; total: number; errors: string[] }> {
+  const errors: string[] = [];
+  let created = 0;
+  
+  try {
+    await discoverCalendarIds();
+    const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
+    
+    if (!calendarId) {
+      return { created: 0, total: 0, errors: ['Wellness calendar not found'] };
+    }
+    
+    const classesWithoutCalendar = await pool.query(
+      `SELECT * FROM wellness_classes WHERE google_calendar_id IS NULL AND date >= CURRENT_DATE ORDER BY date ASC`
+    );
+    
+    const convertTo24Hour = (timeStr: string): string => {
+      const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (match12h) {
+        let hours = parseInt(match12h[1]);
+        const minutes = match12h[2];
+        const period = match12h[3].toUpperCase();
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+      }
+      const match24h = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (match24h) {
+        const hours = match24h[1].padStart(2, '0');
+        const minutes = match24h[2];
+        const seconds = match24h[3] || '00';
+        return `${hours}:${minutes}:${seconds}`;
+      }
+      return '09:00:00';
+    };
+    
+    const calculateEndTime = (startTime24: string, durationStr: string): string => {
+      const durationMatch = durationStr.match(/(\d+)/);
+      const durationMinutes = durationMatch ? parseInt(durationMatch[1]) : 60;
+      const [hours, minutes] = startTime24.split(':').map(Number);
+      const totalMinutes = hours * 60 + minutes + durationMinutes;
+      const endHours = Math.floor(totalMinutes / 60) % 24;
+      const endMins = totalMinutes % 60;
+      return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
+    };
+    
+    for (const wc of classesWithoutCalendar.rows) {
+      try {
+        const calendarTitle = `${wc.category} - ${wc.title} with ${wc.instructor}`;
+        const calendarDescription = [wc.description, `Duration: ${wc.duration}`, `Spots: ${wc.spots}`].filter(Boolean).join('\n');
+        const startTime24 = convertTo24Hour(wc.time);
+        const endTime24 = calculateEndTime(startTime24, wc.duration);
+        
+        const googleCalendarId = await createCalendarEventOnCalendar(
+          calendarId,
+          calendarTitle,
+          calendarDescription,
+          wc.date,
+          startTime24,
+          endTime24
+        );
+        
+        if (googleCalendarId) {
+          await pool.query('UPDATE wellness_classes SET google_calendar_id = $1 WHERE id = $2', [googleCalendarId, wc.id]);
+          created++;
+        }
+      } catch (err: any) {
+        errors.push(`Class ${wc.id}: ${err.message}`);
+      }
+    }
+    
+    return { created, total: classesWithoutCalendar.rows.length, errors };
+  } catch (error: any) {
+    console.error('Error backfilling wellness to calendar:', error);
+    return { created: 0, total: 0, errors: [`Backfill failed: ${error.message}`] };
+  }
+}

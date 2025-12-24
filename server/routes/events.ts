@@ -4,7 +4,7 @@ import { isStaffOrAdmin } from '../core/middleware';
 import { db } from '../db';
 import { events, eventRsvps } from '../../shared/schema';
 import { eq, and, sql, gte } from 'drizzle-orm';
-import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
+import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, backfillWellnessToCalendar, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 
 const router = Router();
 
@@ -48,13 +48,15 @@ router.post('/api/events/sync', async (req, res) => {
 
 router.post('/api/calendars/sync-all', isStaffOrAdmin, async (req, res) => {
   try {
-    const [eventsResult, wellnessResult] = await Promise.all([
+    const [eventsResult, wellnessResult, backfillResult] = await Promise.all([
       syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' })),
-      syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }))
+      syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' })),
+      backfillWellnessToCalendar().catch(() => ({ created: 0, total: 0, errors: ['Backfill failed'] }))
     ]);
     
     const eventsSynced = eventsResult?.synced || 0;
     const wellnessSynced = wellnessResult?.synced || 0;
+    const wellnessBackfilled = backfillResult?.created || 0;
     
     res.json({
       success: true,
@@ -70,7 +72,12 @@ router.post('/api/calendars/sync-all', isStaffOrAdmin, async (req, res) => {
         updated: wellnessResult?.updated || 0,
         error: wellnessResult?.error
       },
-      message: `Synced ${eventsSynced} events and ${wellnessSynced} wellness classes from Google Calendar`
+      wellnessBackfill: {
+        created: wellnessBackfilled,
+        total: backfillResult?.total || 0,
+        errors: backfillResult?.errors?.length > 0 ? backfillResult.errors : undefined
+      },
+      message: `Synced ${eventsSynced} events and ${wellnessSynced} wellness classes from Google Calendar. Created ${wellnessBackfilled} calendar events for existing classes.`
     });
   } catch (error: any) {
     if (!isProduction) console.error('Calendar sync error:', error);
