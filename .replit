@@ -98,4 +98,4 @@ DEV_LOGIN_ENABLED = "true"
 [deployment]
 deploymentTarget = "autoscale"
 run = ["npm", "run", "start"]
-build = ["npm", "run", "build"]
+build = ["bash", "-c", "npm run build && npm run seed"]
