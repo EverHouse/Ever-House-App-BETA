@@ -602,6 +602,10 @@ html.dark a:focus-visible {
   animation: pageEnter 0.15s ease-out forwards;
 }
 
+.page-fade-in {
+  animation: pageEnter 0.2s ease-out forwards;
+}
+
 /* Page Content Animation - Staggered fade for page elements (no vertical offset) */
 @keyframes pageContentEnter {
   0% {

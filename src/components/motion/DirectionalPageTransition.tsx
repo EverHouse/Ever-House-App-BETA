@@ -1,6 +1,4 @@
 import React, { createContext, useContext } from 'react';
-import { motion, Variants, useReducedMotion } from 'framer-motion';
-import { useIsTouchDevice } from '../../hooks/useIsTouchDevice';
 
 export interface TransitionCustom {
   direction: number;
@@ -17,61 +15,11 @@ interface DirectionalPageTransitionProps {
   children: React.ReactNode;
 }
 
-const pageVariants: Variants = {
-  initial: (custom: TransitionCustom = defaultCustom) => ({
-    x: (custom?.direction ?? 1) > 0 ? '100%' : '-100%',
-    opacity: 0,
-  }),
-  animate: {
-    x: 0,
-    opacity: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 350,
-      damping: 35,
-      mass: 0.8,
-    },
-  },
-  exit: (custom: TransitionCustom = defaultCustom) => ({
-    x: (custom?.direction ?? 1) > 0 ? '-15%' : '15%',
-    opacity: 0,
-    transition: {
-      type: 'tween',
-      duration: 0.2,
-      ease: 'easeOut',
-    },
-  }),
-};
-
 const DirectionalPageTransition: React.FC<DirectionalPageTransitionProps> = ({ children }) => {
-  const transitionState = useTransitionState();
-  const prefersReducedMotion = useReducedMotion();
-  const isTouchDevice = useIsTouchDevice();
-
-  if (isTouchDevice || prefersReducedMotion) {
-    return (
-      <div style={{ minHeight: '100%' }}>
-        {children}
-      </div>
-    );
-  }
-  
   return (
-    <motion.div
-      custom={transitionState}
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      style={{
-        willChange: 'transform, opacity',
-        minHeight: '100%',
-        transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden',
-      }}
-    >
+    <div className="page-fade-in" style={{ minHeight: '100%' }}>
       {children}
-    </motion.div>
+    </div>
   );
 };
 

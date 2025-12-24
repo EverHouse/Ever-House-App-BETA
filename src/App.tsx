@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useContext, ErrorInfo, useMemo, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { DataProvider, useData } from './contexts/DataContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { SmoothScrollProvider, useSmoothScroll } from './components/motion/SmoothScroll';
@@ -228,7 +227,6 @@ const AnimatedRoutes: React.FC = () => {
   return (
     <TransitionContext.Provider value={transitionState}>
       <Suspense fallback={<PageSkeleton />}>
-        <AnimatePresence mode="wait" initial={false}>
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<DirectionalPageTransition><Landing /></DirectionalPageTransition>} />
             <Route path="/membership/*" element={<DirectionalPageTransition><Membership /></DirectionalPageTransition>} />
@@ -289,7 +287,6 @@ const AnimatedRoutes: React.FC = () => {
             
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </AnimatePresence>
       </Suspense>
     </TransitionContext.Provider>
   );
