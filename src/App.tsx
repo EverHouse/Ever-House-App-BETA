@@ -13,12 +13,30 @@ import ViewAsBanner from './components/ViewAsBanner';
 import { ToastProvider } from './components/Toast';
 import { NotificationContext } from './contexts/NotificationContext';
 
+const PageSkeleton: React.FC = () => (
+  <div className="px-6 pt-4 animate-pulse">
+    <div className="h-8 w-48 bg-white/10 rounded-lg mb-2" />
+    <div className="h-4 w-32 bg-white/5 rounded mb-6" />
+    <div className="space-y-4">
+      <div className="h-24 bg-white/5 rounded-xl" />
+      <div className="h-24 bg-white/5 rounded-xl" />
+      <div className="h-24 bg-white/5 rounded-xl" />
+    </div>
+  </div>
+);
+
+const lazyWithPrefetch = (importFn: () => Promise<{ default: React.ComponentType<any> }>) => {
+  const Component = lazy(importFn);
+  (Component as any).prefetch = importFn;
+  return Component;
+};
+
 const Dashboard = lazy(() => import('./pages/Member/Dashboard'));
-const BookGolf = lazy(() => import('./pages/Member/BookGolf'));
-const MemberEvents = lazy(() => import('./pages/Member/Events'));
-const MemberWellness = lazy(() => import('./pages/Member/Wellness'));
-const Profile = lazy(() => import('./pages/Member/Profile'));
-const Cafe = lazy(() => import('./pages/Member/Cafe'));
+const BookGolf = lazyWithPrefetch(() => import('./pages/Member/BookGolf'));
+const MemberEvents = lazyWithPrefetch(() => import('./pages/Member/Events'));
+const MemberWellness = lazyWithPrefetch(() => import('./pages/Member/Wellness'));
+const Profile = lazyWithPrefetch(() => import('./pages/Member/Profile'));
+const Cafe = lazyWithPrefetch(() => import('./pages/Member/Cafe'));
 const Sims = lazy(() => import('./pages/Member/Sims'));
 const Landing = lazy(() => import('./pages/Public/Landing'));
 const Membership = lazy(() => import('./pages/Public/Membership'));
@@ -35,14 +53,19 @@ const VerifyMagicLink = lazy(() => import('./pages/Public/VerifyMagicLink'));
 const AuthCallback = lazy(() => import('./pages/Public/AuthCallback'));
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 
-const PageLoader: React.FC = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="flex flex-col items-center gap-3">
-      <div className="w-8 h-8 border-3 border-current border-t-transparent rounded-full animate-spin opacity-60" />
-      <span className="text-sm opacity-50">Loading...</span>
-    </div>
-  </div>
-);
+const prefetchRoute = (path: string) => {
+  const routeMap: Record<string, any> = {
+    '/member-events': MemberEvents,
+    '/member-wellness': MemberWellness,
+    '/book': BookGolf,
+    '/profile': Profile,
+    '/cafe': Cafe
+  };
+  const component = routeMap[path];
+  if (component?.prefetch) {
+    component.prefetch();
+  }
+};
 
 const useDebugLayout = () => {
   useEffect(() => {
@@ -204,7 +227,7 @@ const AnimatedRoutes: React.FC = () => {
 
   return (
     <TransitionContext.Provider value={transitionState}>
-      <Suspense fallback={<PageLoader />}>
+      <Suspense fallback={<PageSkeleton />}>
         <AnimatePresence mode="wait" initial={false}>
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<DirectionalPageTransition><Landing /></DirectionalPageTransition>} />
@@ -642,12 +665,15 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
               }
               navigate(item.path);
             };
+
+            const handlePrefetch = () => prefetchRoute(item.path);
             
             return (
               <button
                 type="button"
                 key={item.path}
                 onClick={handleNavClick}
+                onMouseEnter={handlePrefetch}
                 onTouchStart={import.meta.env.DEV ? () => console.log(`[MemberNav] touchstart for "${item.label}"`) : undefined}
                 onTouchEnd={import.meta.env.DEV ? () => console.log(`[MemberNav] touchend for "${item.label}"`) : undefined}
                 style={{ touchAction: 'manipulation' }}
