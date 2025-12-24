@@ -18,7 +18,7 @@ async function getAccessToken() {
     throw new Error('X_REPLIT_TOKEN not found for repl/depl');
   }
 
-  connectionSettings = await fetch(
+  const res = await fetch(
     'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=hubspot',
     {
       headers: {
@@ -26,7 +26,12 @@ async function getAccessToken() {
         'X_REPLIT_TOKEN': xReplitToken
       }
     }
-  ).then(res => res.json()).then(data => data.items?.[0]);
+  );
+  if (!res.ok) {
+    throw new Error('Failed to fetch HubSpot connection settings');
+  }
+  const data = await res.json();
+  connectionSettings = data.items?.[0];
 
   const accessToken = connectionSettings?.settings?.access_token || connectionSettings?.settings?.oauth?.credentials?.access_token;
 

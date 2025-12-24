@@ -35,7 +35,10 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (user?.email) {
       fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch guest passes');
+          return res.json();
+        })
         .then(data => setGuestPasses(data))
         .catch(err => console.error('Error fetching guest passes:', err));
     }
@@ -217,6 +220,7 @@ const Profile: React.FC = () => {
         onSuccess={async () => {
           try {
             const res = await fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`);
+            if (!res.ok) throw new Error('Failed to refresh guest passes');
             const data = await res.json();
             setGuestPasses(data);
           } catch (err) {
