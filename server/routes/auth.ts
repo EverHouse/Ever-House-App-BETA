@@ -25,6 +25,60 @@ async function isStaffEmail(email: string): Promise<boolean> {
   }
 }
 
+async function getStaffData(email: string): Promise<{ firstName: string; lastName: string; phone: string; jobTitle: string } | null> {
+  if (!email) return null;
+  try {
+    const result = await db.select({
+      firstName: staffUsers.firstName,
+      lastName: staffUsers.lastName,
+      phone: staffUsers.phone,
+      jobTitle: staffUsers.jobTitle
+    })
+      .from(staffUsers)
+      .where(sql`LOWER(${staffUsers.email}) = LOWER(${email})`);
+    
+    if (result.length > 0) {
+      return {
+        firstName: result[0].firstName || '',
+        lastName: result[0].lastName || '',
+        phone: result[0].phone || '',
+        jobTitle: result[0].jobTitle || ''
+      };
+    }
+    return null;
+  } catch (error) {
+    if (!isProduction) console.error('Error fetching staff data:', error);
+    return null;
+  }
+}
+
+async function getAdminData(email: string): Promise<{ firstName: string; lastName: string; phone: string; jobTitle: string } | null> {
+  if (!email) return null;
+  try {
+    const result = await db.select({
+      firstName: adminUsers.firstName,
+      lastName: adminUsers.lastName,
+      phone: adminUsers.phone,
+      jobTitle: adminUsers.jobTitle
+    })
+      .from(adminUsers)
+      .where(sql`LOWER(${adminUsers.email}) = LOWER(${email})`);
+    
+    if (result.length > 0) {
+      return {
+        firstName: result[0].firstName || '',
+        lastName: result[0].lastName || '',
+        phone: result[0].phone || '',
+        jobTitle: result[0].jobTitle || ''
+      };
+    }
+    return null;
+  } catch (error) {
+    if (!isProduction) console.error('Error fetching admin data:', error);
+    return null;
+  }
+}
+
 async function getUserRole(email: string): Promise<'admin' | 'staff' | 'member'> {
   const normalizedEmail = email.toLowerCase();
   if (await isAdminEmail(normalizedEmail)) {
@@ -180,12 +234,36 @@ router.post('/api/auth/verify-member', async (req, res) => {
     
     const role = await getUserRole(email.toLowerCase());
 
+    let firstName = contact.properties.firstname || '';
+    let lastName = contact.properties.lastname || '';
+    let phone = contact.properties.phone || '';
+    let jobTitle = '';
+
+    if (role === 'staff') {
+      const staffData = await getStaffData(email.toLowerCase());
+      if (staffData) {
+        firstName = staffData.firstName || firstName;
+        lastName = staffData.lastName || lastName;
+        phone = staffData.phone || phone;
+        jobTitle = staffData.jobTitle || '';
+      }
+    } else if (role === 'admin') {
+      const adminData = await getAdminData(email.toLowerCase());
+      if (adminData) {
+        firstName = adminData.firstName || firstName;
+        lastName = adminData.lastName || lastName;
+        phone = adminData.phone || phone;
+        jobTitle = adminData.jobTitle || '';
+      }
+    }
+
     const member = {
       id: contact.id,
-      firstName: contact.properties.firstname || '',
-      lastName: contact.properties.lastname || '',
+      firstName,
+      lastName,
       email: contact.properties.email || email,
-      phone: contact.properties.phone || '',
+      phone,
+      jobTitle,
       tier: contact.properties.membership_tier || 'Core',
       tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
       mindbodyClientId: contact.properties.mindbody_client_id || '',

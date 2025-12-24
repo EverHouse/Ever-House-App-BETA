@@ -52,6 +52,7 @@ export interface MemberProfile {
   status: 'Active' | 'Pending';
   email: string;
   phone: string;
+  jobTitle?: string;
   joinDate?: string;
   avatar?: string;
   role?: 'member' | 'staff' | 'admin';
@@ -372,6 +373,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
                   status: 'Active',
                   email: freshMember.email,
                   phone: freshMember.phone || '',
+                  jobTitle: freshMember.jobTitle || '',
                   role: freshMember.role || 'member',
                   mindbodyClientId: freshMember.mindbodyClientId || '',
                   lifetimeVisits: freshMember.lifetimeVisits || 0,
@@ -609,6 +611,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       status: 'Active',
       email: member.email,
       phone: member.phone || '',
+      jobTitle: member.jobTitle || '',
       role: member.role || 'member',
       mindbodyClientId: member.mindbodyClientId || '',
       lifetimeVisits: member.lifetimeVisits || 0,
@@ -628,6 +631,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       status: 'Active',
       email: member.email,
       phone: member.phone || '',
+      jobTitle: member.jobTitle || '',
       role: member.role || 'member',
       mindbodyClientId: member.mindbodyClientId || '',
       lifetimeVisits: member.lifetimeVisits || 0,
@@ -664,6 +668,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           status: 'Active',
           email: member.email,
           phone: member.phone || '',
+          jobTitle: member.jobTitle || '',
           role: member.role || 'member',
           mindbodyClientId: member.mindbodyClientId || '',
           lifetimeVisits: member.lifetimeVisits || 0,

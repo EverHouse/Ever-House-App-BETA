@@ -121,6 +121,7 @@ const Profile: React.FC = () => {
          <Section title="Account" isDark={isDark}>
             <Row icon="mail" label="Email" value={user.email} isDark={isDark} />
             <Row icon="call" label="Phone" value={user.phone} isDark={isDark} />
+            {user.jobTitle && <Row icon="badge" label="Role" value={user.jobTitle} isDark={isDark} />}
          </Section>
 
          <Section title="Membership Benefits" isDark={isDark}>
