@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db';
 import { formSubmissions } from '../../shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, SQL } from 'drizzle-orm';
 import { isStaffOrAdmin } from '../core/middleware';
 
 const router = Router();
@@ -10,14 +10,19 @@ router.get('/api/admin/inquiries', isStaffOrAdmin, async (req, res) => {
   try {
     const { status, formType } = req.query;
     
-    let query = db.select().from(formSubmissions);
+    const conditions: SQL[] = [];
     
     if (status && typeof status === 'string') {
-      query = query.where(eq(formSubmissions.status, status)) as typeof query;
+      conditions.push(eq(formSubmissions.status, status));
     }
     
     if (formType && typeof formType === 'string') {
-      query = query.where(eq(formSubmissions.formType, formType)) as typeof query;
+      conditions.push(eq(formSubmissions.formType, formType));
+    }
+    
+    let query = db.select().from(formSubmissions);
+    if (conditions.length > 0) {
+      query = query.where(conditions.length === 1 ? conditions[0] : and(...conditions)) as typeof query;
     }
     
     const result = await query.orderBy(desc(formSubmissions.createdAt));

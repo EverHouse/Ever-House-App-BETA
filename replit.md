@@ -61,16 +61,20 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
   - When scrolling: nav floats 2rem above bottom with glass effect.
 
 ### Feature Specifications
-- **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details, Cafe Menu (view-only).
+- **Public Pages**: Landing, Login, Contact, FAQ (database-driven), Gallery, Membership details, Cafe Menu (view-only).
 - **Member-Only Pages**: Dashboard, Book Golf, Announcements/News, Events, Profile, Wellness.
-- **Admin Functionality**: Management of members, events, cafe menu, announcements/news, and booking requests.
+- **Staff Portal**: Simplified 5-tab navigation (Home, Sims, Events, Wellness, News). Dashboard home with quick access cards for: Directory, Cafe Menu, Team Access, Gallery, FAQs, Inquiries, Data Conflicts.
+- **Admin Functionality**: Management of members, events, cafe menu, announcements/news, booking requests, FAQs, gallery photos, and inquiry submissions.
+- **FAQ Admin**: Full CRUD for managing FAQs with seeding capability. FAQs stored in PostgreSQL and served via API.
+- **Inquiries Admin**: View and manage form submissions (contact, tour-request, membership, private-hire, guest-checkin). Filter by status (new/read/replied/archived) and form type. Add staff notes.
+- **Gallery Admin**: Manage venue photos with soft-delete support. Images stored in PostgreSQL with category, sort order, and active status.
 - **API Endpoints**: Comprehensive REST API for all core functionalities.
 
 ## External Dependencies
 
 -   **Magic Link Authentication**: Email-based passwordless authentication. Sessions stored in PostgreSQL. Emails sent via Resend. Rate-limited.
 -   **HubSpot CRM**: Integrated for contact and member management; access tokens refreshed via Replit Connectors.
--   **HubSpot Forms**: Application forms submit directly to HubSpot Forms API, utilizing `hutk` cookie.
+-   **HubSpot Forms**: Application forms submit directly to HubSpot Forms API, utilizing `hutk` cookie. Submissions also stored locally in PostgreSQL for faster queries and offline access.
 -   **Eventbrite**: Syncs members-only events from a specified Eventbrite organization to the application database.
 -   **Google Calendar**: Four-calendar integration with full two-way sync for:
     -   **Booked Golf**: Primary for golf simulator bookings.

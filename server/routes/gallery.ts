@@ -88,12 +88,19 @@ router.delete('/api/admin/gallery/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
-    await db.delete(galleryImages).where(eq(galleryImages.id, parseInt(id)));
+    const [updated] = await db.update(galleryImages)
+      .set({ isActive: false })
+      .where(eq(galleryImages.id, parseInt(id)))
+      .returning();
     
-    res.json({ success: true });
+    if (!updated) {
+      return res.status(404).json({ error: 'Gallery image not found' });
+    }
+    
+    res.json({ success: true, archived: updated });
   } catch (error: any) {
     console.error('Gallery delete error:', error);
-    res.status(500).json({ error: 'Failed to delete gallery image' });
+    res.status(500).json({ error: 'Failed to archive gallery image' });
   }
 });
 
