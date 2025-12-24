@@ -35,7 +35,8 @@ export function getSession() {
   const databaseUrl = process.env.DATABASE_URL;
   
   if (!sessionSecret) {
-    console.warn('[Session] SESSION_SECRET is missing - using in-memory session store');
+    console.warn('[Session] SESSION_SECRET is missing');
+    console.log('[Session] Using MemoryStore');
     return session({
       secret: 'temporary-fallback-secret-' + Date.now(),
       resave: false,
@@ -45,7 +46,7 @@ export function getSession() {
   }
   
   if (!databaseUrl) {
-    console.warn('[Session] DATABASE_URL is missing - using in-memory session store');
+    console.log('[Session] Using MemoryStore');
     return session({
       secret: sessionSecret,
       resave: false,
@@ -67,6 +68,7 @@ export function getSession() {
       },
     });
     
+    console.log('[Session] Using Postgres session store');
     return session({
       secret: sessionSecret,
       store: sessionStore,
@@ -79,7 +81,8 @@ export function getSession() {
       },
     });
   } catch (err: any) {
-    console.warn('[Session] Failed to create Postgres session store, using in-memory:', err.message);
+    console.warn('[Session] Postgres store failed, using MemoryStore:', err.message);
+    console.log('[Session] Using MemoryStore');
     return session({
       secret: sessionSecret,
       resave: false,
@@ -89,12 +92,22 @@ export function getSession() {
   }
 }
 
+async function queryWithRetry(pool: Pool, query: string, params: any[]): Promise<any> {
+  try {
+    return await pool.query(query, params);
+  } catch (error: any) {
+    console.warn('[Auth] Query failed, retrying once:', error.message);
+    return await pool.query(query, params);
+  }
+}
+
 export async function isAdminEmail(email: string): Promise<boolean> {
   const pool = getAuthPool();
   if (!pool) return false;
   
   try {
-    const result = await pool.query(
+    const result = await queryWithRetry(
+      pool,
       'SELECT id FROM admin_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
       [email]
     );
@@ -152,7 +165,8 @@ export const isStaffOrAdmin: RequestHandler = async (req, res, next) => {
   }
 
   try {
-    const result = await pool.query(
+    const result = await queryWithRetry(
+      pool,
       'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
       [email]
     );
