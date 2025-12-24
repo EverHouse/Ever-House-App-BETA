@@ -20,7 +20,7 @@ const GUEST_CHECKIN_FIELDS = [
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useData();
+  const { user, logout, actualUser, isViewingAs } = useData();
   const { themeMode, setThemeMode, effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const [isCardOpen, setIsCardOpen] = useState(false);
@@ -29,6 +29,11 @@ const Profile: React.FC = () => {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+
+  // Check if viewing a staff/admin profile (either directly or via view-as)
+  const isStaffOrAdminProfile = user?.role === 'admin' || user?.role === 'staff';
+  // Check if actual user is admin viewing as someone
+  const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
 
   const tierPermissions = getTierPermissions(user?.tier || 'Social');
 
@@ -130,35 +135,47 @@ const Profile: React.FC = () => {
             {user.jobTitle && <Row icon="badge" label="Role" value={user.jobTitle} isDark={isDark} />}
          </Section>
 
-         <Section title="Membership Benefits" isDark={isDark}>
-            <Row icon="calendar_month" label="Advance Booking" value={tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.advanceBookingDays} days`} isDark={isDark} />
-            {tierPermissions.canBookSimulators && (
-              <Row icon="sports_golf" label="Daily Simulator Time" value={tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.dailySimulatorMinutes} min`} isDark={isDark} />
-            )}
-            {guestPasses && (
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>group_add</span>
-                    <span className={`text-sm ${isDark ? '' : 'text-primary'}`}>Guest Passes</span>
+         {/* Membership Benefits - only show for regular members, not staff/admin */}
+         {!isStaffOrAdminProfile && (
+           <Section title="Membership Benefits" isDark={isDark}>
+              <Row icon="calendar_month" label="Advance Booking" value={tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.advanceBookingDays} days`} isDark={isDark} />
+              {tierPermissions.canBookSimulators && (
+                <Row icon="sports_golf" label="Daily Simulator Time" value={tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.dailySimulatorMinutes} min`} isDark={isDark} />
+              )}
+              {guestPasses && (
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>group_add</span>
+                      <span className={`text-sm ${isDark ? '' : 'text-primary'}`}>Guest Passes</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-brand-green'}`}>{guestPasses.passes_remaining}</span>
+                      <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>/ {guestPasses.passes_total} remaining</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-brand-green'}`}>{guestPasses.passes_remaining}</span>
-                    <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>/ {guestPasses.passes_total} remaining</span>
-                  </div>
+                  {guestPasses.passes_remaining > 0 && (
+                    <button
+                      onClick={() => setShowGuestCheckin(true)}
+                      className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${isDark ? 'bg-accent/20 hover:bg-accent/30 text-accent' : 'bg-brand-green/10 hover:bg-brand-green/20 text-brand-green'}`}
+                    >
+                      <span className="material-symbols-outlined text-lg">confirmation_number</span>
+                      Check In a Guest
+                    </button>
+                  )}
                 </div>
-                {guestPasses.passes_remaining > 0 && (
-                  <button
-                    onClick={() => setShowGuestCheckin(true)}
-                    className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${isDark ? 'bg-accent/20 hover:bg-accent/30 text-accent' : 'bg-brand-green/10 hover:bg-brand-green/20 text-brand-green'}`}
-                  >
-                    <span className="material-symbols-outlined text-lg">confirmation_number</span>
-                    Check In a Guest
-                  </button>
-                )}
-              </div>
-            )}
-         </Section>
+              )}
+           </Section>
+         )}
+         
+         {/* Staff Info - only show for staff/admin users */}
+         {isStaffOrAdminProfile && (
+           <Section title="Staff Information" isDark={isDark}>
+              <Row icon="shield_person" label="Role" value={user?.role === 'admin' ? 'Administrator' : 'Staff'} isDark={isDark} />
+              {user?.jobTitle && <Row icon="work" label="Position" value={user.jobTitle} isDark={isDark} />}
+              <Row icon="verified" label="Portal Access" value="Staff Portal" isDark={isDark} />
+           </Section>
+         )}
 
          <Section title="Appearance" isDark={isDark}>
             <div className="p-4">
@@ -239,8 +256,9 @@ const Profile: React.FC = () => {
       {/* Full Screen Card Modal */}
       {isCardOpen && createPortal((() => {
          const tierColors = getTierColor(user.tier || 'Social');
-         const cardBgColor = tierColors.bg;
-         const cardTextColor = tierColors.text;
+         // Use a different color for staff/admin cards
+         const cardBgColor = isStaffOrAdminProfile ? '#293515' : tierColors.bg;
+         const cardTextColor = isStaffOrAdminProfile ? '#F2F2EC' : tierColors.text;
          return (
             <div className="fixed inset-0 z-[10001] overflow-y-auto">
                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200" onClick={() => setIsCardOpen(false)} />
@@ -257,22 +275,45 @@ const Profile: React.FC = () => {
                    {/* Body */}
                    <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4" style={{ backgroundColor: cardBgColor }}>
                        <h2 className="text-3xl font-bold" style={{ color: cardTextColor }}>{user.name}</h2>
-                       <div className="flex items-center justify-center gap-2 flex-wrap">
-                          <TierBadge tier={user.tier || 'Social'} size="md" />
-                       </div>
-                       <div className="flex items-center justify-center gap-2 flex-wrap">
-                          {(user.tags || []).map((tag) => (
-                             <TagBadge key={tag} tag={tag} size="sm" />
-                          ))}
-                          {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
-                             <TagBadge tag="Founding Member" size="sm" />
-                          )}
-                       </div>
-                       {user.mindbodyClientId && (
-                          <div className="mt-4 pt-4 border-t w-full" style={{ borderColor: `${cardTextColor}20` }}>
-                             <span className="text-xs font-bold uppercase tracking-wider opacity-60" style={{ color: cardTextColor }}>Mindbody ID</span>
-                             <p className="text-xl font-mono font-bold mt-1" style={{ color: cardTextColor }}>{user.mindbodyClientId}</p>
-                          </div>
+                       
+                       {/* Staff/Admin: Show role badge instead of tier */}
+                       {isStaffOrAdminProfile ? (
+                         <>
+                           <div className="flex items-center justify-center gap-2 flex-wrap">
+                              <span className="px-3 py-1 rounded-full bg-white/20 text-sm font-bold" style={{ color: cardTextColor }}>
+                                 {user.role === 'admin' ? 'Administrator' : 'Staff'}
+                              </span>
+                           </div>
+                           {user.jobTitle && (
+                             <div className="mt-2">
+                               <span className="text-sm opacity-80" style={{ color: cardTextColor }}>{user.jobTitle}</span>
+                             </div>
+                           )}
+                           <div className="mt-4 pt-4 border-t w-full" style={{ borderColor: `${cardTextColor}20` }}>
+                              <span className="text-xs font-bold uppercase tracking-wider opacity-60" style={{ color: cardTextColor }}>Portal Access</span>
+                              <p className="text-lg font-bold mt-1" style={{ color: cardTextColor }}>Staff Portal</p>
+                           </div>
+                         </>
+                       ) : (
+                         <>
+                           <div className="flex items-center justify-center gap-2 flex-wrap">
+                              <TierBadge tier={user.tier || 'Social'} size="md" />
+                           </div>
+                           <div className="flex items-center justify-center gap-2 flex-wrap">
+                              {(user.tags || []).map((tag) => (
+                                 <TagBadge key={tag} tag={tag} size="sm" />
+                              ))}
+                              {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
+                                 <TagBadge tag="Founding Member" size="sm" />
+                              )}
+                           </div>
+                           {user.mindbodyClientId && (
+                              <div className="mt-4 pt-4 border-t w-full" style={{ borderColor: `${cardTextColor}20` }}>
+                                 <span className="text-xs font-bold uppercase tracking-wider opacity-60" style={{ color: cardTextColor }}>Mindbody ID</span>
+                                 <p className="text-xl font-mono font-bold mt-1" style={{ color: cardTextColor }}>{user.mindbodyClientId}</p>
+                              </div>
+                           )}
+                         </>
                        )}
                    </div>
 
@@ -280,9 +321,12 @@ const Profile: React.FC = () => {
                        <span className="material-symbols-outlined text-sm">close</span>
                    </button>
                   </div>
-                  <button className="mt-8 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow pointer-events-auto" onClick={() => alert("Added to Wallet")}>
-                      Add to Apple Wallet
-                  </button>
+                  {/* Only show wallet button for regular members */}
+                  {!isStaffOrAdminProfile && (
+                    <button className="mt-8 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow pointer-events-auto" onClick={() => alert("Added to Wallet")}>
+                        Add to Apple Wallet
+                    </button>
+                  )}
                </div>
             </div>
          );

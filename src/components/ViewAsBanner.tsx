@@ -7,8 +7,8 @@ const ViewAsBanner: React.FC = () => {
   
   if (!isViewingAs || !viewAsUser) return null;
   
-  const isAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
-  if (!isAdmin) return null;
+  // Only admins can use view-as-member feature (not staff)
+  if (actualUser?.role !== 'admin') return null;
   
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] bg-accent text-brand-green px-4 py-2 flex items-center justify-between shadow-lg safe-area-pb">

@@ -32,12 +32,16 @@ const generateUpcomingDates = (days: number = 14): { day: string; date: string; 
 };
 
 const MemberEvents: React.FC = () => {
-  const { events, addBooking, isLoading, user } = useData();
+  const { events, addBooking, isLoading, user, actualUser, isViewingAs, viewAsUser } = useData();
   const { effectiveTheme } = useTheme();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   const [filter, setFilter] = useState('All');
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+  const [showViewAsConfirm, setShowViewAsConfirm] = useState(false);
+  
+  // Check if admin is viewing as a member
+  const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
   
   const upcomingDates = useMemo(() => generateUpcomingDates(14), []);
   const [selectedDateIndex, setSelectedDateIndex] = useState<number | null>(null);
@@ -69,9 +73,12 @@ const MemberEvents: React.FC = () => {
     setSelectedDateIndex(selectedDateIndex === index ? null : index);
   };
 
-  const handleRSVP = async () => {
+  // Handle actual RSVP submission
+  const submitRSVP = async () => {
     if (selectedEvent?.source === 'eventbrite' && selectedEvent.externalLink) {
         window.open(selectedEvent.externalLink, '_blank');
+        setShowViewAsConfirm(false);
+        setSelectedEvent(null);
         return;
     }
 
@@ -92,7 +99,19 @@ const MemberEvents: React.FC = () => {
         }
     }
 
+    setShowViewAsConfirm(false);
     setSelectedEvent(null);
+  };
+
+  const handleRSVP = async () => {
+    // If admin is viewing as member, show confirmation popup first (for internal events)
+    if (isAdminViewingAs && selectedEvent?.source !== 'eventbrite') {
+        setShowViewAsConfirm(true);
+        return;
+    }
+    
+    // Otherwise proceed directly
+    await submitRSVP();
   };
 
   return (
@@ -294,6 +313,44 @@ const MemberEvents: React.FC = () => {
                   </div>
                 )}
              </div>
+          </div>
+        </div>
+      )}
+
+      {/* View As Confirmation Modal */}
+      {showViewAsConfirm && viewAsUser && selectedEvent && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowViewAsConfirm(false)} />
+          <div className={`relative w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 border ${isDark ? 'bg-[#1a1d15] border-white/10' : 'bg-white border-black/10'}`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
+                <span className="material-symbols-outlined text-2xl text-amber-500">warning</span>
+              </div>
+              <div>
+                <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-primary'}`}>RSVP on Behalf</h3>
+                <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>View As Mode Active</p>
+              </div>
+            </div>
+            
+            <p className={`text-sm mb-6 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+              You're about to RSVP to <span className="font-bold">{selectedEvent.title}</span> on behalf of <span className="font-bold">{viewAsUser.name}</span>. 
+              This will appear in their event list.
+            </p>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowViewAsConfirm(false)}
+                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-colors ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-primary hover:bg-black/10'}`}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitRSVP}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-sm bg-accent text-brand-green hover:bg-accent/90 transition-colors"
+              >
+                Confirm RSVP
+              </button>
+            </div>
           </div>
         </div>
       )}

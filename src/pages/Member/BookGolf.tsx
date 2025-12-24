@@ -76,7 +76,7 @@ const generateDates = (advanceDays: number = 7): { label: string; date: string; 
 
 const BookGolf: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { addBooking, user, viewAsUser } = useData();
+  const { addBooking, user, viewAsUser, actualUser, isViewingAs } = useData();
   const { effectiveTheme } = useTheme();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
@@ -91,8 +91,12 @@ const BookGolf: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
+  const [showViewAsConfirm, setShowViewAsConfirm] = useState(false);
 
   const effectiveUser = viewAsUser || user;
+  
+  // Check if admin is viewing as a member
+  const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -227,11 +231,13 @@ const BookGolf: React.FC = () => {
     return resources.filter(r => slot.availableResourceDbIds.includes(r.dbId));
   };
 
-  const handleConfirm = async () => {
+  // Handle the actual booking submission
+  const submitBooking = async () => {
     if (!selectedSlot || !selectedResource || !effectiveUser) return;
     
     setIsBooking(true);
     setError(null);
+    setShowViewAsConfirm(false);
     
     try {
       const { ok, data, error } = await apiRequest('/api/booking-requests', {
@@ -283,6 +289,19 @@ const BookGolf: React.FC = () => {
     } finally {
       setIsBooking(false);
     }
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedSlot || !selectedResource || !effectiveUser) return;
+    
+    // If admin is viewing as member, show confirmation popup first
+    if (isAdminViewingAs) {
+      setShowViewAsConfirm(true);
+      return;
+    }
+    
+    // Otherwise proceed directly
+    await submitBooking();
   };
 
   const canBook = Boolean(selectedDateObj && duration && selectedSlot && selectedResource && !isBooking);
@@ -455,6 +474,44 @@ const BookGolf: React.FC = () => {
             <div>
               <p>Request sent!</p>
               <p className="text-[10px] font-normal opacity-80 mt-0.5">Concierge will confirm shortly.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View As Confirmation Modal */}
+      {showViewAsConfirm && viewAsUser && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowViewAsConfirm(false)} />
+          <div className={`relative w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 border ${isDark ? 'bg-[#1a1d15] border-white/10' : 'bg-white border-black/10'}`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
+                <span className="material-symbols-outlined text-2xl text-amber-500">warning</span>
+              </div>
+              <div>
+                <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-primary'}`}>Booking on Behalf</h3>
+                <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>View As Mode Active</p>
+              </div>
+            </div>
+            
+            <p className={`text-sm mb-6 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+              You're about to make a booking on behalf of <span className="font-bold">{viewAsUser.name}</span>. 
+              This booking will appear in their account.
+            </p>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowViewAsConfirm(false)}
+                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-colors ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-primary hover:bg-black/10'}`}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitBooking}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-sm bg-accent text-brand-green hover:bg-accent/90 transition-colors"
+              >
+                Confirm Booking
+              </button>
             </div>
           </div>
         </div>

@@ -166,6 +166,20 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Members Portal route guard - redirects staff/admin to Staff Portal (unless viewing as member)
+const MemberPortalRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, actualUser, isViewingAs } = useData();
+  if (!user) return <Navigate to="/login" replace />;
+  
+  // If staff/admin is NOT viewing as a member, redirect to Staff Portal
+  const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
+  if (isStaffOrAdmin && !isViewingAs) {
+    return <Navigate to="/admin" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { actualUser } = useData();
   if (!actualUser) return <Navigate to="/login" replace />;
@@ -242,39 +256,39 @@ const AnimatedRoutes: React.FC = () => {
             } />
 
             <Route path="/dashboard" element={
-              <ProtectedRoute>
+              <MemberPortalRoute>
                 <DirectionalPageTransition><Dashboard /></DirectionalPageTransition>
-              </ProtectedRoute>
+              </MemberPortalRoute>
             } />
             <Route path="/book" element={
-              <ProtectedRoute>
+              <MemberPortalRoute>
                 <DirectionalPageTransition><BookGolf /></DirectionalPageTransition>
-              </ProtectedRoute>
+              </MemberPortalRoute>
             } />
             <Route path="/member-events" element={
-              <ProtectedRoute>
+              <MemberPortalRoute>
                 <DirectionalPageTransition><MemberEvents /></DirectionalPageTransition>
-              </ProtectedRoute>
+              </MemberPortalRoute>
             } />
             <Route path="/member-wellness" element={
-              <ProtectedRoute>
+              <MemberPortalRoute>
                 <DirectionalPageTransition><MemberWellness /></DirectionalPageTransition>
-              </ProtectedRoute>
+              </MemberPortalRoute>
             } />
             <Route path="/profile" element={
-              <ProtectedRoute>
+              <MemberPortalRoute>
                 <DirectionalPageTransition><Profile /></DirectionalPageTransition>
-              </ProtectedRoute>
+              </MemberPortalRoute>
             } />
             <Route path="/announcements" element={
-              <ProtectedRoute>
+              <MemberPortalRoute>
                 <DirectionalPageTransition><MemberAnnouncements /></DirectionalPageTransition>
-              </ProtectedRoute>
+              </MemberPortalRoute>
             } />
             <Route path="/sims" element={
-              <ProtectedRoute>
+              <MemberPortalRoute>
                 <DirectionalPageTransition><Sims /></DirectionalPageTransition>
-              </ProtectedRoute>
+              </MemberPortalRoute>
             } />
             
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -287,8 +301,11 @@ const AnimatedRoutes: React.FC = () => {
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { announcements, user } = useData();
+  const { announcements, user, actualUser, isViewingAs } = useData();
   const { effectiveTheme } = useTheme();
+  
+  // Check if actual user is staff/admin (for header logic)
+  const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifTab, setNotifTab] = useState<'updates' | 'announcements'>('updates');
@@ -355,12 +372,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   const handleTopRightClick = () => {
     if (user) {
-        if (isProfilePage) {
+        // For staff/admin (not viewing as member), go to Staff Portal
+        if (isStaffOrAdmin && !isViewingAs) {
+            navigate('/admin');
+        } else if (isProfilePage) {
             navigate('/dashboard');
         } else if (isMemberRoute) {
             navigate('/profile');
         } else {
-            navigate('/dashboard');
+            // On public pages, staff/admin go to Staff Portal, members go to dashboard
+            if (isStaffOrAdmin) {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
         }
     } else {
         navigate('/login');
@@ -369,6 +394,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const getTopRightIcon = () => {
       if (!user) return 'login';
+      // For staff/admin not viewing as member, show admin icon
+      if (isStaffOrAdmin && !isViewingAs) return 'admin_panel_settings';
       if (isProfilePage) return 'dashboard';
       if (isMemberRoute) return 'account_circle';
       return 'account_circle';

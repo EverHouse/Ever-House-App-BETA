@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { formatDateShort } from '../utils/dateUtils';
 import { useUserStore } from '../stores/userStore';
 import { getCached, fetchAndCache, startBackgroundSync } from '../lib/backgroundSync';
@@ -397,9 +398,10 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     initializeUser();
   }, [storeUser, setStoreUser]);
   
-  // View As Functions - only for admins
+  // View As Functions - only for admins (not staff)
+  // Uses flushSync to ensure state updates are synchronous before navigation
   const setViewAsUser = async (member: MemberProfile) => {
-    if (actualUser?.role === 'admin' || actualUser?.role === 'staff') {
+    if (actualUser?.role === 'admin') {
       try {
         const res = await fetch(`/api/members/${encodeURIComponent(member.email)}/details`);
         if (res.ok) {
@@ -412,19 +414,27 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             lastBookingDate: details.lastBookingDate || undefined,
             mindbodyClientId: details.mindbodyClientId || ''
           };
-          setViewAsUserState(fullMember);
+          flushSync(() => {
+            setViewAsUserState(fullMember);
+          });
         } else {
-          setViewAsUserState(member);
+          flushSync(() => {
+            setViewAsUserState(member);
+          });
         }
       } catch (err) {
         console.error('Failed to fetch member details:', err);
-        setViewAsUserState(member);
+        flushSync(() => {
+          setViewAsUserState(member);
+        });
       }
     }
   };
   
   const clearViewAsUser = () => {
-    setViewAsUserState(null);
+    flushSync(() => {
+      setViewAsUserState(null);
+    });
   };
 
   // Fetch members from HubSpot for admin/staff users
