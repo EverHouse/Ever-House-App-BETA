@@ -47,7 +47,7 @@ const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 font-display dark:bg-[#1a1d15] transition-colors duration-300 flex flex-col relative">
+    <div className="min-h-screen bg-gray-50 font-display dark:bg-transparent transition-colors duration-300 flex flex-col relative">
       
       {/* Header - rendered via portal to escape transform context */}
       {createPortal(headerContent, document.body)}
