@@ -1,5 +1,8 @@
 import { pool, isProduction } from './db';
 import { getGoogleCalendarClient } from './integrations';
+import { db } from '../db';
+import { wellnessClasses } from '../../shared/models/auth';
+import { isNull, gte, asc, sql, and } from 'drizzle-orm';
 
 const calendarIdCache: Record<string, string> = {};
 
@@ -520,9 +523,13 @@ export async function backfillWellnessToCalendar(): Promise<{ created: number; t
       return { created: 0, total: 0, errors: ['Wellness calendar not found'] };
     }
     
-    const classesWithoutCalendar = await pool.query(
-      `SELECT * FROM wellness_classes WHERE google_calendar_id IS NULL AND date >= CURRENT_DATE ORDER BY date ASC`
-    );
+    const classesWithoutCalendarRows = await db.select()
+      .from(wellnessClasses)
+      .where(and(
+        isNull(wellnessClasses.googleCalendarId),
+        gte(wellnessClasses.date, sql`CURRENT_DATE`)
+      ))
+      .orderBy(asc(wellnessClasses.date));
     
     const convertTo24Hour = (timeStr: string): string => {
       const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -554,7 +561,7 @@ export async function backfillWellnessToCalendar(): Promise<{ created: number; t
       return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
     };
     
-    for (const wc of classesWithoutCalendar.rows) {
+    for (const wc of classesWithoutCalendarRows) {
       try {
         const calendarTitle = `${wc.category} - ${wc.title} with ${wc.instructor}`;
         const calendarDescription = [wc.description, `Duration: ${wc.duration}`, `Spots: ${wc.spots}`].filter(Boolean).join('\n');
@@ -579,7 +586,7 @@ export async function backfillWellnessToCalendar(): Promise<{ created: number; t
       }
     }
     
-    return { created, total: classesWithoutCalendar.rows.length, errors };
+    return { created, total: classesWithoutCalendarRows.length, errors };
   } catch (error: any) {
     console.error('Error backfilling wellness to calendar:', error);
     return { created: 0, total: 0, errors: [`Backfill failed: ${error.message}`] };
