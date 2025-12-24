@@ -111,7 +111,7 @@ const Profile: React.FC = () => {
                         <p className="text-xs mt-2" style={{ color: `${cardTextColor}80` }}>Joined {user.joinDate}</p>
                      )}
                      {user.lifetimeVisits !== undefined && (
-                        <p className="text-xs" style={{ color: `${cardTextColor}80` }}>{user.lifetimeVisits} {user.lifetimeVisits === 1 ? 'visit' : 'visits'}</p>
+                        <p className="text-xs" style={{ color: `${cardTextColor}80` }}>{user.lifetimeVisits} {user.lifetimeVisits === 1 ? 'golf booking' : 'golf bookings'}</p>
                      )}
                   </div>
                </div>
