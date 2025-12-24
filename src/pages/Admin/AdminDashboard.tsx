@@ -144,6 +144,7 @@ const StaffBottomNav: React.FC<{
       className="relative mb-8 mx-auto w-[calc(100%-3rem)] max-w-md bg-black/60 backdrop-blur-xl border border-[#293515]/80 p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] rounded-full pointer-events-auto"
     >
       <div className="relative flex items-center w-full">
+        {activeIndex >= 0 && (
         <div 
           className="absolute top-0 bottom-0 left-0 rounded-full pointer-events-none bg-gradient-to-b from-white/20 to-white/10 shadow-[0_0_20px_rgba(41,53,21,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
           style={{ 
@@ -151,6 +152,7 @@ const StaffBottomNav: React.FC<{
             transform: `translateX(${activeIndex * 100}%)`,
           }}
         />
+        )}
         
         {visibleItems.map((item) => (
           <button
