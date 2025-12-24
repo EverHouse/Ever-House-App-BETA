@@ -46,6 +46,12 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Physics-Based Directional Page Transitions**: iOS-style slide animations for native app feel, with direction detection and spring physics.
 - **Persistent UI**: Bottom nav bar and header remain static during transitions.
 
+### PWA (Progressive Web App)
+- **Safe Area Support**: Header uses `pt-[max(16px,env(safe-area-inset-top))]` to clear iPhone notches; main content uses `pt-[max(72px,calc(env(safe-area-inset-top)+56px))]` to stay below header.
+- **Service Worker Caching**: Network First for HTML/navigation (ensures fresh deployments); Cache First for static assets (JS/CSS/images); Network First with cache fallback for API data.
+- **Overscroll Prevention**: `overscroll-behavior-y: none` prevents rubber-banding for native app feel.
+- **Offline Support**: Core pages and API responses cached for offline access.
+
 ### Feature Specifications
 - **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details.
 - **Member-Only Pages**: Dashboard, Book Golf, Cafe, Events, Profile, Wellness.
