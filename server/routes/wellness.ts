@@ -3,8 +3,9 @@ import { pool, isProduction } from '../core/db';
 import { isStaffOrAdmin } from '../core/middleware';
 import { syncWellnessCalendarEvents, discoverCalendarIds, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { db } from '../db';
-import { wellnessEnrollments, wellnessClasses, users } from '../../shared/schema';
+import { wellnessEnrollments, wellnessClasses, users, notifications } from '../../shared/schema';
 import { eq, and, gte, sql, isNull, asc, desc } from 'drizzle-orm';
+import { sendPushNotification } from './push';
 
 const router = Router();
 
@@ -363,7 +364,6 @@ router.post('/api/wellness-enrollments', async (req, res) => {
       return res.status(400).json({ error: 'Missing class_id or user_email' });
     }
     
-    // Check if already enrolled using Drizzle
     const existing = await db.select({ id: wellnessEnrollments.id })
       .from(wellnessEnrollments)
       .where(and(
@@ -383,6 +383,38 @@ router.post('/api/wellness-enrollments', async (req, res) => {
         status: 'confirmed'
       })
       .returning();
+    
+    const classData = await db.select({
+      title: wellnessClasses.title,
+      date: wellnessClasses.date,
+      time: wellnessClasses.time,
+      instructor: wellnessClasses.instructor
+    }).from(wellnessClasses).where(eq(wellnessClasses.id, class_id));
+    
+    if (classData.length > 0) {
+      const cls = classData[0];
+      const formattedDate = new Date(cls.date).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+      const message = `You're enrolled in ${cls.title} with ${cls.instructor} on ${formattedDate} at ${cls.time}.`;
+      
+      await db.insert(notifications).values({
+        userEmail: user_email,
+        title: 'Wellness Class Confirmed',
+        message: message,
+        type: 'wellness_booking',
+        relatedId: class_id,
+        relatedType: 'wellness_class'
+      });
+      
+      sendPushNotification(user_email, {
+        title: 'Class Booked!',
+        body: message,
+        url: '/#/member-wellness'
+      }).catch(err => console.error('Push notification failed:', err));
+    }
     
     res.status(201).json(result[0]);
   } catch (error: any) {

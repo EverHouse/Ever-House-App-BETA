@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { isProduction } from '../core/db';
 import { isStaffOrAdmin } from '../core/middleware';
 import { db } from '../db';
-import { events, eventRsvps, users } from '../../shared/schema';
+import { events, eventRsvps, users, notifications } from '../../shared/schema';
 import { eq, and, sql, gte, desc } from 'drizzle-orm';
 import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, backfillWellnessToCalendar, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
+import { sendPushNotification } from './push';
 
 const router = Router();
 
@@ -466,6 +467,39 @@ router.post('/api/rsvps', async (req, res) => {
       target: [eventRsvps.eventId, eventRsvps.userEmail],
       set: { status: 'confirmed' },
     }).returning();
+    
+    const eventData = await db.select({
+      title: events.title,
+      eventDate: events.eventDate,
+      startTime: events.startTime,
+      location: events.location
+    }).from(events).where(eq(events.id, event_id));
+    
+    if (eventData.length > 0) {
+      const evt = eventData[0];
+      const formattedDate = new Date(evt.eventDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+      const formattedTime = evt.startTime?.substring(0, 5) || '';
+      const message = `You're confirmed for ${evt.title} on ${formattedDate}${formattedTime ? ` at ${formattedTime}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`;
+      
+      await db.insert(notifications).values({
+        userEmail: user_email,
+        title: 'Event RSVP Confirmed',
+        message: message,
+        type: 'event_rsvp',
+        relatedId: event_id,
+        relatedType: 'event'
+      });
+      
+      sendPushNotification(user_email, {
+        title: 'RSVP Confirmed!',
+        body: message,
+        url: '/#/member-events'
+      }).catch(err => console.error('Push notification failed:', err));
+    }
     
     res.status(201).json(result[0]);
   } catch (error: any) {

@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { eq, sql, and, lt } from 'drizzle-orm';
 import { db } from '../db';
-import { guestPasses } from '../../shared/schema';
+import { guestPasses, notifications } from '../../shared/schema';
 import { isProduction } from '../core/db';
 import { getTierLimits } from '../core/tierService';
+import { sendPushNotification } from './push';
 
 const router = Router();
 
@@ -52,6 +53,7 @@ router.get('/api/guest-passes/:email', async (req, res) => {
 router.post('/api/guest-passes/:email/use', async (req, res) => {
   try {
     const { email } = req.params;
+    const { guest_name } = req.body;
     
     const result = await db.update(guestPasses)
       .set({ passesUsed: sql`${guestPasses.passesUsed} + 1` })
@@ -66,10 +68,29 @@ router.post('/api/guest-passes/:email/use', async (req, res) => {
     }
     
     const data = result[0];
+    const remaining = data.passesTotal - data.passesUsed;
+    const message = guest_name 
+      ? `Guest pass used for ${guest_name}. You have ${remaining} pass${remaining !== 1 ? 'es' : ''} remaining this month.`
+      : `Guest pass used. You have ${remaining} pass${remaining !== 1 ? 'es' : ''} remaining this month.`;
+    
+    await db.insert(notifications).values({
+      userEmail: email,
+      title: 'Guest Pass Used',
+      message: message,
+      type: 'guest_pass',
+      relatedType: 'guest_pass'
+    });
+    
+    sendPushNotification(email, {
+      title: 'Guest Pass Used',
+      body: message,
+      url: '/#/profile'
+    }).catch(err => console.error('Push notification failed:', err));
+    
     res.json({
       passes_used: data.passesUsed,
       passes_total: data.passesTotal,
-      passes_remaining: data.passesTotal - data.passesUsed
+      passes_remaining: remaining
     });
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);
