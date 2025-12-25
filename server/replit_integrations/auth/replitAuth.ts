@@ -41,7 +41,7 @@ export function getSession() {
       secret: 'temporary-fallback-secret-' + Date.now(),
       resave: false,
       saveUninitialized: false,
-      cookie: { httpOnly: true, secure: true, maxAge: 3600000 },
+      cookie: { httpOnly: true, secure: true, maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
     });
   }
   
@@ -51,12 +51,12 @@ export function getSession() {
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
-      cookie: { httpOnly: true, secure: true, maxAge: 3600000 },
+      cookie: { httpOnly: true, secure: true, maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
     });
   }
   
   try {
-    const sessionTtl = 7 * 24 * 60 * 60 * 1000;
+    const sessionTtl = 30 * 24 * 60 * 60 * 1000; // 30 days
     const pgStore = connectPg(session);
     const sessionStore = new pgStore({
       conString: databaseUrl,
@@ -87,7 +87,7 @@ export function getSession() {
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
-      cookie: { httpOnly: true, secure: true, maxAge: 3600000 },
+      cookie: { httpOnly: true, secure: true, maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
     });
   }
 }
