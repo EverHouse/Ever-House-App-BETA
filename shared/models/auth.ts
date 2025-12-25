@@ -351,7 +351,7 @@ export const membershipTiers = pgTable("membership_tiers", {
   allFeatures: jsonb("all_features").default(sql`'{}'::jsonb`),
   
   // Logic/Enforcement fields
-  simHoursLimit: integer("sim_hours_limit").default(0),
+  dailySimMinutes: integer("daily_sim_minutes").default(0),
   guestPassesPerMonth: integer("guest_passes_per_month").default(0),
   bookingWindowDays: integer("booking_window_days").default(7),
   dailyConfRoomMinutes: integer("daily_conf_room_minutes").default(0),

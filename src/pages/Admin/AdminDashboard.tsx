@@ -3692,7 +3692,7 @@ interface MembershipTier {
     is_popular: boolean;
     highlighted_features: string[];
     all_features: Record<string, boolean>;
-    sim_hours_limit: number;
+    daily_sim_minutes: number;
     guest_passes_per_month: number;
     booking_window_days: number;
     daily_conf_room_minutes: number;
@@ -3957,12 +3957,12 @@ const TiersAdmin: React.FC = () => {
                                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Limits & Quotas</h4>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Sim Minutes Limit</label>
+                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Daily Sim Minutes</label>
                                         <input 
                                             type="number"
                                             className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                            value={selectedTier.sim_hours_limit} 
-                                            onChange={e => setSelectedTier({...selectedTier, sim_hours_limit: parseInt(e.target.value) || 0})} 
+                                            value={selectedTier.daily_sim_minutes} 
+                                            onChange={e => setSelectedTier({...selectedTier, daily_sim_minutes: parseInt(e.target.value) || 0})} 
                                         />
                                     </div>
                                     <div>
@@ -4163,7 +4163,7 @@ const TiersAdmin: React.FC = () => {
                             <div className="flex flex-wrap gap-2 text-xs">
                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
                                     <span className="material-symbols-outlined text-sm">sports_golf</span>
-                                    {tier.sim_hours_limit > 0 ? `${tier.sim_hours_limit}min sim` : 'No sim'}
+                                    {tier.daily_sim_minutes > 0 ? `${tier.daily_sim_minutes}min sim` : 'No sim'}
                                 </span>
                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
                                     <span className="material-symbols-outlined text-sm">person_add</span>

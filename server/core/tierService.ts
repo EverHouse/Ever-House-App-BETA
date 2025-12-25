@@ -1,7 +1,7 @@
 import { pool } from './db';
 
 export interface TierLimits {
-  sim_hours_limit: number;
+  daily_sim_minutes: number;
   guest_passes_per_month: number;
   booking_window_days: number;
   daily_conf_room_minutes: number;
@@ -17,7 +17,7 @@ export interface TierLimits {
 }
 
 const DEFAULT_TIER_LIMITS: TierLimits = {
-  sim_hours_limit: 0,
+  daily_sim_minutes: 0,
   guest_passes_per_month: 0,
   booking_window_days: 7,
   daily_conf_room_minutes: 0,
@@ -49,7 +49,7 @@ export async function getTierLimits(tierName: string): Promise<TierLimits> {
   
   try {
     const result = await pool.query(
-      `SELECT sim_hours_limit, guest_passes_per_month, booking_window_days, 
+      `SELECT daily_sim_minutes, guest_passes_per_month, booking_window_days, 
               daily_conf_room_minutes, can_book_simulators, can_book_conference,
               can_book_wellness, has_group_lessons, has_extended_sessions,
               has_private_lesson, has_simulator_guest_passes, has_discounted_merch,
@@ -140,7 +140,7 @@ export async function checkDailyBookingLimit(
     return { allowed: false, reason: 'Your membership tier does not include simulator booking' };
   }
   
-  const dailyLimit = limits.sim_hours_limit ?? 0;
+  const dailyLimit = limits.daily_sim_minutes ?? 0;
   
   if (limits.unlimited_access || dailyLimit >= 999) {
     return { allowed: true, remainingMinutes: 999 };
