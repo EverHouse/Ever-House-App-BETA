@@ -140,13 +140,26 @@ export async function checkDailyBookingLimit(
     return { allowed: false, reason: 'Your membership tier does not include simulator booking' };
   }
   
-  if (limits.unlimited_access || limits.sim_hours_limit >= 999) {
+  const dailyLimit = limits.sim_hours_limit ?? 0;
+  
+  if (limits.unlimited_access || dailyLimit >= 999) {
     return { allowed: true, remainingMinutes: 999 };
   }
   
-  const dailyLimit = limits.sim_hours_limit;
+  if (dailyLimit === 0) {
+    return { allowed: false, reason: 'Your membership tier does not include daily simulator time' };
+  }
+  
   const alreadyBooked = await getDailyBookedMinutes(email, date);
   const remainingMinutes = dailyLimit - alreadyBooked;
+  
+  if (remainingMinutes <= 0) {
+    return { 
+      allowed: false, 
+      reason: `You have reached your daily limit of ${dailyLimit} minutes for ${date}.`,
+      remainingMinutes: 0
+    };
+  }
   
   if (requestedMinutes > remainingMinutes) {
     return { 

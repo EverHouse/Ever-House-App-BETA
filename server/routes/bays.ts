@@ -6,6 +6,7 @@ import { isProduction } from '../core/db';
 import { getGoogleCalendarClient } from '../core/integrations';
 import { CALENDAR_CONFIG, getCalendarIdByName, createCalendarEvent, createCalendarEventOnCalendar, deleteCalendarEvent } from '../core/calendar';
 import { sendPushNotification, sendPushNotificationToStaff } from './push';
+import { checkDailyBookingLimit } from '../core/tierService';
 
 const router = Router();
 
@@ -150,6 +151,14 @@ router.post('/api/booking-requests', async (req, res) => {
     
     if (!user_email || !request_date || !start_time || !duration_minutes) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const limitCheck = await checkDailyBookingLimit(user_email, request_date, duration_minutes);
+    if (!limitCheck.allowed) {
+      return res.status(403).json({ 
+        error: limitCheck.reason,
+        remainingMinutes: limitCheck.remainingMinutes
+      });
     }
     
     const [hours, mins] = start_time.split(':').map(Number);
