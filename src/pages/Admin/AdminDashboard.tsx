@@ -2353,13 +2353,11 @@ const WellnessAdmin: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 className="text-lg font-bold text-primary dark:text-white">Wellness Classes</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Schedule and manage wellness classes for members
-                        </p>
-                    </div>
+                <div className="mb-4">
+                    <h3 className="text-lg font-bold text-primary dark:text-white">Wellness Classes</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Schedule and manage wellness classes for members
+                    </p>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handleSyncCalendars}
