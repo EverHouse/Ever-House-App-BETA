@@ -19,16 +19,16 @@ const Toggle: React.FC<ToggleProps> = ({
 }) => {
   const sizes = {
     sm: {
-      track: 'h-5 w-9',
-      thumb: 'h-4 w-4',
-      translate: 'translate-x-4',
-      padding: 'p-0.5',
+      track: 'h-[22px] w-[44px]',
+      thumb: 'h-[18px] w-[18px]',
+      translate: 'translate-x-[22px]',
+      padding: 'p-[2px]',
     },
     md: {
-      track: 'h-6 w-11',
-      thumb: 'h-5 w-5',
-      translate: 'translate-x-5',
-      padding: 'p-0.5',
+      track: 'h-[28px] w-[52px]',
+      thumb: 'h-[24px] w-[24px]',
+      translate: 'translate-x-[24px]',
+      padding: 'p-[2px]',
     },
   };
 
