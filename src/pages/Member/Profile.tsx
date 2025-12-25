@@ -179,30 +179,6 @@ const Profile: React.FC = () => {
            </Section>
          )}
 
-         <Section title="Appearance" isDark={isDark}>
-            <div className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>palette</span>
-                <span className={`text-sm font-medium ${isDark ? '' : 'text-primary'}`}>Theme</span>
-              </div>
-              <div className="flex gap-2">
-                {(['light', 'dark', 'system'] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setThemeMode(mode)}
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
-                      themeMode === mode 
-                        ? 'bg-[#E7E7DC] text-[#293515] shadow-glow' 
-                        : (isDark ? 'bg-white/10 text-white/60 hover:bg-white/15' : 'bg-black/5 text-primary/60 hover:bg-black/10')
-                    }`}
-                  >
-                    {mode === 'system' ? 'Auto' : mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-         </Section>
-
          <Section title="Settings" isDark={isDark}>
             <div className={`p-4 flex items-center justify-between transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
               <div className="flex items-center gap-4">
@@ -229,6 +205,30 @@ const Profile: React.FC = () => {
               />
             </div>
             <Row icon="lock" label="Privacy" arrow isDark={isDark} />
+         </Section>
+
+         <Section title="Appearance" isDark={isDark}>
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>palette</span>
+                <span className={`text-sm font-medium ${isDark ? '' : 'text-primary'}`}>Theme</span>
+              </div>
+              <div className="flex gap-2">
+                {(['light', 'dark', 'system'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setThemeMode(mode)}
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
+                      themeMode === mode 
+                        ? 'bg-[#E7E7DC] text-[#293515] shadow-glow' 
+                        : (isDark ? 'bg-white/10 text-white/60 hover:bg-white/15' : 'bg-black/5 text-primary/60 hover:bg-black/10')
+                    }`}
+                  >
+                    {mode === 'system' ? 'Auto' : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
          </Section>
 
          <button onClick={() => { logout(); navigate('/login'); }} className={`w-full py-4 rounded-xl text-red-400 font-bold text-sm transition-colors ${isDark ? 'glass-button hover:bg-red-500/10' : 'bg-white border border-black/5 hover:bg-red-50'}`}>
