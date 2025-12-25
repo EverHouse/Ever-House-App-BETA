@@ -28,6 +28,7 @@ import announcementsRouter from './routes/announcements';
 import faqsRouter from './routes/faqs';
 import inquiriesRouter from './routes/inquiries';
 import imageUploadRouter from './routes/imageUpload';
+import closuresRouter from './routes/closures';
 import { registerObjectStorageRoutes } from './replit_integrations/object_storage';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -157,6 +158,7 @@ app.use(announcementsRouter);
 app.use(faqsRouter);
 app.use(inquiriesRouter);
 app.use(imageUploadRouter);
+app.use(closuresRouter);
 registerObjectStorageRoutes(app);
 
 // SPA catch-all using middleware (avoids Express 5 path-to-regexp issues)

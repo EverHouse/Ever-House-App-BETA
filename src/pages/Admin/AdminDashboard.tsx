@@ -950,11 +950,72 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
 
 // --- ANNOUNCEMENTS ADMIN ---
 
+interface ClosureForm {
+    start_date: string;
+    start_time: string;
+    end_date: string;
+    end_time: string;
+    affected_areas: string;
+    reason: string;
+    notify_members: boolean;
+}
+
 const AnnouncementsAdmin: React.FC = () => {
-    const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useData();
+    const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement, actualUser } = useData();
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [newItem, setNewItem] = useState<Partial<Announcement>>({ type: 'update' });
+    
+    const [isClosureModalOpen, setIsClosureModalOpen] = useState(false);
+    const [closureForm, setClosureForm] = useState<ClosureForm>({
+        start_date: '',
+        start_time: '',
+        end_date: '',
+        end_time: '',
+        affected_areas: 'entire_facility',
+        reason: '',
+        notify_members: false
+    });
+    const [closureSaving, setClosureSaving] = useState(false);
+    const [bays, setBays] = useState<{id: number; name: string}[]>([]);
+    
+    useEffect(() => {
+        fetch('/api/bays')
+            .then(r => r.json())
+            .then(data => setBays(data))
+            .catch(() => {});
+    }, []);
+    
+    const handleSaveClosure = async () => {
+        if (!closureForm.start_date || !closureForm.affected_areas) return;
+        setClosureSaving(true);
+        try {
+            const res = await fetch('/api/closures', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...closureForm,
+                    created_by: actualUser?.email
+                })
+            });
+            if (res.ok) {
+                setIsClosureModalOpen(false);
+                setClosureForm({
+                    start_date: '',
+                    start_time: '',
+                    end_date: '',
+                    end_time: '',
+                    affected_areas: 'entire_facility',
+                    reason: '',
+                    notify_members: false
+                });
+            }
+        } catch (err) {
+            console.error('Failed to save closure:', err);
+        } finally {
+            setClosureSaving(false);
+        }
+    };
 
     const openCreate = () => {
         setNewItem({ type: 'update' });
@@ -990,7 +1051,13 @@ const AnnouncementsAdmin: React.FC = () => {
 
     return (
         <div>
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-end gap-3 mb-4">
+                <button 
+                    onClick={() => setIsClosureModalOpen(true)} 
+                    className="border-2 border-red-500 text-red-500 px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                    <span className="material-symbols-outlined">block</span> Add Closure
+                </button>
                 <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md">
                     <span className="material-symbols-outlined">add</span> Post Update
                 </button>
@@ -1025,6 +1092,113 @@ const AnnouncementsAdmin: React.FC = () => {
                             <div className="flex gap-3 justify-end">
                                 <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
                                 <button onClick={handleSave} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+            
+            {isClosureModalOpen && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsClosureModalOpen(false)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
+                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
+                                <span className="material-symbols-outlined text-red-500">block</span>
+                                Add Closure
+                            </h3>
+                            <div className="space-y-4 mb-6">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Start Date *</label>
+                                        <input 
+                                            type="date" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            value={closureForm.start_date} 
+                                            onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Start Time</label>
+                                        <input 
+                                            type="time" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            value={closureForm.start_time} 
+                                            onChange={e => setClosureForm({...closureForm, start_time: e.target.value})} 
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">End Date</label>
+                                        <input 
+                                            type="date" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            value={closureForm.end_date} 
+                                            onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">End Time</label>
+                                        <input 
+                                            type="time" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            value={closureForm.end_time} 
+                                            onChange={e => setClosureForm({...closureForm, end_time: e.target.value})} 
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Resource *</label>
+                                    <select 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
+                                        value={closureForm.affected_areas}
+                                        onChange={e => setClosureForm({...closureForm, affected_areas: e.target.value})}
+                                    >
+                                        <option value="entire_facility">Entire Facility</option>
+                                        <option value="all_bays">All Bays</option>
+                                        {bays.map(bay => (
+                                            <option key={bay.id} value={bay.name}>{bay.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Internal Note</label>
+                                    <textarea 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none" 
+                                        placeholder="e.g., Broken Sensor, Maintenance, etc." 
+                                        rows={2} 
+                                        value={closureForm.reason} 
+                                        onChange={e => setClosureForm({...closureForm, reason: e.target.value})} 
+                                    />
+                                </div>
+                                
+                                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-black/20 rounded-xl">
+                                    <div>
+                                        <p className="font-medium text-primary dark:text-white text-sm">Notify Members?</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Send push notification with internal note</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setClosureForm({...closureForm, notify_members: !closureForm.notify_members})}
+                                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${closureForm.notify_members ? 'bg-red-500' : 'bg-gray-200 dark:bg-gray-600'}`}
+                                    >
+                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${closureForm.notify_members ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 justify-end">
+                                <button onClick={() => setIsClosureModalOpen(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                                <button 
+                                    onClick={handleSaveClosure} 
+                                    disabled={closureSaving || !closureForm.start_date}
+                                    className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-bold shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
+                                >
+                                    {closureSaving ? 'Saving...' : 'Add Closure'}
+                                </button>
                             </div>
                         </div>
                     </div>
