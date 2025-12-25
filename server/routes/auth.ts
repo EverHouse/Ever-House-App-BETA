@@ -419,11 +419,12 @@ router.post('/api/auth/magic-link', async (req, res) => {
       expiresAt
     });
     
-    const baseUrl = process.env.REPLIT_DOMAINS 
-      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
-      : process.env.REPLIT_DEV_DOMAIN
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-        : 'http://localhost:5000';
+    const baseUrl = process.env.BASE_URL 
+      || (process.env.REPLIT_DOMAINS 
+        ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+        : process.env.REPLIT_DEV_DOMAIN
+          ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+          : 'http://localhost:5000');
     
     const magicLink = `${baseUrl}/#/verify?token=${token}`;
     
