@@ -506,13 +506,13 @@ const BookGolf: React.FC = () => {
                     </div>
                   )}
                   
-                  {request.status === 'pending' && (
+                  {(request.status === 'pending' || request.status === 'approved') && (
                     <button
                       onClick={() => handleCancelRequest(request.id)}
                       className="mt-3 text-sm text-red-500 flex items-center gap-1 hover:underline"
                     >
                       <span className="material-symbols-outlined text-sm">close</span>
-                      Cancel Request
+                      {request.status === 'pending' ? 'Cancel Request' : 'Cancel Booking'}
                     </button>
                   )}
                 </div>

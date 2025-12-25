@@ -1910,6 +1910,9 @@ const SimulatorAdmin: React.FC = () => {
         setIsProcessing(true);
         setError(null);
         
+        // Use 'cancelled' status for approved bookings being cancelled, 'declined' for pending requests
+        const newStatus = selectedRequest.status === 'approved' ? 'cancelled' : 'declined';
+        
         try {
             let res;
             if (selectedRequest.source === 'booking') {
@@ -1922,7 +1925,7 @@ const SimulatorAdmin: React.FC = () => {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        status: 'declined',
+                        status: newStatus,
                         staff_notes: staffNotes || null,
                         suggested_time: suggestedTime ? suggestedTime + ':00' : null,
                         reviewed_by: user?.email
@@ -1932,12 +1935,12 @@ const SimulatorAdmin: React.FC = () => {
             
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.error || 'Failed to decline');
+                throw new Error(errData.error || 'Failed to process request');
             }
             
             setRequests(prev => prev.map(r => 
                 r.id === selectedRequest.id && r.source === selectedRequest.source 
-                    ? { ...r, status: 'declined' as const } 
+                    ? { ...r, status: newStatus as 'declined' | 'cancelled' } 
                     : r
             ));
             setActionModal(null);
@@ -1959,7 +1962,9 @@ const SimulatorAdmin: React.FC = () => {
             case 'approved': 
             case 'confirmed':
                 return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300';
-            case 'declined': return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
+            case 'declined': 
+            case 'cancelled':
+                return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
             default: return 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400';
         }
     };
@@ -2155,16 +2160,32 @@ const SimulatorAdmin: React.FC = () => {
                         ) : (
                             <div className="space-y-2">
                                 {processedRequests.slice(0, 10).map(req => (
-                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-3 rounded-lg border border-gray-200 dark:border-white/10 flex justify-between items-center">
-                                        <div>
-                                            <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {formatDateShort(req.request_date)} • {formatTime12(req.start_time)}
-                                            </p>
+                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-3 rounded-lg border border-gray-200 dark:border-white/10">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                </p>
+                                                {req.bay_name && (
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{req.bay_name}</p>
+                                                )}
+                                            </div>
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                {formatStatusLabel(req.status)}
+                                            </span>
                                         </div>
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
-                                            {formatStatusLabel(req.status)}
-                                        </span>
+                                        {req.status === 'approved' && (
+                                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-white/10">
+                                                <button
+                                                    onClick={() => { setSelectedRequest(req); setActionModal('decline'); }}
+                                                    className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
+                                                >
+                                                    <span className="material-symbols-outlined text-xs">close</span>
+                                                    Cancel Booking
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -2318,7 +2339,7 @@ const SimulatorAdmin: React.FC = () => {
                                 </div>
                             )}
                             
-                            {actionModal === 'decline' && (
+                            {actionModal === 'decline' && selectedRequest?.status !== 'approved' && (
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Suggest Alternative Time (Optional)</label>
                                     <input
@@ -2365,7 +2386,7 @@ const SimulatorAdmin: React.FC = () => {
                                             {actionModal === 'approve' ? 'check' : 'close'}
                                         </span>
                                     )}
-                                    {actionModal === 'approve' ? 'Approve' : 'Decline'}
+                                    {actionModal === 'approve' ? 'Approve' : (selectedRequest?.status === 'approved' ? 'Cancel Booking' : 'Decline')}
                                 </button>
                             </div>
                         </div>

@@ -61,6 +61,24 @@ interface DBWellnessEnrollment {
   category: string;
 }
 
+interface DBBookingRequest {
+  id: number;
+  user_email: string;
+  user_name: string | null;
+  bay_id: number | null;
+  bay_name: string | null;
+  bay_preference: string | null;
+  request_date: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  notes: string | null;
+  status: 'pending' | 'approved' | 'declined' | 'cancelled';
+  staff_notes: string | null;
+  suggested_time: string | null;
+  created_at: string;
+}
+
 const formatTime12 = (time24: string): string => {
   if (!time24) return '';
   const [hours, minutes] = time24.split(':').map(Number);
@@ -81,6 +99,7 @@ const Dashboard: React.FC = () => {
   const isDark = effectiveTheme === 'dark';
   
   const [dbBookings, setDbBookings] = useState<DBBooking[]>([]);
+  const [dbBookingRequests, setDbBookingRequests] = useState<DBBookingRequest[]>([]);
   const [dbRSVPs, setDbRSVPs] = useState<DBRSVP[]>([]);
   const [dbWellnessEnrollments, setDbWellnessEnrollments] = useState<DBWellnessEnrollment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,7 +124,8 @@ const Dashboard: React.FC = () => {
       const results = await Promise.allSettled([
         fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
         fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`),
-        fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`)
+        fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`),
+        fetch(`/api/booking-requests?user_email=${encodeURIComponent(user.email)}`)
       ]);
 
       if (results[0].status === 'fulfilled' && results[0].value.ok) {
@@ -120,6 +140,10 @@ const Dashboard: React.FC = () => {
 
       if (results[2].status === 'fulfilled' && results[2].value.ok) {
         setDbWellnessEnrollments(await results[2].value.json());
+      }
+      
+      if (results[3].status === 'fulfilled' && results[3].value.ok) {
+        setDbBookingRequests(await results[3].value.json());
       }
       
     } catch (err) {
@@ -151,6 +175,19 @@ const Dashboard: React.FC = () => {
       details: `${formatTime12(b.start_time)} - ${formatTime12(b.end_time)}`,
       sortKey: `${b.booking_date}T${b.start_time}`,
       raw: b
+    })),
+    ...dbBookingRequests.filter(r => r.status === 'approved').map(r => ({
+      id: `request-${r.id}`,
+      dbId: r.id,
+      type: 'booking_request' as const,
+      title: r.bay_name || (r.notes?.includes('Conference room') ? 'Conference Room' : 'Simulator'),
+      resourceType: r.notes?.includes('Conference room') ? 'conference_room' : 'simulator',
+      date: formatDate(r.request_date),
+      time: formatTime12(r.start_time),
+      endTime: formatTime12(r.end_time),
+      details: `${formatTime12(r.start_time)} - ${formatTime12(r.end_time)}`,
+      sortKey: `${r.request_date}T${r.start_time}`,
+      raw: r
     })),
     ...dbRSVPs.map(r => ({
       id: `rsvp-${r.id}`,
@@ -187,6 +224,8 @@ const Dashboard: React.FC = () => {
     let itemDate: string | undefined;
     if (item.type === 'booking') {
       itemDate = (item.raw as DBBooking).booking_date.split('T')[0];
+    } else if (item.type === 'booking_request') {
+      itemDate = (item.raw as DBBookingRequest).request_date.split('T')[0];
     } else if (item.type === 'rsvp') {
       itemDate = (item.raw as DBRSVP).event_date.split('T')[0];
     } else if (item.type === 'wellness') {
@@ -195,8 +234,8 @@ const Dashboard: React.FC = () => {
     return itemDate && itemDate >= todayStr;
   });
 
-  // Separate bookings from events/wellness
-  const upcomingBookings = upcomingItems.filter(item => item.type === 'booking');
+  // Separate bookings from events/wellness (include both confirmed bookings and approved requests)
+  const upcomingBookings = upcomingItems.filter(item => item.type === 'booking' || item.type === 'booking_request');
   const upcomingEventsWellness = upcomingItems.filter(item => item.type === 'rsvp' || item.type === 'wellness');
 
   // Next booking card shows only golf/conference bookings
