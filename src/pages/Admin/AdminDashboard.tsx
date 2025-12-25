@@ -19,6 +19,34 @@ const AdminDashboard: React.FC = () => {
   const { actualUser } = useData();
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  
+  // Fetch pending requests count for badge
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const [requestsRes, bookingsRes] = await Promise.all([
+          fetch('/api/booking-requests?include_all=true'),
+          fetch('/api/pending-bookings')
+        ]);
+        let count = 0;
+        if (requestsRes.ok) {
+          const data = await requestsRes.json();
+          count += data.filter((r: any) => r.status === 'pending' || r.status === 'pending_approval').length;
+        }
+        if (bookingsRes.ok) {
+          const data = await bookingsRes.json();
+          count += data.length;
+        }
+        setPendingRequestsCount(count);
+      } catch (err) {
+        console.error('Failed to fetch pending count:', err);
+      }
+    };
+    fetchPendingCount();
+    const interval = setInterval(fetchPendingCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
   
   // Protect route - use actualUser so admins can still access while viewing as member
   useEffect(() => {
@@ -96,7 +124,8 @@ const AdminDashboard: React.FC = () => {
       <StaffBottomNav 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        isAdmin={actualUser?.role === 'admin'} 
+        isAdmin={actualUser?.role === 'admin'}
+        pendingRequestsCount={pendingRequestsCount}
       />
 
       <BackToTop threshold={400} />
@@ -129,7 +158,8 @@ const StaffBottomNav: React.FC<{
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
   isAdmin?: boolean;
-}> = ({ activeTab, setActiveTab, isAdmin }) => {
+  pendingRequestsCount?: number;
+}> = ({ activeTab, setActiveTab, isAdmin, pendingRequestsCount = 0 }) => {
   const navRef = useRef<HTMLDivElement>(null);
   
   const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
@@ -166,9 +196,16 @@ const StaffBottomNav: React.FC<{
               ${activeTab === item.id ? 'text-white' : 'text-white/50 hover:text-white/80'}
             `}
           >
-            <span className={`material-symbols-outlined text-xl transition-all duration-300 ${activeTab === item.id ? 'filled scale-110' : ''}`}>
-              {item.icon}
-            </span>
+            <div className="relative">
+              <span className={`material-symbols-outlined text-xl transition-all duration-300 ${activeTab === item.id ? 'filled scale-110' : ''}`}>
+                {item.icon}
+              </span>
+              {item.id === 'simulator' && pendingRequestsCount > 0 && (
+                <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                  {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
+                </span>
+              )}
+            </div>
             <span className={`text-[9px] tracking-wide transition-all duration-300 ${activeTab === item.id ? 'font-bold' : 'font-medium'}`}>
               {item.label}
             </span>
