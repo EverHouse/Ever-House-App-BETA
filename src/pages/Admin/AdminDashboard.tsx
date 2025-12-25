@@ -3689,7 +3689,7 @@ const BlocksAdmin: React.FC = () => {
                     className={`flex-1 py-3 rounded-xl font-medium transition-all ${
                         activeTab === 'closures' 
                             ? 'bg-red-500 text-white' 
-                            : 'bg-white/10 text-white/70 hover:bg-white/20'
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20'
                     }`}
                 >
                     <span className="material-symbols-outlined text-lg align-middle mr-1">block</span>
@@ -3700,7 +3700,7 @@ const BlocksAdmin: React.FC = () => {
                     className={`flex-1 py-3 rounded-xl font-medium transition-all ${
                         activeTab === 'blocks' 
                             ? 'bg-amber-500 text-white' 
-                            : 'bg-white/10 text-white/70 hover:bg-white/20'
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20'
                     }`}
                 >
                     <span className="material-symbols-outlined text-lg align-middle mr-1">event_busy</span>
@@ -3719,9 +3719,9 @@ const BlocksAdmin: React.FC = () => {
                     </button>
 
                     {closuresLoading ? (
-                        <div className="text-center py-8 text-white/50">Loading closures...</div>
+                        <div className="text-center py-8 text-gray-400 dark:text-white/50">Loading closures...</div>
                     ) : closures.length === 0 ? (
-                        <div className="text-center py-12 text-white/50">
+                        <div className="text-center py-12 text-gray-400 dark:text-white/50">
                             <span className="material-symbols-outlined text-4xl mb-2">event_available</span>
                             <p>No active closures</p>
                         </div>
@@ -3731,21 +3731,21 @@ const BlocksAdmin: React.FC = () => {
                                 <div 
                                     key={closure.id} 
                                     onClick={() => handleEditClosure(closure)}
-                                    className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 cursor-pointer hover:border-red-500/50 transition-all"
+                                    className="p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 cursor-pointer hover:border-red-400 dark:hover:border-red-500/50 transition-all"
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                                <span className="text-[10px] font-bold uppercase text-red-400">Closure</span>
-                                                <span className="text-[10px] text-red-400/70">• {formatAffectedAreas(closure.affectedAreas)}</span>
+                                                <span className="text-[10px] font-bold uppercase text-red-500 dark:text-red-400">Closure</span>
+                                                <span className="text-[10px] text-red-400 dark:text-red-400/70">• {formatAffectedAreas(closure.affectedAreas)}</span>
                                             </div>
-                                            <h4 className="font-bold text-white mb-1">{closure.title}</h4>
+                                            <h4 className="font-bold text-primary dark:text-white mb-1">{closure.title}</h4>
                                             {closure.reason && (
-                                                <p className="text-sm text-white/60 leading-relaxed mb-2">{closure.reason}</p>
+                                                <p className="text-sm text-gray-600 dark:text-white/60 leading-relaxed mb-2">{closure.reason}</p>
                                             )}
                                             <div className="flex flex-wrap gap-2">
-                                                <div className="inline-flex items-center gap-1 bg-red-500/20 px-2 py-1 rounded text-xs text-red-400">
+                                                <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-500/20 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
                                                     <span className="material-symbols-outlined text-[12px]">calendar_today</span>
                                                     <span>
                                                         {closure.startDate}
@@ -3753,7 +3753,7 @@ const BlocksAdmin: React.FC = () => {
                                                     </span>
                                                 </div>
                                                 {(closure.startTime || closure.endTime) && (
-                                                    <div className="inline-flex items-center gap-1 bg-red-500/20 px-2 py-1 rounded text-xs text-red-400">
+                                                    <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-500/20 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
                                                         <span className="material-symbols-outlined text-[12px]">schedule</span>
                                                         <span>{closure.startTime}{closure.endTime ? ` - ${closure.endTime}` : ''}</span>
                                                     </div>
@@ -3762,7 +3762,7 @@ const BlocksAdmin: React.FC = () => {
                                         </div>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); handleDeleteClosure(closure.id); }} 
-                                            className="text-red-400/50 hover:text-red-400 p-1"
+                                            className="text-red-400 dark:text-red-400/50 hover:text-red-600 dark:hover:text-red-400 p-1"
                                         >
                                             <span className="material-symbols-outlined">delete</span>
                                         </button>
@@ -3780,7 +3780,7 @@ const BlocksAdmin: React.FC = () => {
                         <select
                             value={filterResource}
                             onChange={(e) => setFilterResource(e.target.value)}
-                            className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm"
+                            className="px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20 text-primary dark:text-white text-sm"
                         >
                             <option value="all">All Resources</option>
                             {bays.map(bay => (
@@ -3795,18 +3795,18 @@ const BlocksAdmin: React.FC = () => {
                             type="date"
                             value={filterDate}
                             onChange={(e) => setFilterDate(e.target.value)}
-                            className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm"
+                            className="px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20 text-primary dark:text-white text-sm"
                         />
                         {filterDate && (
                             <button
                                 onClick={() => setFilterDate('')}
-                                className="px-3 py-2 rounded-xl bg-white/10 text-white/70 text-sm hover:bg-white/20"
+                                className="px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 text-sm hover:bg-gray-200 dark:hover:bg-white/20"
                             >
                                 Clear
                             </button>
                         )}
                         
-                        <label className="flex items-center gap-2 text-white/70 text-sm ml-auto">
+                        <label className="flex items-center gap-2 text-gray-600 dark:text-white/70 text-sm ml-auto">
                             <input
                                 type="checkbox"
                                 checked={showPast}
@@ -3818,7 +3818,7 @@ const BlocksAdmin: React.FC = () => {
                     </div>
 
                     {filteredBlocks.length === 0 ? (
-                        <div className="text-center py-12 text-white/50">
+                        <div className="text-center py-12 text-gray-400 dark:text-white/50">
                             <span className="material-symbols-outlined text-4xl mb-2">event_available</span>
                             <p>No availability blocks found</p>
                         </div>
@@ -3827,25 +3827,25 @@ const BlocksAdmin: React.FC = () => {
                             {filteredBlocks.map(block => (
                                 <div
                                     key={block.id}
-                                    className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4"
+                                    className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center gap-4"
                                 >
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-bold text-white">{block.bay_name}</span>
-                                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs">
+                                            <span className="font-bold text-primary dark:text-white">{block.bay_name}</span>
+                                            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs">
                                                 {block.block_type}
                                             </span>
                                             {block.closure_id && (
-                                                <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs">
+                                                <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-xs">
                                                     From Closure
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-white/70 text-sm">
+                                        <p className="text-gray-600 dark:text-white/70 text-sm">
                                             {formatDate(block.block_date)} · {formatTime(block.start_time)} - {formatTime(block.end_time)}
                                         </p>
                                         {block.notes && (
-                                            <p className="text-white/50 text-xs mt-1 truncate">{block.notes}</p>
+                                            <p className="text-gray-400 dark:text-white/50 text-xs mt-1 truncate">{block.notes}</p>
                                         )}
                                     </div>
                                     
@@ -3855,13 +3855,13 @@ const BlocksAdmin: React.FC = () => {
                                                 setSelectedBlock(block);
                                                 setIsEditing(true);
                                             }}
-                                            className="p-2 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all"
+                                            className="p-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20 hover:text-primary dark:hover:text-white transition-all"
                                         >
                                             <span className="material-symbols-outlined text-lg">edit</span>
                                         </button>
                                         <button
                                             onClick={() => handleDeleteBlock(block.id)}
-                                            className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                                            className="p-2 rounded-xl bg-red-100 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/20 transition-all"
                                         >
                                             <span className="material-symbols-outlined text-lg">delete</span>
                                         </button>
