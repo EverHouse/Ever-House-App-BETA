@@ -3183,20 +3183,14 @@ const StaffAdmin: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
-                                        onClick={() => handleToggleActive(staff)}
-                                        className={`p-2 rounded-lg transition-colors ${
-                                            staff.is_active 
-                                                ? 'text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' 
-                                                : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                                        }`}
-                                        title={staff.is_active ? 'Deactivate' : 'Activate'}
+                                        onClick={(e) => { e.stopPropagation(); openEditModal(staff); }}
+                                        className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        title="Edit"
                                     >
-                                        <span className="material-symbols-outlined text-xl">
-                                            {staff.is_active ? 'toggle_on' : 'toggle_off'}
-                                        </span>
+                                        <span className="material-symbols-outlined text-xl">edit</span>
                                     </button>
                                     <button
-                                        onClick={() => handleRemoveStaff(staff)}
+                                        onClick={(e) => { e.stopPropagation(); handleRemoveStaff(staff); }}
                                         className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                         title="Remove"
                                     >
