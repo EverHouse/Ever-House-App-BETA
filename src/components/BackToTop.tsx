@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useSmoothScroll } from './motion/SmoothScroll';
-import { useScrollContainer } from '../contexts/ScrollContainerContext';
+import React, { useState, useEffect, useCallback } from 'react';
 
 interface BackToTopProps {
   threshold?: number;
@@ -12,51 +10,23 @@ const BackToTop: React.FC<BackToTopProps> = ({
   className = '' 
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const { scrollTo, lenis } = useSmoothScroll();
-  const { scrollContainerRef } = useScrollContainer();
 
   useEffect(() => {
     const handleScroll = () => {
-      const container = scrollContainerRef.current;
-      let scrollY: number;
-      
-      if (container) {
-        scrollY = container.scrollTop;
-      } else if (lenis) {
-        scrollY = lenis.scroll;
-      } else {
-        scrollY = window.scrollY;
-      }
-      
-      setIsVisible(scrollY > threshold);
+      setIsVisible(window.scrollY > threshold);
     };
 
-    const container = scrollContainerRef.current;
-    
-    if (container) {
-      container.addEventListener('scroll', handleScroll, { passive: true });
-    } else if (lenis) {
-      lenis.on('scroll', handleScroll);
-    } else {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-    }
-
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
     return () => {
-      if (container) {
-        container.removeEventListener('scroll', handleScroll);
-      } else if (lenis) {
-        lenis.off('scroll', handleScroll);
-      } else {
-        window.removeEventListener('scroll', handleScroll);
-      }
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [lenis, threshold, scrollContainerRef]);
+  }, [threshold]);
 
-  const handleClick = () => {
-    scrollTo(0, { duration: 0.8 });
-  };
+  const handleClick = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   return (
     <div className={`back-to-top ${isVisible ? 'visible' : ''} ${className}`}>
