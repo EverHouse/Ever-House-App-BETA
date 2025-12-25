@@ -2358,7 +2358,7 @@ const WellnessAdmin: React.FC = () => {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                         Schedule and manage wellness classes for members
                     </p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 justify-end">
                         <button
                             onClick={handleSyncCalendars}
                             disabled={isSyncing}
