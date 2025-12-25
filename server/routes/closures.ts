@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { isProduction } from '../core/db';
 import { db } from '../db';
-import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks, announcements } from '../../shared/schema';
+import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks, announcements, notifications } from '../../shared/schema';
 import { eq, desc, or, isNull, inArray } from 'drizzle-orm';
 import webpush from 'web-push';
 import { isStaffOrAdmin } from '../core/middleware';
@@ -406,10 +406,40 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       console.error('[Closures] Failed to create announcement:', announcementError);
     }
     
-    if (notify_members && reason) {
+    if (notify_members) {
+      const notificationTitle = title || 'Facility Closure';
+      const affectedText = affected_areas === 'entire_facility' 
+        ? 'Entire Facility' 
+        : affected_areas === 'all_bays' 
+          ? 'All Simulator Bays' 
+          : affected_areas;
+      const startDateFormatted = new Date(start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const notificationBody = reason 
+        ? `${reason} - ${affectedText} on ${startDateFormatted}`
+        : `${affectedText} will be closed on ${startDateFormatted}`;
+      
+      const memberUsers = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(or(eq(users.role, 'member'), isNull(users.role)));
+      
+      if (memberUsers.length > 0) {
+        const notificationValues = memberUsers.map(m => ({
+          userEmail: m.email,
+          title: notificationTitle,
+          message: notificationBody,
+          type: 'closure',
+          actionUrl: '/announcements',
+          metadata: { closureId: closureId }
+        }));
+        
+        await db.insert(notifications).values(notificationValues);
+        console.log(`[Closures] Created in-app notifications for ${memberUsers.length} members`);
+      }
+      
       await sendPushNotificationToAllMembers({
-        title: 'Facility Update',
-        body: reason,
+        title: notificationTitle,
+        body: notificationBody,
         url: '/announcements'
       });
     }
