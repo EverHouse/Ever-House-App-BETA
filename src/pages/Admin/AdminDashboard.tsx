@@ -4098,6 +4098,7 @@ const TiersAdmin: React.FC = () => {
                                     <p className="text-sm text-gray-400 dark:text-gray-500 italic">Add features above to select highlights</p>
                                 )}
                             </div>
+                            </div>
 
                             {/* Footer */}
                             <div className="flex gap-3 justify-end p-6 pt-4 border-t border-gray-200 dark:border-white/10">
