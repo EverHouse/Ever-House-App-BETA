@@ -4009,6 +4009,7 @@ interface MembershipTier {
     sort_order: number;
     is_active: boolean;
     is_popular: boolean;
+    show_in_comparison: boolean;
     highlighted_features: string[];
     all_features: Record<string, boolean>;
     daily_sim_minutes: number;
@@ -4042,11 +4043,48 @@ const TiersAdmin: React.FC = () => {
     const [tiers, setTiers] = useState<MembershipTier[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
     const [selectedTier, setSelectedTier] = useState<MembershipTier | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [newFeatureKey, setNewFeatureKey] = useState('');
+
+    const getDefaultTier = (): MembershipTier => ({
+        id: 0,
+        name: '',
+        slug: '',
+        price_string: '',
+        description: '',
+        button_text: 'Apply Now',
+        sort_order: tiers.length,
+        is_active: true,
+        is_popular: false,
+        show_in_comparison: true,
+        highlighted_features: [],
+        all_features: {},
+        daily_sim_minutes: 0,
+        guest_passes_per_month: 0,
+        booking_window_days: 7,
+        daily_conf_room_minutes: 0,
+        can_book_simulators: false,
+        can_book_conference: false,
+        can_book_wellness: true,
+        has_group_lessons: false,
+        has_extended_sessions: false,
+        has_private_lesson: false,
+        has_simulator_guest_passes: false,
+        has_discounted_merch: false,
+        unlimited_access: false,
+    });
+
+    const openCreate = () => {
+        setSelectedTier(getDefaultTier());
+        setIsCreating(true);
+        setIsEditing(true);
+        setError(null);
+        setSuccessMessage(null);
+    };
 
     const fetchTiers = async () => {
         try {
@@ -4111,26 +4149,35 @@ const TiersAdmin: React.FC = () => {
         setError(null);
         
         try {
-            const res = await fetch(`/api/membership-tiers/${selectedTier.id}`, {
-                method: 'PUT',
+            const url = isCreating ? '/api/membership-tiers' : `/api/membership-tiers/${selectedTier.id}`;
+            const method = isCreating ? 'POST' : 'PUT';
+            
+            const payload = isCreating ? {
+                ...selectedTier,
+                slug: selectedTier.name.toLowerCase().replace(/\s+/g, '-'),
+            } : selectedTier;
+            
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify(selectedTier)
+                body: JSON.stringify(payload)
             });
             
             if (!res.ok) {
                 const data = await res.json();
-                throw new Error(data.error || 'Failed to save tier');
+                throw new Error(data.error || `Failed to ${isCreating ? 'create' : 'save'} tier`);
             }
             
             await fetchTiers();
-            setSuccessMessage('Tier updated successfully');
+            setSuccessMessage(`Tier ${isCreating ? 'created' : 'updated'} successfully`);
             setTimeout(() => {
                 setIsEditing(false);
+                setIsCreating(false);
                 setSuccessMessage(null);
             }, 1000);
         } catch (err: any) {
-            setError(err.message || 'Failed to save tier');
+            setError(err.message || `Failed to ${isCreating ? 'create' : 'save'} tier`);
         } finally {
             setIsSaving(false);
         }
@@ -4199,17 +4246,24 @@ const TiersAdmin: React.FC = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                     {tiers.length} membership tier{tiers.length !== 1 ? 's' : ''}
                 </p>
+                <button 
+                    onClick={openCreate}
+                    className="bg-primary text-white px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-primary/90 transition-colors"
+                >
+                    <span className="material-symbols-outlined text-lg">add</span>
+                    New Tier
+                </button>
             </div>
 
             {/* Edit Modal - Native sheet style for reliable mobile scrolling */}
             {isEditing && selectedTier && createPortal(
                 <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setIsCreating(false); }} />
                     <div className="relative flex flex-col max-w-2xl w-full bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 max-h-[calc(100vh-2rem)] min-h-0 overflow-hidden">
                             {/* Header - Fixed */}
                             <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1d15] flex-shrink-0">
-                                <h3 className="font-bold text-lg text-primary dark:text-white">Edit Tier: {selectedTier.name}</h3>
-                                <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                                <h3 className="font-bold text-lg text-primary dark:text-white">{isCreating ? 'New Tier' : `Edit Tier: ${selectedTier.name}`}</h3>
+                                <button onClick={() => { setIsEditing(false); setIsCreating(false); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
@@ -4268,6 +4322,28 @@ const TiersAdmin: React.FC = () => {
                                             onChange={e => setSelectedTier({...selectedTier, button_text: e.target.value})} 
                                         />
                                     </div>
+                                    <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors mt-2">
+                                        <span className="text-sm text-primary dark:text-white">Show in Compare Table</span>
+                                        <button
+                                            type="button"
+                                            role="switch"
+                                            aria-checked={selectedTier.show_in_comparison}
+                                            onClick={() => setSelectedTier({...selectedTier, show_in_comparison: !selectedTier.show_in_comparison})}
+                                            className={`relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                                                selectedTier.show_in_comparison 
+                                                    ? 'bg-primary' 
+                                                    : 'bg-[#E9E9EB] dark:bg-[#39393D]'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`pointer-events-none inline-block h-[27px] w-[27px] transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                                    selectedTier.show_in_comparison 
+                                                        ? 'translate-x-[20px]' 
+                                                        : 'translate-x-0'
+                                                }`}
+                                            />
+                                        </button>
+                                    </label>
                                 </div>
                             </div>
 

@@ -353,6 +353,7 @@ export const membershipTiers = pgTable("membership_tiers", {
   sortOrder: integer("sort_order").default(0),
   isActive: boolean("is_active").default(true),
   isPopular: boolean("is_popular").default(false),
+  showInComparison: boolean("show_in_comparison").default(true),
   
   // Marketing fields (JSON)
   highlightedFeatures: jsonb("highlighted_features").default(sql`'[]'::jsonb`),

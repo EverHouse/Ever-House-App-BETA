@@ -23,6 +23,7 @@ interface MembershipTier {
   sort_order: number;
   is_active: boolean;
   is_popular: boolean;
+  show_in_comparison: boolean;
   highlighted_features: string[];
   daily_sim_minutes: number;
   guest_passes_per_month: number;
@@ -160,7 +161,7 @@ const MembershipOverview: React.FC = () => {
         const response = await fetch('/api/membership-tiers?active=true');
         if (response.ok) {
           const data = await response.json();
-          const filteredTiers = data.filter((t: MembershipTier) => t.name !== 'VIP');
+          const filteredTiers = data.filter((t: MembershipTier) => t.show_in_comparison !== false);
           setTiers(filteredTiers);
         }
       } catch (error) {
@@ -469,7 +470,7 @@ const CompareFeatures: React.FC = () => {
         const response = await fetch('/api/membership-tiers?active=true');
         if (response.ok) {
           const data = await response.json();
-          const filteredTiers = data.filter((t: MembershipTier) => t.name !== 'VIP');
+          const filteredTiers = data.filter((t: MembershipTier) => t.show_in_comparison !== false);
           setTiers(filteredTiers);
         }
       } catch (error) {

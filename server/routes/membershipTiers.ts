@@ -92,7 +92,7 @@ router.put('/api/membership-tiers/:id', isAdmin, async (req, res) => {
     const { id } = req.params;
     const {
       name, slug, price_string, description, button_text, sort_order,
-      is_active, is_popular, highlighted_features, all_features,
+      is_active, is_popular, show_in_comparison, highlighted_features, all_features,
       daily_sim_minutes, guest_passes_per_month, booking_window_days,
       daily_conf_room_minutes, can_book_simulators, can_book_conference,
       can_book_wellness, has_group_lessons, has_extended_sessions,
@@ -110,27 +110,28 @@ router.put('/api/membership-tiers/:id', isAdmin, async (req, res) => {
         sort_order = COALESCE($6, sort_order),
         is_active = COALESCE($7, is_active),
         is_popular = COALESCE($8, is_popular),
-        highlighted_features = COALESCE($9, highlighted_features),
-        all_features = COALESCE($10, all_features),
-        daily_sim_minutes = COALESCE($11, daily_sim_minutes),
-        guest_passes_per_month = COALESCE($12, guest_passes_per_month),
-        booking_window_days = COALESCE($13, booking_window_days),
-        daily_conf_room_minutes = COALESCE($14, daily_conf_room_minutes),
-        can_book_simulators = COALESCE($15, can_book_simulators),
-        can_book_conference = COALESCE($16, can_book_conference),
-        can_book_wellness = COALESCE($17, can_book_wellness),
-        has_group_lessons = COALESCE($18, has_group_lessons),
-        has_extended_sessions = COALESCE($19, has_extended_sessions),
-        has_private_lesson = COALESCE($20, has_private_lesson),
-        has_simulator_guest_passes = COALESCE($21, has_simulator_guest_passes),
-        has_discounted_merch = COALESCE($22, has_discounted_merch),
-        unlimited_access = COALESCE($23, unlimited_access),
+        show_in_comparison = COALESCE($9, show_in_comparison),
+        highlighted_features = COALESCE($10, highlighted_features),
+        all_features = COALESCE($11, all_features),
+        daily_sim_minutes = COALESCE($12, daily_sim_minutes),
+        guest_passes_per_month = COALESCE($13, guest_passes_per_month),
+        booking_window_days = COALESCE($14, booking_window_days),
+        daily_conf_room_minutes = COALESCE($15, daily_conf_room_minutes),
+        can_book_simulators = COALESCE($16, can_book_simulators),
+        can_book_conference = COALESCE($17, can_book_conference),
+        can_book_wellness = COALESCE($18, can_book_wellness),
+        has_group_lessons = COALESCE($19, has_group_lessons),
+        has_extended_sessions = COALESCE($20, has_extended_sessions),
+        has_private_lesson = COALESCE($21, has_private_lesson),
+        has_simulator_guest_passes = COALESCE($22, has_simulator_guest_passes),
+        has_discounted_merch = COALESCE($23, has_discounted_merch),
+        unlimited_access = COALESCE($24, unlimited_access),
         updated_at = NOW()
-      WHERE id = $24
+      WHERE id = $25
       RETURNING *
     `, [
       name, slug, price_string, description, button_text, sort_order,
-      is_active, is_popular, 
+      is_active, is_popular, show_in_comparison,
       highlighted_features ? JSON.stringify(highlighted_features) : null,
       all_features ? JSON.stringify(all_features) : null,
       daily_sim_minutes, guest_passes_per_month, booking_window_days,
@@ -160,7 +161,7 @@ router.post('/api/membership-tiers', isAdmin, async (req, res) => {
   try {
     const {
       name, slug, price_string, description, button_text, sort_order,
-      is_active, is_popular, highlighted_features, all_features,
+      is_active, is_popular, show_in_comparison, highlighted_features, all_features,
       daily_sim_minutes, guest_passes_per_month, booking_window_days,
       daily_conf_room_minutes, can_book_simulators, can_book_conference,
       can_book_wellness, has_group_lessons, has_extended_sessions,
@@ -175,17 +176,17 @@ router.post('/api/membership-tiers', isAdmin, async (req, res) => {
     const result = await pool.query(`
       INSERT INTO membership_tiers (
         name, slug, price_string, description, button_text, sort_order,
-        is_active, is_popular, highlighted_features, all_features,
+        is_active, is_popular, show_in_comparison, highlighted_features, all_features,
         daily_sim_minutes, guest_passes_per_month, booking_window_days,
         daily_conf_room_minutes, can_book_simulators, can_book_conference,
         can_book_wellness, has_group_lessons, has_extended_sessions,
         has_private_lesson, has_simulator_guest_passes, has_discounted_merch,
         unlimited_access
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
       RETURNING *
     `, [
       name, slug, price_string, description || null, button_text || 'Apply Now', sort_order || 0,
-      is_active ?? true, is_popular ?? false,
+      is_active ?? true, is_popular ?? false, show_in_comparison ?? true,
       JSON.stringify(highlighted_features || []),
       JSON.stringify(all_features || {}),
       daily_sim_minutes || 0, guest_passes_per_month || 0, booking_window_days || 7,
