@@ -319,8 +319,13 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       const eventTitle = `CLOSURE: ${title || 'Facility Closure'}`;
       const eventDescription = `${reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
       
-      // Create event in Booked Golf calendar
-      if (golfCalendarId) {
+      // Determine what resources are affected
+      const affectsConferenceRoom = affected_areas === 'entire_facility' || affected_areas === 'conference_room';
+      const affectsBays = affected_areas === 'entire_facility' || affected_areas === 'all_bays' || 
+        affected_areas.includes('bay_') || affectedBayIds.length > 0;
+      
+      // Create event in Booked Golf calendar (only if bays are affected)
+      if (golfCalendarId && affectsBays) {
         golfEventIds = await createClosureCalendarEvents(
           golfCalendarId,
           eventTitle,
@@ -336,8 +341,8 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         }
       }
       
-      // For whole facility closures, also create event in MBO_Conference_Room calendar
-      if (affected_areas === 'entire_facility') {
+      // Create event in MBO_Conference_Room calendar (if conference room or entire facility is affected)
+      if (affectsConferenceRoom) {
         const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
         if (conferenceCalendarId) {
           conferenceEventIds = await createClosureCalendarEvents(
@@ -609,7 +614,13 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
         let newGolfEventIds: string | null = null;
         let newConferenceEventIds: string | null = null;
         
-        if (golfCalendarId) {
+        // Determine what resources are affected
+        const affectsConferenceRoom = newAffectedAreas === 'entire_facility' || newAffectedAreas === 'conference_room';
+        const affectsBays = newAffectedAreas === 'entire_facility' || newAffectedAreas === 'all_bays' || 
+          newAffectedAreas.includes('bay_') || affectedBayIds.length > 0;
+        
+        // Create golf calendar event only if bays are affected
+        if (golfCalendarId && affectsBays) {
           newGolfEventIds = await createClosureCalendarEvents(
             golfCalendarId,
             eventTitle,
@@ -621,8 +632,8 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
           );
         }
         
-        // For whole facility closures, also create conference room event
-        if (newAffectedAreas === 'entire_facility' && conferenceCalendarId) {
+        // Create conference room calendar event if conference room or entire facility is affected
+        if (conferenceCalendarId && affectsConferenceRoom) {
           newConferenceEventIds = await createClosureCalendarEvents(
             conferenceCalendarId,
             eventTitle,
