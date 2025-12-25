@@ -83,7 +83,7 @@ const Profile: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className="px-6 pt-6">
+    <div className="px-6 pt-6 pb-32">
       {/* Wallet Pass Preview */}
       {(() => {
          const tierColors = getTierColor(user.tier || 'Social');
