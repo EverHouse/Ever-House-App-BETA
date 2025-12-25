@@ -51,9 +51,9 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Real-Time Booking**: Database-backed booking with shared availability, duration-aware slot generation, and collision detection.
 
 ### Motion Architecture
-- **Framer Motion**: For page transitions and animations.
-- **Lenis Smooth Scroll**: Premium smooth scrolling with weighted easing.
-- **Physics-Based Directional Page Transitions**: iOS-style slide animations for native app feel, with direction detection and spring physics.
+- **CSS Animations**: Pure CSS keyframe animations for page transitions (fade-in, slide-in-up, pop-in).
+- **Native Browser Scrolling**: Uses native window.scrollTo for consistent scroll behavior across all devices.
+- **Scroll-Aware Bottom Nav**: BottomSentinel detects scroll direction and auto-hides nav on downward scroll.
 - **Persistent UI**: Bottom nav bar and header remain static during transitions.
 
 ### PWA (Progressive Web App)

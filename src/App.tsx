@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './contexts/DataContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
-import { SmoothScrollProvider, useSmoothScroll } from './components/motion/SmoothScroll';
+import { SmoothScrollProvider } from './components/motion/SmoothScroll';
 import DirectionalPageTransition, { TransitionContext } from './components/motion/DirectionalPageTransition';
 import Logo from './components/Logo';
 import MenuOverlay from './components/MenuOverlay';
