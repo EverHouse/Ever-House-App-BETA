@@ -4005,9 +4005,9 @@ const TiersAdmin: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedTier({...selectedTier, [key]: !selectedTier[key as keyof MembershipTier]})}
-                                                className={`relative inline-flex h-[31px] w-[51px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34C759] ${selectedTier[key as keyof MembershipTier] ? 'bg-[#34C759]' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                                className={`relative w-[51px] h-[31px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34C759] ${selectedTier[key as keyof MembershipTier] ? 'bg-[#34C759]' : 'bg-gray-300 dark:bg-gray-600'}`}
                                             >
-                                                <span className={`pointer-events-none inline-block h-[27px] w-[27px] transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-300 ease-in-out ${selectedTier[key as keyof MembershipTier] ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} style={{ marginTop: '2px' }} />
+                                                <span className={`absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200 ease-in-out ${selectedTier[key as keyof MembershipTier] ? 'right-[2px]' : 'left-[2px]'}`} />
                                             </button>
                                         </label>
                                     ))}

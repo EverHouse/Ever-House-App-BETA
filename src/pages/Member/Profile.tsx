@@ -215,9 +215,9 @@ const Profile: React.FC = () => {
                 <button 
                   onClick={handlePushToggle}
                   disabled={pushLoading}
-                  className={`w-[51px] h-[31px] rounded-full relative transition-colors flex-shrink-0 ${pushEnabled ? 'bg-green-500' : (isDark ? 'bg-white/20' : 'bg-black/20')}`}
+                  className={`relative w-[51px] h-[31px] flex-shrink-0 rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${pushEnabled ? 'bg-[#34C759]' : (isDark ? 'bg-gray-600' : 'bg-gray-300')}`}
                 >
-                  <div className={`absolute top-[2px] w-[27px] h-[27px] bg-white rounded-full shadow-md transition-all ${pushEnabled ? 'right-[2px]' : 'left-[2px]'}`}></div>
+                  <span className={`absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200 ease-in-out ${pushEnabled ? 'right-[2px]' : 'left-[2px]'}`} />
                 </button>
               </div>
             )}
