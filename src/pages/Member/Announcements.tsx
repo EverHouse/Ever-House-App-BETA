@@ -43,10 +43,10 @@ const MemberAnnouncements: React.FC = () => {
     if (item.linkType) {
       switch (item.linkType) {
         case 'events':
-          navigate('/events');
+          navigate('/member-events');
           break;
         case 'wellness':
-          navigate('/wellness');
+          navigate('/member-wellness');
           break;
         case 'golf':
           navigate('/book');

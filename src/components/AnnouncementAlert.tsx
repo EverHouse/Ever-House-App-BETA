@@ -25,10 +25,10 @@ const AnnouncementAlert: React.FC = () => {
     if (item.linkType) {
       switch (item.linkType) {
         case 'events':
-          navigate('/events');
+          navigate('/member-events');
           return;
         case 'wellness':
-          navigate('/wellness');
+          navigate('/member-wellness');
           return;
         case 'golf':
           navigate('/book');

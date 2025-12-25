@@ -55,10 +55,6 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
   try {
     const { title, description, type, startDate, endDate, linkType, linkTarget } = req.body;
     
-    if (!isProduction) {
-      console.log('[Announcements] Create request body:', { title, type, linkType, linkTarget });
-    }
-    
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
     }
