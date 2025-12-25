@@ -39,7 +39,9 @@ router.get('/api/announcements', async (req, res) => {
       type: (a.priority === 'high' ? 'announcement' : 'update') as 'update' | 'announcement',
       date: a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now',
       startDate: a.startsAt ? new Date(a.startsAt).toISOString().split('T')[0] : undefined,
-      endDate: a.endsAt ? new Date(a.endsAt).toISOString().split('T')[0] : undefined
+      endDate: a.endsAt ? new Date(a.endsAt).toISOString().split('T')[0] : undefined,
+      linkType: a.linkType || undefined,
+      linkTarget: a.linkTarget || undefined
     }));
     
     res.json(formatted);
@@ -51,7 +53,7 @@ router.get('/api/announcements', async (req, res) => {
 
 router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
   try {
-    const { title, description, type, startDate, endDate } = req.body;
+    const { title, description, type, startDate, endDate, linkType, linkTarget } = req.body;
     
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
@@ -65,6 +67,8 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
       priority: type === 'announcement' ? 'high' : 'normal',
       startsAt: startDate ? new Date(startDate) : null,
       endsAt: endDate ? new Date(endDate) : null,
+      linkType: linkType || null,
+      linkTarget: linkTarget || null,
       createdBy: userEmail
     }).returning();
     
@@ -75,7 +79,9 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
       type: (newAnnouncement.priority === 'high' ? 'announcement' : 'update') as 'update' | 'announcement',
       date: 'Just now',
       startDate: newAnnouncement.startsAt ? new Date(newAnnouncement.startsAt).toISOString().split('T')[0] : undefined,
-      endDate: newAnnouncement.endsAt ? new Date(newAnnouncement.endsAt).toISOString().split('T')[0] : undefined
+      endDate: newAnnouncement.endsAt ? new Date(newAnnouncement.endsAt).toISOString().split('T')[0] : undefined,
+      linkType: newAnnouncement.linkType || undefined,
+      linkTarget: newAnnouncement.linkTarget || undefined
     });
   } catch (error: any) {
     if (!isProduction) console.error('Announcement create error:', error);
@@ -86,7 +92,7 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
 router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, type, startDate, endDate } = req.body;
+    const { title, description, type, startDate, endDate, linkType, linkTarget } = req.body;
     
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
@@ -98,7 +104,9 @@ router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
         message: description || '',
         priority: type === 'announcement' ? 'high' : 'normal',
         startsAt: startDate ? new Date(startDate) : null,
-        endsAt: endDate ? new Date(endDate) : null
+        endsAt: endDate ? new Date(endDate) : null,
+        linkType: linkType || null,
+        linkTarget: linkTarget || null
       })
       .where(eq(announcements.id, parseInt(id)))
       .returning();
@@ -114,7 +122,9 @@ router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
       type: (updated.priority === 'high' ? 'announcement' : 'update') as 'update' | 'announcement',
       date: updated.createdAt ? new Date(updated.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now',
       startDate: updated.startsAt ? new Date(updated.startsAt).toISOString().split('T')[0] : undefined,
-      endDate: updated.endsAt ? new Date(updated.endsAt).toISOString().split('T')[0] : undefined
+      endDate: updated.endsAt ? new Date(updated.endsAt).toISOString().split('T')[0] : undefined,
+      linkType: updated.linkType || undefined,
+      linkTarget: updated.linkTarget || undefined
     });
   } catch (error: any) {
     if (!isProduction) console.error('Announcement update error:', error);

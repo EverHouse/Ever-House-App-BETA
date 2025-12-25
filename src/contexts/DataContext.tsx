@@ -42,6 +42,8 @@ export interface Announcement {
   date: string;
   startDate?: string;
   endDate?: string;
+  linkType?: 'events' | 'wellness' | 'golf' | 'external';
+  linkTarget?: string;
 }
 
 export interface MemberProfile {
