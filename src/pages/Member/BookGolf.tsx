@@ -10,7 +10,7 @@ import SwipeablePage from '../../components/SwipeablePage';
 import { haptic } from '../../utils/haptics';
 import { useTierPermissions } from '../../hooks/useTierPermissions';
 import { canAccessResource } from '../../services/tierService';
-import { getDateString } from '../../utils/dateUtils';
+import { getDateString, formatDateShort } from '../../utils/dateUtils';
 
 
 interface APIResource {
@@ -48,6 +48,34 @@ interface Resource {
   image?: string;
 }
 
+interface BookingRequest {
+  id: number;
+  user_email: string;
+  user_name: string;
+  bay_id: number | null;
+  bay_name: string | null;
+  bay_preference: string | null;
+  request_date: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  notes: string | null;
+  status: 'pending' | 'approved' | 'declined' | 'cancelled';
+  staff_notes: string | null;
+  suggested_time: string | null;
+  created_at: string;
+}
+
+const getStatusColor = (status: string, isDark: boolean): string => {
+  switch (status) {
+    case 'pending': return isDark ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-500/20 text-yellow-700';
+    case 'approved': return isDark ? 'bg-green-500/20 text-green-300' : 'bg-green-500/20 text-green-700';
+    case 'declined': return isDark ? 'bg-red-500/20 text-red-300' : 'bg-red-500/20 text-red-700';
+    case 'cancelled': return isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-500/20 text-gray-500';
+    default: return isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-500/20 text-gray-500';
+  }
+};
+
 const formatTime12 = (time24: string): string => {
   const [hours, minutes] = time24.split(':').map(Number);
   const period = hours >= 12 ? 'PM' : 'AM';
@@ -82,7 +110,7 @@ const BookGolf: React.FC = () => {
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   const initialTab = searchParams.get('tab') === 'conference' ? 'conference' : 'simulator';
-  const [activeTab, setActiveTab] = useState<'simulator' | 'conference'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'simulator' | 'conference' | 'my-requests'>(initialTab);
   const [duration, setDuration] = useState<number>(60);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -93,6 +121,8 @@ const BookGolf: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [showViewAsConfirm, setShowViewAsConfirm] = useState(false);
+  const [myRequests, setMyRequests] = useState<BookingRequest[]>([]);
+  const [previousTab, setPreviousTab] = useState<'simulator' | 'conference'>(initialTab as 'simulator' | 'conference');
 
   const effectiveUser = viewAsUser || user;
   
@@ -101,13 +131,21 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'conference') setActiveTab('conference');
-    else if (tab === 'simulator') setActiveTab('simulator');
+    if (tab === 'conference') {
+      setActiveTab('conference');
+      setPreviousTab('conference');
+    } else if (tab === 'simulator') {
+      setActiveTab('simulator');
+      setPreviousTab('simulator');
+    }
   }, [searchParams]);
 
   const { permissions: tierPermissions, loading: tierLoading } = useTierPermissions(effectiveUser?.tier);
   const canBookSimulators = canAccessResource(tierPermissions, 'simulator');
+  const canBookConference = canAccessResource(tierPermissions, 'conference');
   const isTierLoaded = Boolean(effectiveUser?.tier) && !tierLoading;
+  
+  const pendingRequestsCount = myRequests.filter(r => r.status === 'pending').length;
   
   const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
   const [selectedDateObj, setSelectedDateObj] = useState(dates[0]);
@@ -228,6 +266,43 @@ const BookGolf: React.FC = () => {
     fetchAvailability();
   }, [resources, selectedDateObj, duration, effectiveUser?.email, effectiveUser?.tier]);
 
+  useEffect(() => {
+    const fetchMyRequests = async () => {
+      if (!effectiveUser?.email) return;
+      try {
+        const { ok, data } = await apiRequest<BookingRequest[]>(
+          `/api/booking-requests?user_email=${encodeURIComponent(effectiveUser.email)}`
+        );
+        if (ok && data) {
+          setMyRequests(data);
+        }
+      } catch (err) {
+        console.error('[BookGolf] Failed to fetch booking requests:', err);
+      }
+    };
+    fetchMyRequests();
+  }, [effectiveUser?.email, showConfirmation]);
+
+  const handleCancelRequest = async (id: number) => {
+    haptic.light();
+    try {
+      const { ok } = await apiRequest(`/api/booking-requests/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' })
+      });
+      
+      if (ok) {
+        setMyRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
+        haptic.success();
+        showToast('Request cancelled', 'success');
+      }
+    } catch (err) {
+      console.error('[BookGolf] Failed to cancel request:', err);
+      haptic.error();
+    }
+  };
+
   const getAvailableResourcesForSlot = (slot: TimeSlot): Resource[] => {
     return resources.filter(r => slot.availableResourceDbIds.includes(r.dbId));
   };
@@ -305,7 +380,7 @@ const BookGolf: React.FC = () => {
     await submitBooking();
   };
 
-  const canBook = Boolean(selectedDateObj && duration && selectedSlot && selectedResource && !isBooking);
+  const canBook = Boolean(selectedDateObj && duration && selectedSlot && selectedResource && !isBooking && activeTab !== 'my-requests');
 
   return (
     <SwipeablePage className="px-6 pt-4 relative min-h-screen">
@@ -316,8 +391,35 @@ const BookGolf: React.FC = () => {
 
       <section className={`mb-8 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide" role="tablist">
-          <TabButton label="Golf Simulator" active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} isDark={isDark} />
-          <TabButton label="Conference Room" active={activeTab === 'conference'} onClick={() => setActiveTab('conference')} isDark={isDark} />
+          <TabButton 
+            label="Golf Simulator" 
+            active={activeTab === 'simulator'} 
+            onClick={() => { setPreviousTab('simulator'); setActiveTab('simulator'); }} 
+            isDark={isDark} 
+          />
+          <TabButton 
+            label="Conference Room" 
+            active={activeTab === 'conference'} 
+            onClick={() => { setPreviousTab('conference'); setActiveTab('conference'); }} 
+            isDark={isDark} 
+          />
+          <button
+            role="tab"
+            aria-selected={activeTab === 'my-requests'}
+            onClick={() => setActiveTab('my-requests')}
+            className={`relative whitespace-nowrap pb-4 text-sm font-bold transition-all border-b-2 -mb-px ${
+              activeTab === 'my-requests'
+                ? (isDark ? 'text-white border-accent' : 'text-primary border-accent')
+                : (isDark ? 'text-white/50 border-transparent hover:text-white/70' : 'text-primary/50 border-transparent hover:text-primary/70')
+            }`}
+          >
+            My Requests
+            {pendingRequestsCount > 0 && (
+              <span className="absolute -top-1 -right-3 w-5 h-5 bg-yellow-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                {pendingRequestsCount}
+              </span>
+            )}
+          </button>
         </div>
       </section>
 
@@ -336,6 +438,108 @@ const BookGolf: React.FC = () => {
             View Membership Options
           </a>
         </section>
+      ) : activeTab === 'conference' && isTierLoaded && !canBookConference ? (
+        <section className={`rounded-2xl p-6 border text-center ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
+          <span className="material-symbols-outlined text-4xl text-accent mb-4">lock</span>
+          <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Upgrade for Conference Room Access</h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+            Conference room booking is available for Core, Premium, and Corporate members. Upgrade your membership to start booking.
+          </p>
+          <a 
+            href="/membership" 
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-brand-green rounded-xl font-bold text-sm"
+          >
+            <span className="material-symbols-outlined text-lg">upgrade</span>
+            View Membership Options
+          </a>
+        </section>
+      ) : activeTab === 'my-requests' ? (
+        <div className="space-y-4">
+          {myRequests.length === 0 ? (
+            <div className={`text-center py-12 rounded-2xl border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
+              <span className={`material-symbols-outlined text-5xl mb-4 ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
+              <p className={`${isDark ? 'text-white/60' : 'text-primary/60'}`}>No booking requests yet</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {myRequests
+                .filter(request => {
+                  if (previousTab === 'conference') {
+                    return request.notes?.includes('Conference room booking');
+                  }
+                  return !request.notes?.includes('Conference room booking');
+                })
+                .map(request => (
+                <div 
+                  key={request.id} 
+                  className={`rounded-xl p-4 border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className={`font-bold ${isDark ? 'text-white' : 'text-primary'}`}>
+                        {formatDateShort(request.request_date)}
+                      </p>
+                      <p className={`text-sm ${isDark ? 'text-white/70' : 'text-primary/70'}`}>
+                        {formatTime12(request.start_time)} - {formatTime12(request.end_time)}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(request.status, isDark)}`}>
+                      {request.status}
+                    </span>
+                  </div>
+                  
+                  {request.bay_name && (
+                    <p className={`text-sm flex items-center gap-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>
+                      <span className="material-symbols-outlined text-sm">
+                        {request.notes?.includes('Conference room booking') ? 'meeting_room' : 'golf_course'}
+                      </span>
+                      {request.bay_name}
+                    </p>
+                  )}
+                  
+                  {request.notes && (
+                    <p className={`text-sm mt-2 italic ${isDark ? 'text-white/60' : 'text-primary/60'}`}>"{request.notes}"</p>
+                  )}
+                  
+                  {request.staff_notes && request.status !== 'pending' && (
+                    <div className={`mt-2 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                      <p className={`text-xs ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Staff note: {request.staff_notes}</p>
+                    </div>
+                  )}
+                  
+                  {request.suggested_time && request.status === 'declined' && (
+                    <div className="mt-2 p-2 bg-yellow-500/10 rounded-lg">
+                      <p className="text-xs text-yellow-700">Suggested time: {formatTime12(request.suggested_time)}</p>
+                    </div>
+                  )}
+                  
+                  {request.status === 'pending' && (
+                    <button
+                      onClick={() => handleCancelRequest(request.id)}
+                      className="mt-3 text-sm text-red-500 flex items-center gap-1 hover:underline"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                      Cancel Request
+                    </button>
+                  )}
+                </div>
+              ))}
+              {myRequests.filter(request => {
+                if (previousTab === 'conference') {
+                  return request.notes?.includes('Conference room booking');
+                }
+                return !request.notes?.includes('Conference room booking');
+              }).length === 0 && (
+                <div className={`text-center py-12 rounded-2xl border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
+                  <span className={`material-symbols-outlined text-5xl mb-4 ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
+                  <p className={`${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+                    No {previousTab === 'conference' ? 'conference room' : 'simulator'} requests yet
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="relative z-10 animate-pop-in space-y-6">
           <section className={`rounded-2xl p-4 border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
