@@ -366,7 +366,7 @@ router.post('/api/auth/magic-link', async (req, res) => {
           value: normalizedEmail
         }]
       }],
-      properties: ['firstname', 'lastname', 'email', 'membership_status'],
+      properties: ['firstname', 'lastname', 'email', 'membership_status', 'membership_start_date'],
       limit: 1
     });
     
@@ -487,7 +487,7 @@ router.post('/api/auth/request-otp', async (req, res) => {
           value: normalizedEmail
         }]
       }],
-      properties: ['firstname', 'lastname', 'email', 'membership_status'],
+      properties: ['firstname', 'lastname', 'email', 'membership_status', 'membership_start_date'],
       limit: 1
     });
     
@@ -624,7 +624,7 @@ router.post('/api/auth/verify-otp', async (req, res) => {
           value: normalizedEmail
         }]
       }],
-      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id'],
+      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id', 'membership_start_date'],
       limit: 1
     });
     
@@ -704,7 +704,7 @@ router.post('/api/auth/verify-token', async (req, res) => {
           value: magicLinkRecord.email
         }]
       }],
-      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id'],
+      properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id', 'membership_start_date'],
       limit: 1
     });
     
@@ -885,7 +885,7 @@ router.post('/api/auth/password-login', async (req, res) => {
             value: normalizedEmail
           }]
         }],
-        properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id'],
+        properties: ['firstname', 'lastname', 'email', 'phone', 'membership_tier', 'membership_status', 'membership_discount_reason', 'mindbody_client_id', 'membership_start_date'],
         limit: 1
       });
       

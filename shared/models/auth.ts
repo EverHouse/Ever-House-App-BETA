@@ -27,6 +27,7 @@ export const users = pgTable("users", {
   tags: jsonb("tags").default(sql`'[]'::jsonb`),
   phone: varchar("phone"),
   mindbodyClientId: varchar("mindbody_client_id"),
+  membershipStartDate: date("membership_start_date"),
   lifetimeVisits: integer("lifetime_visits").default(0),
   linkedEmails: jsonb("linked_emails").default(sql`'[]'::jsonb`),
   dataSource: varchar("data_source"),
