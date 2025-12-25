@@ -1737,7 +1737,7 @@ interface CalendarClosure {
 }
 
 const SimulatorAdmin: React.FC = () => {
-    const { user } = useData();
+    const { user, actualUser } = useData();
     const [activeView, setActiveView] = useState<'requests' | 'calendar'>('requests');
     const [requests, setRequests] = useState<BookingRequest[]>([]);
     const [bays, setBays] = useState<Bay[]>([]);
@@ -1928,7 +1928,8 @@ const SimulatorAdmin: React.FC = () => {
                         status: newStatus,
                         staff_notes: staffNotes || null,
                         suggested_time: suggestedTime ? suggestedTime + ':00' : null,
-                        reviewed_by: user?.email
+                        reviewed_by: actualUser?.email || user?.email,
+                        cancelled_by: newStatus === 'cancelled' ? (actualUser?.email || user?.email) : undefined
                     })
                 });
             }

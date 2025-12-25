@@ -256,7 +256,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleCancelBooking = (bookingId: number) => {
+  const handleCancelBooking = (bookingId: number, bookingType: 'booking' | 'booking_request') => {
     setConfirmModal({
       isOpen: true,
       title: "Cancel Booking",
@@ -264,9 +264,27 @@ const Dashboard: React.FC = () => {
       onConfirm: async () => {
         setConfirmModal(null);
         try {
-          const res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE' });
+          let res;
+          if (bookingType === 'booking') {
+            // Legacy booking table - use DELETE
+            res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE' });
+            if (res.ok) {
+              setDbBookings(prev => prev.filter(b => b.id !== bookingId));
+            }
+          } else {
+            // Booking request - use PUT with status cancelled
+            res = await fetch(`/api/booking-requests/${bookingId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'cancelled', cancelled_by: user?.email })
+            });
+            if (res.ok) {
+              setDbBookingRequests(prev => prev.map(r => 
+                r.id === bookingId ? { ...r, status: 'cancelled' } : r
+              ));
+            }
+          }
           if (res.ok) {
-            setDbBookings(prev => prev.filter(b => b.id !== bookingId));
             setSelectedBooking(null);
             showToast('Booking cancelled successfully', 'success');
           } else {
@@ -447,7 +465,7 @@ const Dashboard: React.FC = () => {
                       ) : 'Check In'}
                     </button>
                     <button 
-                      onClick={() => handleCancelBooking(nextBooking.dbId)}
+                      onClick={() => handleCancelBooking(nextBooking.dbId, nextBooking.type)}
                       className="w-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-xl transition-colors text-brand-green border border-brand-green/10 focus:ring-2 focus:ring-accent focus:outline-none"
                       aria-label="Cancel booking"
                     >

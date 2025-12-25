@@ -375,16 +375,76 @@ router.put('/api/booking-requests/:id', async (req, res) => {
     }
     
     if (status === 'cancelled') {
-      const existing = await db.select({ calendarEventId: bookingRequests.calendarEventId })
+      const existing = await db.select({
+        calendarEventId: bookingRequests.calendarEventId,
+        userEmail: bookingRequests.userEmail,
+        userName: bookingRequests.userName,
+        requestDate: bookingRequests.requestDate,
+        startTime: bookingRequests.startTime,
+        status: bookingRequests.status
+      })
         .from(bookingRequests)
         .where(eq(bookingRequests.id, parseInt(id)));
       
-      if (existing[0]?.calendarEventId) {
+      const bookingData = existing[0];
+      
+      // Delete calendar event if exists
+      if (bookingData?.calendarEventId) {
         try {
           const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-          await deleteCalendarEvent(existing[0].calendarEventId, golfCalendarId || 'primary');
+          await deleteCalendarEvent(bookingData.calendarEventId, golfCalendarId || 'primary');
         } catch (calError) {
           console.error('Failed to delete calendar event (non-blocking):', calError);
+        }
+      }
+      
+      // Only send cancellation notifications if booking was previously approved
+      if (bookingData && bookingData.status === 'approved') {
+        const { cancelled_by } = req.body;
+        const memberEmail = bookingData.userEmail;
+        const memberName = bookingData.userName || memberEmail;
+        const bookingDate = bookingData.requestDate;
+        const bookingTime = bookingData.startTime?.substring(0, 5) || '';
+        
+        // Determine if member cancelled (cancelled_by matches member email) or staff cancelled
+        const memberCancelled = cancelled_by === memberEmail;
+        
+        if (memberCancelled) {
+          // Member cancelled - notify all staff
+          const staffMessage = `${memberName} has cancelled their booking for ${bookingDate} at ${bookingTime}.`;
+          
+          await db.insert(notifications).values({
+            userEmail: 'staff@evenhouse.app', // Generic staff notification marker
+            title: 'Booking Cancelled by Member',
+            message: staffMessage,
+            type: 'booking_cancelled',
+            relatedId: parseInt(id),
+            relatedType: 'booking_request'
+          });
+          
+          await sendPushNotificationToStaff({
+            title: 'Booking Cancelled',
+            body: staffMessage,
+            url: '/#/staff'
+          });
+        } else {
+          // Staff cancelled - notify the member
+          const memberMessage = `Your booking for ${bookingDate} at ${bookingTime} has been cancelled by staff.${staff_notes ? ' Note: ' + staff_notes : ''}`;
+          
+          await db.insert(notifications).values({
+            userEmail: memberEmail,
+            title: 'Booking Cancelled',
+            message: memberMessage,
+            type: 'booking_cancelled',
+            relatedId: parseInt(id),
+            relatedType: 'booking_request'
+          });
+          
+          await sendPushNotification(memberEmail, {
+            title: 'Booking Cancelled',
+            body: memberMessage,
+            url: '/#/sims'
+          });
         }
       }
     }

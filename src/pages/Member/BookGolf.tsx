@@ -284,7 +284,7 @@ const BookGolf: React.FC = () => {
       const { ok } = await apiRequest(`/api/booking-requests/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'cancelled' })
+        body: JSON.stringify({ status: 'cancelled', cancelled_by: effectiveUser?.email })
       });
       
       if (ok) {
