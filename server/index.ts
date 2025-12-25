@@ -19,7 +19,7 @@ import wellnessRouter from './routes/wellness';
 import guestPassesRouter from './routes/guestPasses';
 import baysRouter from './routes/bays';
 import notificationsRouter from './routes/notifications';
-import pushRouter from './routes/push';
+import pushRouter, { sendDailyReminders } from './routes/push';
 import availabilityRouter from './routes/availability';
 import cafeRouter from './routes/cafe';
 import dataConflictsRouter from './routes/dataConflicts';
@@ -345,6 +345,33 @@ async function startServer() {
     console.log('[Startup] Production mode: auto-seeding and background sync disabled');
     console.log('[Startup] Use POST /api/events/sync/google and POST /api/wellness-classes/sync for manual sync');
   }
+  
+  // Daily reminder scheduler - runs at 6pm local time
+  const REMINDER_HOUR = 18; // 6pm
+  let lastReminderDate = '';
+  
+  const checkAndSendReminders = async () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const todayStr = now.toISOString().split('T')[0];
+    
+    // Only run at 6pm and only once per day
+    if (currentHour === REMINDER_HOUR && lastReminderDate !== todayStr) {
+      lastReminderDate = todayStr;
+      console.log('[Daily Reminders] Starting scheduled reminder job...');
+      
+      try {
+        const result = await sendDailyReminders();
+        console.log(`[Daily Reminders] Completed: ${result.message}`);
+      } catch (err) {
+        console.error('[Daily Reminders] Scheduled job failed:', err);
+      }
+    }
+  };
+  
+  // Check every 30 minutes
+  setInterval(checkAndSendReminders, 30 * 60 * 1000);
+  console.log('[Startup] Daily reminder scheduler enabled (runs at 6pm)');
 }
 
 startServer().catch((err) => {

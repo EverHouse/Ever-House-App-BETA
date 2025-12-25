@@ -153,13 +153,12 @@ router.post('/api/push/test', async (req, res) => {
   }
 });
 
-router.post('/api/push/send-daily-reminders', async (req, res) => {
-  try {
-    const results = { events: 0, bookings: 0, wellness: 0, pushFailed: 0, errors: [] as string[] };
-    
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+export async function sendDailyReminders() {
+  const results = { events: 0, bookings: 0, wellness: 0, pushFailed: 0, errors: [] as string[] };
+  
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
     
     const eventReminders = await db.select({
       userEmail: eventRsvps.userEmail,
@@ -276,13 +275,19 @@ router.post('/api/push/send-daily-reminders', async (req, res) => {
       }
     }
     
-    console.log(`[Daily Reminders] Sent ${results.events} event, ${results.bookings} booking, ${results.wellness} wellness reminders. Push failures: ${results.pushFailed}`);
-    
-    res.json({
-      success: true,
-      message: `Sent ${results.events} event, ${results.bookings} booking, and ${results.wellness} wellness reminders`,
-      ...results
-    });
+  console.log(`[Daily Reminders] Sent ${results.events} event, ${results.bookings} booking, ${results.wellness} wellness reminders. Push failures: ${results.pushFailed}`);
+  
+  return {
+    success: true,
+    message: `Sent ${results.events} event, ${results.bookings} booking, and ${results.wellness} wellness reminders`,
+    ...results
+  };
+}
+
+router.post('/api/push/send-daily-reminders', async (req, res) => {
+  try {
+    const result = await sendDailyReminders();
+    res.json(result);
   } catch (error: any) {
     console.error('Daily reminders error:', error);
     res.status(500).json({ error: 'Failed to send daily reminders' });
