@@ -7,7 +7,8 @@ export const BottomSentinel: React.FC = () => {
   const { setIsAtBottom } = useBottomNav();
   const { scrollContainerRef } = useScrollContainer();
   const lastScrollY = useRef(0);
-  const scrollDirectionRef = useRef<'up' | 'down' | null>(null);
+  const isHiddenRef = useRef(false);
+  const SCROLL_THRESHOLD = 50;
   
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -27,19 +28,20 @@ export const BottomSentinel: React.FC = () => {
     }
     
     const isScrollable = scrollHeight > clientHeight + 100;
+    const scrollDelta = currentScrollY - lastScrollY.current;
     
-    if (currentScrollY > lastScrollY.current) {
-      scrollDirectionRef.current = 'down';
-    } else if (currentScrollY < lastScrollY.current) {
-      scrollDirectionRef.current = 'up';
+    if (isScrollable) {
+      if (scrollDelta > 5 && currentScrollY > SCROLL_THRESHOLD) {
+        isHiddenRef.current = true;
+      } else if (scrollDelta < -5) {
+        isHiddenRef.current = false;
+      }
+    } else {
+      isHiddenRef.current = false;
     }
+    
     lastScrollY.current = currentScrollY;
-    
-    const distanceFromBottom = scrollHeight - (currentScrollY + clientHeight);
-    const isNearBottom = distanceFromBottom < 50;
-    const shouldHide = isScrollable && isNearBottom && scrollDirectionRef.current === 'down';
-    
-    setIsAtBottom(shouldHide);
+    setIsAtBottom(isHiddenRef.current);
   }, [setIsAtBottom, scrollContainerRef]);
   
   useEffect(() => {
