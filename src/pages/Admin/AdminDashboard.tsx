@@ -1262,52 +1262,52 @@ const AnnouncementsAdmin: React.FC = () => {
                                 <span className="material-symbols-outlined text-red-500">block</span>
                                 {editingClosureId ? 'Edit Closure' : 'Add Closure'}
                             </h3>
-                            <div className="space-y-4 mb-6">
+                            <div className="space-y-3 mb-5">
                                 <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Title</label>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Title</label>
                                     <input 
                                         type="text" 
                                         placeholder="e.g., Holiday Closure, Maintenance" 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
                                         value={closureForm.title} 
                                         onChange={e => setClosureForm({...closureForm, title: e.target.value})} 
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Start Date *</label>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Date *</label>
                                         <input 
                                             type="date" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
                                             value={closureForm.start_date} 
                                             onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Start Time</label>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Time</label>
                                         <input 
                                             type="time" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
                                             value={closureForm.start_time} 
                                             onChange={e => setClosureForm({...closureForm, start_time: e.target.value})} 
                                         />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">End Date</label>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Date</label>
                                         <input 
                                             type="date" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
                                             value={closureForm.end_date} 
                                             onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">End Time</label>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Time</label>
                                         <input 
                                             type="time" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
                                             value={closureForm.end_time} 
                                             onChange={e => setClosureForm({...closureForm, end_time: e.target.value})} 
                                         />
@@ -1315,9 +1315,9 @@ const AnnouncementsAdmin: React.FC = () => {
                                 </div>
                                 
                                 <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Resource *</label>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Resource *</label>
                                     <select 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
                                         value={closureForm.affected_areas}
                                         onChange={e => setClosureForm({...closureForm, affected_areas: e.target.value})}
                                     >
@@ -1330,9 +1330,9 @@ const AnnouncementsAdmin: React.FC = () => {
                                 </div>
                                 
                                 <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Internal Note</label>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Internal Note</label>
                                     <textarea 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none" 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none" 
                                         placeholder="e.g., Broken Sensor, Maintenance, etc." 
                                         rows={2} 
                                         value={closureForm.reason} 
@@ -1345,13 +1345,11 @@ const AnnouncementsAdmin: React.FC = () => {
                                         <p className="font-medium text-primary dark:text-white text-sm">Notify Members?</p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">Send push notification with internal note</p>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setClosureForm({...closureForm, notify_members: !closureForm.notify_members})}
-                                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${closureForm.notify_members ? 'bg-red-500' : 'bg-gray-200 dark:bg-gray-600'}`}
-                                    >
-                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${closureForm.notify_members ? 'translate-x-5' : 'translate-x-0'}`} />
-                                    </button>
+                                    <Toggle
+                                        checked={closureForm.notify_members}
+                                        onChange={(val) => setClosureForm({...closureForm, notify_members: val})}
+                                        label="Notify members about closure"
+                                    />
                                 </div>
                             </div>
                             <div className="flex gap-3 justify-end">
