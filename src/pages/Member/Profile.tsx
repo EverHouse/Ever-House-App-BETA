@@ -137,6 +137,34 @@ const Profile: React.FC = () => {
             {user.jobTitle && <Row icon="badge" label="Role" value={user.jobTitle} isDark={isDark} />}
          </Section>
 
+         <Section title="Settings" isDark={isDark}>
+            <div className={`p-4 flex items-center justify-between transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+              <div className="flex items-center gap-4">
+                <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>notifications</span>
+                <div>
+                  <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>Push Notifications</span>
+                  <p className={`text-xs mt-0.5 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>
+                    {isStaffOrAdminProfile 
+                      ? 'Get notified of new booking requests' 
+                      : 'Get notified when bookings are approved'}
+                  </p>
+                  {!pushSupported && (
+                    <p className={`text-xs mt-1 ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>
+                      Not supported in this browser
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Toggle
+                checked={pushEnabled}
+                onChange={handlePushToggle}
+                disabled={pushLoading || !pushSupported}
+                label="Push Notifications"
+              />
+            </div>
+            <Row icon="lock" label="Privacy" arrow isDark={isDark} />
+         </Section>
+
          {/* Membership Benefits - only show for regular members, not staff/admin */}
          {!isStaffOrAdminProfile && (
            <Section title="Membership Benefits" isDark={isDark}>
@@ -178,34 +206,6 @@ const Profile: React.FC = () => {
               <Row icon="verified" label="Portal Access" value="Staff Portal" isDark={isDark} />
            </Section>
          )}
-
-         <Section title="Settings" isDark={isDark}>
-            <div className={`p-4 flex items-center justify-between transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
-              <div className="flex items-center gap-4">
-                <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>notifications</span>
-                <div>
-                  <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>Push Notifications</span>
-                  <p className={`text-xs mt-0.5 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>
-                    {isStaffOrAdminProfile 
-                      ? 'Get notified of new booking requests' 
-                      : 'Get notified when bookings are approved'}
-                  </p>
-                  {!pushSupported && (
-                    <p className={`text-xs mt-1 ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>
-                      Not supported in this browser
-                    </p>
-                  )}
-                </div>
-              </div>
-              <Toggle
-                checked={pushEnabled}
-                onChange={handlePushToggle}
-                disabled={pushLoading || !pushSupported}
-                label="Push Notifications"
-              />
-            </div>
-            <Row icon="lock" label="Privacy" arrow isDark={isDark} />
-         </Section>
 
          <Section title="Appearance" isDark={isDark}>
             <div className="p-4">
