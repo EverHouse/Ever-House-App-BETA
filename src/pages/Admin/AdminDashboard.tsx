@@ -1170,12 +1170,6 @@ const AnnouncementsAdmin: React.FC = () => {
                                 {editId ? `Edit ${newItem.type === 'update' ? 'Update' : 'Announcement'}` : `New ${newItem.type === 'update' ? 'Update' : 'Announcement'}`}
                             </h3>
                             <div className="space-y-4 mb-6">
-                                {editId && (
-                                    <div className="flex gap-2">
-                                        <button onClick={() => setNewItem({...newItem, type: 'update', linkType: undefined, linkTarget: undefined})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'update' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Update</button>
-                                        <button onClick={() => setNewItem({...newItem, type: 'announcement'})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'announcement' ? 'bg-accent text-primary' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Announcement</button>
-                                    </div>
-                                )}
                                 <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
                                 <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
                                 
