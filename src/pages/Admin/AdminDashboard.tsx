@@ -1437,6 +1437,18 @@ const formatDateShort = (dateStr: string): string => {
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 };
 
+const formatStatusLabel = (status: string): string => {
+    switch (status) {
+        case 'pending': return 'pending';
+        case 'pending_approval': return 'pending';
+        case 'approved': return 'approved';
+        case 'confirmed': return 'confirmed';
+        case 'declined': return 'declined';
+        case 'cancelled': return 'cancelled';
+        default: return status;
+    }
+};
+
 interface Resource {
     id: number;
     name: string;
@@ -1719,7 +1731,7 @@ const SimulatorAdmin: React.FC = () => {
                         ) : (
                             <div className="space-y-3">
                                 {pendingRequests.map(req => (
-                                    <div key={req.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-200 dark:border-white/5">
+                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10">
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
                                                 <p className="font-bold text-primary dark:text-white">{req.user_name || req.user_email}</p>
@@ -1729,7 +1741,7 @@ const SimulatorAdmin: React.FC = () => {
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">{req.duration_minutes} min</p>
                                             </div>
                                             <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
-                                                {req.status}
+                                                {formatStatusLabel(req.status)}
                                             </span>
                                         </div>
                                         
@@ -1776,7 +1788,7 @@ const SimulatorAdmin: React.FC = () => {
                         ) : (
                             <div className="space-y-2">
                                 {processedRequests.slice(0, 10).map(req => (
-                                    <div key={req.id} className="bg-white dark:bg-surface-dark p-3 rounded-lg shadow-sm border border-gray-200 dark:border-white/5 flex justify-between items-center">
+                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-3 rounded-lg border border-gray-200 dark:border-white/10 flex justify-between items-center">
                                         <div>
                                             <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1784,7 +1796,7 @@ const SimulatorAdmin: React.FC = () => {
                                             </p>
                                         </div>
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
-                                            {req.status}
+                                            {formatStatusLabel(req.status)}
                                         </span>
                                     </div>
                                 ))}
@@ -1796,7 +1808,7 @@ const SimulatorAdmin: React.FC = () => {
                 <div>
                     {/* Date Selector Row */}
                     <div className="bg-gray-50 dark:bg-white/5 py-3 mb-4">
-                        <div className="flex items-center justify-center gap-4">
+                        <div className="flex items-center justify-center gap-2">
                             <button
                                 onClick={() => {
                                     const d = new Date(calendarDate);
@@ -1807,9 +1819,12 @@ const SimulatorAdmin: React.FC = () => {
                             >
                                 <span className="material-symbols-outlined text-xl">chevron_left</span>
                             </button>
-                            <h3 className="font-semibold text-primary dark:text-white min-w-[140px] text-center text-sm">
+                            <button
+                                onClick={() => setCalendarDate(new Date().toISOString().split('T')[0])}
+                                className="font-semibold text-primary dark:text-white min-w-[120px] text-center text-sm py-1 px-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                            >
                                 {formatDateShort(calendarDate)}
-                            </h3>
+                            </button>
                             <button
                                 onClick={() => {
                                     const d = new Date(calendarDate);
