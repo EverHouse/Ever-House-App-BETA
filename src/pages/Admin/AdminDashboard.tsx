@@ -3864,14 +3864,17 @@ const TiersAdmin: React.FC = () => {
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto max-h-[90vh] overflow-y-auto">
-                            <div className="flex items-center justify-between mb-5">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto max-h-[90vh] flex flex-col">
+                            {/* Sticky Header */}
+                            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 flex-shrink-0">
                                 <h3 className="font-bold text-lg text-primary dark:text-white">Edit Tier: {selectedTier.name}</h3>
                                 <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
 
+                            {/* Scrollable Content */}
+                            <div className="flex-1 overflow-y-auto p-6 pt-4">
                             {error && (
                                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
                                     {error}
@@ -3970,19 +3973,19 @@ const TiersAdmin: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Boolean Toggles */}
+                            {/* Boolean Toggles - iOS Style */}
                             <div className="mb-6">
                                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Permissions</h4>
                                 <div className="grid grid-cols-2 gap-2">
                                     {BOOLEAN_FIELDS.map(({ key, label }) => (
-                                        <label key={key} className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
-                                            <span className="text-sm text-primary dark:text-white">{label}</span>
+                                        <label key={key} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
+                                            <span className="text-sm text-primary dark:text-white pr-2">{label}</span>
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedTier({...selectedTier, [key]: !selectedTier[key as keyof MembershipTier]})}
-                                                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedTier[key as keyof MembershipTier] ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'}`}
+                                                className={`relative inline-flex h-[31px] w-[51px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34C759] ${selectedTier[key as keyof MembershipTier] ? 'bg-[#34C759]' : 'bg-gray-300 dark:bg-gray-600'}`}
                                             >
-                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedTier[key as keyof MembershipTier] ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                <span className={`pointer-events-none inline-block h-[27px] w-[27px] transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-300 ease-in-out ${selectedTier[key as keyof MembershipTier] ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} style={{ marginTop: '2px' }} />
                                             </button>
                                         </label>
                                     ))}
@@ -4072,8 +4075,11 @@ const TiersAdmin: React.FC = () => {
                                     <p className="text-sm text-gray-400 dark:text-gray-500 italic">Add features above to select highlights</p>
                                 )}
                             </div>
+                            </div>
+                            {/* End Scrollable Content */}
 
-                            <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-white/10">
+                            {/* Sticky Footer */}
+                            <div className="flex gap-3 justify-end p-6 pt-4 border-t border-gray-200 dark:border-white/10 flex-shrink-0 bg-white dark:bg-[#1a1d15]">
                                 <button 
                                     onClick={() => setIsEditing(false)} 
                                     className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
