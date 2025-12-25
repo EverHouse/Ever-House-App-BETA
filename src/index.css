@@ -40,8 +40,9 @@
 }
 
 @theme {
-  --font-family-display: "Inter", sans-serif;
+  --font-family-display: "Playfair Display", Georgia, serif;
   --font-family-sans: "Inter", sans-serif;
+  --font-family-serif: "Playfair Display", Georgia, serif;
   
   --color-primary: #293515;
   --color-secondary: #E7E7DC;
