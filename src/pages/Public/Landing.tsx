@@ -1,8 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import BackToTop from '../../components/BackToTop';
+
+interface MembershipTier {
+  id: number;
+  name: string;
+  slug: string;
+  price_string: string;
+  description: string;
+  is_popular: boolean;
+  highlighted_features: string[];
+}
 
 const TOUR_REQUEST_FIELDS = [
   { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
@@ -16,6 +26,36 @@ const TOUR_REQUEST_FIELDS = [
 const Landing: React.FC = () => {
   const navigate = useNavigate();
   const [showTourForm, setShowTourForm] = useState(false);
+  const [tiers, setTiers] = useState<MembershipTier[]>([]);
+
+  useEffect(() => {
+    const fetchTiers = async () => {
+      try {
+        const response = await fetch('/api/membership-tiers?active=true');
+        if (response.ok) {
+          const data = await response.json();
+          setTiers(data.filter((t: MembershipTier) => ['social', 'core', 'corporate'].includes(t.slug)));
+        }
+      } catch (error) {
+        console.error('Failed to fetch tiers:', error);
+      }
+    };
+    fetchTiers();
+  }, []);
+
+  const socialTier = tiers.find(t => t.slug === 'social');
+  const coreTier = tiers.find(t => t.slug === 'core');
+  const corporateTier = tiers.find(t => t.slug === 'corporate');
+
+  const extractPrice = (priceString: string) => {
+    const match = priceString?.match(/\$[\d,]+/);
+    return match ? match[0] : '$—';
+  };
+
+  const extractSuffix = (priceString: string) => {
+    const match = priceString?.match(/\/\w+/);
+    return match ? match[0] : '/mo';
+  };
 
   return (
     <div className="bg-[#293515] min-h-screen pb-0 overflow-x-hidden">
@@ -90,47 +130,59 @@ const Landing: React.FC = () => {
          </div>
          
          <div className="flex flex-col gap-4">
+            {/* Social Tier */}
+            {socialTier && (
             <div className="backdrop-blur-xl bg-white/50 p-6 rounded-[2rem] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.6)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
                 <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-xl font-bold text-[#293515]">Social</h3>
-                    <span className="text-lg font-bold text-[#293515]">$180<span className="text-xs font-medium opacity-60">/mo</span></span>
+                    <h3 className="text-xl font-bold text-[#293515]">{socialTier.name}</h3>
+                    <span className="text-lg font-bold text-[#293515]">{extractPrice(socialTier.price_string)}<span className="text-xs font-medium opacity-60">{extractSuffix(socialTier.price_string)}</span></span>
                 </div>
-                <p className="text-sm text-[#293515]/70 mb-4">Access to lounges, café, workspace, and events.</p>
+                <p className="text-sm text-[#293515]/70 mb-4">{socialTier.description}</p>
                 <ul className="space-y-2 mb-6">
-                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Lounge & Cowork Access</li>
-                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> Member Events</li>
+                    {(socialTier.highlighted_features || []).slice(0, 3).map((feature, idx) => (
+                        <li key={idx} className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> {feature}</li>
+                    ))}
                 </ul>
                 <Link to="/membership" className="w-full py-3 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-[#293515] font-bold text-xs hover:bg-white/80 transition-all duration-300 block text-center">View Details</Link>
             </div>
+            )}
 
+            {/* Core Tier - Featured/Popular */}
+            {coreTier && (
             <div className="backdrop-blur-xl bg-[#293515]/90 p-6 rounded-[2rem] border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_0_20px_rgba(41,53,21,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms] relative overflow-hidden">
                 <div className="flex justify-between items-start mb-2 relative z-10">
                     <div className="flex items-center gap-2">
-                        <h3 className="text-xl font-bold text-white">Core</h3>
-                        <span className="bg-[#CCB8E4]/90 backdrop-blur text-[#293515] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm border border-white/20">Popular</span>
+                        <h3 className="text-xl font-bold text-white">{coreTier.name}</h3>
+                        {coreTier.is_popular && <span className="bg-[#CCB8E4]/90 backdrop-blur text-[#293515] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm border border-white/20">Popular</span>}
                     </div>
-                    <span className="text-lg font-bold text-white">$250<span className="text-xs font-medium opacity-60">/mo</span></span>
+                    <span className="text-lg font-bold text-white">{extractPrice(coreTier.price_string)}<span className="text-xs font-medium opacity-60">{extractSuffix(coreTier.price_string)}</span></span>
                 </div>
-                <p className="text-sm text-white/70 mb-4 relative z-10">All-access pass including golf simulators.</p>
+                <p className="text-sm text-white/70 mb-4 relative z-10">{coreTier.description}</p>
                 <ul className="space-y-2 mb-6 relative z-10">
-                    <li className="flex gap-2 text-xs font-bold text-white/90"><span className="material-symbols-outlined text-sm text-[#CCB8E4]">check</span> 60min Daily Sim Time</li>
-                    <li className="flex gap-2 text-xs font-bold text-white/90"><span className="material-symbols-outlined text-sm text-[#CCB8E4]">check</span> 60min Conf Room</li>
+                    {(coreTier.highlighted_features || []).slice(0, 3).map((feature, idx) => (
+                        <li key={idx} className="flex gap-2 text-xs font-bold text-white/90"><span className="material-symbols-outlined text-sm text-[#CCB8E4]">check</span> {feature}</li>
+                    ))}
                 </ul>
                 <Link to="/membership" className="w-full py-3 rounded-xl bg-white/95 backdrop-blur text-[#293515] font-bold text-xs hover:bg-white transition-all duration-300 relative z-10 shadow-md block text-center">View Details</Link>
             </div>
+            )}
 
+            {/* Corporate Tier */}
+            {corporateTier && (
             <div className="backdrop-blur-xl bg-white/50 p-6 rounded-[2rem] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.6)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
                 <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-xl font-bold text-[#293515]">Corporate</h3>
-                    <span className="text-lg font-bold text-[#293515]">$350<span className="text-xs font-medium opacity-60">/mo</span></span>
+                    <h3 className="text-xl font-bold text-[#293515]">{corporateTier.name}</h3>
+                    <span className="text-lg font-bold text-[#293515]">{extractPrice(corporateTier.price_string)}<span className="text-xs font-medium opacity-60">{extractSuffix(corporateTier.price_string)}</span></span>
                 </div>
-                <p className="text-sm text-[#293515]/70 mb-4">Elevate your team with premium amenities.</p>
+                <p className="text-sm text-[#293515]/70 mb-4">{corporateTier.description}</p>
                 <ul className="space-y-2 mb-6">
-                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 90min Daily Sim Time</li>
-                    <li className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> 10-Day Advance Booking</li>
+                    {(corporateTier.highlighted_features || []).slice(0, 3).map((feature, idx) => (
+                        <li key={idx} className="flex gap-2 text-xs font-bold text-[#293515]/80"><span className="material-symbols-outlined text-sm">check</span> {feature}</li>
+                    ))}
                 </ul>
                 <Link to="/membership/corporate" className="w-full py-3 rounded-xl bg-white/60 backdrop-blur border border-white/80 text-[#293515] font-bold text-xs hover:bg-white/80 transition-all duration-300 block text-center">View Details</Link>
             </div>
+            )}
 
             <Link to="/membership/compare" className="w-full mt-2 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-[#293515]/60 hover:text-[#293515] transition-colors py-2">
               Compare all tiers
