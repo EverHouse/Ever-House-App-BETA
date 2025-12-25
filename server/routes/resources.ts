@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { eq, and, or, sql, desc, asc } from 'drizzle-orm';
 import { db } from '../db';
-import { bookings, resources, users } from '../../shared/schema';
+import { bookings, resources, users, facilityClosures, bays } from '../../shared/schema';
 import { isProduction } from '../core/db';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
 import { isStaffOrAdmin } from '../core/middleware';
@@ -93,17 +93,177 @@ router.get('/api/pending-bookings', async (req, res) => {
   }
 });
 
+async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
+  if (affectedAreas === 'entire_facility' || affectedAreas === 'all_bays') {
+    const activeBays = await db
+      .select({ id: bays.id })
+      .from(bays)
+      .where(eq(bays.isActive, true));
+    return activeBays.map(bay => bay.id);
+  }
+  
+  if (affectedAreas.startsWith('bay_') && !affectedAreas.includes(',') && !affectedAreas.includes('[')) {
+    const bayId = parseInt(affectedAreas.replace('bay_', ''));
+    if (!isNaN(bayId)) return [bayId];
+  }
+  
+  if (affectedAreas.includes(',') && !affectedAreas.startsWith('[')) {
+    const ids: number[] = [];
+    for (const item of affectedAreas.split(',')) {
+      const trimmed = item.trim();
+      if (trimmed.startsWith('bay_')) {
+        const bayId = parseInt(trimmed.replace('bay_', ''));
+        if (!isNaN(bayId)) ids.push(bayId);
+      } else {
+        const bayId = parseInt(trimmed);
+        if (!isNaN(bayId)) ids.push(bayId);
+      }
+    }
+    return ids;
+  }
+  
+  try {
+    const parsed = JSON.parse(affectedAreas);
+    if (Array.isArray(parsed)) {
+      const ids: number[] = [];
+      for (const item of parsed) {
+        if (typeof item === 'number') {
+          ids.push(item);
+        } else if (typeof item === 'string') {
+          if (item.startsWith('bay_')) {
+            const bayId = parseInt(item.replace('bay_', ''));
+            if (!isNaN(bayId)) ids.push(bayId);
+          } else {
+            const bayId = parseInt(item);
+            if (!isNaN(bayId)) ids.push(bayId);
+          }
+        }
+      }
+      return ids;
+    }
+  } catch {}
+  
+  return [];
+}
+
+function parseTimeToMinutes(time: string | null | undefined): number {
+  if (!time) return 0;
+  const parts = time.split(':').map(Number);
+  return (parts[0] || 0) * 60 + (parts[1] || 0);
+}
+
+async function checkClosureConflict(resourceId: number, bookingDate: string, startTime: string, endTime: string): Promise<{ hasConflict: boolean; closureTitle?: string }> {
+  const resource = await db.select({ type: resources.type }).from(resources).where(eq(resources.id, resourceId));
+  if (!resource[0] || resource[0].type !== 'simulator') {
+    return { hasConflict: false };
+  }
+  
+  const activeClosures = await db
+    .select()
+    .from(facilityClosures)
+    .where(and(
+      eq(facilityClosures.isActive, true),
+      sql`${facilityClosures.startDate} <= ${bookingDate}`,
+      sql`${facilityClosures.endDate} >= ${bookingDate}`
+    ));
+  
+  const bookingStartMinutes = parseTimeToMinutes(startTime);
+  const bookingEndMinutes = parseTimeToMinutes(endTime);
+  
+  for (const closure of activeClosures) {
+    const affectedBayIds = await getAffectedBayIds(closure.affectedAreas);
+    
+    if (!affectedBayIds.includes(resourceId)) continue;
+    
+    if (!closure.startTime && !closure.endTime) {
+      return { hasConflict: true, closureTitle: closure.title || 'Facility Closure' };
+    }
+    
+    const closureStartMinutes = closure.startTime ? parseTimeToMinutes(closure.startTime) : 0;
+    const closureEndMinutes = closure.endTime ? parseTimeToMinutes(closure.endTime) : 24 * 60;
+    
+    if (bookingStartMinutes < closureEndMinutes && bookingEndMinutes > closureStartMinutes) {
+      return { hasConflict: true, closureTitle: closure.title || 'Facility Closure' };
+    }
+  }
+  
+  return { hasConflict: false };
+}
+
+async function checkBookingConflict(resourceId: number, bookingDate: string, startTime: string, endTime: string, excludeBookingId?: number): Promise<{ hasConflict: boolean; conflictingBooking?: any }> {
+  const conditions = [
+    eq(bookings.resourceId, resourceId),
+    sql`${bookings.bookingDate} = ${bookingDate}`,
+    eq(bookings.status, 'confirmed'),
+    or(
+      and(
+        sql`${bookings.startTime} < ${endTime}`,
+        sql`${bookings.endTime} > ${startTime}`
+      )
+    )
+  ];
+  
+  const existingBookings = await db
+    .select()
+    .from(bookings)
+    .where(and(...conditions));
+  
+  const conflicts = excludeBookingId 
+    ? existingBookings.filter(b => b.id !== excludeBookingId)
+    : existingBookings;
+  
+  if (conflicts.length > 0) {
+    return { hasConflict: true, conflictingBooking: conflicts[0] };
+  }
+  
+  return { hasConflict: false };
+}
+
 router.put('/api/bookings/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await db.update(bookings)
-      .set({ status: 'confirmed' })
-      .where(eq(bookings.id, parseInt(id)))
-      .returning();
+    const bookingId = parseInt(id);
     
-    if (result.length === 0) {
+    const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
+    
+    if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
     }
+    
+    const closureCheck = await checkClosureConflict(
+      booking.resourceId,
+      booking.bookingDate,
+      booking.startTime,
+      booking.endTime
+    );
+    
+    if (closureCheck.hasConflict) {
+      return res.status(409).json({ 
+        error: 'Cannot approve booking during closure',
+        message: `This time slot conflicts with "${closureCheck.closureTitle}". Please decline this request or wait until the closure ends.`
+      });
+    }
+    
+    const bookingCheck = await checkBookingConflict(
+      booking.resourceId,
+      booking.bookingDate,
+      booking.startTime,
+      booking.endTime,
+      bookingId
+    );
+    
+    if (bookingCheck.hasConflict) {
+      return res.status(409).json({ 
+        error: 'Time slot already booked',
+        message: 'Another booking has already been approved for this time slot. Please decline this request or suggest an alternative time.'
+      });
+    }
+    
+    const result = await db.update(bookings)
+      .set({ status: 'confirmed' })
+      .where(eq(bookings.id, bookingId))
+      .returning();
+    
     res.json(result[0]);
   } catch (error: any) {
     if (!isProduction) console.error('Approve booking error:', error);

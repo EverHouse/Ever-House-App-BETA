@@ -1646,6 +1646,17 @@ interface Resource {
     description: string | null;
 }
 
+interface CalendarClosure {
+    id: number;
+    title: string;
+    startDate: string;
+    endDate: string;
+    startTime: string | null;
+    endTime: string | null;
+    affectedAreas: string;
+    reason: string | null;
+}
+
 const SimulatorAdmin: React.FC = () => {
     const { user } = useData();
     const [activeView, setActiveView] = useState<'requests' | 'calendar'>('requests');
@@ -1653,6 +1664,7 @@ const SimulatorAdmin: React.FC = () => {
     const [bays, setBays] = useState<Bay[]>([]);
     const [resources, setResources] = useState<Resource[]>([]);
     const [approvedBookings, setApprovedBookings] = useState<BookingRequest[]>([]);
+    const [closures, setClosures] = useState<CalendarClosure[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<BookingRequest | null>(null);
     const [actionModal, setActionModal] = useState<'approve' | 'decline' | null>(null);
@@ -1727,21 +1739,33 @@ const SimulatorAdmin: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const fetchApprovedBookings = async () => {
+        const fetchCalendarData = async () => {
             const startDate = calendarDate;
             const endDate = new Date(new Date(calendarDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             try {
-                const res = await fetch(`/api/approved-bookings?start_date=${startDate}&end_date=${endDate}`);
-                if (res.ok) {
-                    const data = await res.json();
+                const [bookingsRes, closuresRes] = await Promise.all([
+                    fetch(`/api/approved-bookings?start_date=${startDate}&end_date=${endDate}`),
+                    fetch('/api/closures')
+                ]);
+                
+                if (bookingsRes.ok) {
+                    const data = await bookingsRes.json();
                     setApprovedBookings(data);
                 }
+                
+                if (closuresRes.ok) {
+                    const closuresData = await closuresRes.json();
+                    const activeClosures = closuresData.filter((c: CalendarClosure) => 
+                        c.startDate <= endDate && c.endDate >= startDate
+                    );
+                    setClosures(activeClosures);
+                }
             } catch (err) {
-                console.error('Failed to fetch approved bookings:', err);
+                console.error('Failed to fetch calendar data:', err);
             }
         };
         if (activeView === 'calendar') {
-            fetchApprovedBookings();
+            fetchCalendarData();
         }
     }, [activeView, calendarDate]);
 
@@ -1781,7 +1805,7 @@ const SimulatorAdmin: React.FC = () => {
             
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.error || 'Failed to approve');
+                throw new Error(errData.message || errData.error || 'Failed to approve');
             }
             
             const updated = await res.json();
@@ -1869,6 +1893,80 @@ const SimulatorAdmin: React.FC = () => {
         }
         return slots;
     }, []);
+
+    const parseAffectedBayIds = (affectedAreas: string): number[] => {
+        if (affectedAreas === 'entire_facility' || affectedAreas === 'all_bays') {
+            return resources.filter(r => r.type === 'simulator').map(r => r.id);
+        }
+        
+        if (affectedAreas.startsWith('bay_') && !affectedAreas.includes(',') && !affectedAreas.includes('[')) {
+            const bayId = parseInt(affectedAreas.replace('bay_', ''));
+            return isNaN(bayId) ? [] : [bayId];
+        }
+        
+        if (affectedAreas.includes(',') && !affectedAreas.startsWith('[')) {
+            const ids: number[] = [];
+            for (const item of affectedAreas.split(',')) {
+                const trimmed = item.trim();
+                if (trimmed.startsWith('bay_')) {
+                    const bayId = parseInt(trimmed.replace('bay_', ''));
+                    if (!isNaN(bayId)) ids.push(bayId);
+                } else {
+                    const bayId = parseInt(trimmed);
+                    if (!isNaN(bayId)) ids.push(bayId);
+                }
+            }
+            return ids;
+        }
+        
+        try {
+            const parsed = JSON.parse(affectedAreas);
+            if (Array.isArray(parsed)) {
+                const ids: number[] = [];
+                for (const item of parsed) {
+                    if (typeof item === 'number') {
+                        ids.push(item);
+                    } else if (typeof item === 'string') {
+                        if (item.startsWith('bay_')) {
+                            const bayId = parseInt(item.replace('bay_', ''));
+                            if (!isNaN(bayId)) ids.push(bayId);
+                        } else {
+                            const bayId = parseInt(item);
+                            if (!isNaN(bayId)) ids.push(bayId);
+                        }
+                    }
+                }
+                return ids;
+            }
+        } catch {}
+        
+        return [];
+    };
+
+    const getClosureForSlot = (resourceId: number, date: string, slotStart: number, slotEnd: number): CalendarClosure | null => {
+        for (const closure of closures) {
+            if (closure.startDate > date || closure.endDate < date) continue;
+            
+            const affectedBayIds = parseAffectedBayIds(closure.affectedAreas);
+            if (!affectedBayIds.includes(resourceId)) continue;
+            
+            if (!closure.startTime && !closure.endTime) {
+                return closure;
+            }
+            
+            const closureStartMinutes = closure.startTime 
+                ? parseInt(closure.startTime.split(':')[0]) * 60 + parseInt(closure.startTime.split(':')[1] || '0') 
+                : 0;
+            const closureEndMinutes = closure.endTime 
+                ? parseInt(closure.endTime.split(':')[0]) * 60 + parseInt(closure.endTime.split(':')[1] || '0') 
+                : 24 * 60;
+            
+            if (slotStart < closureEndMinutes && slotEnd > closureStartMinutes) {
+                return closure;
+            }
+        }
+        return null;
+    };
 
     return (
         <div className="flex justify-center">
@@ -2048,6 +2146,8 @@ const SimulatorAdmin: React.FC = () => {
                                             const slotStart = slotHour * 60 + slotMin;
                                             const slotEnd = slotStart + 30;
                                             
+                                            const closure = getClosureForSlot(resource.id, calendarDate, slotStart, slotEnd);
+                                            
                                             const booking = approvedBookings.find(b => {
                                                 if (b.bay_id !== resource.id || b.request_date !== calendarDate) return false;
                                                 const [bh, bm] = b.start_time.split(':').map(Number);
@@ -2062,17 +2162,26 @@ const SimulatorAdmin: React.FC = () => {
                                             return (
                                                 <div
                                                     key={`${resource.id}-${slot}`}
+                                                    title={closure ? `CLOSED: ${closure.title}` : undefined}
                                                     className={`h-8 rounded border ${
-                                                        booking 
-                                                            ? isConference
-                                                                ? 'bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-500/30'
-                                                                : 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30' 
-                                                            : isConference
-                                                                ? 'bg-purple-50/50 dark:bg-purple-500/5 border-purple-100 dark:border-purple-500/10 hover:bg-purple-100/50 dark:hover:bg-purple-500/10'
-                                                                : 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5'
+                                                        closure
+                                                            ? 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/30'
+                                                            : booking 
+                                                                ? isConference
+                                                                    ? 'bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-500/30'
+                                                                    : 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30' 
+                                                                : isConference
+                                                                    ? 'bg-purple-50/50 dark:bg-purple-500/5 border-purple-100 dark:border-purple-500/10 hover:bg-purple-100/50 dark:hover:bg-purple-500/10'
+                                                                    : 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5'
                                                     }`}
                                                 >
-                                                    {booking && (
+                                                    {closure ? (
+                                                        <div className="px-1 h-full flex items-center">
+                                                            <p className="text-[10px] font-medium truncate text-red-600 dark:text-red-400">
+                                                                CLOSED
+                                                            </p>
+                                                        </div>
+                                                    ) : booking && (
                                                         <div className="px-1 h-full flex items-center">
                                                             <p className={`text-[10px] font-medium truncate ${isConference ? 'text-purple-700 dark:text-purple-300' : 'text-green-700 dark:text-green-300'}`}>
                                                                 {booking.user_name || 'Booked'}
