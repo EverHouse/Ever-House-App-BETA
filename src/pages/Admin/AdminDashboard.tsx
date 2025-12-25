@@ -4482,8 +4482,11 @@ const TiersAdmin: React.FC = () => {
                                 </h4>
                                 <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Select up to 4 features to highlight on the membership page</p>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {Object.entries(selectedTier.all_features || {}).filter(([_, enabled]) => enabled).map(([key]) => {
-                                        const isHighlighted = selectedTier.highlighted_features?.includes(key);
+                                    {Object.entries(selectedTier.all_features || {}).map(([key, featureData]) => {
+                                        const label = typeof featureData === 'object' && featureData !== null && 'label' in featureData 
+                                            ? (featureData as any).label 
+                                            : key;
+                                        const isHighlighted = selectedTier.highlighted_features?.includes(label);
                                         const canAdd = (selectedTier.highlighted_features?.length || 0) < 4;
                                         return (
                                             <button 
@@ -4491,8 +4494,8 @@ const TiersAdmin: React.FC = () => {
                                                 type="button"
                                                 role="checkbox"
                                                 aria-checked={isHighlighted}
-                                                aria-label={`Highlight ${key}`}
-                                                onClick={() => handleHighlightToggle(key)}
+                                                aria-label={`Highlight ${label}`}
+                                                onClick={() => handleHighlightToggle(label)}
                                                 disabled={!isHighlighted && !canAdd}
                                                 className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                                                     isHighlighted 
@@ -4511,7 +4514,7 @@ const TiersAdmin: React.FC = () => {
                                                 >
                                                     {isHighlighted && <span className="material-symbols-outlined text-base font-bold">check</span>}
                                                 </span>
-                                                <span className={`text-sm truncate ${isHighlighted ? 'text-primary dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400'}`}>{key}</span>
+                                                <span className={`text-sm truncate ${isHighlighted ? 'text-primary dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400'}`}>{label}</span>
                                             </button>
                                         );
                                     })}
