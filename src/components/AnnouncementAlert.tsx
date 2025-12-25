@@ -14,6 +14,7 @@ const AnnouncementAlert: React.FC = () => {
 
   const latestAnnouncement = unseenHighPriority[0];
   const hasMultiple = unseenHighPriority.length > 1;
+  const isUpdate = latestAnnouncement.type === 'update';
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -47,20 +48,38 @@ const AnnouncementAlert: React.FC = () => {
     handleAnnouncementClick(latestAnnouncement);
   };
 
+  const cardColors = isUpdate
+    ? isDark 
+      ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/15' 
+      : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+    : isDark
+      ? 'bg-accent/10 border-accent/30 hover:bg-accent/15'
+      : 'bg-accent/10 border-accent/30 hover:bg-accent/20';
+
+  const iconBgColor = isUpdate
+    ? isDark ? 'bg-amber-500/20' : 'bg-amber-100'
+    : isDark ? 'bg-accent/20' : 'bg-accent/20';
+
+  const iconColor = isUpdate
+    ? isDark ? 'text-amber-400' : 'text-amber-600'
+    : isDark ? 'text-accent' : 'text-accent';
+
+  const labelColor = isUpdate
+    ? isDark ? 'text-amber-400' : 'text-amber-700'
+    : isDark ? 'text-accent' : 'text-primary';
+
+  const labelText = hasMultiple 
+    ? `${unseenHighPriority.length} new ${isUpdate ? 'updates' : 'announcements'}` 
+    : `New ${isUpdate ? 'update' : 'announcement'}`;
+
   return (
     <div 
-      className={`mb-6 p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
-        isDark 
-          ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/15' 
-          : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
-      }`}
+      className={`mb-6 p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${cardColors}`}
       onClick={handleViewAll}
     >
       <div className="flex items-start gap-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-          isDark ? 'bg-amber-500/20' : 'bg-amber-100'
-        }`}>
-          <span className={`material-symbols-outlined text-xl ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBgColor}`}>
+          <span className={`material-symbols-outlined text-xl ${iconColor}`}>
             campaign
           </span>
         </div>
@@ -91,10 +110,8 @@ const AnnouncementAlert: React.FC = () => {
           </div>
           
           <div className="flex items-center justify-between mt-2">
-            <span className={`text-[10px] uppercase font-bold tracking-wide ${
-              isDark ? 'text-amber-400' : 'text-amber-700'
-            }`}>
-              {hasMultiple ? `${unseenHighPriority.length} new updates` : 'New update'}
+            <span className={`text-[10px] uppercase font-bold tracking-wide ${labelColor}`}>
+              {labelText}
             </span>
             <span className={`text-xs font-medium flex items-center gap-1 ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
               {latestAnnouncement.linkType === 'events' ? 'View Events' :
