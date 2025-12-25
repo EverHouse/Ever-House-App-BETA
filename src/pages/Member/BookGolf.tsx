@@ -278,6 +278,8 @@ const BookGolf: React.FC = () => {
 
   const handleCancelRequest = async (id: number) => {
     haptic.light();
+    const request = myRequests.find(r => r.id === id);
+    const wasApproved = request?.status === 'approved';
     try {
       const { ok } = await apiRequest(`/api/booking-requests/${id}`, {
         method: 'PUT',
@@ -288,7 +290,7 @@ const BookGolf: React.FC = () => {
       if (ok) {
         setMyRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
         haptic.success();
-        showToast('Request cancelled', 'success');
+        showToast(wasApproved ? 'Booking cancelled' : 'Request cancelled', 'success');
       }
     } catch (err) {
       console.error('[BookGolf] Failed to cancel request:', err);
