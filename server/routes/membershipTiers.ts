@@ -25,6 +25,49 @@ router.get('/api/membership-tiers', async (req, res) => {
   }
 });
 
+router.get('/api/membership-tiers/limits/:tierName', async (req, res) => {
+  try {
+    const { tierName } = req.params;
+    const result = await pool.query(
+      `SELECT 
+        name, slug,
+        daily_sim_minutes, guest_passes_per_month, booking_window_days,
+        daily_conf_room_minutes, can_book_simulators, can_book_conference,
+        can_book_wellness, has_group_lessons, has_extended_sessions,
+        has_private_lesson, has_simulator_guest_passes, has_discounted_merch,
+        unlimited_access
+      FROM membership_tiers 
+      WHERE LOWER(name) = LOWER($1) OR LOWER(slug) = LOWER($1)
+      LIMIT 1`,
+      [tierName]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({
+        name: 'Social',
+        daily_sim_minutes: 0,
+        guest_passes_per_month: 0,
+        booking_window_days: 7,
+        daily_conf_room_minutes: 0,
+        can_book_simulators: false,
+        can_book_conference: false,
+        can_book_wellness: true,
+        has_group_lessons: false,
+        has_extended_sessions: false,
+        has_private_lesson: false,
+        has_simulator_guest_passes: false,
+        has_discounted_merch: false,
+        unlimited_access: false
+      });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Membership tier limits fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch tier limits' });
+  }
+});
+
 router.get('/api/membership-tiers/:id', async (req, res) => {
   try {
     const { id } = req.params;
