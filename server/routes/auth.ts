@@ -113,43 +113,33 @@ async function upsertUserWithTier(data: UpsertUserData): Promise<void> {
     
     const tierId = tierResult.length > 0 ? tierResult[0].id : null;
     
-    const existing = await db.select({ id: users.id })
-      .from(users)
-      .where(sql`LOWER(${users.email}) = LOWER(${normalizedEmail})`)
-      .limit(1);
-    
-    if (existing.length > 0) {
-      const updateData: Record<string, any> = { 
+    await db.insert(users)
+      .values({
+        id: crypto.randomUUID(),
+        email: normalizedEmail,
+        firstName: data.firstName || null,
+        lastName: data.lastName || null,
         tier: normalizedTier,
         tierId: tierId,
-        updatedAt: new Date()
-      };
-      
-      if (data.firstName) updateData.firstName = data.firstName;
-      if (data.lastName) updateData.lastName = data.lastName;
-      if (data.phone) updateData.phone = data.phone;
-      if (data.mindbodyClientId) updateData.mindbodyClientId = data.mindbodyClientId;
-      if (data.membershipStartDate) updateData.membershipStartDate = data.membershipStartDate;
-      updateData.tags = data.tags || [];
-      
-      await db.update(users)
-        .set(updateData)
-        .where(sql`LOWER(${users.email}) = LOWER(${normalizedEmail})`);
-    } else {
-      await db.insert(users)
-        .values({
-          id: crypto.randomUUID(),
-          email: normalizedEmail,
-          firstName: data.firstName || null,
-          lastName: data.lastName || null,
+        phone: data.phone || null,
+        mindbodyClientId: data.mindbodyClientId || null,
+        tags: data.tags && data.tags.length > 0 ? data.tags : [],
+        membershipStartDate: data.membershipStartDate || null
+      })
+      .onConflictDoUpdate({
+        target: users.email,
+        set: {
           tier: normalizedTier,
           tierId: tierId,
-          phone: data.phone || null,
-          mindbodyClientId: data.mindbodyClientId || null,
+          firstName: sql`COALESCE(${data.firstName || null}, ${users.firstName})`,
+          lastName: sql`COALESCE(${data.lastName || null}, ${users.lastName})`,
+          phone: sql`COALESCE(${data.phone || null}, ${users.phone})`,
+          mindbodyClientId: sql`COALESCE(${data.mindbodyClientId || null}, ${users.mindbodyClientId})`,
+          membershipStartDate: sql`COALESCE(${data.membershipStartDate || null}, ${users.membershipStartDate})`,
           tags: data.tags && data.tags.length > 0 ? data.tags : [],
-          membershipStartDate: data.membershipStartDate || null
-        });
-    }
+          updatedAt: new Date()
+        }
+      });
     
     if (!isProduction) console.log(`[Auth] Updated user ${normalizedEmail} with tier ${normalizedTier}, mindbodyId: ${data.mindbodyClientId || 'none'}`);
   } catch (error) {
