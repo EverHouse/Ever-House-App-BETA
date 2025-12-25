@@ -305,21 +305,24 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       );
     }
     
-    let googleCalendarId: string | null = null;
+    let golfEventIds: string | null = null;
+    let conferenceEventIds: string | null = null;
+    
     try {
-      const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-      if (calendarId) {
-        const affectedText = affected_areas === 'entire_facility' 
-          ? 'Entire Facility' 
-          : affected_areas === 'all_bays' 
-            ? 'All Simulator Bays' 
-            : affected_areas;
-            
-        const eventTitle = `CLOSURE: ${title || 'Facility Closure'}`;
-        const eventDescription = `${reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
-        
-        googleCalendarId = await createClosureCalendarEvents(
-          calendarId,
+      const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+      const affectedText = affected_areas === 'entire_facility' 
+        ? 'Entire Facility' 
+        : affected_areas === 'all_bays' 
+          ? 'All Simulator Bays' 
+          : affected_areas;
+          
+      const eventTitle = `CLOSURE: ${title || 'Facility Closure'}`;
+      const eventDescription = `${reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
+      
+      // Create event in Booked Golf calendar
+      if (golfCalendarId) {
+        golfEventIds = await createClosureCalendarEvents(
+          golfCalendarId,
           eventTitle,
           eventDescription,
           start_date,
@@ -328,14 +331,40 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
           end_time
         );
         
-        if (googleCalendarId) {
-          await db
-            .update(facilityClosures)
-            .set({ googleCalendarId })
-            .where(eq(facilityClosures.id, closureId));
-          
-          console.log(`[Closures] Created Google Calendar event(s) for closure #${closureId}`);
+        if (golfEventIds) {
+          console.log(`[Closures] Created Booked Golf calendar event(s) for closure #${closureId}`);
         }
+      }
+      
+      // For whole facility closures, also create event in MBO_Conference_Room calendar
+      if (affected_areas === 'entire_facility') {
+        const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
+        if (conferenceCalendarId) {
+          conferenceEventIds = await createClosureCalendarEvents(
+            conferenceCalendarId,
+            eventTitle,
+            eventDescription,
+            start_date,
+            end_date || start_date,
+            start_time,
+            end_time
+          );
+          
+          if (conferenceEventIds) {
+            console.log(`[Closures] Created MBO_Conference_Room calendar event(s) for closure #${closureId}`);
+          }
+        }
+      }
+      
+      // Store event IDs in separate columns
+      if (golfEventIds || conferenceEventIds) {
+        await db
+          .update(facilityClosures)
+          .set({ 
+            googleCalendarId: golfEventIds,
+            conferenceCalendarId: conferenceEventIds
+          })
+          .where(eq(facilityClosures.id, closureId));
       }
     } catch (calError) {
       console.error('[Closures] Failed to create calendar event:', calError);
@@ -385,7 +414,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       });
     }
     
-    res.json({ ...result, googleCalendarId, announcementId });
+    res.json({ ...result, googleCalendarId: golfEventIds, conferenceCalendarId: conferenceEventIds, announcementId });
   } catch (error: any) {
     if (!isProduction) console.error('Closure create error:', error);
     res.status(500).json({ error: 'Failed to create closure' });
@@ -402,16 +431,27 @@ router.delete('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
       .from(facilityClosures)
       .where(eq(facilityClosures.id, closureId));
     
-    if (closure?.googleCalendarId) {
-      try {
-        const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-        if (calendarId) {
-          await deleteClosureCalendarEvents(calendarId, closure.googleCalendarId);
-          console.log(`[Closures] Deleted Google Calendar event(s) for closure #${closureId}`);
+    // Delete calendar events from both calendars
+    try {
+      // Delete from Booked Golf calendar
+      if (closure?.googleCalendarId) {
+        const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+        if (golfCalendarId) {
+          await deleteClosureCalendarEvents(golfCalendarId, closure.googleCalendarId);
+          console.log(`[Closures] Deleted Booked Golf calendar event(s) for closure #${closureId}`);
         }
-      } catch (calError) {
-        console.error('[Closures] Failed to delete calendar event:', calError);
       }
+      
+      // Delete from MBO_Conference_Room calendar
+      if (closure?.conferenceCalendarId) {
+        const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
+        if (conferenceCalendarId) {
+          await deleteClosureCalendarEvents(conferenceCalendarId, closure.conferenceCalendarId);
+          console.log(`[Closures] Deleted MBO_Conference_Room calendar event(s) for closure #${closureId}`);
+        }
+      }
+    } catch (calError) {
+      console.error('[Closures] Failed to delete calendar event:', calError);
     }
     
     await deleteAvailabilityBlocksForClosure(closureId);
@@ -434,6 +474,194 @@ router.delete('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Closure delete error:', error);
     res.status(500).json({ error: 'Failed to delete closure' });
+  }
+});
+
+// Update closure - also updates calendar events
+router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const closureId = parseInt(id);
+    const { 
+      title, 
+      reason, 
+      start_date, 
+      start_time,
+      end_date, 
+      end_time,
+      affected_areas
+    } = req.body;
+    
+    // Get existing closure
+    const [existing] = await db
+      .select()
+      .from(facilityClosures)
+      .where(eq(facilityClosures.id, closureId));
+    
+    if (!existing) {
+      return res.status(404).json({ error: 'Closure not found' });
+    }
+    
+    // Update the closure record
+    const [updated] = await db
+      .update(facilityClosures)
+      .set({
+        title: title || existing.title,
+        reason: reason !== undefined ? reason : existing.reason,
+        startDate: start_date || existing.startDate,
+        startTime: start_time !== undefined ? start_time : existing.startTime,
+        endDate: end_date || existing.endDate,
+        endTime: end_time !== undefined ? end_time : existing.endTime,
+        affectedAreas: affected_areas || existing.affectedAreas
+      })
+      .where(eq(facilityClosures.id, closureId))
+      .returning();
+    
+    // Update availability blocks if dates/times changed
+    const datesChanged = start_date !== existing.startDate || end_date !== existing.endDate;
+    const timesChanged = start_time !== existing.startTime || end_time !== existing.endTime;
+    const areasChanged = affected_areas !== existing.affectedAreas;
+    
+    if (datesChanged || timesChanged || areasChanged) {
+      // Delete old availability blocks and recreate
+      await deleteAvailabilityBlocksForClosure(closureId);
+      
+      const newAffectedAreas = affected_areas || existing.affectedAreas;
+      const affectedBayIds = await getAffectedBayIds(newAffectedAreas);
+      const dates = getDatesBetween(
+        start_date || existing.startDate,
+        end_date || existing.endDate || start_date || existing.startDate
+      );
+      
+      if (affectedBayIds.length > 0) {
+        await createAvailabilityBlocksForClosure(
+          closureId,
+          affectedBayIds,
+          dates,
+          start_time !== undefined ? start_time : existing.startTime,
+          end_time !== undefined ? end_time : existing.endTime,
+          reason !== undefined ? reason : existing.reason,
+          existing.createdBy
+        );
+      }
+    }
+    
+    // Update calendar events if dates/times/title changed
+    const hasCalendarEvents = existing.googleCalendarId || existing.conferenceCalendarId;
+    if (hasCalendarEvents && (datesChanged || timesChanged || title !== existing.title || reason !== existing.reason || areasChanged)) {
+      try {
+        const newAffectedAreas = affected_areas || existing.affectedAreas;
+        const affectedText = newAffectedAreas === 'entire_facility' 
+          ? 'Entire Facility' 
+          : newAffectedAreas === 'all_bays' 
+            ? 'All Simulator Bays' 
+            : newAffectedAreas;
+            
+        const eventTitle = `CLOSURE: ${title || existing.title}`;
+        const eventDescription = `${reason !== undefined ? reason : existing.reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
+        const newStartDate = start_date || existing.startDate;
+        const newEndDate = end_date || existing.endDate;
+        const newStartTime = start_time !== undefined ? start_time : existing.startTime;
+        const newEndTime = end_time !== undefined ? end_time : existing.endTime;
+        
+        const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+        const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
+        
+        // Delete old events from both calendars
+        if (existing.googleCalendarId && golfCalendarId) {
+          await deleteClosureCalendarEvents(golfCalendarId, existing.googleCalendarId);
+        }
+        if (existing.conferenceCalendarId && conferenceCalendarId) {
+          await deleteClosureCalendarEvents(conferenceCalendarId, existing.conferenceCalendarId);
+        }
+        
+        // Create new events
+        let newGolfEventIds: string | null = null;
+        let newConferenceEventIds: string | null = null;
+        
+        if (golfCalendarId) {
+          newGolfEventIds = await createClosureCalendarEvents(
+            golfCalendarId,
+            eventTitle,
+            eventDescription,
+            newStartDate,
+            newEndDate || newStartDate,
+            newStartTime,
+            newEndTime
+          );
+        }
+        
+        // For whole facility closures, also create conference room event
+        if (newAffectedAreas === 'entire_facility' && conferenceCalendarId) {
+          newConferenceEventIds = await createClosureCalendarEvents(
+            conferenceCalendarId,
+            eventTitle,
+            eventDescription,
+            newStartDate,
+            newEndDate || newStartDate,
+            newStartTime,
+            newEndTime
+          );
+        }
+        
+        // Update stored calendar IDs in separate columns
+        await db
+          .update(facilityClosures)
+          .set({ 
+            googleCalendarId: newGolfEventIds,
+            conferenceCalendarId: newConferenceEventIds
+          })
+          .where(eq(facilityClosures.id, closureId));
+        
+        console.log(`[Closures] Updated Google Calendar event(s) for closure #${closureId}`);
+      } catch (calError) {
+        console.error('[Closures] Failed to update calendar events:', calError);
+      }
+    }
+    
+    // Update linked announcement if exists
+    try {
+      const newAffectedAreas = affected_areas || existing.affectedAreas;
+      const affectedText = newAffectedAreas === 'entire_facility' 
+        ? 'Entire Facility' 
+        : newAffectedAreas === 'all_bays' 
+          ? 'All Simulator Bays' 
+          : newAffectedAreas;
+      
+      const newStartDate = start_date || existing.startDate;
+      const newEndDate = end_date || existing.endDate;
+      const startDateFormatted = new Date(newStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const endDateFormatted = newEndDate && newEndDate !== newStartDate 
+        ? new Date(newEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : null;
+      
+      const newStartTime = start_time !== undefined ? start_time : existing.startTime;
+      const newEndTime = end_time !== undefined ? end_time : existing.endTime;
+      const dateRange = endDateFormatted ? `${startDateFormatted} - ${endDateFormatted}` : startDateFormatted;
+      const timeRange = newStartTime && newEndTime ? ` (${newStartTime} - ${newEndTime})` : newStartTime ? ` from ${newStartTime}` : '';
+      
+      const announcementTitle = title || existing.title;
+      const announcementMessage = `${reason !== undefined ? reason : existing.reason || 'Scheduled maintenance'}\n\nAffected: ${affectedText}\nWhen: ${dateRange}${timeRange}`;
+      
+      await db
+        .update(announcements)
+        .set({
+          title: announcementTitle,
+          message: announcementMessage,
+          startsAt: new Date(newStartDate),
+          endsAt: newEndDate ? new Date(newEndDate) : new Date(newStartDate)
+        })
+        .where(eq(announcements.closureId, closureId));
+      
+      console.log(`[Closures] Updated announcement for closure #${closureId}`);
+    } catch (announcementError) {
+      console.error('[Closures] Failed to update announcement:', announcementError);
+    }
+    
+    res.json(updated);
+  } catch (error: any) {
+    if (!isProduction) console.error('Closure update error:', error);
+    res.status(500).json({ error: 'Failed to update closure' });
   }
 });
 

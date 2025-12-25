@@ -39,6 +39,10 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Closure-to-Announcement Integration**: Facility closures automatically create linked high-priority announcements with formatted details (reason, affected areas, date/time range). Uses `closureId` foreign key in announcements table for lifecycle management. When a closure is deleted, the linked announcement is automatically removed.
 - **Booking Approval Validation**: Staff cannot approve bookings that conflict with facility closures or existing approved bookings. System returns descriptive error messages explaining the conflict. Uses integer-based time comparison for accurate overlap detection.
 - **Staff Calendar Closure Display**: Calendar view in the Sims admin panel shows closures as red "CLOSED" blocks with tooltip showing closure title. Closures are fetched alongside approved bookings and displayed consistently with the same affected area parsing logic used for approval validation.
+- **Closure-to-Calendar Sync**: Closures are managed exclusively through the app admin panel. Events sync to Google Calendar with full lifecycle management:
+  - Create: Whole facility closures create events in BOTH "Booked Golf" and "MBO_Conference_Room" calendars. Bay-only closures create events only in "Booked Golf".
+  - Delete: Removes events from both calendars when closure is deleted through the app.
+  - Update: Time/date edits automatically update the calendar events. Uses separate `googleCalendarId` and `conferenceCalendarId` columns to track events in each calendar.
 - **Notifications**: In-app, real-time notification system.
 - **Role Management**: Admin dashboard for assigning member/staff/admin roles.
 - **View As Member**: Admin-only feature allowing admins to impersonate members to view the app from their perspective. Staff users cannot use this feature. Confirmation popups warn admins before taking actions (booking, RSVP) on behalf of members. Uses `flushSync` for synchronous state updates.

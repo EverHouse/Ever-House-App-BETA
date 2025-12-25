@@ -335,6 +335,7 @@ export const facilityClosures = pgTable("facility_closures", {
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: varchar("created_by"),
   googleCalendarId: varchar("google_calendar_id"),
+  conferenceCalendarId: varchar("conference_calendar_id"),
 });
 
 // Membership tiers table - centralized tier configuration for marketing and logic
