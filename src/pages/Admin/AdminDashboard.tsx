@@ -3752,6 +3752,29 @@ const TiersAdmin: React.FC = () => {
         fetchTiers();
     }, []);
 
+    // Prevent body scroll when modal is open
+    useEffect(() => {
+        if (isEditing) {
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.top = `-${window.scrollY}px`;
+        } else {
+            const scrollY = document.body.style.top;
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.top = '';
+            window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.top = '';
+        };
+    }, [isEditing]);
+
     const openEdit = (tier: MembershipTier) => {
         setSelectedTier({
             ...tier,
@@ -3874,7 +3897,7 @@ const TiersAdmin: React.FC = () => {
                             </div>
 
                             {/* Scrollable Content */}
-                            <div className="flex-1 overflow-y-auto p-6 pt-4">
+                            <div className="flex-1 overflow-y-auto overscroll-contain p-6 pt-4" style={{ WebkitOverflowScrolling: 'touch' }}>
                             {error && (
                                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
                                     {error}
