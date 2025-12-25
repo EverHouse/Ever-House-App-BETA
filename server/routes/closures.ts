@@ -395,7 +395,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         priority: 'normal',
         isActive: true,
         closureId: closureId,
-        startsAt: new Date(start_date),
+        startsAt: null,
         endsAt: end_date ? new Date(end_date) : new Date(start_date),
         createdBy: created_by
       }).returning();
