@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { Resend } from 'resend';
 import { eq, and, sql, gt, isNotNull } from 'drizzle-orm';
 import { db } from '../db';
-import { users, magicLinks, adminUsers, staffUsers } from '../../shared/schema';
+import { users, magicLinks, adminUsers, staffUsers, membershipTiers } from '../../shared/schema';
 import { isProduction } from '../core/db';
 import { getHubSpotClient } from '../core/integrations';
 import { isAdminEmail } from '../core/middleware';
@@ -88,6 +88,49 @@ async function getUserRole(email: string): Promise<'admin' | 'staff' | 'member'>
     return 'staff';
   }
   return 'member';
+}
+
+async function upsertUserWithTier(email: string, tierName: string, firstName?: string, lastName?: string): Promise<void> {
+  try {
+    const normalizedEmail = email.toLowerCase();
+    const normalizedTier = tierName || 'Core';
+    
+    const tierResult = await db.select({ id: membershipTiers.id })
+      .from(membershipTiers)
+      .where(sql`LOWER(${membershipTiers.name}) = LOWER(${normalizedTier})`)
+      .limit(1);
+    
+    const tierId = tierResult.length > 0 ? tierResult[0].id : null;
+    
+    const existing = await db.select({ id: users.id })
+      .from(users)
+      .where(sql`LOWER(${users.email}) = LOWER(${normalizedEmail})`)
+      .limit(1);
+    
+    if (existing.length > 0) {
+      await db.update(users)
+        .set({ 
+          tier: normalizedTier,
+          tierId: tierId,
+          updatedAt: new Date()
+        })
+        .where(sql`LOWER(${users.email}) = LOWER(${normalizedEmail})`);
+    } else {
+      await db.insert(users)
+        .values({
+          id: crypto.randomUUID(),
+          email: normalizedEmail,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          tier: normalizedTier,
+          tierId: tierId
+        });
+    }
+    
+    if (!isProduction) console.log(`[Auth] Updated user ${normalizedEmail} with tier ${normalizedTier}`);
+  } catch (error) {
+    console.error('[Auth] Error upserting user tier:', error);
+  }
 }
 
 const router = Router();
@@ -610,6 +653,8 @@ router.post('/api/auth/verify-otp', async (req, res) => {
     
     (req.session as any).user = member;
     
+    await upsertUserWithTier(member.email, member.tier, member.firstName, member.lastName);
+    
     req.session.save((err) => {
       if (err) {
         if (!isProduction) console.error('Session save error:', err);
@@ -687,6 +732,8 @@ router.post('/api/auth/verify-token', async (req, res) => {
     };
     
     (req.session as any).user = member;
+    
+    await upsertUserWithTier(member.email, member.tier, member.firstName, member.lastName);
     
     req.session.save((err) => {
       if (err) {
@@ -875,6 +922,8 @@ router.post('/api/auth/password-login', async (req, res) => {
     };
     
     (req.session as any).user = member;
+    
+    await upsertUserWithTier(member.email, member.tier, member.firstName, member.lastName);
     
     req.session.save((err) => {
       if (err) {
