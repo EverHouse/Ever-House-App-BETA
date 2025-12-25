@@ -609,7 +609,7 @@ const EventsAdmin: React.FC = () => {
                 setSyncMessage(data.message);
                 await fetchEvents();
             } else {
-                setSyncMessage(`Error: ${data.error}`);
+                setSyncMessage(`Error: ${data.error || data.message || 'Sync failed'}`);
             }
         } catch (err) {
             console.error('Failed to sync Eventbrite:', err);
@@ -630,7 +630,7 @@ const EventsAdmin: React.FC = () => {
                 setSyncMessage(data.message);
                 await fetchEvents();
             } else {
-                setSyncMessage(`Error: ${data.error}`);
+                setSyncMessage(`Error: ${data.error || data.message || 'Sync failed'}`);
             }
         } catch (err) {
             console.error('Failed to sync calendars:', err);
@@ -2322,7 +2322,7 @@ const WellnessAdmin: React.FC = () => {
                 setSuccess(data.message);
                 await fetchClasses();
             } else {
-                setError(`Sync failed: ${data.error}`);
+                setError(`Sync failed: ${data.error || data.message || 'Unknown error'}`);
             }
         } catch (err) {
             console.error('Failed to sync calendars:', err);
