@@ -32,7 +32,7 @@ export const TIER_PERMISSIONS: Record<BaseTier, TierPermissions> = {
   Core: {
     canBookSimulators: true,
     canBookWellness: true,
-    advanceBookingDays: 10,
+    advanceBookingDays: 7,
     guestPassesPerYear: 4,
     dailySimulatorMinutes: 60,
     dailyConfRoomMinutes: 60,
@@ -45,7 +45,7 @@ export const TIER_PERMISSIONS: Record<BaseTier, TierPermissions> = {
   Premium: {
     canBookSimulators: true,
     canBookWellness: true,
-    advanceBookingDays: 14,
+    advanceBookingDays: 10,
     guestPassesPerYear: 8,
     dailySimulatorMinutes: 90,
     dailyConfRoomMinutes: 90,
@@ -58,7 +58,7 @@ export const TIER_PERMISSIONS: Record<BaseTier, TierPermissions> = {
   Corporate: {
     canBookSimulators: true,
     canBookWellness: true,
-    advanceBookingDays: 14,
+    advanceBookingDays: 10,
     guestPassesPerYear: 15,
     dailySimulatorMinutes: 90,
     dailyConfRoomMinutes: 90,
