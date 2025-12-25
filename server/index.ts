@@ -5,7 +5,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { getSession, registerAuthRoutes } from './replit_integrations/auth';
 import { setupSupabaseAuthRoutes } from './supabase/auth';
-import { pool, isProduction } from './core/db';
+import { isProduction } from './core/db';
+import { db } from './db';
+import { systemSettings } from '../shared/schema';
+import { eq, sql } from 'drizzle-orm';
 import { syncGoogleCalendarEvents, syncWellnessCalendarEvents } from './core/calendar';
 
 import resourcesRouter from './routes/resources';
@@ -353,27 +356,26 @@ async function startServer() {
   // Atomic check-and-set: only returns true if this instance claimed today's reminder slot
   const tryClaimReminderSlot = async (todayStr: string): Promise<boolean> => {
     try {
-      // Ensure table exists (bootstrap for first run)
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS system_settings (
-          key VARCHAR PRIMARY KEY,
-          value VARCHAR,
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-      
       // Atomic upsert that only succeeds if value is different from today
-      // Uses INSERT ON CONFLICT with a WHERE clause to ensure atomicity
-      const result = await pool.query(`
-        INSERT INTO system_settings (key, value, updated_at)
-        VALUES ($1, $2, NOW())
-        ON CONFLICT (key) DO UPDATE 
-        SET value = $2, updated_at = NOW()
-        WHERE system_settings.value IS DISTINCT FROM $2
-        RETURNING key
-      `, [REMINDER_SETTING_KEY, todayStr]);
+      // Uses Drizzle's onConflictDoUpdate with a WHERE clause to ensure atomicity
+      const result = await db
+        .insert(systemSettings)
+        .values({
+          key: REMINDER_SETTING_KEY,
+          value: todayStr,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: systemSettings.key,
+          set: {
+            value: todayStr,
+            updatedAt: new Date(),
+          },
+          where: sql`${systemSettings.value} IS DISTINCT FROM ${todayStr}`,
+        })
+        .returning({ key: systemSettings.key });
       
-      return result.rowCount !== null && result.rowCount > 0;
+      return result.length > 0;
     } catch (err) {
       console.error('[Daily Reminders] Database error:', err);
       return false;
