@@ -1148,7 +1148,7 @@ const AnnouncementsAdmin: React.FC = () => {
                 >
                     <span className="material-symbols-outlined text-lg">block</span> Closure
                 </button>
-                <button onClick={openCreateUpdate} className="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-blue-700 transition-colors">
+                <button onClick={openCreateUpdate} className="bg-amber-100 text-amber-800 px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-amber-200 transition-colors border border-amber-200">
                     <span className="material-symbols-outlined text-lg">add</span> Update
                 </button>
                 <button onClick={openCreateAnnouncement} className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-accent/90 transition-colors">
@@ -1163,7 +1163,7 @@ const AnnouncementsAdmin: React.FC = () => {
                         <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
                             <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
                                 {newItem.type === 'update' ? (
-                                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                                 ) : (
                                     <span className="w-2.5 h-2.5 rounded-full bg-accent" />
                                 )}
@@ -1172,7 +1172,7 @@ const AnnouncementsAdmin: React.FC = () => {
                             <div className="space-y-4 mb-6">
                                 {editId && (
                                     <div className="flex gap-2">
-                                        <button onClick={() => setNewItem({...newItem, type: 'update', linkType: undefined, linkTarget: undefined})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'update' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Update</button>
+                                        <button onClick={() => setNewItem({...newItem, type: 'update', linkType: undefined, linkTarget: undefined})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'update' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Update</button>
                                         <button onClick={() => setNewItem({...newItem, type: 'announcement'})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'announcement' ? 'bg-accent text-primary' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Announcement</button>
                                     </div>
                                 )}

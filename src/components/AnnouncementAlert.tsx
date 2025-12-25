@@ -51,17 +51,17 @@ const AnnouncementAlert: React.FC = () => {
     <div 
       className={`mb-6 p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
         isDark 
-          ? 'bg-red-500/10 border-red-500/30 hover:bg-red-500/15' 
-          : 'bg-red-50 border-red-200 hover:bg-red-100'
+          ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/15' 
+          : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
       }`}
       onClick={handleViewAll}
     >
       <div className="flex items-start gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-          isDark ? 'bg-red-500/20' : 'bg-red-100'
+          isDark ? 'bg-amber-500/20' : 'bg-amber-100'
         }`}>
-          <span className={`material-symbols-outlined text-xl ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-            priority_high
+          <span className={`material-symbols-outlined text-xl ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+            campaign
           </span>
         </div>
         
@@ -92,7 +92,7 @@ const AnnouncementAlert: React.FC = () => {
           
           <div className="flex items-center justify-between mt-2">
             <span className={`text-[10px] uppercase font-bold tracking-wide ${
-              isDark ? 'text-red-400' : 'text-red-600'
+              isDark ? 'text-amber-400' : 'text-amber-700'
             }`}>
               {hasMultiple ? `${unseenHighPriority.length} new updates` : 'New update'}
             </span>

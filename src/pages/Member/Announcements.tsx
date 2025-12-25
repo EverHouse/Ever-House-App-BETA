@@ -154,7 +154,7 @@ const MemberAnnouncements: React.FC = () => {
                     }}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${item.type === 'update' ? 'bg-blue-500' : 'bg-accent'}`} />
+                      <span className={`w-2.5 h-2.5 rounded-full ${item.type === 'update' ? 'bg-amber-400' : 'bg-accent'}`} />
                       <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
                         {item.type}
                       </span>
