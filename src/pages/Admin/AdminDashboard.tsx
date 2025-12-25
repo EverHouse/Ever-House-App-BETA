@@ -1669,7 +1669,8 @@ const SimulatorAdmin: React.FC = () => {
     }, []);
 
     return (
-        <div>
+        <div className="flex justify-center">
+            <div className="w-full max-w-md bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
             {/* Tab Bar */}
             <div className="flex justify-center border-b border-gray-200 dark:border-white/10 mb-0">
                 <button
@@ -1794,7 +1795,7 @@ const SimulatorAdmin: React.FC = () => {
             ) : (
                 <div>
                     {/* Date Selector Row */}
-                    <div className="bg-gray-100 dark:bg-white/5 py-3 mb-4 -mx-6">
+                    <div className="bg-gray-50 dark:bg-white/5 py-3 mb-4">
                         <div className="flex items-center justify-center gap-4">
                             <button
                                 onClick={() => {
@@ -1822,8 +1823,8 @@ const SimulatorAdmin: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="flex justify-center px-4">
-                        <div className="inline-block" style={{ marginLeft: '-40px' }}>
+                    <div className="flex justify-center px-2 pb-4">
+                        <div className="inline-block" style={{ marginLeft: '-20px' }}>
                             <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, 52px)` }}>
                                 <div className="h-10"></div>
                                 {resources.map(resource => (
@@ -1979,6 +1980,7 @@ const SimulatorAdmin: React.FC = () => {
                 </div>,
                 document.body
             )}
+            </div>
         </div>
     );
 };
