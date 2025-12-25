@@ -138,22 +138,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-  const { scrollTo, lenis } = useSmoothScroll();
   
   useEffect(() => {
     requestAnimationFrame(() => {
-      if (lenis) {
-        scrollTo(0, { duration: 0 });
-      } else {
-        const main = document.querySelector('#main-content');
-        if (main) {
-          main.scrollTo({ top: 0, behavior: 'auto' });
-        } else {
-          window.scrollTo({ top: 0, behavior: 'auto' });
-        }
-      }
+      window.scrollTo({ top: 0, behavior: 'auto' });
     });
-  }, [pathname, lenis, scrollTo]);
+  }, [pathname]);
   
   return null;
 };
