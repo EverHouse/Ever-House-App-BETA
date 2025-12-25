@@ -510,10 +510,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 className={`flex-1 relative ${showHeader ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''}`}
             >
                 {children}
-                {isMemberRoute && !isAdminRoute && <BottomSentinel />}
+                {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}
             </main>
 
-            {isMemberRoute && !isAdminRoute && user && (
+            {isMemberRoute && !isAdminRoute && !isProfilePage && user && (
               <MemberBottomNav currentPath={location.pathname} isDarkTheme={isDarkTheme} />
             )}
 
