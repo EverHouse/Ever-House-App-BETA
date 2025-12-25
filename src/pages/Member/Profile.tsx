@@ -10,6 +10,7 @@ import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import { isPushSupported, isSubscribedToPush, subscribeToPush, unsubscribeFromPush } from '../../services/pushNotifications';
+import Toggle from '../../components/Toggle';
 
 
 const GUEST_CHECKIN_FIELDS = [
@@ -62,12 +63,12 @@ const Profile: React.FC = () => {
     checkPush();
   }, []);
 
-  const handlePushToggle = async () => {
+  const handlePushToggle = async (newValue: boolean) => {
     if (!user?.email || pushLoading) return;
     
     setPushLoading(true);
     try {
-      if (pushEnabled) {
+      if (!newValue) {
         await unsubscribeFromPush();
         setPushEnabled(false);
       } else {
@@ -220,19 +221,12 @@ const Profile: React.FC = () => {
                   )}
                 </div>
               </div>
-              <button 
-                onClick={handlePushToggle}
+              <Toggle
+                checked={pushEnabled}
+                onChange={handlePushToggle}
                 disabled={pushLoading || !pushSupported}
-                className={`relative w-[51px] h-[31px] flex-shrink-0 rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
-                  !pushSupported 
-                    ? (isDark ? 'bg-gray-700 opacity-50' : 'bg-gray-200 opacity-50')
-                    : pushEnabled 
-                      ? 'bg-[#34C759]' 
-                      : (isDark ? 'bg-gray-600' : 'bg-gray-300')
-                }`}
-              >
-                <span className={`absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200 ease-in-out ${pushEnabled ? 'right-[2px]' : 'left-[2px]'}`} />
-              </button>
+                label="Push Notifications"
+              />
             </div>
             <Row icon="lock" label="Privacy" arrow isDark={isDark} />
          </Section>

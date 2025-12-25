@@ -10,6 +10,7 @@ import { AVAILABLE_TAGS } from '../../utils/tierUtils';
 import { SafeAreaBottomOverlay } from '../../components/layout/SafeAreaBottomOverlay';
 import { BottomSentinel } from '../../components/layout/BottomSentinel';
 import BackToTop from '../../components/BackToTop';
+import Toggle from '../../components/Toggle';
 import FaqsAdmin from './FaqsAdmin';
 import InquiriesAdmin from './InquiriesAdmin';
 import GalleryAdmin from './GalleryAdmin';
@@ -3997,25 +3998,11 @@ const TiersAdmin: React.FC = () => {
                                     </div>
                                     <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors mt-2">
                                         <span className="text-sm text-primary dark:text-white">Show in Compare Table</span>
-                                        <button
-                                            type="button"
-                                            role="switch"
-                                            aria-checked={selectedTier.show_in_comparison}
-                                            onClick={() => setSelectedTier({...selectedTier, show_in_comparison: !selectedTier.show_in_comparison})}
-                                            className={`relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                                                selectedTier.show_in_comparison 
-                                                    ? 'bg-primary' 
-                                                    : 'bg-[#E9E9EB] dark:bg-[#39393D]'
-                                            }`}
-                                        >
-                                            <span
-                                                className={`pointer-events-none inline-block h-[27px] w-[27px] transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                                    selectedTier.show_in_comparison 
-                                                        ? 'translate-x-[20px]' 
-                                                        : 'translate-x-0'
-                                                }`}
-                                            />
-                                        </button>
+                                        <Toggle
+                                            checked={selectedTier.show_in_comparison}
+                                            onChange={(val) => setSelectedTier({...selectedTier, show_in_comparison: val})}
+                                            label="Show in Compare Table"
+                                        />
                                     </label>
                                 </div>
                             </div>
@@ -4070,25 +4057,11 @@ const TiersAdmin: React.FC = () => {
                                     {BOOLEAN_FIELDS.map(({ key, label }) => (
                                         <label key={key} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
                                             <span className="text-sm text-primary dark:text-white pr-2">{label}</span>
-                                            <button
-                                                type="button"
-                                                role="switch"
-                                                aria-checked={!!selectedTier[key as keyof MembershipTier]}
-                                                onClick={() => setSelectedTier({...selectedTier, [key]: !selectedTier[key as keyof MembershipTier]})}
-                                                className={`relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                                                    selectedTier[key as keyof MembershipTier] 
-                                                        ? 'bg-primary' 
-                                                        : 'bg-[#E9E9EB] dark:bg-[#39393D]'
-                                                }`}
-                                            >
-                                                <span
-                                                    className={`pointer-events-none inline-block h-[27px] w-[27px] transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                                        selectedTier[key as keyof MembershipTier] 
-                                                            ? 'translate-x-[20px]' 
-                                                            : 'translate-x-0'
-                                                    }`}
-                                                />
-                                            </button>
+                                            <Toggle
+                                                checked={!!selectedTier[key as keyof MembershipTier]}
+                                                onChange={(val) => setSelectedTier({...selectedTier, [key]: val})}
+                                                label={label}
+                                            />
                                         </label>
                                     ))}
                                 </div>
