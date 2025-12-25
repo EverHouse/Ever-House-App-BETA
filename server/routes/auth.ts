@@ -90,10 +90,21 @@ async function getUserRole(email: string): Promise<'admin' | 'staff' | 'member'>
   return 'member';
 }
 
-async function upsertUserWithTier(email: string, tierName: string, firstName?: string, lastName?: string): Promise<void> {
+interface UpsertUserData {
+  email: string;
+  tierName: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  mindbodyClientId?: string;
+  tags?: string[];
+  membershipStartDate?: string;
+}
+
+async function upsertUserWithTier(data: UpsertUserData): Promise<void> {
   try {
-    const normalizedEmail = email.toLowerCase();
-    const normalizedTier = tierName || 'Core';
+    const normalizedEmail = data.email.toLowerCase();
+    const normalizedTier = data.tierName || 'Core';
     
     const tierResult = await db.select({ id: membershipTiers.id })
       .from(membershipTiers)
@@ -108,26 +119,39 @@ async function upsertUserWithTier(email: string, tierName: string, firstName?: s
       .limit(1);
     
     if (existing.length > 0) {
+      const updateData: Record<string, any> = { 
+        tier: normalizedTier,
+        tierId: tierId,
+        updatedAt: new Date()
+      };
+      
+      if (data.firstName) updateData.firstName = data.firstName;
+      if (data.lastName) updateData.lastName = data.lastName;
+      if (data.phone) updateData.phone = data.phone;
+      if (data.mindbodyClientId) updateData.mindbodyClientId = data.mindbodyClientId;
+      if (data.membershipStartDate) updateData.membershipStartDate = data.membershipStartDate;
+      updateData.tags = data.tags || [];
+      
       await db.update(users)
-        .set({ 
-          tier: normalizedTier,
-          tierId: tierId,
-          updatedAt: new Date()
-        })
+        .set(updateData)
         .where(sql`LOWER(${users.email}) = LOWER(${normalizedEmail})`);
     } else {
       await db.insert(users)
         .values({
           id: crypto.randomUUID(),
           email: normalizedEmail,
-          firstName: firstName || null,
-          lastName: lastName || null,
+          firstName: data.firstName || null,
+          lastName: data.lastName || null,
           tier: normalizedTier,
-          tierId: tierId
+          tierId: tierId,
+          phone: data.phone || null,
+          mindbodyClientId: data.mindbodyClientId || null,
+          tags: data.tags && data.tags.length > 0 ? data.tags : [],
+          membershipStartDate: data.membershipStartDate || null
         });
     }
     
-    if (!isProduction) console.log(`[Auth] Updated user ${normalizedEmail} with tier ${normalizedTier}`);
+    if (!isProduction) console.log(`[Auth] Updated user ${normalizedEmail} with tier ${normalizedTier}, mindbodyId: ${data.mindbodyClientId || 'none'}`);
   } catch (error) {
     console.error('[Auth] Error upserting user tier:', error);
   }
@@ -637,6 +661,7 @@ router.post('/api/auth/verify-otp', async (req, res) => {
     const role = await getUserRole(normalizedEmail);
 
     const sessionTtl = 7 * 24 * 60 * 60 * 1000;
+    const tags = parseDiscountReasonToTags(contact.properties.membership_discount_reason);
     const member = {
       id: contact.id,
       firstName: contact.properties.firstname || '',
@@ -644,8 +669,9 @@ router.post('/api/auth/verify-otp', async (req, res) => {
       email: contact.properties.email || normalizedEmail,
       phone: contact.properties.phone || '',
       tier: normalizeMembershipTier(contact.properties.membership_tier),
-      tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+      tags,
       mindbodyClientId: contact.properties.mindbody_client_id || '',
+      membershipStartDate: contact.properties.membership_start_date || '',
       status: 'Active',
       role,
       expires_at: Date.now() + sessionTtl
@@ -653,7 +679,16 @@ router.post('/api/auth/verify-otp', async (req, res) => {
     
     (req.session as any).user = member;
     
-    await upsertUserWithTier(member.email, member.tier, member.firstName, member.lastName);
+    await upsertUserWithTier({
+      email: member.email,
+      tierName: member.tier,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      phone: member.phone,
+      mindbodyClientId: member.mindbodyClientId,
+      tags,
+      membershipStartDate: member.membershipStartDate
+    });
     
     req.session.save((err) => {
       if (err) {
@@ -717,6 +752,7 @@ router.post('/api/auth/verify-token', async (req, res) => {
     const role = await getUserRole(magicLinkRecord.email.toLowerCase());
 
     const sessionTtl = 7 * 24 * 60 * 60 * 1000;
+    const tags = parseDiscountReasonToTags(contact.properties.membership_discount_reason);
     const member = {
       id: contact.id,
       firstName: contact.properties.firstname || '',
@@ -724,8 +760,9 @@ router.post('/api/auth/verify-token', async (req, res) => {
       email: contact.properties.email || magicLinkRecord.email,
       phone: contact.properties.phone || '',
       tier: normalizeMembershipTier(contact.properties.membership_tier),
-      tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+      tags,
       mindbodyClientId: contact.properties.mindbody_client_id || '',
+      membershipStartDate: contact.properties.membership_start_date || '',
       status: 'Active',
       role,
       expires_at: Date.now() + sessionTtl
@@ -733,7 +770,16 @@ router.post('/api/auth/verify-token', async (req, res) => {
     
     (req.session as any).user = member;
     
-    await upsertUserWithTier(member.email, member.tier, member.firstName, member.lastName);
+    await upsertUserWithTier({
+      email: member.email,
+      tierName: member.tier,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      phone: member.phone,
+      mindbodyClientId: member.mindbodyClientId,
+      tags,
+      membershipStartDate: member.membershipStartDate
+    });
     
     req.session.save((err) => {
       if (err) {
@@ -900,6 +946,7 @@ router.post('/api/auth/password-login', async (req, res) => {
           tier: normalizeMembershipTier(contact.properties.membership_tier),
           tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
           mindbodyClientId: contact.properties.mindbody_client_id || '',
+          membershipStartDate: contact.properties.membership_start_date || '',
         };
       }
     } catch (hubspotError) {
@@ -916,6 +963,7 @@ router.post('/api/auth/password-login', async (req, res) => {
       tier: memberData?.tier || 'Core',
       tags: memberData?.tags || [],
       mindbodyClientId: memberData?.mindbodyClientId || '',
+      membershipStartDate: memberData?.membershipStartDate || '',
       status: 'Active',
       role: userRole,
       expires_at: Date.now() + sessionTtl
@@ -923,7 +971,16 @@ router.post('/api/auth/password-login', async (req, res) => {
     
     (req.session as any).user = member;
     
-    await upsertUserWithTier(member.email, member.tier, member.firstName, member.lastName);
+    await upsertUserWithTier({
+      email: member.email,
+      tierName: member.tier,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      phone: member.phone,
+      mindbodyClientId: member.mindbodyClientId,
+      tags: member.tags,
+      membershipStartDate: member.membershipStartDate
+    });
     
     req.session.save((err) => {
       if (err) {
