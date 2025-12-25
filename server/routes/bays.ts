@@ -361,6 +361,10 @@ router.put('/api/booking-requests/:id', async (req, res) => {
         .where(eq(bookingRequests.id, parseInt(id)))
         .returning();
       
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Booking request not found' });
+      }
+      
       const updated = result[0];
       const declineMessage = suggested_time 
         ? `Your simulator booking request for ${updated.requestDate} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
@@ -395,6 +399,10 @@ router.put('/api/booking-requests/:id', async (req, res) => {
       })
         .from(bookingRequests)
         .where(eq(bookingRequests.id, parseInt(id)));
+      
+      if (existing.length === 0) {
+        return res.status(404).json({ error: 'Booking request not found' });
+      }
       
       const bookingData = existing[0];
       
@@ -462,10 +470,15 @@ router.put('/api/booking-requests/:id', async (req, res) => {
     const result = await db.update(bookingRequests)
       .set({
         status: status,
+        staffNotes: staff_notes || undefined,
         updatedAt: new Date()
       })
       .where(eq(bookingRequests.id, parseInt(id)))
       .returning();
+    
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Booking request not found' });
+    }
     
     res.json(formatRow(result[0]));
   } catch (error: any) {
