@@ -1670,27 +1670,29 @@ const SimulatorAdmin: React.FC = () => {
 
     return (
         <div>
-            <div className="flex gap-2 mb-6">
-                <button
-                    onClick={() => setActiveView('requests')}
-                    className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
-                        activeView === 'requests'
-                            ? 'bg-primary text-white dark:bg-white dark:text-primary'
-                            : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10'
-                    }`}
-                >
-                    Requests Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
-                </button>
-                <button
-                    onClick={() => setActiveView('calendar')}
-                    className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
-                        activeView === 'calendar'
-                            ? 'bg-primary text-white dark:bg-white dark:text-primary'
-                            : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10'
-                    }`}
-                >
-                    Calendar View
-                </button>
+            <div className="flex justify-center mb-6">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setActiveView('requests')}
+                        className={`py-2 px-4 rounded-lg font-medium text-sm transition-all ${
+                            activeView === 'requests'
+                                ? 'bg-primary text-white dark:bg-white dark:text-primary'
+                                : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10'
+                        }`}
+                    >
+                        Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                    </button>
+                    <button
+                        onClick={() => setActiveView('calendar')}
+                        className={`py-2 px-4 rounded-lg font-medium text-sm transition-all ${
+                            activeView === 'calendar'
+                                ? 'bg-primary text-white dark:bg-white dark:text-primary'
+                                : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10'
+                        }`}
+                    >
+                        Calendar
+                    </button>
+                </div>
             </div>
 
             {isLoading ? (
