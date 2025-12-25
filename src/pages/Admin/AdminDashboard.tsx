@@ -3882,22 +3882,22 @@ const TiersAdmin: React.FC = () => {
                 </p>
             </div>
 
-            {/* Edit Modal */}
+            {/* Edit Modal - Full page scroll pattern for mobile */}
             {isEditing && selectedTier && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                <div className="fixed inset-0 z-[10001] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto max-h-[90vh] flex flex-col">
-                            {/* Sticky Header */}
-                            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 flex-shrink-0">
+                    <div className="relative min-h-full flex items-start justify-center py-8 px-4">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 border border-gray-200 dark:border-white/10 my-auto">
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 sticky top-0 bg-white dark:bg-[#1a1d15] rounded-t-2xl z-10">
                                 <h3 className="font-bold text-lg text-primary dark:text-white">Edit Tier: {selectedTier.name}</h3>
                                 <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
 
-                            {/* Scrollable Content */}
-                            <div className="flex-1 overflow-y-auto overscroll-contain p-6 pt-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+                            {/* Content */}
+                            <div className="p-6 pt-4">
                             {error && (
                                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
                                     {error}
@@ -4098,11 +4098,9 @@ const TiersAdmin: React.FC = () => {
                                     <p className="text-sm text-gray-400 dark:text-gray-500 italic">Add features above to select highlights</p>
                                 )}
                             </div>
-                            </div>
-                            {/* End Scrollable Content */}
 
-                            {/* Sticky Footer */}
-                            <div className="flex gap-3 justify-end p-6 pt-4 border-t border-gray-200 dark:border-white/10 flex-shrink-0 bg-white dark:bg-[#1a1d15]">
+                            {/* Footer */}
+                            <div className="flex gap-3 justify-end p-6 pt-4 border-t border-gray-200 dark:border-white/10">
                                 <button 
                                     onClick={() => setIsEditing(false)} 
                                     className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
