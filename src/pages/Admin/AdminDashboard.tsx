@@ -1411,7 +1411,7 @@ const AnnouncementsAdmin: React.FC = () => {
             <div className="space-y-4">
                 {announcements.length > 0 && (
                     <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-blue-500 text-[18px]">campaign</span>
+                        <span className="material-symbols-outlined text-amber-500 text-[18px]">campaign</span>
                         Updates & Announcements ({announcements.length})
                     </h3>
                 )}
@@ -1419,7 +1419,7 @@ const AnnouncementsAdmin: React.FC = () => {
                     <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm flex justify-between items-start cursor-pointer hover:border-primary/30 transition-all">
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
-                                <span className={`w-2 h-2 rounded-full ${item.type === 'update' ? 'bg-blue-500' : 'bg-red-500'}`}></span>
+                                <span className={`w-2 h-2 rounded-full ${item.type === 'update' ? 'bg-amber-400' : 'bg-accent'}`}></span>
                                 <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500">{item.type}</span>
                                 <span className="text-[10px] text-gray-300 dark:text-gray-600">• {item.date}</span>
                             </div>
