@@ -3884,7 +3884,7 @@ const TiersAdmin: React.FC = () => {
             {isEditing && selectedTier && createPortal(
                 <div className="fixed inset-0 z-[10001] flex flex-col">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="relative flex-1 flex flex-col mx-4 my-8 max-w-2xl w-full self-center bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden">
+                    <div className="relative flex flex-col mx-4 my-8 max-w-2xl w-full self-center bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 max-h-[calc(100vh-4rem)] overflow-hidden">
                             {/* Header - Fixed */}
                             <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1d15] flex-shrink-0">
                                 <h3 className="font-bold text-lg text-primary dark:text-white">Edit Tier: {selectedTier.name}</h3>
@@ -4002,10 +4002,12 @@ const TiersAdmin: React.FC = () => {
                                             <span className="text-sm text-primary dark:text-white pr-2">{label}</span>
                                             <button
                                                 type="button"
+                                                role="switch"
+                                                aria-checked={!!selectedTier[key as keyof MembershipTier]}
                                                 onClick={() => setSelectedTier({...selectedTier, [key]: !selectedTier[key as keyof MembershipTier]})}
-                                                className={`relative w-[51px] h-[31px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34C759] ${selectedTier[key as keyof MembershipTier] ? 'bg-[#34C759]' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                                className={`relative w-[51px] h-[31px] min-w-[51px] min-h-[31px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34C759] ${selectedTier[key as keyof MembershipTier] ? 'bg-[#34C759]' : 'bg-gray-300 dark:bg-gray-600'}`}
                                             >
-                                                <span className={`absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200 ease-in-out ${selectedTier[key as keyof MembershipTier] ? 'right-[2px]' : 'left-[2px]'}`} />
+                                                <span className={`absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200 ${selectedTier[key as keyof MembershipTier] ? 'right-[2px]' : 'left-[2px]'}`} />
                                             </button>
                                         </label>
                                     ))}
