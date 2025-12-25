@@ -16,7 +16,8 @@ The Even House Members App is a private members club application for golf and we
 The application uses a React 19 frontend with Vite, styled with Tailwind CSS, and an Express.js backend with a PostgreSQL database.
 
 ### UI/UX Decisions
-- **Typography**: Inter (sans-serif).
+- **Typography**: Playfair Display (serif) for hero headlines, Inter (sans-serif) for body and UI.
+- **Landing Page**: Transparent header overlaying hero, serif headline with tight leading, uppercase CTAs with wide tracking.
 - **Icons**: Material Symbols Outlined (weight 300, `.filled` for active states).
 - **Color Palette**: Deep Green (#293515), Lavender (#CCB8E4), Bone (#F2F2EC), Background Dark (#0f120a).
 - **Liquid Glass Design System**: iOS-inspired glassmorphism applied globally with backdrop blur, reflective edges, inner depth, extra-large rounded corners, and fluid interactions. Utilizes specific CSS classes (e.g., `.glass-card`) and CSS variables.
