@@ -187,10 +187,20 @@ router.post('/api/booking-requests', async (req, res) => {
       day: 'numeric' 
     });
     const formattedTime = row.startTime.substring(0, 5);
+    const staffMessage = `${row.userName || row.userEmail} requested ${formattedDate} at ${formattedTime}`;
+    
+    await db.insert(notifications).values({
+      userEmail: 'staff@evenhouse.app',
+      title: 'New Golf Booking Request',
+      message: staffMessage,
+      type: 'booking',
+      actionUrl: '/#/admin',
+      metadata: { bookingRequestId: row.id }
+    });
     
     sendPushNotificationToStaff({
       title: 'New Golf Booking Request',
-      body: `${row.userName || row.userEmail} requested ${formattedDate} at ${formattedTime}`,
+      body: staffMessage,
       url: '/#/admin'
     }).catch(err => console.error('Staff notification failed:', err));
     
