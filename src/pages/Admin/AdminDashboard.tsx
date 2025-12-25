@@ -1641,32 +1641,6 @@ const MembersAdmin: React.FC = () => {
                                 </div>
                                 <p className="text-[10px] text-gray-400 mt-1">Select all applicable tags for this member</p>
                             </div>
-                            {/* Role selector - only for admins */}
-                            {isAdmin && (
-                                <div>
-                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Role</label>
-                                    <select 
-                                        className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" 
-                                        value={selectedMember.role || 'member'} 
-                                        onChange={e => setSelectedMember({...selectedMember, role: e.target.value as any})}
-                                    >
-                                        <option value="member">Member</option>
-                                        <option value="staff">Staff</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                    <p className="text-[10px] text-gray-400 mt-1">Staff and Admin can access the staff portal</p>
-                                </div>
-                            )}
-                            {/* Show role as read-only for staff users */}
-                            {!isAdmin && (
-                                <div>
-                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Role</label>
-                                    <div className="w-full border border-gray-300 p-2 rounded-lg bg-gray-50 text-primary dark:bg-black/20 dark:border-white/10 dark:text-white">
-                                        {selectedMember.role || 'member'}
-                                    </div>
-                                    <p className="text-[10px] text-gray-400 mt-1">Only admins can modify roles</p>
-                                </div>
-                            )}
                         </div>
                         <div className="flex gap-3 justify-end">
                             <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
