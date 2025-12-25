@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { getTierPermissions } from '../utils/permissions';
+import { useTierPermissions } from '../hooks/useTierPermissions';
 
 const WelcomeBanner: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const WelcomeBanner: React.FC = () => {
   const isDark = effectiveTheme === 'dark';
   const [dismissed, setDismissed] = useState(false);
   const [isNew, setIsNew] = useState(false);
+  const { permissions: tierPermissions } = useTierPermissions(user?.tier);
 
   useEffect(() => {
     if (!user?.email) return;
@@ -29,8 +30,6 @@ const WelcomeBanner: React.FC = () => {
   };
 
   if (dismissed || !isNew || !user) return null;
-
-  const tierPermissions = getTierPermissions(user.tier || 'Social');
   const firstName = user.name?.split(' ')[0] || 'Member';
 
   return (

@@ -3,7 +3,8 @@ import { useData } from '../../contexts/DataContext';
 import DateButton from '../../components/DateButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { triggerHaptic } from '../../utils/haptics';
-import { getTierPermissions, canAccessResource } from '../../utils/permissions';
+import { useTierPermissions } from '../../hooks/useTierPermissions';
+import { canAccessResource } from '../../services/tierService';
 import { formatDateShort, getDateString } from '../../utils/dateUtils';
 
 interface Bay {
@@ -78,8 +79,8 @@ const getStatusColor = (status: string): string => {
 const Sims: React.FC = () => {
   const { user, viewAsUser } = useData();
   const effectiveUser = viewAsUser || user;
-  const tierPermissions = getTierPermissions(effectiveUser?.tier || 'Social');
-  const canBookSimulators = canAccessResource(effectiveUser?.tier || 'Social', 'simulator');
+  const { permissions: tierPermissions } = useTierPermissions(effectiveUser?.tier);
+  const canBookSimulators = canAccessResource(tierPermissions, 'simulator');
   const advanceDays = Math.min(tierPermissions.advanceBookingDays, 14);
   const dates = useMemo(() => generateDates(advanceDays), [advanceDays]);
   

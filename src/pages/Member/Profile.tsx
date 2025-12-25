@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { getTierPermissions, isFoundingMember, getBaseTier } from '../../utils/permissions';
+import { isFoundingMember, getBaseTier } from '../../utils/permissions';
 import { getTierColor } from '../../utils/tierUtils';
+import { useTierPermissions } from '../../hooks/useTierPermissions';
 import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
@@ -35,7 +36,7 @@ const Profile: React.FC = () => {
   // Check if actual user is admin viewing as someone
   const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
 
-  const tierPermissions = getTierPermissions(user?.tier || 'Social');
+  const { permissions: tierPermissions } = useTierPermissions(user?.tier);
 
   useEffect(() => {
     if (user?.email) {

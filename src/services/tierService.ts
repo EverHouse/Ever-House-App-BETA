@@ -147,3 +147,19 @@ export function invalidateTierCache(tierName: string): void {
   const baseTier = getBaseTierName(tierName);
   tierCache.delete(baseTier);
 }
+
+export function canAccessResource(permissions: TierPermissions, resourceType: string): boolean {
+  if (permissions.unlimitedAccess) {
+    return true;
+  }
+  
+  if (resourceType === 'simulator') {
+    return permissions.canBookSimulators;
+  }
+  
+  if (resourceType === 'conference') {
+    return permissions.dailyConfRoomMinutes > 0;
+  }
+  
+  return true;
+}

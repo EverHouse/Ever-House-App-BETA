@@ -8,7 +8,8 @@ import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { haptic } from '../../utils/haptics';
-import { getTierPermissions, canAccessResource } from '../../utils/permissions';
+import { useTierPermissions } from '../../hooks/useTierPermissions';
+import { canAccessResource } from '../../services/tierService';
 import { getDateString } from '../../utils/dateUtils';
 
 
@@ -104,9 +105,9 @@ const BookGolf: React.FC = () => {
     else if (tab === 'simulator') setActiveTab('simulator');
   }, [searchParams]);
 
-  const tierPermissions = getTierPermissions(effectiveUser?.tier || 'Social');
-  const canBookSimulators = canAccessResource(effectiveUser?.tier || 'Social', 'simulator');
-  const isTierLoaded = Boolean(effectiveUser?.tier);
+  const { permissions: tierPermissions, loading: tierLoading } = useTierPermissions(effectiveUser?.tier);
+  const canBookSimulators = canAccessResource(tierPermissions, 'simulator');
+  const isTierLoaded = Boolean(effectiveUser?.tier) && !tierLoading;
   
   const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
   const [selectedDateObj, setSelectedDateObj] = useState(dates[0]);
