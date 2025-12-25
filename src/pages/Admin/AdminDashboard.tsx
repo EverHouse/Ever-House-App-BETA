@@ -1670,29 +1670,34 @@ const SimulatorAdmin: React.FC = () => {
 
     return (
         <div>
-            <div className="flex justify-center mb-6">
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setActiveView('requests')}
-                        className={`py-2 px-4 rounded-lg font-medium text-sm transition-all ${
-                            activeView === 'requests'
-                                ? 'bg-primary text-white dark:bg-white dark:text-primary'
-                                : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10'
-                        }`}
-                    >
-                        Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
-                    </button>
-                    <button
-                        onClick={() => setActiveView('calendar')}
-                        className={`py-2 px-4 rounded-lg font-medium text-sm transition-all ${
-                            activeView === 'calendar'
-                                ? 'bg-primary text-white dark:bg-white dark:text-primary'
-                                : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10'
-                        }`}
-                    >
-                        Calendar
-                    </button>
-                </div>
+            {/* Tab Bar */}
+            <div className="flex justify-center border-b border-gray-200 dark:border-white/10 mb-0">
+                <button
+                    onClick={() => setActiveView('requests')}
+                    className={`py-3 px-6 font-medium text-sm transition-all relative ${
+                        activeView === 'requests'
+                            ? 'text-primary dark:text-white'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                >
+                    Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                    {activeView === 'requests' && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
+                    )}
+                </button>
+                <button
+                    onClick={() => setActiveView('calendar')}
+                    className={`py-3 px-6 font-medium text-sm transition-all relative ${
+                        activeView === 'calendar'
+                            ? 'text-primary dark:text-white'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                >
+                    Calendar
+                    {activeView === 'calendar' && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
+                    )}
+                </button>
             </div>
 
             {isLoading ? (
@@ -1788,30 +1793,33 @@ const SimulatorAdmin: React.FC = () => {
                 </div>
             ) : (
                 <div>
-                    <div className="flex items-center justify-center gap-4 mb-4">
-                        <button
-                            onClick={() => {
-                                const d = new Date(calendarDate);
-                                d.setDate(d.getDate() - 1);
-                                setCalendarDate(d.toISOString().split('T')[0]);
-                            }}
-                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 text-primary dark:text-white hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
-                        >
-                            <span className="material-symbols-outlined">chevron_left</span>
-                        </button>
-                        <h3 className="font-bold text-primary dark:text-white min-w-[140px] text-center">
-                            {formatDateShort(calendarDate)}
-                        </h3>
-                        <button
-                            onClick={() => {
-                                const d = new Date(calendarDate);
-                                d.setDate(d.getDate() + 1);
-                                setCalendarDate(d.toISOString().split('T')[0]);
-                            }}
-                            className="p-2 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 text-primary dark:text-white hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
-                        >
-                            <span className="material-symbols-outlined">chevron_right</span>
-                        </button>
+                    {/* Date Selector Row */}
+                    <div className="bg-gray-100 dark:bg-white/5 py-3 mb-4 -mx-6">
+                        <div className="flex items-center justify-center gap-4">
+                            <button
+                                onClick={() => {
+                                    const d = new Date(calendarDate);
+                                    d.setDate(d.getDate() - 1);
+                                    setCalendarDate(d.toISOString().split('T')[0]);
+                                }}
+                                className="p-1.5 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-xl">chevron_left</span>
+                            </button>
+                            <h3 className="font-semibold text-primary dark:text-white min-w-[140px] text-center text-sm">
+                                {formatDateShort(calendarDate)}
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    const d = new Date(calendarDate);
+                                    d.setDate(d.getDate() + 1);
+                                    setCalendarDate(d.toISOString().split('T')[0]);
+                                }}
+                                className="p-1.5 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-xl">chevron_right</span>
+                            </button>
+                        </div>
                     </div>
                     
                     <div className="flex justify-center px-4">
