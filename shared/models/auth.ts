@@ -112,6 +112,7 @@ export const availabilityBlocks = pgTable("availability_blocks", {
   notes: text("notes"),
   createdBy: varchar("created_by"),
   createdAt: timestamp("created_at").defaultNow(),
+  closureId: integer("closure_id"),
 });
 
 // Booking requests table - pending booking requests
@@ -332,6 +333,7 @@ export const facilityClosures = pgTable("facility_closures", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: varchar("created_by"),
+  googleCalendarId: varchar("google_calendar_id"),
 });
 
 // Membership tiers table - centralized tier configuration for marketing and logic
