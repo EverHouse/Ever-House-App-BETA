@@ -14,6 +14,7 @@ import OfflineBanner from './components/OfflineBanner';
 import { NotificationContext } from './contexts/NotificationContext';
 import { SafeAreaBottomOverlay } from './components/layout/SafeAreaBottomOverlay';
 import { BottomNavProvider } from './contexts/BottomNavContext';
+import { AnnouncementBadgeProvider, useAnnouncementBadge } from './contexts/AnnouncementBadgeContext';
 import { BottomSentinel } from './components/layout/BottomSentinel';
 
 const PageSkeleton: React.FC = () => (
@@ -640,11 +641,18 @@ const MEMBER_NAV_ITEMS: MemberNavItem[] = [
 const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> = ({ currentPath, isDarkTheme }) => {
   const navigate = useNavigate();
   const navigatingRef = useRef(false);
+  const { hasUnseenAnnouncements, markAllAsSeen } = useAnnouncementBadge();
   
   useEffect(() => {
     prefetchAdjacentRoutes(currentPath);
     navigatingRef.current = false;
   }, [currentPath]);
+  
+  useEffect(() => {
+    if (currentPath === '/announcements') {
+      markAllAsSeen();
+    }
+  }, [currentPath, markAllAsSeen]);
   
   const handleNavigation = useCallback((path: string, label: string) => {
     if (navigatingRef.current) return;
@@ -683,6 +691,7 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
             const isActive = currentPath === item.path;
             const isGolfIcon = item.icon === 'sports_golf';
             const shouldFill = isActive && !isGolfIcon;
+            const showBadge = item.path === '/announcements' && hasUnseenAnnouncements && !isActive;
             
             return (
               <button
@@ -708,9 +717,14 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <span className={`material-symbols-outlined text-xl transition-all duration-300 pointer-events-none ${shouldFill ? 'filled' : ''} ${isActive ? 'scale-110' : ''}`}>
-                  {item.icon}
-                </span>
+                <div className="relative">
+                  <span className={`material-symbols-outlined text-xl transition-all duration-300 pointer-events-none ${shouldFill ? 'filled' : ''} ${isActive ? 'scale-110' : ''}`}>
+                    {item.icon}
+                  </span>
+                  {showBadge && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-black/30 animate-pulse" />
+                  )}
+                </div>
                 <span className={`text-[9px] tracking-wide transition-all duration-300 pointer-events-none ${isActive ? 'font-bold' : 'font-medium'}`}>
                   {item.label}
                 </span>
@@ -731,6 +745,7 @@ const App: React.FC = () => {
         <DataProvider>
           <ToastProvider>
           <BottomNavProvider>
+          <AnnouncementBadgeProvider>
           <OfflineBanner />
           <HashRouter>
             <SmoothScrollProvider>
@@ -740,6 +755,7 @@ const App: React.FC = () => {
               </Layout>
             </SmoothScrollProvider>
           </HashRouter>
+          </AnnouncementBadgeProvider>
           </BottomNavProvider>
           </ToastProvider>
         </DataProvider>
