@@ -21,6 +21,7 @@
     "@types/multer": "^2.0.0",
     "autoprefixer": "^10.4.23",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "drizzle-kit": "^0.31.8",
