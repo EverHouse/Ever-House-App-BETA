@@ -4480,47 +4480,98 @@ const TiersAdmin: React.FC = () => {
                                     Highlighted Features 
                                     <span className="text-gray-400 font-normal ml-1">({selectedTier.highlighted_features?.length || 0}/4)</span>
                                 </h4>
-                                <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Select up to 4 features to highlight on the membership page</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {Object.entries(selectedTier.all_features || {}).map(([key, featureData]) => {
-                                        const label = typeof featureData === 'object' && featureData !== null && 'label' in featureData 
-                                            ? (featureData as any).label 
-                                            : key;
-                                        const isHighlighted = selectedTier.highlighted_features?.includes(label);
-                                        const canAdd = (selectedTier.highlighted_features?.length || 0) < 4;
-                                        return (
-                                            <button 
-                                                key={key}
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">These appear as bullet points on the membership cards</p>
+                                
+                                {/* Current highlights - editable */}
+                                <div className="space-y-2 mb-4">
+                                    {(selectedTier.highlighted_features || []).map((highlight, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 dark:bg-primary/20 border border-primary">
+                                            <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0 text-xs font-bold">{idx + 1}</span>
+                                            <input
+                                                type="text"
+                                                value={highlight}
+                                                onChange={e => {
+                                                    const newHighlights = [...(selectedTier.highlighted_features || [])];
+                                                    newHighlights[idx] = e.target.value;
+                                                    setSelectedTier({...selectedTier, highlighted_features: newHighlights});
+                                                }}
+                                                className="flex-1 bg-transparent border-none text-sm text-primary dark:text-white font-medium focus:outline-none focus:ring-0"
+                                            />
+                                            <button
                                                 type="button"
-                                                role="checkbox"
-                                                aria-checked={isHighlighted}
-                                                aria-label={`Highlight ${label}`}
-                                                onClick={() => handleHighlightToggle(label)}
-                                                disabled={!isHighlighted && !canAdd}
-                                                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                                                    isHighlighted 
-                                                        ? 'bg-primary/10 dark:bg-primary/20 border-primary' 
-                                                        : canAdd 
-                                                            ? 'bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-black/30' 
-                                                            : 'bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-white/10 opacity-50 cursor-not-allowed'
-                                                }`}
+                                                onClick={() => {
+                                                    const newHighlights = (selectedTier.highlighted_features || []).filter((_, i) => i !== idx);
+                                                    setSelectedTier({...selectedTier, highlighted_features: newHighlights});
+                                                }}
+                                                className="text-primary/60 hover:text-red-500 transition-colors"
                                             >
-                                                <span 
-                                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ${
-                                                        isHighlighted 
-                                                            ? 'bg-primary text-white shadow-sm' 
-                                                            : 'bg-white dark:bg-[#39393D] border-2 border-gray-300 dark:border-gray-600'
-                                                    }`}
-                                                >
-                                                    {isHighlighted && <span className="material-symbols-outlined text-base font-bold">check</span>}
-                                                </span>
-                                                <span className={`text-sm truncate ${isHighlighted ? 'text-primary dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400'}`}>{label}</span>
+                                                <span className="material-symbols-outlined text-lg">close</span>
                                             </button>
-                                        );
-                                    })}
+                                        </div>
+                                    ))}
                                 </div>
-                                {Object.keys(selectedTier.all_features || {}).length === 0 && (
-                                    <p className="text-sm text-gray-400 dark:text-gray-500 italic">Add features above to select highlights</p>
+
+                                {/* Add new highlight */}
+                                {(selectedTier.highlighted_features?.length || 0) < 4 && (
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                                            placeholder="Add highlight (e.g., '60 min Daily Golf')..."
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
+                                                    const val = (e.target as HTMLInputElement).value.trim();
+                                                    setSelectedTier({
+                                                        ...selectedTier, 
+                                                        highlighted_features: [...(selectedTier.highlighted_features || []), val]
+                                                    });
+                                                    (e.target as HTMLInputElement).value = '';
+                                                }
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={e => {
+                                                const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
+                                                if (input.value.trim()) {
+                                                    setSelectedTier({
+                                                        ...selectedTier, 
+                                                        highlighted_features: [...(selectedTier.highlighted_features || []), input.value.trim()]
+                                                    });
+                                                    input.value = '';
+                                                }
+                                            }}
+                                            className="px-3 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">add</span>
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Quick-add from all_features */}
+                                {(selectedTier.highlighted_features?.length || 0) < 4 && Object.keys(selectedTier.all_features || {}).length > 0 && (
+                                    <div className="mt-3">
+                                        <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2">Quick add from features:</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {Object.entries(selectedTier.all_features || {}).map(([key, featureData]) => {
+                                                const label = typeof featureData === 'object' && featureData !== null && 'label' in featureData 
+                                                    ? (featureData as any).label 
+                                                    : key;
+                                                const isAlreadyHighlighted = selectedTier.highlighted_features?.includes(label);
+                                                if (isAlreadyHighlighted) return null;
+                                                return (
+                                                    <button 
+                                                        key={key}
+                                                        type="button"
+                                                        onClick={() => handleHighlightToggle(label)}
+                                                        className="px-2.5 py-1 text-xs rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-primary/10 hover:text-primary dark:hover:text-white transition-colors"
+                                                    >
+                                                        + {label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                             </div>
