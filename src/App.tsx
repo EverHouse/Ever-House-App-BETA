@@ -368,7 +368,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     let themeColor: string;
     
     if (isLanding && !hasScrolledPastHero) {
-      themeColor = 'transparent';
+      themeColor = '#e8e4dc';
     } else if (isAdmin || isMember) {
       themeColor = '#0f120a';
     } else {
