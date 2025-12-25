@@ -148,47 +148,49 @@ const WelcomeBanner: React.FC = () => {
               </button>
             </div>
             
-            <div className={`space-y-4 ${isDark ? 'text-white/80' : 'text-gray-600'}`}>
-              {isIOS ? (
-                <>
-                  <div className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                      <span className="text-sm font-bold">1</span>
-                    </div>
-                    <p className="text-sm pt-1">
-                      Tap the <span className="material-symbols-outlined text-[16px] align-middle">ios_share</span> <strong>Share</strong> button at the bottom of the screen.
-                    </p>
+            <div className={`${isDark ? 'text-white/80' : 'text-gray-600'}`}>
+              <p className="text-sm mb-4">
+                Use your browser's menu to add this app to your home screen to receive push notifications regarding your bookings.
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                    <span className="text-xs font-bold">1</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                      <span className="text-sm font-bold">2</span>
-                    </div>
-                    <p className="text-sm pt-1">
-                      Scroll down and tap <strong>"Add to Home Screen"</strong>.
-                    </p>
+                  <p className="text-sm pt-0.5">
+                    Tap the <strong>Share</strong> button at the bottom of the screen.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                    <span className="text-xs font-bold">2</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                      <span className="text-sm font-bold">3</span>
-                    </div>
-                    <p className="text-sm pt-1">
-                      Turn on the <strong>"Open as Web App"</strong> toggle to open it like a dedicated app.
-                    </p>
+                  <p className="text-sm pt-0.5">
+                    Scroll down and tap <strong>"Add to Home Screen"</strong>.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                    <span className="text-xs font-bold">3</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                      <span className="text-sm font-bold">4</span>
-                    </div>
-                    <p className="text-sm pt-1">
-                      Tap <strong>"Add"</strong> to place the icon on your Home Screen.
-                    </p>
+                  <p className="text-sm pt-0.5">
+                    Turn on the <strong>"Open as Web App"</strong> toggle.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                    <span className="text-xs font-bold">4</span>
                   </div>
-                </>
-              ) : (
-                <p className="text-sm">
-                  Use your browser's menu to add this app to your home screen for the best experience.
-                </p>
-              )}
+                  <p className="text-sm pt-0.5">
+                    Tap <strong>"Add"</strong> to place the icon on your Home Screen.
+                  </p>
+                </div>
+              </div>
+              
+              <p className={`text-sm mt-4 ${isDark ? 'text-accent' : 'text-brand-green'}`}>
+                Don't forget to enable push notifications in your profile settings!
+              </p>
             </div>
             
             <a
