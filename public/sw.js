@@ -1,12 +1,16 @@
-const CACHE_NAME = 'even-house-v1';
+const CACHE_NAME = 'even-house-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/assets/logos/header-logo.webp',
+  '/assets/logos/monogram-dark.webp',
+  '/assets/logos/monogram-white.webp'
 ];
-const CORE_PAGES = ['/member-home', '/book', '/events', '/wellness', '/cafe'];
-const API_CACHE = 'api-cache-v1';
+const CORE_PAGES = ['/member-home', '/book', '/events', '/wellness', '/cafe', '/profile', '/announcements'];
+const API_CACHE = 'api-cache-v2';
+const CACHEABLE_API_ENDPOINTS = ['events', 'wellness-classes', 'cafe-menu', 'hours', 'faqs', 'announcements', 'gallery'];
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
@@ -30,7 +34,7 @@ self.addEventListener('fetch', function(event) {
   if (request.method !== 'GET') return;
 
   if (url.pathname.startsWith('/api/')) {
-    if (['events', 'wellness-classes', 'cafe-menu', 'hours'].some(ep => url.pathname.includes(ep))) {
+    if (CACHEABLE_API_ENDPOINTS.some(ep => url.pathname.includes(ep))) {
       event.respondWith(
         fetch(request).then(response => {
           if (response.ok) {

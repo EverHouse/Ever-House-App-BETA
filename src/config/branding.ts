@@ -4,12 +4,12 @@ export const BRAND = {
   
   logos: {
     monogram: {
-      dark: '/assets/logos/monogram-dark.png',
-      white: '/assets/logos/monogram-white.png',
+      dark: '/assets/logos/monogram-dark.webp',
+      white: '/assets/logos/monogram-white.webp',
     },
     mascot: {
-      dark: '/assets/logos/mascot-dark.png',
-      white: '/assets/logos/mascot-white.png',
+      dark: '/assets/logos/mascot-dark.webp',
+      white: '/assets/logos/mascot-white.webp',
     },
   },
   

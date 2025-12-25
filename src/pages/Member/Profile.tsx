@@ -96,7 +96,7 @@ const Profile: React.FC = () => {
                {/* Content */}
                <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
                   <div className="flex justify-between items-start">
-                     <img src="/assets/logos/monogram-white.png" className="w-8 h-8 opacity-90" alt="" />
+                     <img src="/assets/logos/monogram-white.webp" className="w-8 h-8 opacity-90" alt="" />
                      <div className="flex flex-col items-end gap-1">
                         <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${cardTextColor}99` }}>Even House</span>
                         {(user.tags || []).map((tag) => (
@@ -267,7 +267,7 @@ const Profile: React.FC = () => {
                    {/* Header Section of Pass */}
                    <div className="p-6 pb-4" style={{ backgroundColor: cardBgColor, borderBottom: `1px solid ${cardTextColor}20` }}>
                        <div className="flex justify-between items-center mb-6">
-                            <img src="/assets/logos/monogram-white.png" className="w-10 h-10" alt="" />
+                            <img src="/assets/logos/monogram-white.webp" className="w-10 h-10" alt="" />
                             <span className="font-bold text-lg tracking-wide" style={{ color: cardTextColor }}>Even House</span>
                        </div>
                    </div>
