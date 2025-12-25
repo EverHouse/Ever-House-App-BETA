@@ -124,7 +124,7 @@ const NAV_ITEMS: NavItemData[] = [
   { id: 'simulator', icon: 'event_note', label: 'Requests' },
   { id: 'events', icon: 'event', label: 'Events' },
   { id: 'wellness', icon: 'spa', label: 'Wellness' },
-  { id: 'announcements', icon: 'campaign', label: 'News' },
+  { id: 'announcements', icon: 'campaign', label: 'Updates' },
 ];
 
 const StaffBottomNav: React.FC<{
