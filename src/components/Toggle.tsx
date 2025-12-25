@@ -19,18 +19,20 @@ const Toggle: React.FC<ToggleProps> = ({
 }) => {
   const sizes = {
     sm: {
-      track: 'h-[24px] w-[40px]',
-      thumb: 'h-[20px] w-[20px]',
-      translate: 'translate-x-[16px]',
+      track: 'h-5 w-9',
+      thumb: 'h-4 w-4',
+      translate: 'translate-x-4',
+      padding: 'p-0.5',
     },
     md: {
-      track: 'h-[31px] w-[51px]',
-      thumb: 'h-[27px] w-[27px]',
-      translate: 'translate-x-[20px]',
+      track: 'h-6 w-11',
+      thumb: 'h-5 w-5',
+      translate: 'translate-x-5',
+      padding: 'p-0.5',
     },
   };
 
-  const { track, thumb, translate } = sizes[size];
+  const { track, thumb, translate, padding } = sizes[size];
 
   const handleClick = () => {
     if (!disabled) {
@@ -38,7 +40,7 @@ const Toggle: React.FC<ToggleProps> = ({
     }
   };
 
-  const toggle = (
+  return (
     <button
       type="button"
       role="switch"
@@ -47,25 +49,23 @@ const Toggle: React.FC<ToggleProps> = ({
       disabled={disabled}
       onClick={handleClick}
       className={`
-        relative inline-flex ${track} shrink-0 cursor-pointer rounded-full 
-        border-2 border-transparent transition-colors duration-200 ease-in-out 
-        focus:outline-none focus-visible:ring-2 focus-visible:ring-[#34C759] focus-visible:ring-offset-2
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-        ${checked ? 'bg-[#34C759]' : 'bg-[#E9E9EB] dark:bg-[#39393D]'}
+        relative inline-flex items-center ${track} ${padding} shrink-0 rounded-full 
+        transition-colors duration-200 ease-in-out 
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-[#34C759]/50 focus-visible:ring-offset-2
+        ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+        ${checked ? 'bg-[#34C759]' : 'bg-[#787880]/30'}
         ${className}
       `}
     >
       <span
         className={`
-          pointer-events-none inline-block ${thumb} transform rounded-full 
-          bg-white shadow-lg ring-0 transition duration-200 ease-in-out
+          pointer-events-none inline-block ${thumb} rounded-full 
+          bg-white shadow-sm transition-transform duration-200 ease-in-out
           ${checked ? translate : 'translate-x-0'}
         `}
       />
     </button>
   );
-
-  return toggle;
 };
 
 export default Toggle;
