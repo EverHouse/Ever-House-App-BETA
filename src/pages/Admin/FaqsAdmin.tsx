@@ -274,16 +274,31 @@ const FaqsAdmin: React.FC = () => {
                                         />
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        id="faq-active"
-                                        checked={newItem.isActive ?? true}
-                                        onChange={e => setNewItem({ ...newItem, isActive: e.target.checked })}
-                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                    />
-                                    <label htmlFor="faq-active" className="text-sm text-gray-700 dark:text-gray-300">Active (visible on public FAQ page)</label>
-                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={newItem.isActive ?? true}
+                                    aria-label="Toggle FAQ active status"
+                                    onClick={() => setNewItem({ ...newItem, isActive: !(newItem.isActive ?? true) })}
+                                    className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors w-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                >
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">Active (visible on public FAQ page)</span>
+                                    <span
+                                        className={`relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                            (newItem.isActive ?? true) 
+                                                ? 'bg-primary' 
+                                                : 'bg-[#E9E9EB] dark:bg-[#39393D]'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`pointer-events-none inline-block h-[27px] w-[27px] transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                                (newItem.isActive ?? true) 
+                                                    ? 'translate-x-[20px]' 
+                                                    : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </span>
+                                </button>
                             </div>
                             <div className="flex gap-3 justify-end">
                                 <button

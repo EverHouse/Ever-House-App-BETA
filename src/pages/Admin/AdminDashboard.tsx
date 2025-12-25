@@ -1408,24 +1408,37 @@ const MembersAdmin: React.FC = () => {
                             <div>
                                 <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Tags</label>
                                 <div className="mt-1 space-y-2">
-                                    {AVAILABLE_TAGS.map(tag => (
-                                        <label key={tag} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selectedMember.tags?.includes(tag) || false} 
-                                                onChange={e => {
+                                    {AVAILABLE_TAGS.map(tag => {
+                                        const isChecked = selectedMember.tags?.includes(tag) || false;
+                                        return (
+                                            <button 
+                                                key={tag} 
+                                                type="button"
+                                                role="checkbox"
+                                                aria-checked={isChecked}
+                                                onClick={() => {
                                                     const currentTags = selectedMember.tags || [];
-                                                    if (e.target.checked) {
-                                                        setSelectedMember({...selectedMember, tags: [...currentTags, tag]});
-                                                    } else {
+                                                    if (isChecked) {
                                                         setSelectedMember({...selectedMember, tags: currentTags.filter(t => t !== tag)});
+                                                    } else {
+                                                        setSelectedMember({...selectedMember, tags: [...currentTags, tag]});
                                                     }
                                                 }}
-                                                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                            />
-                                            <span className="text-sm text-primary dark:text-white">{tag}</span>
-                                        </label>
-                                    ))}
+                                                className="flex items-center gap-3 w-full p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                            >
+                                                <span 
+                                                    className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 shrink-0 ${
+                                                        isChecked 
+                                                            ? 'bg-primary text-white shadow-sm' 
+                                                            : 'bg-white dark:bg-[#39393D] border-2 border-gray-300 dark:border-gray-600'
+                                                    }`}
+                                                >
+                                                    {isChecked && <span className="material-symbols-outlined text-base font-bold">check</span>}
+                                                </span>
+                                                <span className="text-sm text-primary dark:text-white">{tag}</span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                                 <p className="text-[10px] text-gray-400 mt-1">Select all applicable tags for this member</p>
                             </div>
@@ -4005,9 +4018,19 @@ const TiersAdmin: React.FC = () => {
                                                 role="switch"
                                                 aria-checked={!!selectedTier[key as keyof MembershipTier]}
                                                 onClick={() => setSelectedTier({...selectedTier, [key]: !selectedTier[key as keyof MembershipTier]})}
-                                                className={`relative w-[51px] h-[31px] min-w-[51px] min-h-[31px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34C759] ${selectedTier[key as keyof MembershipTier] ? 'bg-[#34C759]' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                                className={`relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                                                    selectedTier[key as keyof MembershipTier] 
+                                                        ? 'bg-primary' 
+                                                        : 'bg-[#E9E9EB] dark:bg-[#39393D]'
+                                                }`}
                                             >
-                                                <span className={`absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200 ${selectedTier[key as keyof MembershipTier] ? 'right-[2px]' : 'left-[2px]'}`} />
+                                                <span
+                                                    className={`pointer-events-none inline-block h-[27px] w-[27px] transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                                        selectedTier[key as keyof MembershipTier] 
+                                                            ? 'translate-x-[20px]' 
+                                                            : 'translate-x-0'
+                                                    }`}
+                                                />
                                             </button>
                                         </label>
                                     ))}
@@ -4019,23 +4042,31 @@ const TiersAdmin: React.FC = () => {
                                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">All Features</h4>
                                 <div className="space-y-2 mb-3">
                                     {Object.entries(selectedTier.all_features || {}).map(([key, enabled]) => (
-                                        <div key={key} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
-                                            <div className="flex items-center gap-2">
+                                        <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
+                                            <div className="flex items-center gap-3">
                                                 <button
                                                     type="button"
+                                                    role="checkbox"
+                                                    aria-checked={enabled}
+                                                    aria-label={`Toggle ${key}`}
                                                     onClick={() => handleToggleFeature(key)}
-                                                    className={`w-4 h-4 rounded border flex items-center justify-center ${enabled ? 'bg-primary border-primary text-white' : 'border-gray-300 dark:border-gray-600'}`}
+                                                    className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                                                        enabled 
+                                                            ? 'bg-primary text-white shadow-sm' 
+                                                            : 'bg-white dark:bg-[#39393D] border-2 border-gray-300 dark:border-gray-600'
+                                                    }`}
                                                 >
-                                                    {enabled && <span className="material-symbols-outlined text-xs">check</span>}
+                                                    {enabled && <span className="material-symbols-outlined text-base font-bold">check</span>}
                                                 </button>
-                                                <span className={`text-sm ${enabled ? 'text-primary dark:text-white' : 'text-gray-400 line-through'}`}>{key}</span>
+                                                <span className={`text-sm ${enabled ? 'text-primary dark:text-white font-medium' : 'text-gray-400 line-through'}`}>{key}</span>
                                             </div>
                                             <button
                                                 type="button"
+                                                aria-label={`Remove ${key}`}
                                                 onClick={() => handleRemoveFeature(key)}
-                                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                                className="text-gray-400 hover:text-red-500 transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded"
                                             >
-                                                <span className="material-symbols-outlined text-sm">close</span>
+                                                <span className="material-symbols-outlined text-lg">close</span>
                                             </button>
                                         </div>
                                     ))}
@@ -4071,25 +4102,33 @@ const TiersAdmin: React.FC = () => {
                                         const isHighlighted = selectedTier.highlighted_features?.includes(key);
                                         const canAdd = (selectedTier.highlighted_features?.length || 0) < 4;
                                         return (
-                                            <label 
-                                                key={key} 
-                                                className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                                            <button 
+                                                key={key}
+                                                type="button"
+                                                role="checkbox"
+                                                aria-checked={isHighlighted}
+                                                aria-label={`Highlight ${key}`}
+                                                onClick={() => handleHighlightToggle(key)}
+                                                disabled={!isHighlighted && !canAdd}
+                                                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                                                     isHighlighted 
-                                                        ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary dark:text-white' 
+                                                        ? 'bg-primary/10 dark:bg-primary/20 border-primary' 
                                                         : canAdd 
                                                             ? 'bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-black/30' 
                                                             : 'bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-white/10 opacity-50 cursor-not-allowed'
                                                 }`}
                                             >
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={isHighlighted} 
-                                                    onChange={() => handleHighlightToggle(key)}
-                                                    disabled={!isHighlighted && !canAdd}
-                                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                                />
-                                                <span className="text-sm truncate">{key}</span>
-                                            </label>
+                                                <span 
+                                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ${
+                                                        isHighlighted 
+                                                            ? 'bg-primary text-white shadow-sm' 
+                                                            : 'bg-white dark:bg-[#39393D] border-2 border-gray-300 dark:border-gray-600'
+                                                    }`}
+                                                >
+                                                    {isHighlighted && <span className="material-symbols-outlined text-base font-bold">check</span>}
+                                                </span>
+                                                <span className={`text-sm truncate ${isHighlighted ? 'text-primary dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400'}`}>{key}</span>
+                                            </button>
                                         );
                                     })}
                                 </div>

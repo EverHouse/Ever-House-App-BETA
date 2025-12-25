@@ -254,15 +254,31 @@ const GalleryAdmin: React.FC = () => {
                                         onChange={e => setNewItem({...newItem, sortOrder: parseInt(e.target.value) || 0})} 
                                     />
                                 </div>
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={newItem.isActive !== false} 
-                                        onChange={e => setNewItem({...newItem, isActive: e.target.checked})}
-                                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                    />
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={newItem.isActive !== false}
+                                    aria-label="Toggle image active status"
+                                    onClick={() => setNewItem({...newItem, isActive: !(newItem.isActive !== false)})}
+                                    className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors w-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                >
                                     <span className="text-primary dark:text-white font-medium">Active (visible on public gallery)</span>
-                                </label>
+                                    <span
+                                        className={`relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                            (newItem.isActive !== false) 
+                                                ? 'bg-primary' 
+                                                : 'bg-[#E9E9EB] dark:bg-[#39393D]'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`pointer-events-none inline-block h-[27px] w-[27px] transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                                (newItem.isActive !== false) 
+                                                    ? 'translate-x-[20px]' 
+                                                    : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </span>
+                                </button>
                             </div>
                             <div className="flex gap-3 justify-end">
                                 <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
