@@ -19,14 +19,14 @@ const Toggle: React.FC<ToggleProps> = ({
 }) => {
   const sizes = {
     sm: {
-      track: 'h-[28px] w-[50px]',
-      thumb: 'h-[22px] w-[22px]',
-      translate: 'translate-x-[22px]',
+      track: 'h-[26px] w-[46px]',
+      thumb: 'h-[26px] w-[26px]',
+      translate: 'translate-x-[20px]',
     },
     md: {
-      track: 'h-[34px] w-[60px]',
-      thumb: 'h-[26px] w-[26px]',
-      translate: 'translate-x-[26px]',
+      track: 'h-[31px] w-[51px]',
+      thumb: 'h-[31px] w-[31px]',
+      translate: 'translate-x-[20px]',
     },
   };
 
@@ -47,18 +47,18 @@ const Toggle: React.FC<ToggleProps> = ({
       disabled={disabled}
       onClick={handleClick}
       className={`
-        relative inline-flex items-center ${track} shrink-0 rounded-full p-[4px]
+        relative inline-flex items-center ${track} shrink-0 rounded-full
         transition-colors duration-200 ease-in-out 
         focus:outline-none focus-visible:ring-2 focus-visible:ring-[#34C759]/50 focus-visible:ring-offset-2
         ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
-        ${checked ? 'bg-[#5AC35A]' : 'bg-[#E5E5EA]'}
+        ${checked ? 'bg-[#4CD964] shadow-[inset_0_0_0_2px_#4CD964]' : 'bg-[#E5E5EA] shadow-[inset_0_0_0_2px_#D1D1D6]'}
         ${className}
       `}
     >
       <span
         className={`
           pointer-events-none inline-block ${thumb} rounded-full 
-          bg-white shadow-md transition-transform duration-200 ease-in-out
+          bg-white shadow-sm transition-transform duration-200 ease-in-out
           ${checked ? translate : 'translate-x-0'}
         `}
       />
