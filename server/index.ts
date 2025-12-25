@@ -348,24 +348,61 @@ async function startServer() {
   
   // Daily reminder scheduler - runs at 6pm local time
   const REMINDER_HOUR = 18; // 6pm
-  let lastReminderDate = '';
+  const REMINDER_SETTING_KEY = 'last_daily_reminder_date';
+  
+  // Atomic check-and-set: only returns true if this instance claimed today's reminder slot
+  const tryClaimReminderSlot = async (todayStr: string): Promise<boolean> => {
+    try {
+      // Ensure table exists (bootstrap for first run)
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS system_settings (
+          key VARCHAR PRIMARY KEY,
+          value VARCHAR,
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      
+      // Atomic upsert that only succeeds if value is different from today
+      // Uses INSERT ON CONFLICT with a WHERE clause to ensure atomicity
+      const result = await pool.query(`
+        INSERT INTO system_settings (key, value, updated_at)
+        VALUES ($1, $2, NOW())
+        ON CONFLICT (key) DO UPDATE 
+        SET value = $2, updated_at = NOW()
+        WHERE system_settings.value IS DISTINCT FROM $2
+        RETURNING key
+      `, [REMINDER_SETTING_KEY, todayStr]);
+      
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (err) {
+      console.error('[Daily Reminders] Database error:', err);
+      return false;
+    }
+  };
   
   const checkAndSendReminders = async () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const todayStr = now.toISOString().split('T')[0];
-    
-    // Only run at 6pm and only once per day
-    if (currentHour === REMINDER_HOUR && lastReminderDate !== todayStr) {
-      lastReminderDate = todayStr;
-      console.log('[Daily Reminders] Starting scheduled reminder job...');
+    try {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const todayStr = now.toISOString().split('T')[0];
       
-      try {
-        const result = await sendDailyReminders();
-        console.log(`[Daily Reminders] Completed: ${result.message}`);
-      } catch (err) {
-        console.error('[Daily Reminders] Scheduled job failed:', err);
+      // Only run at 6pm and only once per day (atomic claim)
+      if (currentHour === REMINDER_HOUR) {
+        const claimed = await tryClaimReminderSlot(todayStr);
+        
+        if (claimed) {
+          console.log('[Daily Reminders] Starting scheduled reminder job...');
+          
+          try {
+            const result = await sendDailyReminders();
+            console.log(`[Daily Reminders] Completed: ${result.message}`);
+          } catch (err) {
+            console.error('[Daily Reminders] Send failed:', err);
+          }
+        }
       }
+    } catch (err) {
+      console.error('[Daily Reminders] Scheduler error:', err);
     }
   };
   

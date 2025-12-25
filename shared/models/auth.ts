@@ -415,3 +415,12 @@ export type FormSubmission = typeof formSubmissions.$inferSelect;
 export type InsertFormSubmission = typeof formSubmissions.$inferInsert;
 export type MembershipTier = typeof membershipTiers.$inferSelect;
 export type InsertMembershipTier = typeof membershipTiers.$inferInsert;
+
+// System settings table - for storing app configuration like last reminder date
+export const systemSettings = pgTable("system_settings", {
+  key: varchar("key").primaryKey(),
+  value: varchar("value"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type SystemSetting = typeof systemSettings.$inferSelect;
