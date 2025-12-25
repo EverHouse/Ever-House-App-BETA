@@ -99,3 +99,6 @@ DEV_LOGIN_ENABLED = "true"
 deploymentTarget = "autoscale"
 run = ["sh", "-c", "NODE_ENV=production node --import tsx server/index.ts"]
 build = ["sh", "-c", "npm install && npm run build"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-a74e2fa8-3e0a-44cd-bca4-3046e4e3b9c2"
