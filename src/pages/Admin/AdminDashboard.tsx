@@ -3882,9 +3882,9 @@ const TiersAdmin: React.FC = () => {
 
             {/* Edit Modal - Native sheet style for reliable mobile scrolling */}
             {isEditing && selectedTier && createPortal(
-                <div className="fixed inset-0 z-[10001] flex flex-col">
+                <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="relative flex flex-col mx-4 my-8 max-w-2xl w-full self-center bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 max-h-[calc(100vh-4rem)] min-h-0 overflow-hidden">
+                    <div className="relative flex flex-col max-w-2xl w-full bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 max-h-[calc(100vh-2rem)] min-h-0 overflow-hidden">
                             {/* Header - Fixed */}
                             <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1d15] flex-shrink-0">
                                 <h3 className="font-bold text-lg text-primary dark:text-white">Edit Tier: {selectedTier.name}</h3>
