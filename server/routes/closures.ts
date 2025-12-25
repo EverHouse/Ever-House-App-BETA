@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { pool, isProduction } from '../core/db';
+import { isProduction } from '../core/db';
+import { db } from '../db';
+import { facilityClosures, pushSubscriptions, users } from '../../shared/schema';
+import { eq, desc, or, isNull, and } from 'drizzle-orm';
 import webpush from 'web-push';
 import { isStaffOrAdmin } from '../core/middleware';
 
@@ -7,14 +10,17 @@ const router = Router();
 
 export async function sendPushNotificationToAllMembers(payload: { title: string; body: string; url?: string }) {
   try {
-    const result = await pool.query(`
-      SELECT ps.endpoint, ps.p256dh, ps.auth 
-      FROM push_subscriptions ps
-      INNER JOIN users u ON ps.user_email = u.email
-      WHERE u.role = 'member' OR u.role IS NULL
-    `);
+    const subscriptions = await db
+      .select({
+        endpoint: pushSubscriptions.endpoint,
+        p256dh: pushSubscriptions.p256dh,
+        auth: pushSubscriptions.auth
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userEmail, users.email))
+      .where(or(eq(users.role, 'member'), isNull(users.role)));
     
-    const notifications = result.rows.map(async (sub) => {
+    const notifications = subscriptions.map(async (sub) => {
       const pushSubscription = {
         endpoint: sub.endpoint,
         keys: {
@@ -27,13 +33,13 @@ export async function sendPushNotificationToAllMembers(payload: { title: string;
         await webpush.sendNotification(pushSubscription, JSON.stringify(payload));
       } catch (err: any) {
         if (err.statusCode === 410) {
-          await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [sub.endpoint]);
+          await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
         }
       }
     });
     
     await Promise.all(notifications);
-    console.log(`[Push] Sent notification to ${result.rows.length} members`);
+    console.log(`[Push] Sent notification to ${subscriptions.length} members`);
   } catch (error) {
     console.error('Failed to send push notification to members:', error);
   }
@@ -41,12 +47,12 @@ export async function sendPushNotificationToAllMembers(payload: { title: string;
 
 router.get('/api/closures', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT * FROM facility_closures 
-      WHERE is_active = true 
-      ORDER BY start_date DESC, start_time DESC NULLS LAST
-    `);
-    res.json(result.rows);
+    const results = await db
+      .select()
+      .from(facilityClosures)
+      .where(eq(facilityClosures.isActive, true))
+      .orderBy(desc(facilityClosures.startDate), desc(facilityClosures.startTime));
+    res.json(results);
   } catch (error: any) {
     if (!isProduction) console.error('Closures fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch closures' });
@@ -71,20 +77,17 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Start date and affected areas are required' });
     }
     
-    const result = await pool.query(`
-      INSERT INTO facility_closures (title, reason, start_date, start_time, end_date, end_time, affected_areas, is_active, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8)
-      RETURNING *
-    `, [
-      title || 'Facility Closure',
+    const [result] = await db.insert(facilityClosures).values({
+      title: title || 'Facility Closure',
       reason,
-      start_date,
-      start_time || null,
-      end_date || start_date,
-      end_time || null,
-      affected_areas,
-      created_by
-    ]);
+      startDate: start_date,
+      startTime: start_time || null,
+      endDate: end_date || start_date,
+      endTime: end_time || null,
+      affectedAreas: affected_areas,
+      isActive: true,
+      createdBy: created_by
+    }).returning();
     
     if (notify_members && reason) {
       const affectedText = affected_areas === 'entire_facility' 
@@ -100,7 +103,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       });
     }
     
-    res.json(result.rows[0]);
+    res.json(result);
   } catch (error: any) {
     if (!isProduction) console.error('Closure create error:', error);
     res.status(500).json({ error: 'Failed to create closure' });
@@ -110,7 +113,10 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
 router.delete('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('UPDATE facility_closures SET is_active = false WHERE id = $1', [id]);
+    await db
+      .update(facilityClosures)
+      .set({ isActive: false })
+      .where(eq(facilityClosures.id, parseInt(id)));
     res.json({ success: true });
   } catch (error: any) {
     if (!isProduction) console.error('Closure delete error:', error);
