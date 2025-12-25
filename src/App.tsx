@@ -444,7 +444,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 border-b border-[#1e2810]")
     : isLandingPage
       ? (hasScrolledPastHero 
-          ? "bg-[#293515]/95 backdrop-blur-md text-white shadow-lg shadow-black/20 border-b border-white/10"
+          ? "bg-[#293515] text-white shadow-lg shadow-black/20 border-b border-white/10"
           : "bg-transparent text-white")
       : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20";
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
