@@ -809,7 +809,9 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           description: item.desc,
           type: item.type,
           startDate: item.startDate || null,
-          endDate: item.endDate || null
+          endDate: item.endDate || null,
+          linkType: item.linkType || null,
+          linkTarget: item.linkTarget || null
         })
       });
       if (res.ok) {
@@ -832,7 +834,9 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           description: item.desc,
           type: item.type,
           startDate: item.startDate || null,
-          endDate: item.endDate || null
+          endDate: item.endDate || null,
+          linkType: item.linkType || null,
+          linkTarget: item.linkTarget || null
         })
       });
       if (res.ok) {

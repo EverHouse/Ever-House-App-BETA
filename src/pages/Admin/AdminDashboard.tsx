@@ -1120,7 +1120,9 @@ const AnnouncementsAdmin: React.FC = () => {
             type: newItem.type || 'update',
             date: newItem.date || 'Just now',
             startDate: newItem.startDate,
-            endDate: newItem.endDate
+            endDate: newItem.endDate,
+            linkType: newItem.linkType,
+            linkTarget: newItem.linkTarget
         };
 
         if (editId) {
@@ -1170,6 +1172,29 @@ const AnnouncementsAdmin: React.FC = () => {
                                         <input type="date" className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.endDate || ''} onChange={e => setNewItem({...newItem, endDate: e.target.value})} />
                                     </div>
                                 </div>
+                                
+                                {/* Link Destination (for Announcements type) */}
+                                {newItem.type === 'announcement' && (
+                                    <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-white/10">
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block">Link Destination</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: undefined, linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${!newItem.linkType ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>None</button>
+                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'events', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'events' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Events</button>
+                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'wellness', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'wellness' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Wellness</button>
+                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'golf', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'golf' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Book Golf</button>
+                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'external', linkTarget: newItem.linkTarget || ''})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors col-span-2 ${newItem.linkType === 'external' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>External URL</button>
+                                        </div>
+                                        {newItem.linkType === 'external' && (
+                                            <input 
+                                                type="url" 
+                                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                                placeholder="https://example.com" 
+                                                value={newItem.linkTarget || ''} 
+                                                onChange={e => setNewItem({...newItem, linkTarget: e.target.value})} 
+                                            />
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             <div className="flex gap-3 justify-end">
                                 <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
