@@ -292,6 +292,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifTab, setNotifTab] = useState<'updates' | 'announcements'>('updates');
   const [userNotifications, setUserNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -339,6 +340,22 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
   
   useDebugLayout();
+
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      setHasScrolledPastHero(false);
+      return;
+    }
+    
+    const handleScroll = () => {
+      const heroThreshold = window.innerHeight * 0.6;
+      setHasScrolledPastHero(window.scrollY > heroThreshold);
+    };
+    
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [location.pathname]);
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -405,12 +422,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         ? "bg-[#0f120a] text-[#F2F2EC] shadow-md border-b border-white/5"
         : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 border-b border-[#1e2810]")
     : isLandingPage
-      ? "bg-transparent text-white"
+      ? (hasScrolledPastHero 
+          ? "bg-[#293515]/95 backdrop-blur-md text-white shadow-lg shadow-black/20 border-b border-white/10"
+          : "bg-transparent text-white")
       : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20";
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
 
   const headerContent = showHeader ? (
-    <header className={`fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 z-[9998] pointer-events-auto ${headerClasses}`} role="banner">
+    <header className={`fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 z-[9998] pointer-events-auto transition-all duration-300 ${headerClasses}`} role="banner">
       <button 
         onClick={handleTopLeftClick}
         className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
