@@ -13,12 +13,6 @@ const MEMBERSHIP_FIELDS = [
   { name: 'message', label: 'Tell us about yourself', type: 'textarea' as const, required: false, placeholder: 'Tell us about yourself and your interests...' }
 ];
 
-interface TierFeature {
-  label: string;
-  value: string;
-  included: boolean;
-}
-
 interface MembershipTier {
   id: number;
   name: string;
@@ -30,26 +24,117 @@ interface MembershipTier {
   is_active: boolean;
   is_popular: boolean;
   highlighted_features: string[];
-  all_features: Record<string, TierFeature>;
+  daily_sim_minutes: number;
+  guest_passes_per_month: number;
+  booking_window_days: number;
+  daily_conf_room_minutes: number;
+  can_book_simulators: boolean;
+  can_book_conference: boolean;
+  can_book_wellness: boolean;
+  has_group_lessons: boolean;
+  has_extended_sessions: boolean;
+  has_private_lesson: boolean;
+  has_simulator_guest_passes: boolean;
+  has_discounted_merch: boolean;
+  unlimited_access: boolean;
 }
 
-const FEATURE_KEYS = [
-  'golf_hours',
-  'guest_passes',
-  'booking_window',
-  'cafe_bar',
-  'lounge',
-  'work_desks',
-  'simulators',
-  'putting',
-  'events',
-  'daily_guests',
-  'group_lessons',
-  'advanced_booking',
-  'extended_sessions',
-  'private_lesson',
-  'sim_guest_passes',
-  'discounted_merch'
+interface FeatureConfig {
+  label: string;
+  getValue: (tier: MembershipTier) => { included: boolean; value: string };
+}
+
+const FEATURE_DISPLAY: FeatureConfig[] = [
+  {
+    label: 'Daily Golf Time',
+    getValue: (t) => ({
+      included: t.can_book_simulators && t.daily_sim_minutes > 0,
+      value: t.unlimited_access ? 'Unlimited' : t.daily_sim_minutes > 0 ? `${t.daily_sim_minutes} min` : '—'
+    })
+  },
+  {
+    label: 'Guest Passes',
+    getValue: (t) => ({
+      included: t.guest_passes_per_month > 0,
+      value: t.guest_passes_per_month > 12 ? 'Unlimited' : t.guest_passes_per_month > 0 ? `${t.guest_passes_per_month}/mo` : '—'
+    })
+  },
+  {
+    label: 'Booking Window',
+    getValue: (t) => ({
+      included: t.booking_window_days > 0,
+      value: `${t.booking_window_days} days`
+    })
+  },
+  {
+    label: 'Cafe & Bar Access',
+    getValue: () => ({ included: true, value: '✓' })
+  },
+  {
+    label: 'Lounge Access',
+    getValue: () => ({ included: true, value: '✓' })
+  },
+  {
+    label: 'Work Desks',
+    getValue: () => ({ included: true, value: '✓' })
+  },
+  {
+    label: 'Golf Simulators',
+    getValue: (t) => ({
+      included: t.can_book_simulators,
+      value: t.can_book_simulators ? '✓' : '—'
+    })
+  },
+  {
+    label: 'Putting Green',
+    getValue: () => ({ included: true, value: '✓' })
+  },
+  {
+    label: 'Member Events',
+    getValue: () => ({ included: true, value: '✓' })
+  },
+  {
+    label: 'Conference Room',
+    getValue: (t) => ({
+      included: t.can_book_conference && t.daily_conf_room_minutes > 0,
+      value: t.daily_conf_room_minutes > 0 ? `${t.daily_conf_room_minutes} min` : '—'
+    })
+  },
+  {
+    label: 'Group Lessons',
+    getValue: (t) => ({
+      included: t.has_group_lessons,
+      value: t.has_group_lessons ? '✓' : '—'
+    })
+  },
+  {
+    label: 'Extended Sessions',
+    getValue: (t) => ({
+      included: t.has_extended_sessions,
+      value: t.has_extended_sessions ? '✓' : '—'
+    })
+  },
+  {
+    label: 'Private Lessons',
+    getValue: (t) => ({
+      included: t.has_private_lesson,
+      value: t.has_private_lesson ? '✓' : '—'
+    })
+  },
+  {
+    label: 'Sim Guest Passes',
+    getValue: (t) => ({
+      included: t.has_simulator_guest_passes,
+      value: t.has_simulator_guest_passes ? '✓' : '—'
+    })
+  },
+  {
+    label: 'Discounted Merch',
+    getValue: (t) => ({
+      included: t.has_discounted_merch,
+      value: t.has_discounted_merch ? '✓' : '—'
+    })
+  }
 ];
 
 const Membership: React.FC = () => {
@@ -474,22 +559,17 @@ const CompareFeatures: React.FC = () => {
              {[...Array(3 - selectedTiers.length)].map((_, i) => <div key={i}></div>)}
           </div>
           
-          {FEATURE_KEYS.map(featureKey => {
-              const firstTierWithFeature = tiers.find(t => t.all_features?.[featureKey]);
-              const featureLabel = firstTierWithFeature?.all_features?.[featureKey]?.label || featureKey;
-              
+          {FEATURE_DISPLAY.map((feature, idx) => {
               return (
-                <div key={featureKey} className="grid grid-cols-[25%_1fr_1fr_1fr] gap-1 items-center py-3 border-b border-primary/5 last:border-0">
-                    <div className="text-[10px] font-bold text-primary/80 pl-1 leading-tight">{featureLabel}</div>
+                <div key={idx} className="grid grid-cols-[25%_1fr_1fr_1fr] gap-1 items-center py-3 border-b border-primary/5 last:border-0">
+                    <div className="text-[10px] font-bold text-primary/80 pl-1 leading-tight">{feature.label}</div>
                     {selectedTiers.map(tier => {
                         const tierData = tiersMap[tier];
                         if (!tierData) return null;
-                        const feature = tierData.all_features?.[featureKey];
-                        const included = feature?.included ?? false;
-                        const value = feature?.value || '—';
+                        const { included, value } = feature.getValue(tierData);
                         
                         return (
-                          <div key={`${tier}-${featureKey}`} className="flex justify-center text-center">
+                          <div key={`${tier}-${idx}`} className="flex justify-center text-center">
                               {included ? (
                                   value === '✓' ? (
                                       <span className="material-symbols-outlined text-[18px] text-primary/80">check_circle</span>
