@@ -159,7 +159,6 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const fetchResources = async () => {
-      console.log('[BookGolf] Fetching resources for tab:', activeTab, 'effectiveUser:', effectiveUser?.email, 'tier:', effectiveUser?.tier);
       const { ok, data, error } = await apiRequest<APIResource[]>('/api/resources');
       
       if (!ok) {
@@ -167,8 +166,6 @@ const BookGolf: React.FC = () => {
         setError(error || 'Unable to load resources');
         return;
       }
-      
-      console.log('[BookGolf] Resources API response:', data!.length, 'resources');
       
       const typeMap: Record<string, string> = {
         simulator: 'simulator',
@@ -186,7 +183,6 @@ const BookGolf: React.FC = () => {
           icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
         }));
       
-      console.log('[BookGolf] Filtered resources:', filtered.length);
       setResources(filtered);
     };
     
@@ -195,9 +191,7 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const fetchAvailability = async () => {
-      console.log('[BookGolf] fetchAvailability called. resources:', resources.length, 'date:', selectedDateObj?.date);
       if (!resources || resources.length === 0 || !selectedDateObj?.date) {
-        console.log('[BookGolf] Skipping fetchAvailability - waiting for resources/date');
         return;
       }
       
@@ -252,7 +246,6 @@ const BookGolf: React.FC = () => {
           }))
           .sort((a, b) => a.startTime24.localeCompare(b.startTime24));
         
-        console.log('[BookGolf] Setting availableSlots:', sortedSlots.length, 'slots');
         setAvailableSlots(sortedSlots);
       } catch (err) {
         console.error('[BookGolf] Error fetching availability:', err);
