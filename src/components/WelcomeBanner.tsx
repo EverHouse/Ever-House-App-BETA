@@ -189,7 +189,7 @@ const WelcomeBanner: React.FC = () => {
               </div>
               
               <p className={`text-sm mt-4 ${isDark ? 'text-accent' : 'text-brand-green'}`}>
-                Don't forget to enable push notifications in your profile settings!
+                Don't forget to enable push notifications in your profile settings (top right icon)!
               </p>
             </div>
             
