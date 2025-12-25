@@ -960,7 +960,22 @@ interface ClosureForm {
     end_time: string;
     affected_areas: string;
     reason: string;
+    title: string;
     notify_members: boolean;
+}
+
+interface Closure {
+    id: number;
+    title: string;
+    reason: string | null;
+    startDate: string;
+    startTime: string | null;
+    endDate: string;
+    endTime: string | null;
+    affectedAreas: string | null;
+    isActive: boolean;
+    createdAt: string;
+    createdBy: string | null;
 }
 
 const AnnouncementsAdmin: React.FC = () => {
@@ -970,6 +985,7 @@ const AnnouncementsAdmin: React.FC = () => {
     const [newItem, setNewItem] = useState<Partial<Announcement>>({ type: 'update' });
     
     const [isClosureModalOpen, setIsClosureModalOpen] = useState(false);
+    const [editingClosureId, setEditingClosureId] = useState<number | null>(null);
     const [closureForm, setClosureForm] = useState<ClosureForm>({
         start_date: '',
         start_time: '',
@@ -977,47 +993,110 @@ const AnnouncementsAdmin: React.FC = () => {
         end_time: '',
         affected_areas: 'entire_facility',
         reason: '',
+        title: '',
         notify_members: false
     });
     const [closureSaving, setClosureSaving] = useState(false);
     const [bays, setBays] = useState<{id: number; name: string}[]>([]);
+    const [closures, setClosures] = useState<Closure[]>([]);
+    const [closuresLoading, setClosuresLoading] = useState(true);
+    
+    const fetchClosures = async () => {
+        try {
+            const res = await fetch('/api/closures');
+            if (res.ok) {
+                const data = await res.json();
+                setClosures(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch closures:', err);
+        } finally {
+            setClosuresLoading(false);
+        }
+    };
     
     useEffect(() => {
         fetch('/api/bays')
             .then(r => r.json())
             .then(data => setBays(data))
             .catch(() => {});
+        fetchClosures();
     }, []);
+    
+    const resetClosureForm = () => {
+        setClosureForm({
+            start_date: '',
+            start_time: '',
+            end_date: '',
+            end_time: '',
+            affected_areas: 'entire_facility',
+            reason: '',
+            title: '',
+            notify_members: false
+        });
+        setEditingClosureId(null);
+    };
     
     const handleSaveClosure = async () => {
         if (!closureForm.start_date || !closureForm.affected_areas) return;
         setClosureSaving(true);
         try {
-            const res = await fetch('/api/closures', {
-                method: 'POST',
+            const url = editingClosureId 
+                ? `/api/closures/${editingClosureId}` 
+                : '/api/closures';
+            const method = editingClosureId ? 'PUT' : 'POST';
+            
+            const payload = editingClosureId 
+                ? { ...closureForm }
+                : { ...closureForm, created_by: actualUser?.email };
+            
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...closureForm,
-                    created_by: actualUser?.email
-                })
+                body: JSON.stringify(payload)
             });
             if (res.ok) {
                 setIsClosureModalOpen(false);
-                setClosureForm({
-                    start_date: '',
-                    start_time: '',
-                    end_date: '',
-                    end_time: '',
-                    affected_areas: 'entire_facility',
-                    reason: '',
-                    notify_members: false
-                });
+                resetClosureForm();
+                fetchClosures();
             }
         } catch (err) {
             console.error('Failed to save closure:', err);
         } finally {
             setClosureSaving(false);
         }
+    };
+    
+    const handleEditClosure = (closure: Closure) => {
+        setEditingClosureId(closure.id);
+        setClosureForm({
+            start_date: closure.startDate,
+            start_time: closure.startTime || '',
+            end_date: closure.endDate,
+            end_time: closure.endTime || '',
+            affected_areas: closure.affectedAreas || 'entire_facility',
+            reason: closure.reason || '',
+            title: closure.title || '',
+            notify_members: false
+        });
+        setIsClosureModalOpen(true);
+    };
+    
+    const handleDeleteClosure = async (closureId: number) => {
+        if (!confirm('Are you sure you want to delete this closure? This will also remove the calendar event and announcement.')) return;
+        try {
+            const res = await fetch(`/api/closures/${closureId}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchClosures();
+            }
+        } catch (err) {
+            console.error('Failed to delete closure:', err);
+        }
+    };
+    
+    const openNewClosure = () => {
+        resetClosureForm();
+        setIsClosureModalOpen(true);
     };
 
     const openCreate = () => {
@@ -1056,7 +1135,7 @@ const AnnouncementsAdmin: React.FC = () => {
         <div>
             <div className="flex justify-end gap-3 mb-4">
                 <button 
-                    onClick={() => setIsClosureModalOpen(true)} 
+                    onClick={openNewClosure} 
                     className="border-2 border-red-500 text-red-500 px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 >
                     <span className="material-symbols-outlined">block</span> Add Closure
@@ -1104,14 +1183,24 @@ const AnnouncementsAdmin: React.FC = () => {
             
             {isClosureModalOpen && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsClosureModalOpen(false)} />
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
                             <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
                                 <span className="material-symbols-outlined text-red-500">block</span>
-                                Add Closure
+                                {editingClosureId ? 'Edit Closure' : 'Add Closure'}
                             </h3>
                             <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Title</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g., Holiday Closure, Maintenance" 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                        value={closureForm.title} 
+                                        onChange={e => setClosureForm({...closureForm, title: e.target.value})} 
+                                    />
+                                </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Start Date *</label>
@@ -1194,13 +1283,13 @@ const AnnouncementsAdmin: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex gap-3 justify-end">
-                                <button onClick={() => setIsClosureModalOpen(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                                <button onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
                                 <button 
                                     onClick={handleSaveClosure} 
                                     disabled={closureSaving || !closureForm.start_date}
                                     className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-bold shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
                                 >
-                                    {closureSaving ? 'Saving...' : 'Add Closure'}
+                                    {closureSaving ? 'Saving...' : editingClosureId ? 'Save Changes' : 'Add Closure'}
                                 </button>
                             </div>
                         </div>
@@ -1209,7 +1298,80 @@ const AnnouncementsAdmin: React.FC = () => {
                 document.body
             )}
 
+            {/* Closures Section */}
+            {closuresLoading && (
+                <div className="mb-8 p-4 bg-gray-50 dark:bg-white/5 rounded-xl text-center">
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">Loading closures...</span>
+                </div>
+            )}
+            {!closuresLoading && closures.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-red-500 text-[18px]">block</span>
+                        Active Closures ({closures.length})
+                    </h3>
+                    <div className="space-y-3">
+                        {closures.map(closure => {
+                            const formatAffectedAreas = (areas: string | null) => {
+                                if (!areas) return 'Unknown';
+                                if (areas === 'entire_facility') return 'Entire Facility';
+                                if (areas === 'all_bays') return 'All Bays';
+                                return areas;
+                            };
+                            
+                            return (
+                                <div 
+                                    key={closure.id} 
+                                    onClick={() => handleEditClosure(closure)}
+                                    className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800/30 shadow-sm flex justify-between items-start cursor-pointer hover:border-red-400 transition-all"
+                                >
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                            <span className="text-[10px] font-bold uppercase text-red-500">Closure</span>
+                                            <span className="text-[10px] text-red-400">• {formatAffectedAreas(closure.affectedAreas)}</span>
+                                        </div>
+                                        <h4 className="font-bold text-gray-900 dark:text-white mb-1">{closure.title}</h4>
+                                        {closure.reason && (
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2">{closure.reason}</p>
+                                        )}
+                                        <div className="flex flex-wrap gap-2">
+                                            <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
+                                                <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                                                <span>
+                                                    {closure.startDate}
+                                                    {closure.endDate && closure.endDate !== closure.startDate ? ` - ${closure.endDate}` : ''}
+                                                </span>
+                                            </div>
+                                            {(closure.startTime || closure.endTime) && (
+                                                <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
+                                                    <span className="material-symbols-outlined text-[12px]">schedule</span>
+                                                    <span>{closure.startTime}{closure.endTime ? ` - ${closure.endTime}` : ''}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteClosure(closure.id); }} 
+                                        className="text-red-300 hover:text-red-600 p-1 -mr-2"
+                                    >
+                                        <span className="material-symbols-outlined">delete</span>
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Announcements Section */}
             <div className="space-y-4">
+                {announcements.length > 0 && (
+                    <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-blue-500 text-[18px]">campaign</span>
+                        Updates & Announcements ({announcements.length})
+                    </h3>
+                )}
                 {announcements.map(item => (
                     <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm flex justify-between items-start cursor-pointer hover:border-primary/30 transition-all">
                         <div>
