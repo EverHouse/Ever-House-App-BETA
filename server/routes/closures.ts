@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { isProduction } from '../core/db';
 import { db } from '../db';
-import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks } from '../../shared/schema';
+import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks, announcements } from '../../shared/schema';
 import { eq, desc, or, isNull, inArray } from 'drizzle-orm';
 import webpush from 'web-push';
 import { isStaffOrAdmin } from '../core/middleware';
@@ -341,6 +341,42 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       console.error('[Closures] Failed to create calendar event:', calError);
     }
     
+    let announcementId: number | null = null;
+    try {
+      const affectedText = affected_areas === 'entire_facility' 
+        ? 'Entire Facility' 
+        : affected_areas === 'all_bays' 
+          ? 'All Simulator Bays' 
+          : affected_areas;
+      
+      const startDateFormatted = new Date(start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const endDateFormatted = end_date && end_date !== start_date 
+        ? new Date(end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : null;
+      
+      const dateRange = endDateFormatted ? `${startDateFormatted} - ${endDateFormatted}` : startDateFormatted;
+      const timeRange = start_time && end_time ? ` (${start_time} - ${end_time})` : start_time ? ` from ${start_time}` : '';
+      
+      const announcementTitle = title || 'Facility Closure';
+      const announcementMessage = `${reason || 'Scheduled maintenance'}\n\nAffected: ${affectedText}\nWhen: ${dateRange}${timeRange}`;
+      
+      const [announcement] = await db.insert(announcements).values({
+        title: announcementTitle,
+        message: announcementMessage,
+        priority: 'high',
+        isActive: true,
+        closureId: closureId,
+        startsAt: new Date(start_date),
+        endsAt: end_date ? new Date(end_date) : new Date(start_date),
+        createdBy: created_by
+      }).returning();
+      
+      announcementId = announcement.id;
+      console.log(`[Closures] Created announcement #${announcementId} for closure #${closureId}`);
+    } catch (announcementError) {
+      console.error('[Closures] Failed to create announcement:', announcementError);
+    }
+    
     if (notify_members && reason) {
       await sendPushNotificationToAllMembers({
         title: 'Facility Update',
@@ -349,7 +385,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       });
     }
     
-    res.json({ ...result, googleCalendarId });
+    res.json({ ...result, googleCalendarId, announcementId });
   } catch (error: any) {
     if (!isProduction) console.error('Closure create error:', error);
     res.status(500).json({ error: 'Failed to create closure' });
@@ -379,6 +415,15 @@ router.delete('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
     }
     
     await deleteAvailabilityBlocksForClosure(closureId);
+    
+    try {
+      await db
+        .delete(announcements)
+        .where(eq(announcements.closureId, closureId));
+      console.log(`[Closures] Deleted announcement(s) for closure #${closureId}`);
+    } catch (announcementError) {
+      console.error('[Closures] Failed to delete announcement:', announcementError);
+    }
     
     await db
       .update(facilityClosures)

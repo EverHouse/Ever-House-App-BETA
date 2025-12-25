@@ -255,6 +255,7 @@ export const announcements = pgTable("announcements", {
   isActive: boolean("is_active").default(true),
   startsAt: timestamp("starts_at"),
   endsAt: timestamp("ends_at"),
+  closureId: integer("closure_id"),
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: varchar("created_by"),
 });
