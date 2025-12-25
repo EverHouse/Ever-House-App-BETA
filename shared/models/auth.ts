@@ -256,6 +256,8 @@ export const announcements = pgTable("announcements", {
   startsAt: timestamp("starts_at"),
   endsAt: timestamp("ends_at"),
   closureId: integer("closure_id"),
+  linkType: varchar("link_type"),
+  linkTarget: varchar("link_target"),
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: varchar("created_by"),
 });
