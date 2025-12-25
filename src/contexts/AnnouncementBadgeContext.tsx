@@ -56,7 +56,6 @@ export const AnnouncementBadgeProvider: React.FC<{ children: React.ReactNode }> 
 
   const unseenHighPriority = useMemo(() => {
     return announcements.filter(a => 
-      a.type === 'update' && 
       isActiveAnnouncement(a) && 
       !seenIds.has(a.id)
     );
@@ -76,10 +75,10 @@ export const AnnouncementBadgeProvider: React.FC<{ children: React.ReactNode }> 
 
   const markAllAsSeen = useCallback(() => {
     if (!user?.email) return;
-    const allUpdateIds = announcements
-      .filter(a => a.type === 'update' && isActiveAnnouncement(a))
+    const allActiveIds = announcements
+      .filter(a => isActiveAnnouncement(a))
       .map(a => a.id);
-    markAsSeen(allUpdateIds);
+    markAsSeen(allActiveIds);
   }, [user?.email, announcements, markAsSeen]);
 
   return (
