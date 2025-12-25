@@ -19,6 +19,17 @@ const parseDiscountReasonToTags = (reason: string | undefined): string[] => {
   return tags;
 };
 
+const normalizeMembershipTier = (tier: string | undefined): string => {
+  if (!tier) return 'Core';
+  const tierLower = tier.toLowerCase();
+  if (tierLower.includes('vip')) return 'VIP';
+  if (tierLower.includes('premium')) return 'Premium';
+  if (tierLower.includes('corporate')) return 'Corporate';
+  if (tierLower.includes('core')) return 'Core';
+  if (tierLower.includes('social')) return 'Social';
+  return 'Core';
+};
+
 router.get('/api/hubspot/contacts', async (req, res) => {
   try {
     const hubspot = await getHubSpotClient();
@@ -54,7 +65,7 @@ router.get('/api/hubspot/contacts', async (req, res) => {
         phone: contact.properties.phone || '',
         company: contact.properties.company || '',
         status: contact.properties.membership_status || contact.properties.hs_lead_status || '',
-        tier: contact.properties.membership_tier || '',
+        tier: normalizeMembershipTier(contact.properties.membership_tier),
         tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
         createdAt: contact.properties.createdate
       }))
@@ -93,7 +104,7 @@ router.get('/api/hubspot/contacts/:id', async (req, res) => {
       phone: contact.properties.phone || '',
       company: contact.properties.company || '',
       status: contact.properties.membership_status || contact.properties.hs_lead_status || 'Active',
-      tier: contact.properties.membership_tier || '',
+      tier: normalizeMembershipTier(contact.properties.membership_tier),
       tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
       createdAt: contact.properties.createdate
     });
