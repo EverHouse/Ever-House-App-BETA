@@ -107,6 +107,12 @@ img, video, svg {
   height: auto;
 }
 
+/* Modal max-height that fits between header and bottom nav */
+.modal-safe-height {
+  max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 160px);
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 160px);
+}
+
 /* iOS safe area support */
 .safe-area-bottom {
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));

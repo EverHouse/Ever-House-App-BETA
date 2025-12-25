@@ -768,7 +768,7 @@ const EventsAdmin: React.FC = () => {
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setError(null); }} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 max-h-[90vh] overflow-y-auto pointer-events-auto">
+                        <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto">
                             <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">{editId ? 'Edit Event' : 'Create Event'}</h3>
                             {error && (
                                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg text-sm mb-4">
@@ -916,7 +916,7 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
         <div className="fixed inset-0 z-[10001] overflow-y-auto">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
             <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 max-h-[90vh] overflow-y-auto pointer-events-auto">
+                <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto">
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="font-bold text-lg text-primary dark:text-white">{title}</h3>
@@ -2667,7 +2667,7 @@ const WellnessAdmin: React.FC = () => {
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setError(null); }} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto pointer-events-auto">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md modal-safe-height overflow-y-auto pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
                                 {editId ? 'Edit Class' : 'Add Class'}
                             </h3>
@@ -3931,7 +3931,7 @@ const TiersAdmin: React.FC = () => {
             {isEditing && selectedTier && createPortal(
                 <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setIsCreating(false); }} />
-                    <div className="relative flex flex-col max-w-2xl w-full bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 max-h-[calc(100vh-2rem)] min-h-0 overflow-hidden">
+                    <div className="relative flex flex-col max-w-2xl w-full bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 modal-safe-height min-h-0 overflow-hidden">
                             {/* Header - Fixed */}
                             <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1d15] flex-shrink-0">
                                 <h3 className="font-bold text-lg text-primary dark:text-white">{isCreating ? 'New Tier' : `Edit Tier: ${selectedTier.name}`}</h3>

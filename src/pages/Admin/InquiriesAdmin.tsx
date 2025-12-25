@@ -208,7 +208,7 @@ const InquiriesAdmin: React.FC = () => {
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto max-h-[90vh] overflow-y-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto modal-safe-height overflow-y-auto">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
                                     <h3 className="font-bold text-lg text-primary dark:text-white">
