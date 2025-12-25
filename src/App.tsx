@@ -356,6 +356,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const metaThemeColor = document.getElementById('theme-color-meta');
+    if (!metaThemeColor) return;
+    
+    const isLanding = location.pathname === '/';
+    const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
+    const isAdmin = location.pathname.startsWith('/admin');
+    
+    let themeColor: string;
+    
+    if (isLanding && !hasScrolledPastHero) {
+      themeColor = 'transparent';
+    } else if (isAdmin || isMember) {
+      themeColor = '#0f120a';
+    } else {
+      themeColor = '#293515';
+    }
+    
+    metaThemeColor.setAttribute('content', themeColor);
+  }, [location.pathname, hasScrolledPastHero]);
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
