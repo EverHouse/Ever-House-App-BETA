@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData, Announcement } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import TabButton from '../../components/TabButton';
@@ -31,11 +32,33 @@ const isActiveAnnouncement = (item: Announcement): boolean => {
 };
 
 const MemberAnnouncements: React.FC = () => {
+  const navigate = useNavigate();
   const { announcements, isLoading } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const [filter, setFilter] = useState<'all' | 'update' | 'announcement'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const handleAnnouncementClick = (item: Announcement) => {
+    if (item.linkType) {
+      switch (item.linkType) {
+        case 'events':
+          navigate('/events');
+          break;
+        case 'wellness':
+          navigate('/wellness');
+          break;
+        case 'golf':
+          navigate('/book');
+          break;
+        case 'external':
+          if (item.linkTarget) {
+            window.open(item.linkTarget, '_blank', 'noopener,noreferrer');
+          }
+          break;
+      }
+    }
+  };
 
   const activeAnnouncements = useMemo(() => {
     return announcements.filter(isActiveAnnouncement);
@@ -109,6 +132,11 @@ const MemberAnnouncements: React.FC = () => {
             {sortedAnnouncements.map((item) => {
               const isExpanded = expandedId === item.id;
               const hasLongDesc = item.desc && item.desc.length > 100;
+              const hasLink = !!item.linkType;
+              const linkLabel = item.linkType === 'events' ? 'View Events' 
+                : item.linkType === 'wellness' ? 'View Wellness' 
+                : item.linkType === 'golf' ? 'Book Now' 
+                : item.linkType === 'external' ? 'Learn More' : '';
               
               return (
                 <MotionListItem 
@@ -116,8 +144,14 @@ const MemberAnnouncements: React.FC = () => {
                   className={`rounded-2xl transition-all overflow-hidden ${isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered'}`}
                 >
                   <div 
-                    className={`p-5 ${hasLongDesc ? 'cursor-pointer' : ''}`}
-                    onClick={() => hasLongDesc && setExpandedId(isExpanded ? null : item.id)}
+                    className={`p-5 ${hasLongDesc || hasLink ? 'cursor-pointer' : ''}`}
+                    onClick={() => {
+                      if (hasLink) {
+                        handleAnnouncementClick(item);
+                      } else if (hasLongDesc) {
+                        setExpandedId(isExpanded ? null : item.id);
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`w-2.5 h-2.5 rounded-full ${item.type === 'update' ? 'bg-blue-500' : 'bg-accent'}`} />
@@ -140,7 +174,7 @@ const MemberAnnouncements: React.FC = () => {
                       </p>
                     )}
                     
-                    {hasLongDesc && (
+                    {hasLongDesc && !hasLink && (
                       <button className={`mt-3 text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${isDark ? 'text-white/50 hover:text-white/70' : 'text-primary/50 hover:text-primary/70'}`}>
                         <span>{isExpanded ? 'Show less' : 'Read more'}</span>
                         <span className={`material-symbols-outlined text-sm transition-transform ${isExpanded ? 'rotate-180' : ''}`}>expand_more</span>
@@ -152,6 +186,23 @@ const MemberAnnouncements: React.FC = () => {
                         <span className="material-symbols-outlined text-[14px]">schedule</span>
                         <span>Until {formatDate(item.endDate)}</span>
                       </div>
+                    )}
+                    
+                    {hasLink && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAnnouncementClick(item);
+                        }}
+                        className={`mt-3 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
+                          isDark 
+                            ? 'bg-accent/20 text-accent hover:bg-accent/30' 
+                            : 'bg-accent/10 text-primary hover:bg-accent/20'
+                        }`}
+                      >
+                        <span>{linkLabel}</span>
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </button>
                     )}
                   </div>
                 </MotionListItem>

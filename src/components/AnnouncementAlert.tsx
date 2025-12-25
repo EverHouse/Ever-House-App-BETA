@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAnnouncementBadge } from '../contexts/AnnouncementBadgeContext';
+import { Announcement } from '../contexts/DataContext';
 
 const AnnouncementAlert: React.FC = () => {
   const navigate = useNavigate();
@@ -19,9 +20,31 @@ const AnnouncementAlert: React.FC = () => {
     markAllAsSeen();
   };
 
-  const handleViewAll = () => {
+  const handleAnnouncementClick = (item: Announcement) => {
     markAllAsSeen();
+    if (item.linkType) {
+      switch (item.linkType) {
+        case 'events':
+          navigate('/events');
+          return;
+        case 'wellness':
+          navigate('/wellness');
+          return;
+        case 'golf':
+          navigate('/book');
+          return;
+        case 'external':
+          if (item.linkTarget) {
+            window.open(item.linkTarget, '_blank', 'noopener,noreferrer');
+          }
+          return;
+      }
+    }
     navigate('/announcements');
+  };
+
+  const handleViewAll = () => {
+    handleAnnouncementClick(latestAnnouncement);
   };
 
   return (
@@ -73,8 +96,12 @@ const AnnouncementAlert: React.FC = () => {
             }`}>
               {hasMultiple ? `${unseenHighPriority.length} new updates` : 'New update'}
             </span>
-            <span className={`text-xs font-medium ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
-              Tap to view
+            <span className={`text-xs font-medium flex items-center gap-1 ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
+              {latestAnnouncement.linkType === 'events' ? 'View Events' :
+               latestAnnouncement.linkType === 'wellness' ? 'View Wellness' :
+               latestAnnouncement.linkType === 'golf' ? 'Book Now' :
+               latestAnnouncement.linkType === 'external' ? 'Learn More' : 'Tap to view'}
+              <span className="material-symbols-outlined text-sm">arrow_forward</span>
             </span>
           </div>
         </div>
