@@ -83,4 +83,80 @@ export function invalidateTierCache(tierName: string): void {
   tierCache.delete(tierName.toLowerCase());
 }
 
+export async function getMemberTierByEmail(email: string): Promise<string | null> {
+  try {
+    const result = await pool.query(
+      `SELECT u.tier, mt.name as tier_name
+       FROM users u
+       LEFT JOIN membership_tiers mt ON u.tier_id = mt.id
+       WHERE LOWER(u.email) = LOWER($1)
+       LIMIT 1`,
+      [email]
+    );
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+    
+    return result.rows[0].tier_name || result.rows[0].tier || null;
+  } catch (error) {
+    console.error('[getMemberTierByEmail] Error:', error);
+    return null;
+  }
+}
+
+export async function getDailyBookedMinutes(email: string, date: string): Promise<number> {
+  try {
+    const result = await pool.query(
+      `SELECT COALESCE(SUM(duration_minutes), 0) as total_minutes
+       FROM booking_requests
+       WHERE LOWER(user_email) = LOWER($1)
+         AND request_date = $2
+         AND status IN ('pending', 'approved')`,
+      [email, date]
+    );
+    
+    return parseInt(result.rows[0].total_minutes) || 0;
+  } catch (error) {
+    console.error('[getDailyBookedMinutes] Error:', error);
+    return 0;
+  }
+}
+
+export async function checkDailyBookingLimit(
+  email: string, 
+  date: string, 
+  requestedMinutes: number
+): Promise<{ allowed: boolean; reason?: string; remainingMinutes?: number }> {
+  const tier = await getMemberTierByEmail(email);
+  
+  if (!tier) {
+    return { allowed: false, reason: 'Member not found or no tier assigned' };
+  }
+  
+  const limits = await getTierLimits(tier);
+  
+  if (!limits.can_book_simulators) {
+    return { allowed: false, reason: 'Your membership tier does not include simulator booking' };
+  }
+  
+  if (limits.unlimited_access || limits.sim_hours_limit >= 999) {
+    return { allowed: true, remainingMinutes: 999 };
+  }
+  
+  const dailyLimit = limits.sim_hours_limit;
+  const alreadyBooked = await getDailyBookedMinutes(email, date);
+  const remainingMinutes = dailyLimit - alreadyBooked;
+  
+  if (requestedMinutes > remainingMinutes) {
+    return { 
+      allowed: false, 
+      reason: `Daily limit exceeded. You have ${remainingMinutes} minutes remaining for ${date}. Your tier (${tier}) allows ${dailyLimit} minutes per day.`,
+      remainingMinutes
+    };
+  }
+  
+  return { allowed: true, remainingMinutes: remainingMinutes - requestedMinutes };
+}
+
 export { DEFAULT_TIER_LIMITS };
