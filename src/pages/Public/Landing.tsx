@@ -58,7 +58,7 @@ const Landing: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#293515] min-h-screen pb-0 overflow-x-hidden">
+    <div className="bg-[#F2F2EC] min-h-screen pb-0 overflow-x-hidden">
       {/* Hero Section */}
       <div className="relative h-[85vh] min-h-[600px] flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))] overflow-hidden rounded-b-[2.5rem] shadow-sm">
         {/* Hero Background Image - Even House interior lounge (optimized WebP) */}
