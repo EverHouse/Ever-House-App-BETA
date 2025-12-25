@@ -1099,8 +1099,14 @@ const AnnouncementsAdmin: React.FC = () => {
         setIsClosureModalOpen(true);
     };
 
-    const openCreate = () => {
+    const openCreateUpdate = () => {
         setNewItem({ type: 'update' });
+        setEditId(null);
+        setIsEditing(true);
+    };
+
+    const openCreateAnnouncement = () => {
+        setNewItem({ type: 'announcement' });
         setEditId(null);
         setIsEditing(true);
     };
@@ -1135,15 +1141,18 @@ const AnnouncementsAdmin: React.FC = () => {
 
     return (
         <div>
-            <div className="flex justify-end gap-3 mb-4">
+            <div className="flex justify-end gap-2 mb-4">
                 <button 
                     onClick={openNewClosure} 
-                    className="border-2 border-red-500 text-red-500 px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="border-2 border-red-500 text-red-500 px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm"
                 >
-                    <span className="material-symbols-outlined">block</span> Add Closure
+                    <span className="material-symbols-outlined text-lg">block</span> Closure
                 </button>
-                <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md">
-                    <span className="material-symbols-outlined">add</span> Post Update
+                <button onClick={openCreateUpdate} className="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-blue-700 transition-colors">
+                    <span className="material-symbols-outlined text-lg">add</span> Update
+                </button>
+                <button onClick={openCreateAnnouncement} className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-accent/90 transition-colors">
+                    <span className="material-symbols-outlined text-lg">add</span> Announcement
                 </button>
             </div>
             
@@ -1152,12 +1161,21 @@ const AnnouncementsAdmin: React.FC = () => {
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
-                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white">{editId ? 'Edit Post' : 'New Post'}</h3>
+                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
+                                {newItem.type === 'update' ? (
+                                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                ) : (
+                                    <span className="w-2.5 h-2.5 rounded-full bg-accent" />
+                                )}
+                                {editId ? `Edit ${newItem.type === 'update' ? 'Update' : 'Announcement'}` : `New ${newItem.type === 'update' ? 'Update' : 'Announcement'}`}
+                            </h3>
                             <div className="space-y-4 mb-6">
-                                <div className="flex gap-2">
-                                    <button onClick={() => setNewItem({...newItem, type: 'update'})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'update' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Update</button>
-                                    <button onClick={() => setNewItem({...newItem, type: 'announcement'})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'announcement' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Announcement</button>
-                                </div>
+                                {editId && (
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setNewItem({...newItem, type: 'update', linkType: undefined, linkTarget: undefined})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'update' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Update</button>
+                                        <button onClick={() => setNewItem({...newItem, type: 'announcement'})} className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${newItem.type === 'announcement' ? 'bg-accent text-primary' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Announcement</button>
+                                    </div>
+                                )}
                                 <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
                                 <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
                                 
