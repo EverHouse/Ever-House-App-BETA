@@ -19,20 +19,18 @@ const Toggle: React.FC<ToggleProps> = ({
 }) => {
   const sizes = {
     sm: {
-      track: 'h-[22px] w-[44px]',
+      track: 'h-[18px] w-[36px]',
       thumb: 'h-[18px] w-[18px]',
-      translate: 'translate-x-[22px]',
-      padding: 'p-[2px]',
+      translate: 'translate-x-[18px]',
     },
     md: {
-      track: 'h-[28px] w-[52px]',
+      track: 'h-[24px] w-[44px]',
       thumb: 'h-[24px] w-[24px]',
-      translate: 'translate-x-[24px]',
-      padding: 'p-[2px]',
+      translate: 'translate-x-[20px]',
     },
   };
 
-  const { track, thumb, translate, padding } = sizes[size];
+  const { track, thumb, translate } = sizes[size];
 
   const handleClick = () => {
     if (!disabled) {
@@ -49,7 +47,7 @@ const Toggle: React.FC<ToggleProps> = ({
       disabled={disabled}
       onClick={handleClick}
       className={`
-        relative inline-flex items-center ${track} ${padding} shrink-0 rounded-full 
+        relative inline-flex items-center ${track} shrink-0 rounded-full 
         transition-colors duration-200 ease-in-out 
         focus:outline-none focus-visible:ring-2 focus-visible:ring-[#34C759]/50 focus-visible:ring-offset-2
         ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
