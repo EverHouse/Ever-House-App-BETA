@@ -833,3 +833,10 @@ img {
 img[loading="lazy"] {
   contain-intrinsic-size: 200px 200px;
 }
+
+/* Gate hover effects for touch devices to prevent iOS double-tap */
+@media (hover: hover) and (pointer: fine) {
+  .hoverable-translate:hover {
+    transform: translateX(0.5rem);
+  }
+}

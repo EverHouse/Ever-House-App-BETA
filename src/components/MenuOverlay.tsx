@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
@@ -63,7 +63,8 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
             
             <div className="flex items-center justify-end mb-8">
                 <button 
-                  onClick={onClose} 
+                  onClick={onClose}
+                  aria-label="Close menu"
                   className={`w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center hover:rotate-90 transition-transform duration-300 rounded-full active:scale-90 ${isDark ? 'text-[#F2F2EC] hover:bg-white/10' : 'text-[#293515] hover:bg-black/5'}`}
                 >
                     <span className="material-symbols-outlined text-3xl">close</span>
@@ -107,15 +108,26 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   return createPortal(menuContent, document.body);
 };
 
-const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string; isDark: boolean }> = ({ label, onClick, delay, isDark }) => (
-  <button 
-    type="button"
-    onClick={onClick}
-    style={{ touchAction: 'manipulation', animationDelay: delay, animationFillMode: 'both' }}
-    className={`text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight min-h-[44px] hover:translate-x-2 active:translate-x-2 ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/60' : 'text-[#293515] hover:text-[#293515]/60'}`}
-  >
-    {label}
-  </button>
-);
+const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string; isDark: boolean }> = ({ label, onClick, delay, isDark }) => {
+  const lastTapRef = useRef(0);
+  
+  const handlePointerUp = () => {
+    if (Date.now() - lastTapRef.current < 350) return;
+    lastTapRef.current = Date.now();
+    onClick();
+  };
+  
+  return (
+    <button 
+      type="button"
+      onClick={onClick}
+      onPointerUp={handlePointerUp}
+      style={{ touchAction: 'manipulation', animationDelay: delay, animationFillMode: 'both' }}
+      className={`text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight min-h-[44px] hoverable-translate active:translate-x-2 ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/60' : 'text-[#293515] hover:text-[#293515]/60'}`}
+    >
+      {label}
+    </button>
+  );
+};
 
 export default MenuOverlay;

@@ -32,7 +32,16 @@ const PublicCafe: React.FC = () => {
         const response = await fetch('/api/cafe-menu');
         if (response.ok) {
           const data = await response.json();
-          setCafeMenu(data);
+          const normalized = data.map((item: any) => ({
+            id: item.id?.toString() || '',
+            name: item.name || '',
+            category: item.category || '',
+            price: parseFloat(item.price) || 0,
+            desc: item.description || item.desc || '',
+            image: item.image_url || item.image || '',
+            icon: item.icon || ''
+          }));
+          setCafeMenu(normalized);
         }
       } catch (error) {
         console.error('Failed to fetch cafe menu:', error);

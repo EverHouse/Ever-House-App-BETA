@@ -14,7 +14,8 @@
         var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         var isDark = themeMode === 'dark' || (themeMode === 'system' && prefersDark) || (!themeMode && prefersDark);
         var color = isDark ? '#0f120a' : '#F2F2EC';
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', color);
+        var metas = document.querySelectorAll('meta[name="theme-color"]');
+        metas.forEach(function(meta) { meta.setAttribute('content', color); });
         if (isDark) document.documentElement.classList.add('dark');
       })();
     </script>

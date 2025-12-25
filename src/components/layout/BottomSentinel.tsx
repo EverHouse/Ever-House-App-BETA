@@ -1,16 +1,31 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { useBottomNav } from '../../contexts/BottomNavContext';
+import { useScrollContainer } from '../../contexts/ScrollContainerContext';
 
 export const BottomSentinel: React.FC = () => {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { setIsAtBottom } = useBottomNav();
+  const { scrollContainerRef } = useScrollContainer();
   const lastScrollY = useRef(0);
   const scrollDirectionRef = useRef<'up' | 'down' | null>(null);
   
   const handleScroll = useCallback(() => {
-    const currentScrollY = window.scrollY;
-    const scrollHeight = document.documentElement.scrollHeight;
-    const clientHeight = window.innerHeight;
+    const container = scrollContainerRef.current;
+    
+    let currentScrollY: number;
+    let scrollHeight: number;
+    let clientHeight: number;
+    
+    if (container) {
+      currentScrollY = container.scrollTop;
+      scrollHeight = container.scrollHeight;
+      clientHeight = container.clientHeight;
+    } else {
+      currentScrollY = window.scrollY;
+      scrollHeight = document.documentElement.scrollHeight;
+      clientHeight = window.innerHeight;
+    }
+    
     const isScrollable = scrollHeight > clientHeight + 100;
     
     if (currentScrollY > lastScrollY.current) {
@@ -25,15 +40,26 @@ export const BottomSentinel: React.FC = () => {
     const shouldHide = isScrollable && isNearBottom && scrollDirectionRef.current === 'down';
     
     setIsAtBottom(shouldHide);
-  }, [setIsAtBottom]);
+  }, [setIsAtBottom, scrollContainerRef]);
   
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    const container = scrollContainerRef.current;
+    
+    if (container) {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+    } else {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      } else {
+        window.removeEventListener('scroll', handleScroll);
+      }
       setIsAtBottom(false);
     };
-  }, [handleScroll, setIsAtBottom]);
+  }, [handleScroll, setIsAtBottom, scrollContainerRef]);
   
   return <div ref={sentinelRef} className="h-24 w-full pointer-events-none" aria-hidden="true" />;
 };

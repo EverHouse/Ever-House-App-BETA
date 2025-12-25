@@ -323,7 +323,7 @@ const CafeAdmin: React.FC = () => {
     };
 
     const handleSave = () => {
-        if (!newItem.name || !newItem.price) return;
+        if (!newItem.name || newItem.price === undefined || newItem.price === null) return;
         
         const item: CafeItem = {
             id: editId || Math.random().toString(36).substr(2, 9),

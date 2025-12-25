@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSmoothScroll } from './motion/SmoothScroll';
+import { useScrollContainer } from '../contexts/ScrollContainerContext';
 
 interface BackToTopProps {
   threshold?: number;
@@ -12,14 +13,29 @@ const BackToTop: React.FC<BackToTopProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const { scrollTo, lenis } = useSmoothScroll();
+  const { scrollContainerRef } = useScrollContainer();
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollY = lenis?.scroll || window.scrollY;
+      const container = scrollContainerRef.current;
+      let scrollY: number;
+      
+      if (container) {
+        scrollY = container.scrollTop;
+      } else if (lenis) {
+        scrollY = lenis.scroll;
+      } else {
+        scrollY = window.scrollY;
+      }
+      
       setIsVisible(scrollY > threshold);
     };
 
-    if (lenis) {
+    const container = scrollContainerRef.current;
+    
+    if (container) {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+    } else if (lenis) {
       lenis.on('scroll', handleScroll);
     } else {
       window.addEventListener('scroll', handleScroll, { passive: true });
@@ -28,13 +44,15 @@ const BackToTop: React.FC<BackToTopProps> = ({
     handleScroll();
 
     return () => {
-      if (lenis) {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      } else if (lenis) {
         lenis.off('scroll', handleScroll);
       } else {
         window.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [lenis, threshold]);
+  }, [lenis, threshold, scrollContainerRef]);
 
   const handleClick = () => {
     scrollTo(0, { duration: 0.8 });

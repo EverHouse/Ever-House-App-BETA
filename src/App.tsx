@@ -630,6 +630,7 @@ const MEMBER_NAV_ITEMS: MemberNavItem[] = [
 const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> = ({ currentPath, isDarkTheme }) => {
   const navigate = useNavigate();
   const navigatingRef = useRef(false);
+  const lastTapRef = useRef(0);
   const { hasUnseenAnnouncements, markAllAsSeen } = useAnnouncementBadge();
   
   useEffect(() => {
@@ -686,15 +687,15 @@ const MemberBottomNav: React.FC<{ currentPath: string; isDarkTheme: boolean }> =
               <button
                 type="button"
                 key={item.path}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleNavigation(item.path, item.label);
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleNavigation(item.path, item.label);
+                onClick={() => handleNavigation(item.path, item.label)}
+                onPointerUp={(e) => {
+                  if (e.pointerType === 'touch') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (Date.now() - lastTapRef.current < 350) return;
+                    lastTapRef.current = Date.now();
+                    handleNavigation(item.path, item.label);
+                  }
                 }}
                 onMouseEnter={() => prefetchRoute(item.path)}
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
