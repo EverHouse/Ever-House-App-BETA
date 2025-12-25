@@ -3,21 +3,18 @@ import { eq, sql, and, lt } from 'drizzle-orm';
 import { db } from '../db';
 import { guestPasses } from '../../shared/schema';
 import { isProduction } from '../core/db';
+import { getTierLimits } from '../core/tierService';
 
 const router = Router();
-
-const TIER_GUEST_PASSES: Record<string, number> = {
-  'Social': 2,
-  'Core': 4,
-  'Premium': 8,
-  'Corporate': 15
-};
 
 router.get('/api/guest-passes/:email', async (req, res) => {
   try {
     const { email } = req.params;
     const { tier } = req.query;
-    const passesTotal = TIER_GUEST_PASSES[tier as string] || 4;
+    
+    // Get guest pass limit from database-driven tier configuration
+    const tierLimits = tier ? await getTierLimits(tier as string) : null;
+    const passesTotal = tierLimits?.guest_passes_per_month || 4;
     
     let result = await db.select()
       .from(guestPasses)

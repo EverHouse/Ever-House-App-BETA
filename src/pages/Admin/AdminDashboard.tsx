@@ -74,6 +74,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'faqs' && 'Manage FAQs'}
                {activeTab === 'inquiries' && 'Inquiries'}
                {activeTab === 'gallery' && 'Manage Gallery'}
+               {activeTab === 'tiers' && 'Manage Tiers'}
            </h1>
         </div>
         
@@ -89,6 +90,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'faqs' && <FaqsAdmin />}
         {activeTab === 'inquiries' && <InquiriesAdmin />}
         {activeTab === 'gallery' && <GalleryAdmin />}
+        {activeTab === 'tiers' && actualUser?.role === 'admin' && <TiersAdmin />}
         <BottomSentinel />
       </main>
 
@@ -108,7 +110,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'conflicts' | 'faqs' | 'inquiries' | 'gallery';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'conflicts' | 'faqs' | 'inquiries' | 'gallery' | 'tiers';
 
 interface NavItemData {
   id: TabType;
@@ -192,6 +194,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
     { id: 'conflicts' as TabType, icon: 'warning', label: 'Data Conflicts', description: 'Review membership discrepancies', adminOnly: true },
+    { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings', adminOnly: true },
   ];
 
   const visibleLinks = quickLinks.filter(link => !link.adminOnly || isAdmin);
@@ -3666,6 +3669,490 @@ const DataConflictsAdmin: React.FC = () => {
                                         Ignore
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- TIERS ADMIN ---
+
+interface MembershipTier {
+    id: number;
+    name: string;
+    slug: string;
+    price_string: string;
+    description: string | null;
+    button_text: string;
+    sort_order: number;
+    is_active: boolean;
+    is_popular: boolean;
+    highlighted_features: string[];
+    all_features: Record<string, boolean>;
+    sim_hours_limit: number;
+    guest_passes_per_month: number;
+    booking_window_days: number;
+    daily_conf_room_minutes: number;
+    can_book_simulators: boolean;
+    can_book_conference: boolean;
+    can_book_wellness: boolean;
+    has_group_lessons: boolean;
+    has_extended_sessions: boolean;
+    has_private_lesson: boolean;
+    has_simulator_guest_passes: boolean;
+    has_discounted_merch: boolean;
+    unlimited_access: boolean;
+}
+
+const BOOLEAN_FIELDS = [
+    { key: 'can_book_simulators', label: 'Can Book Simulators' },
+    { key: 'can_book_conference', label: 'Can Book Conference Room' },
+    { key: 'can_book_wellness', label: 'Can Book Wellness' },
+    { key: 'has_group_lessons', label: 'Has Group Lessons' },
+    { key: 'has_extended_sessions', label: 'Has Extended Sessions' },
+    { key: 'has_private_lesson', label: 'Has Private Lesson' },
+    { key: 'has_simulator_guest_passes', label: 'Has Simulator Guest Passes' },
+    { key: 'has_discounted_merch', label: 'Has Discounted Merch' },
+    { key: 'unlimited_access', label: 'Unlimited Access' },
+] as const;
+
+const TiersAdmin: React.FC = () => {
+    const [tiers, setTiers] = useState<MembershipTier[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedTier, setSelectedTier] = useState<MembershipTier | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [newFeatureKey, setNewFeatureKey] = useState('');
+
+    const fetchTiers = async () => {
+        try {
+            const res = await fetch('/api/membership-tiers');
+            const data = await res.json();
+            setTiers(data.map((t: any) => ({
+                ...t,
+                highlighted_features: Array.isArray(t.highlighted_features) ? t.highlighted_features : 
+                    (typeof t.highlighted_features === 'string' ? JSON.parse(t.highlighted_features || '[]') : []),
+                all_features: typeof t.all_features === 'object' && t.all_features !== null ? t.all_features :
+                    (typeof t.all_features === 'string' ? JSON.parse(t.all_features || '{}') : {})
+            })));
+        } catch (err) {
+            console.error('Failed to fetch tiers:', err);
+            setError('Failed to load tiers');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTiers();
+    }, []);
+
+    const openEdit = (tier: MembershipTier) => {
+        setSelectedTier({
+            ...tier,
+            highlighted_features: Array.isArray(tier.highlighted_features) ? [...tier.highlighted_features] : [],
+            all_features: typeof tier.all_features === 'object' && tier.all_features !== null ? { ...tier.all_features } : {}
+        });
+        setIsEditing(true);
+        setError(null);
+        setSuccessMessage(null);
+    };
+
+    const handleSave = async () => {
+        if (!selectedTier) return;
+        setIsSaving(true);
+        setError(null);
+        
+        try {
+            const res = await fetch(`/api/membership-tiers/${selectedTier.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(selectedTier)
+            });
+            
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to save tier');
+            }
+            
+            await fetchTiers();
+            setSuccessMessage('Tier updated successfully');
+            setTimeout(() => {
+                setIsEditing(false);
+                setSuccessMessage(null);
+            }, 1000);
+        } catch (err: any) {
+            setError(err.message || 'Failed to save tier');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleHighlightToggle = (feature: string) => {
+        if (!selectedTier) return;
+        const current = selectedTier.highlighted_features || [];
+        
+        if (current.includes(feature)) {
+            setSelectedTier({
+                ...selectedTier,
+                highlighted_features: current.filter(f => f !== feature)
+            });
+        } else if (current.length < 4) {
+            setSelectedTier({
+                ...selectedTier,
+                highlighted_features: [...current, feature]
+            });
+        }
+    };
+
+    const handleAddFeature = () => {
+        if (!selectedTier || !newFeatureKey.trim()) return;
+        const key = newFeatureKey.trim();
+        setSelectedTier({
+            ...selectedTier,
+            all_features: { ...selectedTier.all_features, [key]: true }
+        });
+        setNewFeatureKey('');
+    };
+
+    const handleRemoveFeature = (key: string) => {
+        if (!selectedTier) return;
+        const newFeatures = { ...selectedTier.all_features };
+        delete newFeatures[key];
+        setSelectedTier({
+            ...selectedTier,
+            all_features: newFeatures,
+            highlighted_features: selectedTier.highlighted_features.filter(f => f !== key)
+        });
+    };
+
+    const handleToggleFeature = (key: string) => {
+        if (!selectedTier) return;
+        setSelectedTier({
+            ...selectedTier,
+            all_features: {
+                ...selectedTier.all_features,
+                [key]: !selectedTier.all_features[key]
+            }
+        });
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <span className="material-symbols-outlined animate-spin text-4xl text-primary/50">progress_activity</span>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-6">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {tiers.length} membership tier{tiers.length !== 1 ? 's' : ''}
+                </p>
+            </div>
+
+            {/* Edit Modal */}
+            {isEditing && selectedTier && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-5">
+                                <h3 className="font-bold text-lg text-primary dark:text-white">Edit Tier: {selectedTier.name}</h3>
+                                <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            {error && (
+                                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            {successMessage && (
+                                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-sm">
+                                    {successMessage}
+                                </div>
+                            )}
+
+                            {/* Display Fields */}
+                            <div className="mb-6">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Display Fields</h4>
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Name</label>
+                                            <input 
+                                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                                value={selectedTier.name} 
+                                                onChange={e => setSelectedTier({...selectedTier, name: e.target.value})} 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Price String</label>
+                                            <input 
+                                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                                value={selectedTier.price_string} 
+                                                onChange={e => setSelectedTier({...selectedTier, price_string: e.target.value})} 
+                                                placeholder="e.g., $199/mo"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Description</label>
+                                        <textarea 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" 
+                                            rows={2}
+                                            value={selectedTier.description || ''} 
+                                            onChange={e => setSelectedTier({...selectedTier, description: e.target.value})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Button Text</label>
+                                        <input 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                            value={selectedTier.button_text} 
+                                            onChange={e => setSelectedTier({...selectedTier, button_text: e.target.value})} 
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Logic Fields */}
+                            <div className="mb-6">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Limits & Quotas</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Sim Hours Limit</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                            value={selectedTier.sim_hours_limit} 
+                                            onChange={e => setSelectedTier({...selectedTier, sim_hours_limit: parseInt(e.target.value) || 0})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Guest Passes / Month</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                            value={selectedTier.guest_passes_per_month} 
+                                            onChange={e => setSelectedTier({...selectedTier, guest_passes_per_month: parseInt(e.target.value) || 0})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Booking Window (Days)</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                            value={selectedTier.booking_window_days} 
+                                            onChange={e => setSelectedTier({...selectedTier, booking_window_days: parseInt(e.target.value) || 0})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Daily Conf Room Minutes</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                            value={selectedTier.daily_conf_room_minutes} 
+                                            onChange={e => setSelectedTier({...selectedTier, daily_conf_room_minutes: parseInt(e.target.value) || 0})} 
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Boolean Toggles */}
+                            <div className="mb-6">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Permissions</h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {BOOLEAN_FIELDS.map(({ key, label }) => (
+                                        <label key={key} className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
+                                            <span className="text-sm text-primary dark:text-white">{label}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedTier({...selectedTier, [key]: !selectedTier[key as keyof MembershipTier]})}
+                                                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedTier[key as keyof MembershipTier] ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'}`}
+                                            >
+                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedTier[key as keyof MembershipTier] ? 'translate-x-4' : 'translate-x-0'}`} />
+                                            </button>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* All Features (JSON Editor) */}
+                            <div className="mb-6">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">All Features</h4>
+                                <div className="space-y-2 mb-3">
+                                    {Object.entries(selectedTier.all_features || {}).map(([key, enabled]) => (
+                                        <div key={key} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleFeature(key)}
+                                                    className={`w-4 h-4 rounded border flex items-center justify-center ${enabled ? 'bg-primary border-primary text-white' : 'border-gray-300 dark:border-gray-600'}`}
+                                                >
+                                                    {enabled && <span className="material-symbols-outlined text-xs">check</span>}
+                                                </button>
+                                                <span className={`text-sm ${enabled ? 'text-primary dark:text-white' : 'text-gray-400 line-through'}`}>{key}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveFeature(key)}
+                                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">close</span>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                                        placeholder="Add new feature..."
+                                        value={newFeatureKey}
+                                        onChange={e => setNewFeatureKey(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && handleAddFeature()}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddFeature}
+                                        className="px-3 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">add</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Highlights Selector */}
+                            <div className="mb-6">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                                    Highlighted Features 
+                                    <span className="text-gray-400 font-normal ml-1">({selectedTier.highlighted_features?.length || 0}/4)</span>
+                                </h4>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Select up to 4 features to highlight on the membership page</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {Object.entries(selectedTier.all_features || {}).filter(([_, enabled]) => enabled).map(([key]) => {
+                                        const isHighlighted = selectedTier.highlighted_features?.includes(key);
+                                        const canAdd = (selectedTier.highlighted_features?.length || 0) < 4;
+                                        return (
+                                            <label 
+                                                key={key} 
+                                                className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                                                    isHighlighted 
+                                                        ? 'bg-primary/10 dark:bg-primary/20 border-primary text-primary dark:text-white' 
+                                                        : canAdd 
+                                                            ? 'bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-black/30' 
+                                                            : 'bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-white/10 opacity-50 cursor-not-allowed'
+                                                }`}
+                                            >
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isHighlighted} 
+                                                    onChange={() => handleHighlightToggle(key)}
+                                                    disabled={!isHighlighted && !canAdd}
+                                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                />
+                                                <span className="text-sm truncate">{key}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                {Object.keys(selectedTier.all_features || {}).length === 0 && (
+                                    <p className="text-sm text-gray-400 dark:text-gray-500 italic">Add features above to select highlights</p>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-white/10">
+                                <button 
+                                    onClick={() => setIsEditing(false)} 
+                                    className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleSave} 
+                                    disabled={isSaving}
+                                    className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                                    {isSaving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Tiers List */}
+            {tiers.length === 0 ? (
+                <div className="text-center py-12 px-6 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5">
+                    <span className="material-symbols-outlined text-5xl mb-4 text-gray-300 dark:text-white/20">loyalty</span>
+                    <h3 className="text-lg font-bold mb-2 text-gray-600 dark:text-white/70">No tiers found</h3>
+                    <p className="text-sm text-gray-500 dark:text-white/50 max-w-xs mx-auto">
+                        Membership tiers will appear here once configured.
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {tiers.map(tier => (
+                        <div 
+                            key={tier.id} 
+                            onClick={() => openEdit(tier)}
+                            className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 cursor-pointer hover:border-primary/30 transition-all"
+                        >
+                            <div className="flex items-start justify-between mb-3">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-bold text-lg text-primary dark:text-white">{tier.name}</h4>
+                                        {tier.is_popular && (
+                                            <span className="text-[10px] font-bold uppercase tracking-wider bg-accent text-primary px-2 py-0.5 rounded">Popular</span>
+                                        )}
+                                        {!tier.is_active && (
+                                            <span className="text-[10px] font-bold uppercase tracking-wider bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">Inactive</span>
+                                        )}
+                                    </div>
+                                    <p className="text-xl font-bold text-primary dark:text-white">{tier.price_string}</p>
+                                </div>
+                                <button className="text-gray-400 hover:text-primary dark:hover:text-white transition-colors">
+                                    <span className="material-symbols-outlined">edit</span>
+                                </button>
+                            </div>
+                            
+                            {tier.description && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{tier.description}</p>
+                            )}
+                            
+                            <div className="flex flex-wrap gap-2 text-xs">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
+                                    <span className="material-symbols-outlined text-sm">sports_golf</span>
+                                    {tier.sim_hours_limit > 0 ? `${tier.sim_hours_limit}h sim` : 'No sim'}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
+                                    <span className="material-symbols-outlined text-sm">person_add</span>
+                                    {tier.guest_passes_per_month > 0 ? `${tier.guest_passes_per_month} passes` : 'No passes'}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
+                                    <span className="material-symbols-outlined text-sm">calendar_today</span>
+                                    {tier.booking_window_days}d window
+                                </span>
+                                {tier.unlimited_access && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 dark:bg-primary/20 text-primary dark:text-white font-bold">
+                                        <span className="material-symbols-outlined text-sm">all_inclusive</span>
+                                        Unlimited
+                                    </span>
+                                )}
                             </div>
                         </div>
                     ))}

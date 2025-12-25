@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
@@ -11,6 +11,45 @@ const MEMBERSHIP_FIELDS = [
   { name: 'phone', label: 'Phone', type: 'tel' as const, required: true, placeholder: '(949) 555-0100' },
   { name: 'membership_tier', label: 'Which tier are you interested in?', type: 'select' as const, required: false, options: ['Social', 'Core', 'Premium', 'Corporate', 'Not sure yet'] },
   { name: 'message', label: 'Tell us about yourself', type: 'textarea' as const, required: false, placeholder: 'Tell us about yourself and your interests...' }
+];
+
+interface TierFeature {
+  label: string;
+  value: string;
+  included: boolean;
+}
+
+interface MembershipTier {
+  id: number;
+  name: string;
+  slug: string;
+  price_string: string;
+  description: string;
+  button_text: string;
+  sort_order: number;
+  is_active: boolean;
+  is_popular: boolean;
+  highlighted_features: string[];
+  all_features: Record<string, TierFeature>;
+}
+
+const FEATURE_KEYS = [
+  'golf_hours',
+  'guest_passes',
+  'booking_window',
+  'cafe_bar',
+  'lounge',
+  'work_desks',
+  'simulators',
+  'putting',
+  'events',
+  'daily_guests',
+  'group_lessons',
+  'advanced_booking',
+  'extended_sessions',
+  'private_lesson',
+  'sim_guest_passes',
+  'discounted_merch'
 ];
 
 const Membership: React.FC = () => {
@@ -27,6 +66,57 @@ const MembershipOverview: React.FC = () => {
   const navigate = useNavigate();
   const [selectedPass, setSelectedPass] = useState<'workspace' | 'sim' | null>(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [tiers, setTiers] = useState<MembershipTier[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTiers = async () => {
+      try {
+        const response = await fetch('/api/membership-tiers?active=true');
+        if (response.ok) {
+          const data = await response.json();
+          const filteredTiers = data.filter((t: MembershipTier) => t.name !== 'VIP');
+          setTiers(filteredTiers);
+        }
+      } catch (error) {
+        console.error('Failed to fetch membership tiers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTiers();
+  }, []);
+
+  const socialTier = tiers.find(t => t.slug === 'social');
+  const coreTier = tiers.find(t => t.slug === 'core');
+  const premiumTier = tiers.find(t => t.slug === 'premium');
+  const corporateTier = tiers.find(t => t.slug === 'corporate');
+
+  const extractPrice = (priceString: string) => {
+    const match = priceString.match(/\$[\d,]+/);
+    return match ? match[0] : priceString;
+  };
+
+  const extractSuffix = (priceString: string) => {
+    const match = priceString.match(/\/\w+/);
+    return match ? match[0] : '/mo';
+  };
+
+  if (loading) {
+    return (
+      <div className="px-4 pt-6 pb-0 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen overflow-x-hidden">
+        <div className="text-center px-2 pt-4 animate-pulse">
+          <div className="h-8 bg-primary/10 rounded-lg w-48 mx-auto mb-3"></div>
+          <div className="h-4 bg-primary/10 rounded w-64 mx-auto"></div>
+        </div>
+        <div className="space-y-5">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-64 bg-white/50 rounded-[2rem] animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pt-6 pb-0 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen overflow-x-hidden">
@@ -37,7 +127,6 @@ const MembershipOverview: React.FC = () => {
         </p>
       </div>
 
-      {/* Guest Pass Section - Light Glass */}
       <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-5 border border-white/60 shadow-sm animate-pop-in" style={{animationDelay: '0.1s'}}>
         <div className="flex items-center gap-3 mb-4">
            <div className="p-2 bg-primary/5 rounded-xl text-primary">
@@ -79,84 +168,76 @@ const MembershipOverview: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-5">
-        <MembershipCard 
-          title="Social Membership"
-          price="$180"
-          desc="Perfect for those who want to join the community and enjoy the club's lifestyle offerings, without the golf simulators. Social Members have full access to our lounges, cafe, putting course, events, work spaces, and more."
-          features={[
-            "Member events",
-            "Daily guest passes",
-            "Putting course & practice green",
-            "Concierge for bookings"
-          ]}
-          onClick={() => setShowApplicationForm(true)} 
-        />
-        {/* Core Card - Dark Green with Liquid Glass */}
-        <div className="relative flex flex-col p-6 backdrop-blur-xl bg-primary/90 rounded-[2rem] overflow-hidden text-white border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_0_20px_rgba(41,53,21,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className="pr-2">
-              <h3 className="text-xl font-semibold mb-2">Core Membership</h3>
-              <p className="text-sm text-white/70 leading-relaxed font-light">Your all-access pass to the Even House experience. From the cafe and lounges to the putting course and conference room.</p>
-            </div>
-            <span className="shrink-0 px-3 py-1 bg-accent/90 backdrop-blur text-primary text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm border border-white/20 mt-1">
-              Popular
-            </span>
-          </div>
-          <div className="flex items-baseline gap-1 mb-6 relative z-10">
-            <span className="text-4xl font-semibold tracking-tight">$250</span>
-            <span className="text-sm font-medium text-white/60">/mo</span>
-          </div>
-          <ul className="flex flex-col gap-3 mb-8 relative z-10">
-            {[
-              "60 mins/day golf simulator bookings",
-              "60 mins/day conf room bookings",
-              "Daily guest passes",
-              "Concierge for bookings & support"
-            ].map((f, i) => (
-              <li key={i} className="flex gap-3 text-sm text-white/90 font-light">
-                <span className="material-symbols-outlined text-[18px] text-accent shrink-0 font-light">check_circle</span>
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-          <button 
+        {socialTier && (
+          <MembershipCard 
+            title={`${socialTier.name} Membership`}
+            price={extractPrice(socialTier.price_string)}
+            suffix={extractSuffix(socialTier.price_string)}
+            desc={socialTier.description}
+            features={socialTier.highlighted_features}
             onClick={() => setShowApplicationForm(true)}
-            className="w-full relative z-10 py-4 px-6 rounded-2xl bg-white/95 backdrop-blur text-primary font-bold text-sm tracking-widest uppercase hover:bg-white transition-all duration-300 active:scale-[0.98] shadow-[0_4px_16px_rgba(0,0,0,0.2)]"
-          >
-            Apply
-          </button>
-        </div>
+            btnText={socialTier.button_text}
+          />
+        )}
         
-        <MembershipCard 
-          title="Premium Membership"
-          price="$450"
-          desc="Premium gives you everything from the Core Membership plus priority bookings for amenities and events, and added benefits that elevate every visit."
-          features={[
-            "90 mins/day golf simulator bookings",
-            "Priority booking of amenities",
-            "Group lessons package included",
-            "Daily complimentary coffee, beer or wine",
-            "Additional discounts and perks"
-          ]}
-          onClick={() => setShowApplicationForm(true)}
-        />
+        {coreTier && (
+          <div className="relative flex flex-col p-6 backdrop-blur-xl bg-primary/90 rounded-[2rem] overflow-hidden text-white border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_0_20px_rgba(41,53,21,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-[1.02] hover:-translate-y-1 transition-all duration-[400ms]">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none"></div>
+            <div className="flex justify-between items-start mb-4 relative z-10">
+              <div className="pr-2">
+                <h3 className="text-xl font-semibold mb-2">{coreTier.name} Membership</h3>
+                <p className="text-sm text-white/70 leading-relaxed font-light">{coreTier.description}</p>
+              </div>
+              {coreTier.is_popular && (
+                <span className="shrink-0 px-3 py-1 bg-accent/90 backdrop-blur text-primary text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm border border-white/20 mt-1">
+                  Popular
+                </span>
+              )}
+            </div>
+            <div className="flex items-baseline gap-1 mb-6 relative z-10">
+              <span className="text-4xl font-semibold tracking-tight">{extractPrice(coreTier.price_string)}</span>
+              <span className="text-sm font-medium text-white/60">{extractSuffix(coreTier.price_string)}</span>
+            </div>
+            <ul className="flex flex-col gap-3 mb-8 relative z-10">
+              {coreTier.highlighted_features.map((f, i) => (
+                <li key={i} className="flex gap-3 text-sm text-white/90 font-light">
+                  <span className="material-symbols-outlined text-[18px] text-accent shrink-0 font-light">check_circle</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <button 
+              onClick={() => setShowApplicationForm(true)}
+              className="w-full relative z-10 py-4 px-6 rounded-2xl bg-white/95 backdrop-blur text-primary font-bold text-sm tracking-widest uppercase hover:bg-white transition-all duration-300 active:scale-[0.98] shadow-[0_4px_16px_rgba(0,0,0,0.2)]"
+            >
+              {coreTier.button_text}
+            </button>
+          </div>
+        )}
+        
+        {premiumTier && (
+          <MembershipCard 
+            title={`${premiumTier.name} Membership`}
+            price={extractPrice(premiumTier.price_string)}
+            suffix={extractSuffix(premiumTier.price_string)}
+            desc={premiumTier.description}
+            features={premiumTier.highlighted_features}
+            onClick={() => setShowApplicationForm(true)}
+            btnText={premiumTier.button_text}
+          />
+        )}
 
-        <MembershipCard 
-          title="Corporate Membership"
-          price="$350"
-          suffix="/mo per employee"
-          desc="Unlock a powerful business asset. Corporate memberships provide your team with professional workspaces, private meeting rooms, and premium golf amenities."
-          features={[
-            "Daily workspaces & lounge access",
-            "90 min/day golf simulator bookings",
-            "Priority bookings",
-            "15 full-access guest passes per year",
-            "Additional passes $25/each"
-          ]}
-          onClick={() => navigate('corporate')}
-          btnText="View Details"
-        />
+        {corporateTier && (
+          <MembershipCard 
+            title={`${corporateTier.name} Membership`}
+            price={extractPrice(corporateTier.price_string)}
+            suffix="/mo per employee"
+            desc={corporateTier.description}
+            features={corporateTier.highlighted_features}
+            onClick={() => navigate('corporate')}
+            btnText="View Details"
+          />
+        )}
       </div>
       
       <Link to="compare" className="w-full mt-4 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-primary transition-colors py-2">
@@ -206,10 +287,8 @@ const MembershipCard: React.FC<any> = ({ title, price, suffix="/mo", desc, featu
 );
 
 const Corporate: React.FC = () => {
-    const navigate = useNavigate();
     return (
       <div className="px-6 pt-6 pb-12 flex flex-col gap-6 bg-[#F2F2EC] min-h-screen">
-        {/* Header */}
         <div className="flex flex-col gap-2 mb-2 pt-4">
             <div className="flex items-center gap-2">
                 <span className="px-4 py-1 bg-white/50 backdrop-blur text-primary text-[10px] font-bold rounded-full uppercase tracking-wider border border-primary/5 shadow-sm">
@@ -224,7 +303,6 @@ const Corporate: React.FC = () => {
             </p>
         </div>
 
-        {/* Features Card */}
         <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60">
             <ul className="space-y-8">
                 <li className="flex gap-4 items-start">
@@ -257,7 +335,6 @@ const Corporate: React.FC = () => {
             </ul>
         </div>
 
-        {/* Volume Discounts Table */}
         <div className="mt-4">
              <div className="flex justify-between items-center mb-6 px-2">
                 <h2 className="text-2xl font-medium text-primary tracking-tight">Volume Discounts</h2>
@@ -276,7 +353,6 @@ const Corporate: React.FC = () => {
              </p>
         </div>
 
-        {/* Apply Button */}
         <Link to="/contact" className="w-full py-5 px-6 rounded-2xl bg-primary text-white font-bold text-sm uppercase tracking-widest hover:bg-primary/90 shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-4 mb-8 group">
             Apply for Corporate Membership
             <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
@@ -297,102 +373,29 @@ const DiscountRow: React.FC<{count: string; price: string; icon: string}> = ({ c
     </div>
 );
 
-const MEMBERSHIP_DATA: Record<string, {
-    price: string,
-    features: Record<string, string | boolean>
-}> = {
-    Social: {
-        price: "$180",
-        features: {
-            "Cafe, Bar & Patio Dining": true,
-            "Lounge & Entertaining Spaces": true,
-            "Work Desks & Conference Room": true,
-            "Trackman Simulators": false,
-            "Putting Course": true,
-            "Programs & Events": true,
-            "Daily Guests Allowed": true,
-            "Group Lessons": false,
-            "Advanced Simulator Booking": false,
-            "Extended Simulator Sessions": false,
-            "Complimentary Private Lesson": false,
-            "Simulator Guest Passes": false,
-            "Discounted Merchandise": false
-        }
-    },
-    Core: {
-        price: "$250",
-        features: {
-            "Cafe, Bar & Patio Dining": true,
-            "Lounge & Entertaining Spaces": true,
-            "Work Desks & Conference Room": true,
-            "Trackman Simulators": true,
-            "Putting Course": true,
-            "Programs & Events": true,
-            "Daily Guests Allowed": true,
-            "Group Lessons": false,
-            "Advanced Simulator Booking": false,
-            "Extended Simulator Sessions": false,
-            "Complimentary Private Lesson": false,
-            "Simulator Guest Passes": false,
-            "Discounted Merchandise": false
-        }
-    },
-    Premium: {
-        price: "$450",
-        features: {
-            "Cafe, Bar & Patio Dining": true,
-            "Lounge & Entertaining Spaces": true,
-            "Work Desks & Conference Room": true,
-            "Trackman Simulators": true,
-            "Putting Course": true,
-            "Programs & Events": true,
-            "Daily Guests Allowed": true,
-            "Group Lessons": true,
-            "Advanced Simulator Booking": true,
-            "Extended Simulator Sessions": true,
-            "Complimentary Private Lesson": true,
-            "Simulator Guest Passes": true,
-            "Discounted Merchandise": true
-        }
-    },
-    Corporate: {
-        price: "$350",
-        features: {
-            "Cafe, Bar & Patio Dining": true,
-            "Lounge & Entertaining Spaces": true,
-            "Work Desks & Conference Room": true,
-            "Trackman Simulators": true,
-            "Putting Course": true,
-            "Programs & Events": true,
-            "Daily Guests Allowed": true,
-            "Group Lessons": true,
-            "Advanced Simulator Booking": true,
-            "Extended Simulator Sessions": true,
-            "Complimentary Private Lesson": true,
-            "Simulator Guest Passes": true,
-            "Discounted Merchandise": true
-        }
-    }
-};
-
-const FEATURE_KEYS = [
-    "Cafe, Bar & Patio Dining",
-    "Lounge & Entertaining Spaces",
-    "Work Desks & Conference Room",
-    "Trackman Simulators",
-    "Putting Course",
-    "Programs & Events",
-    "Daily Guests Allowed",
-    "Group Lessons",
-    "Advanced Simulator Booking",
-    "Extended Simulator Sessions",
-    "Complimentary Private Lesson",
-    "Simulator Guest Passes",
-    "Discounted Merchandise"
-];
-
 const CompareFeatures: React.FC = () => {
+  const [tiers, setTiers] = useState<MembershipTier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedTiers, setSelectedTiers] = useState<string[]>(['Social', 'Core', 'Premium']);
+
+  useEffect(() => {
+    const fetchTiers = async () => {
+      try {
+        const response = await fetch('/api/membership-tiers?active=true');
+        if (response.ok) {
+          const data = await response.json();
+          const filteredTiers = data.filter((t: MembershipTier) => t.name !== 'VIP');
+          setTiers(filteredTiers);
+        }
+      } catch (error) {
+        console.error('Failed to fetch membership tiers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTiers();
+  }, []);
+
   const toggleTier = (tier: string) => {
     if (selectedTiers.includes(tier)) {
         if (selectedTiers.length > 1) {
@@ -404,6 +407,26 @@ const CompareFeatures: React.FC = () => {
         }
     }
   };
+
+  const tierNames = tiers.map(t => t.name);
+  const tiersMap = Object.fromEntries(tiers.map(t => [t.name, t]));
+
+  const extractPrice = (priceString: string) => {
+    const match = priceString.match(/\$[\d,]+/);
+    return match ? match[0] : priceString;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-6 pt-6 px-4 pb-12 bg-[#F2F2EC] min-h-screen">
+        <div className="text-center px-2 pt-4 animate-pulse">
+          <div className="h-8 bg-primary/10 rounded-lg w-48 mx-auto mb-3"></div>
+          <div className="h-4 bg-primary/10 rounded w-64 mx-auto"></div>
+        </div>
+        <div className="h-96 bg-white/50 rounded-3xl animate-pulse"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 pt-6 px-4 pb-12 bg-[#F2F2EC] min-h-screen">
@@ -417,7 +440,7 @@ const CompareFeatures: React.FC = () => {
       <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-4 shadow-sm border border-white/60">
         <h3 className="text-xs font-bold text-primary/50 mb-3 uppercase tracking-wider">Select to Compare (Max 3)</h3>
         <div className="flex flex-wrap gap-2">
-          {['Social', 'Core', 'Premium', 'Corporate'].map(t => {
+          {tierNames.map(t => {
             const isSelected = selectedTiers.includes(t);
             return (
                 <button 
@@ -437,36 +460,52 @@ const CompareFeatures: React.FC = () => {
         <div className="min-w-[320px]">
           <div className="grid grid-cols-[25%_1fr_1fr_1fr] gap-1 mb-4 border-b border-primary/5 pb-4 items-end">
              <div className="text-[10px] font-bold text-primary/40 uppercase tracking-widest pl-1">Features</div>
-             {selectedTiers.map((tier, idx) => (
-                 <div key={tier} className="text-center px-0.5">
-                    {tier === 'Core' && <div className="inline-block bg-accent text-[8px] font-bold px-1.5 py-0.5 rounded-full text-primary mb-1 shadow-sm">POPULAR</div>}
+             {selectedTiers.map((tier) => {
+                const tierData = tiersMap[tier];
+                if (!tierData) return null;
+                return (
+                  <div key={tier} className="text-center px-0.5">
+                    {tierData.is_popular && <div className="inline-block bg-accent text-[8px] font-bold px-1.5 py-0.5 rounded-full text-primary mb-1 shadow-sm">POPULAR</div>}
                     <span className="text-xs md:text-sm font-bold block text-primary truncate">{tier}</span>
-                    <span className="text-[10px] text-primary/60 font-medium">{MEMBERSHIP_DATA[tier].price}</span>
-                 </div>
-             ))}
+                    <span className="text-[10px] text-primary/60 font-medium">{extractPrice(tierData.price_string)}</span>
+                  </div>
+                );
+             })}
              {[...Array(3 - selectedTiers.length)].map((_, i) => <div key={i}></div>)}
           </div>
           
-          {FEATURE_KEYS.map(feature => (
-              <div key={feature} className="grid grid-cols-[25%_1fr_1fr_1fr] gap-1 items-center py-3 border-b border-primary/5 last:border-0">
-                  <div className="text-[10px] font-bold text-primary/80 pl-1 leading-tight">{feature}</div>
-                  {selectedTiers.map(tier => {
-                      const val = MEMBERSHIP_DATA[tier].features[feature];
-                      return (
-                        <div key={`${tier}-${feature}`} className="flex justify-center text-center">
-                            {val === true ? (
-                                <span className="material-symbols-outlined text-[18px] text-primary/80">check_circle</span>
-                            ) : val === false ? (
-                                <span className="text-[10px] font-bold text-primary/20">—</span>
-                            ) : (
-                                <span className="text-[10px] font-bold text-primary/80 leading-tight">{val}</span>
-                            )}
-                        </div>
-                      );
-                  })}
-                  {[...Array(3 - selectedTiers.length)].map((_, i) => <div key={i}></div>)}
-              </div>
-          ))}
+          {FEATURE_KEYS.map(featureKey => {
+              const firstTierWithFeature = tiers.find(t => t.all_features?.[featureKey]);
+              const featureLabel = firstTierWithFeature?.all_features?.[featureKey]?.label || featureKey;
+              
+              return (
+                <div key={featureKey} className="grid grid-cols-[25%_1fr_1fr_1fr] gap-1 items-center py-3 border-b border-primary/5 last:border-0">
+                    <div className="text-[10px] font-bold text-primary/80 pl-1 leading-tight">{featureLabel}</div>
+                    {selectedTiers.map(tier => {
+                        const tierData = tiersMap[tier];
+                        if (!tierData) return null;
+                        const feature = tierData.all_features?.[featureKey];
+                        const included = feature?.included ?? false;
+                        const value = feature?.value || '—';
+                        
+                        return (
+                          <div key={`${tier}-${featureKey}`} className="flex justify-center text-center">
+                              {included ? (
+                                  value === '✓' ? (
+                                      <span className="material-symbols-outlined text-[18px] text-primary/80">check_circle</span>
+                                  ) : (
+                                      <span className="text-[10px] font-bold text-primary/80 leading-tight">{value}</span>
+                                  )
+                              ) : (
+                                  <span className="text-[10px] font-bold text-primary/20">—</span>
+                              )}
+                          </div>
+                        );
+                    })}
+                    {[...Array(3 - selectedTiers.length)].map((_, i) => <div key={i}></div>)}
+                </div>
+              );
+          })}
         </div>
       </div>
     </div>

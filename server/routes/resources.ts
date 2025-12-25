@@ -150,7 +150,7 @@ router.post('/api/bookings', async (req, res) => {
       }
     } catch { userTags = []; }
     
-    const isMemberAuthorized = isAuthorizedForMemberBooking(userTier, userTags);
+    const isMemberAuthorized = await isAuthorizedForMemberBooking(userTier, userTags);
     
     if (!isMemberAuthorized) {
       return res.status(402).json({ 

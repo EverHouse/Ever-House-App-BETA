@@ -23,6 +23,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").default("member"),
   tier: varchar("tier"),
+  tierId: integer("tier_id"),
   tags: jsonb("tags").default(sql`'[]'::jsonb`),
   phone: varchar("phone"),
   mindbodyClientId: varchar("mindbody_client_id"),
@@ -331,6 +332,45 @@ export const facilityClosures = pgTable("facility_closures", {
   createdBy: varchar("created_by"),
 });
 
+// Membership tiers table - centralized tier configuration for marketing and logic
+export const membershipTiers = pgTable("membership_tiers", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull().unique(),
+  slug: varchar("slug").notNull().unique(),
+  
+  // Display fields
+  priceString: varchar("price_string").notNull(),
+  description: text("description"),
+  buttonText: varchar("button_text").default("Apply Now"),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  isPopular: boolean("is_popular").default(false),
+  
+  // Marketing fields (JSON)
+  highlightedFeatures: jsonb("highlighted_features").default(sql`'[]'::jsonb`),
+  allFeatures: jsonb("all_features").default(sql`'{}'::jsonb`),
+  
+  // Logic/Enforcement fields
+  simHoursLimit: integer("sim_hours_limit").default(0),
+  guestPassesPerMonth: integer("guest_passes_per_month").default(0),
+  bookingWindowDays: integer("booking_window_days").default(7),
+  dailyConfRoomMinutes: integer("daily_conf_room_minutes").default(0),
+  
+  // Boolean permissions
+  canBookSimulators: boolean("can_book_simulators").default(false),
+  canBookConference: boolean("can_book_conference").default(false),
+  canBookWellness: boolean("can_book_wellness").default(true),
+  hasGroupLessons: boolean("has_group_lessons").default(false),
+  hasExtendedSessions: boolean("has_extended_sessions").default(false),
+  hasPrivateLesson: boolean("has_private_lesson").default(false),
+  hasSimulatorGuestPasses: boolean("has_simulator_guest_passes").default(false),
+  hasDiscountedMerch: boolean("has_discounted_merch").default(false),
+  unlimitedAccess: boolean("unlimited_access").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Membership tier conflicts table - tracks tier discrepancies between app and external sources
 export const membershipTierConflicts = pgTable("membership_tier_conflicts", {
   id: serial("id").primaryKey(),
@@ -364,3 +404,5 @@ export type Faq = typeof faqs.$inferSelect;
 export type InsertFaq = typeof faqs.$inferInsert;
 export type FormSubmission = typeof formSubmissions.$inferSelect;
 export type InsertFormSubmission = typeof formSubmissions.$inferInsert;
+export type MembershipTier = typeof membershipTiers.$inferSelect;
+export type InsertMembershipTier = typeof membershipTiers.$inferInsert;
