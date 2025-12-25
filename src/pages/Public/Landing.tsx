@@ -75,7 +75,7 @@ const Landing: React.FC = () => {
             A new kind of <br/> members club — <br/> rooted in golf, built <br/> for community.
           </h1>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-             <Link to="/membership" className="w-full py-4 rounded-xl bg-[#F2F2EC] text-[#293515] font-bold text-xs uppercase tracking-[0.15em] shadow-lg hover:scale-[1.02] transition-transform text-center">
+             <Link to="/membership" className="w-full py-4 rounded-2xl bg-white/30 backdrop-blur-xl text-white font-bold text-xs uppercase tracking-[0.15em] shadow-lg hover:scale-[1.02] hover:bg-white/40 transition-all text-center border border-white/40">
                 Apply for Membership
              </Link>
              <button onClick={() => setShowTourForm(true)} className="w-full py-3 text-white font-medium text-sm hover:opacity-80 transition-opacity flex items-center justify-center gap-2 group">
