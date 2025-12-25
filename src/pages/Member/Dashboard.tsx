@@ -10,6 +10,7 @@ import { formatDateShort, getTodayString } from '../../utils/dateUtils';
 import { DashboardSkeleton } from '../../components/skeletons';
 import { getBaseTier } from '../../utils/permissions';
 import PullToRefresh from '../../components/PullToRefresh';
+import AnnouncementAlert from '../../components/AnnouncementAlert';
 
 
 interface DBBooking {
@@ -323,6 +324,7 @@ const Dashboard: React.FC = () => {
     <PullToRefresh onRefresh={handleRefresh} className="h-full overflow-y-auto">
       <div className="px-6 pt-4 font-sans relative min-h-full">
         <WelcomeBanner />
+        <AnnouncementAlert />
         
         <div className="mb-6">
           <div className="flex items-center gap-3 animate-pop-in">
