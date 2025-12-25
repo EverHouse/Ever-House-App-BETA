@@ -103,6 +103,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'inquiries' && 'Inquiries'}
                {activeTab === 'gallery' && 'Manage Gallery'}
                {activeTab === 'tiers' && 'Manage Tiers'}
+               {activeTab === 'blocks' && 'Availability Blocks'}
            </h1>
         </div>
         
@@ -118,6 +119,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'inquiries' && <InquiriesAdmin />}
         {activeTab === 'gallery' && <GalleryAdmin />}
         {activeTab === 'tiers' && actualUser?.role === 'admin' && <TiersAdmin />}
+        {activeTab === 'blocks' && <BlocksAdmin />}
         <BottomSentinel />
       </main>
 
@@ -138,7 +140,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'faqs' | 'inquiries' | 'gallery' | 'tiers';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks';
 
 interface NavItemData {
   id: TabType;
@@ -230,6 +232,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings', adminOnly: true },
+    { id: 'blocks' as TabType, icon: 'block', label: 'Bay Blocks', description: 'View and manage availability blocks' },
   ];
 
   const visibleLinks = quickLinks.filter(link => !link.adminOnly || isAdmin);
@@ -3732,6 +3735,321 @@ const BOOLEAN_FIELDS = [
     { key: 'has_discounted_merch', label: 'Has Discounted Merch' },
     { key: 'unlimited_access', label: 'Unlimited Access' },
 ] as const;
+
+// --- BLOCKS ADMIN ---
+
+interface AvailabilityBlock {
+    id: number;
+    bay_id: number;
+    bay_name: string;
+    block_date: string;
+    start_time: string;
+    end_time: string;
+    block_type: string;
+    notes: string | null;
+    created_by: string | null;
+    created_at: string;
+    closure_id: number | null;
+}
+
+const BlocksAdmin: React.FC = () => {
+    const [blocks, setBlocks] = useState<AvailabilityBlock[]>([]);
+    const [bays, setBays] = useState<{ id: number; name: string }[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedBlock, setSelectedBlock] = useState<AvailabilityBlock | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [filterBay, setFilterBay] = useState<string>('all');
+    const [filterDate, setFilterDate] = useState<string>('');
+    const [showPast, setShowPast] = useState(false);
+
+    const fetchBlocks = async () => {
+        setIsLoading(true);
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const params = new URLSearchParams();
+            if (!showPast) {
+                params.append('start_date', today);
+            }
+            if (filterBay !== 'all') {
+                params.append('bay_id', filterBay);
+            }
+            
+            const [blocksRes, baysRes] = await Promise.all([
+                fetch(`/api/availability-blocks?${params}`),
+                fetch('/api/bays')
+            ]);
+            
+            if (blocksRes.ok) setBlocks(await blocksRes.json());
+            if (baysRes.ok) setBays(await baysRes.json());
+        } catch (error) {
+            console.error('Failed to fetch blocks:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchBlocks();
+    }, [filterBay, showPast]);
+
+    const handleDelete = async (id: number) => {
+        if (!confirm('Are you sure you want to delete this availability block?')) return;
+        
+        try {
+            const res = await fetch(`/api/availability-blocks/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setBlocks(blocks.filter(b => b.id !== id));
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+        }
+    };
+
+    const handleUpdate = async () => {
+        if (!selectedBlock) return;
+        
+        try {
+            const res = await fetch(`/api/availability-blocks/${selectedBlock.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bay_id: selectedBlock.bay_id,
+                    block_date: selectedBlock.block_date,
+                    start_time: selectedBlock.start_time,
+                    end_time: selectedBlock.end_time,
+                    block_type: selectedBlock.block_type,
+                    notes: selectedBlock.notes
+                })
+            });
+            
+            if (res.ok) {
+                setIsEditing(false);
+                setSelectedBlock(null);
+                fetchBlocks();
+            }
+        } catch (error) {
+            console.error('Update failed:', error);
+        }
+    };
+
+    const formatDate = (dateStr: string) => {
+        return new Date(dateStr).toLocaleDateString('en-US', { 
+            weekday: 'short', month: 'short', day: 'numeric' 
+        });
+    };
+
+    const formatTime = (time: string) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+        return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+    };
+
+    const filteredBlocks = filterDate 
+        ? blocks.filter(b => b.block_date === filterDate)
+        : blocks;
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-wrap gap-3 items-center">
+                <select
+                    value={filterBay}
+                    onChange={(e) => setFilterBay(e.target.value)}
+                    className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm"
+                >
+                    <option value="all">All Bays</option>
+                    {bays.map(bay => (
+                        <option key={bay.id} value={bay.id}>{bay.name}</option>
+                    ))}
+                </select>
+                
+                <input
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm"
+                />
+                {filterDate && (
+                    <button
+                        onClick={() => setFilterDate('')}
+                        className="px-3 py-2 rounded-xl bg-white/10 text-white/70 text-sm hover:bg-white/20"
+                    >
+                        Clear Date
+                    </button>
+                )}
+                
+                <label className="flex items-center gap-2 text-white/70 text-sm ml-auto">
+                    <input
+                        type="checkbox"
+                        checked={showPast}
+                        onChange={(e) => setShowPast(e.target.checked)}
+                        className="rounded"
+                    />
+                    Show past blocks
+                </label>
+            </div>
+
+            {filteredBlocks.length === 0 ? (
+                <div className="text-center py-12 text-white/50">
+                    <span className="material-symbols-outlined text-4xl mb-2">event_available</span>
+                    <p>No availability blocks found</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {filteredBlocks.map(block => (
+                        <div
+                            key={block.id}
+                            className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4"
+                        >
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold text-white">{block.bay_name}</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs">
+                                        {block.block_type}
+                                    </span>
+                                    {block.closure_id && (
+                                        <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs">
+                                            Closure
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-white/70 text-sm">
+                                    {formatDate(block.block_date)} · {formatTime(block.start_time)} - {formatTime(block.end_time)}
+                                </p>
+                                {block.notes && (
+                                    <p className="text-white/50 text-xs mt-1 truncate">{block.notes}</p>
+                                )}
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => {
+                                        setSelectedBlock(block);
+                                        setIsEditing(true);
+                                    }}
+                                    className="p-2 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(block.id)}
+                                    className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {isEditing && selectedBlock && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="w-full max-w-md bg-[#1a1f12] rounded-3xl border border-white/10 p-6">
+                        <h3 className="text-lg font-bold text-white mb-4">Edit Block</h3>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-white/70 text-sm mb-1 block">Bay</label>
+                                <select
+                                    value={selectedBlock.bay_id}
+                                    onChange={(e) => setSelectedBlock({...selectedBlock, bay_id: parseInt(e.target.value)})}
+                                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                                >
+                                    {bays.map(bay => (
+                                        <option key={bay.id} value={bay.id}>{bay.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label className="text-white/70 text-sm mb-1 block">Date</label>
+                                <input
+                                    type="date"
+                                    value={selectedBlock.block_date}
+                                    onChange={(e) => setSelectedBlock({...selectedBlock, block_date: e.target.value})}
+                                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                                />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-white/70 text-sm mb-1 block">Start Time</label>
+                                    <input
+                                        type="time"
+                                        value={selectedBlock.start_time.substring(0, 5)}
+                                        onChange={(e) => setSelectedBlock({...selectedBlock, start_time: e.target.value + ':00'})}
+                                        className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-white/70 text-sm mb-1 block">End Time</label>
+                                    <input
+                                        type="time"
+                                        value={selectedBlock.end_time.substring(0, 5)}
+                                        onChange={(e) => setSelectedBlock({...selectedBlock, end_time: e.target.value + ':00'})}
+                                        className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label className="text-white/70 text-sm mb-1 block">Block Type</label>
+                                <select
+                                    value={selectedBlock.block_type}
+                                    onChange={(e) => setSelectedBlock({...selectedBlock, block_type: e.target.value})}
+                                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                                >
+                                    <option value="blocked">Blocked</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="reserved">Reserved</option>
+                                    <option value="closure">Closure</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label className="text-white/70 text-sm mb-1 block">Notes</label>
+                                <textarea
+                                    value={selectedBlock.notes || ''}
+                                    onChange={(e) => setSelectedBlock({...selectedBlock, notes: e.target.value})}
+                                    rows={2}
+                                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white resize-none"
+                                    placeholder="Optional notes..."
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => {
+                                    setIsEditing(false);
+                                    setSelectedBlock(null);
+                                }}
+                                className="flex-1 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUpdate}
+                                className="flex-1 py-3 rounded-xl bg-brand-green text-white font-medium hover:opacity-90 transition-all"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const TiersAdmin: React.FC = () => {
     const [tiers, setTiers] = useState<MembershipTier[]>([]);

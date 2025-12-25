@@ -127,6 +127,34 @@ router.get('/api/availability-blocks', async (req, res) => {
   }
 });
 
+router.put('/api/availability-blocks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { bay_id, block_date, start_time, end_time, block_type, notes } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE availability_blocks 
+       SET bay_id = COALESCE($1, bay_id),
+           block_date = COALESCE($2, block_date),
+           start_time = COALESCE($3, start_time),
+           end_time = COALESCE($4, end_time),
+           block_type = COALESCE($5, block_type),
+           notes = $6
+       WHERE id = $7 RETURNING *`,
+      [bay_id, block_date, start_time, end_time, block_type, notes, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Block not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    if (!isProduction) console.error('Update block error:', error);
+    res.status(500).json({ error: 'Failed to update availability block' });
+  }
+});
+
 router.delete('/api/availability-blocks/:id', async (req, res) => {
   try {
     const { id } = req.params;
