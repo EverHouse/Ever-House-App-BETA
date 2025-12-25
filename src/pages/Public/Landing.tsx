@@ -71,15 +71,16 @@ const Landing: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
         
         <div className="relative z-10 animate-pop-in flex flex-col items-center text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.1] mb-8 sm:mb-10 text-white text-shadow-sm">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05] mb-8 sm:mb-10 text-white text-shadow-sm font-serif">
             A new kind of <br/> members club — <br/> rooted in golf, built <br/> for community.
           </h1>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-             <Link to="/membership" className="w-full py-4 rounded-xl bg-[#F2F2EC] text-[#293515] font-bold text-sm shadow-lg hover:scale-[1.02] transition-transform text-center">
+             <Link to="/membership" className="w-full py-4 rounded-xl bg-[#F2F2EC] text-[#293515] font-bold text-xs uppercase tracking-[0.15em] shadow-lg hover:scale-[1.02] transition-transform text-center">
                 Apply for Membership
              </Link>
-             <button onClick={() => setShowTourForm(true)} className="w-full py-4 rounded-xl border border-white/30 bg-white/5 backdrop-blur-sm text-white font-bold text-sm hover:bg-white/10 transition-colors">
+             <button onClick={() => setShowTourForm(true)} className="w-full py-3 text-white font-medium text-sm hover:opacity-80 transition-opacity flex items-center justify-center gap-2 group">
                 Book a Tour
+                <span className="material-symbols-outlined text-lg group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
              </button>
           </div>
         </div>
