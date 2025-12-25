@@ -156,7 +156,7 @@ const WelcomeBanner: React.FC = () => {
                       <span className="text-sm font-bold">1</span>
                     </div>
                     <p className="text-sm pt-1">
-                      Tap the <span className="material-symbols-outlined text-[16px] align-middle">ios_share</span> Share button in Safari
+                      Tap the <span className="material-symbols-outlined text-[16px] align-middle">ios_share</span> <strong>Share</strong> button at the bottom of the screen.
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
@@ -164,7 +164,7 @@ const WelcomeBanner: React.FC = () => {
                       <span className="text-sm font-bold">2</span>
                     </div>
                     <p className="text-sm pt-1">
-                      Scroll down and tap <strong>"Add to Home Screen"</strong>
+                      Scroll down and tap <strong>"Add to Home Screen"</strong>.
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
@@ -172,7 +172,15 @@ const WelcomeBanner: React.FC = () => {
                       <span className="text-sm font-bold">3</span>
                     </div>
                     <p className="text-sm pt-1">
-                      Tap <strong>"Add"</strong> in the top right
+                      Turn on the <strong>"Open as Web App"</strong> toggle to open it like a dedicated app.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                      <span className="text-sm font-bold">4</span>
+                    </div>
+                    <p className="text-sm pt-1">
+                      Tap <strong>"Add"</strong> to place the icon on your Home Screen.
                     </p>
                   </div>
                 </>
@@ -183,12 +191,15 @@ const WelcomeBanner: React.FC = () => {
               )}
             </div>
             
-            <button
+            <a
+              href="https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios"
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setShowIOSModal(false)}
-              className={`w-full mt-6 py-3 rounded-xl font-bold ${isDark ? 'bg-accent text-brand-green' : 'bg-brand-green text-white'}`}
+              className={`w-full mt-6 py-3 rounded-xl font-bold text-center block ${isDark ? 'bg-accent text-brand-green' : 'bg-brand-green text-white'}`}
             >
-              Got it
-            </button>
+              View Full Instructions
+            </a>
           </div>
         </div>
       )}
