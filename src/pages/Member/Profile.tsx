@@ -203,24 +203,37 @@ const Profile: React.FC = () => {
          </Section>
 
          <Section title="Settings" isDark={isDark}>
-            {pushSupported && (
-              <div className={`p-4 flex items-center justify-between transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
-                <div className="flex items-center gap-4">
-                  <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>notifications</span>
-                  <div>
-                    <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>Push Notifications</span>
-                    <p className={`text-xs mt-0.5 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>Get notified when bookings are approved</p>
-                  </div>
+            <div className={`p-4 flex items-center justify-between transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+              <div className="flex items-center gap-4">
+                <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>notifications</span>
+                <div>
+                  <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>Push Notifications</span>
+                  <p className={`text-xs mt-0.5 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>
+                    {isStaffOrAdminProfile 
+                      ? 'Get notified of new booking requests' 
+                      : 'Get notified when bookings are approved'}
+                  </p>
+                  {!pushSupported && (
+                    <p className={`text-xs mt-1 ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>
+                      Not supported in this browser
+                    </p>
+                  )}
                 </div>
-                <button 
-                  onClick={handlePushToggle}
-                  disabled={pushLoading}
-                  className={`relative w-[51px] h-[31px] flex-shrink-0 rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${pushEnabled ? 'bg-[#34C759]' : (isDark ? 'bg-gray-600' : 'bg-gray-300')}`}
-                >
-                  <span className={`absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200 ease-in-out ${pushEnabled ? 'right-[2px]' : 'left-[2px]'}`} />
-                </button>
               </div>
-            )}
+              <button 
+                onClick={handlePushToggle}
+                disabled={pushLoading || !pushSupported}
+                className={`relative w-[51px] h-[31px] flex-shrink-0 rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+                  !pushSupported 
+                    ? (isDark ? 'bg-gray-700 opacity-50' : 'bg-gray-200 opacity-50')
+                    : pushEnabled 
+                      ? 'bg-[#34C759]' 
+                      : (isDark ? 'bg-gray-600' : 'bg-gray-300')
+                }`}
+              >
+                <span className={`absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200 ease-in-out ${pushEnabled ? 'right-[2px]' : 'left-[2px]'}`} />
+              </button>
+            </div>
             <Row icon="lock" label="Privacy" arrow isDark={isDark} />
          </Section>
 
