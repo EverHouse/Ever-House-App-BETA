@@ -1706,9 +1706,9 @@ const SimulatorAdmin: React.FC = () => {
                     <span className="material-symbols-outlined animate-spin text-primary dark:text-white">progress_activity</span>
                 </div>
             ) : activeView === 'requests' ? (
-                <div className="space-y-6">
+                <div className="space-y-6 p-5">
                     <div>
-                        <h3 className="font-bold text-primary dark:text-white mb-3 flex items-center gap-2">
+                        <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-yellow-500">pending</span>
                             Pending Requests ({pendingRequests.length})
                         </h3>
@@ -1765,7 +1765,7 @@ const SimulatorAdmin: React.FC = () => {
                     </div>
                     
                     <div>
-                        <h3 className="font-bold text-primary dark:text-white mb-3 flex items-center gap-2">
+                        <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-gray-400">history</span>
                             Recent Processed ({processedRequests.length})
                         </h3>
