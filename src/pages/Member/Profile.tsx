@@ -89,6 +89,8 @@ const Profile: React.FC = () => {
          const tierColors = getTierColor(user.tier || 'Social');
          const cardBgColor = tierColors.bg;
          const cardTextColor = tierColors.text;
+         const baseTier = getBaseTier(user.tier || 'Social');
+         const useDarkLogo = ['Social', 'Premium', 'VIP'].includes(baseTier);
          return (
             <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-layered mb-8 group animate-pop-in">
                {/* Card Background */}
@@ -98,7 +100,7 @@ const Profile: React.FC = () => {
                {/* Content */}
                <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
                   <div className="flex justify-between items-start">
-                     <img src="/assets/logos/monogram-white.webp" className="w-8 h-8 opacity-90" alt="" />
+                     <img src={useDarkLogo ? "/assets/logos/monogram-dark.webp" : "/assets/logos/monogram-white.webp"} className="w-8 h-8 opacity-90" alt="" />
                      <div className="flex flex-col items-end gap-1">
                         <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${cardTextColor}99` }}>Even House</span>
                         {(user.tags || []).map((tag) => (
@@ -258,6 +260,8 @@ const Profile: React.FC = () => {
          const tierColors = getTierColor(user.tier || 'Social');
          const cardBgColor = isStaffOrAdminProfile ? '#293515' : tierColors.bg;
          const cardTextColor = isStaffOrAdminProfile ? '#F2F2EC' : tierColors.text;
+         const baseTier = getBaseTier(user.tier || 'Social');
+         const useDarkLogo = !isStaffOrAdminProfile && ['Social', 'Premium', 'VIP'].includes(baseTier);
          return (
             <div className="fixed inset-0 z-[10001] overflow-y-auto">
                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200" onClick={() => setIsCardOpen(false)} />
@@ -271,7 +275,7 @@ const Profile: React.FC = () => {
 
                    {/* Header with Logo */}
                    <div className="pt-6 pb-4 px-6 flex justify-center" style={{ backgroundColor: cardBgColor }}>
-                       <img src="/assets/logos/monogram-white.webp" className="w-12 h-12" alt="" />
+                       <img src={useDarkLogo ? "/assets/logos/monogram-dark.webp" : "/assets/logos/monogram-white.webp"} className="w-12 h-12" alt="" />
                    </div>
                    
                    {/* Member Info */}
