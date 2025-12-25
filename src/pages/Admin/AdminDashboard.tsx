@@ -1475,10 +1475,8 @@ const AnnouncementsAdmin: React.FC = () => {
 const TIER_OPTIONS = ['All', 'Social', 'Core', 'Premium', 'Corporate', 'VIP'] as const;
 
 const MembersAdmin: React.FC = () => {
-    const { members, updateMember, setViewAsUser, actualUser } = useData();
+    const { members, setViewAsUser, actualUser } = useData();
     const navigate = useNavigate();
-    const [isEditing, setIsEditing] = useState(false);
-    const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<string>('All');
     
@@ -1516,44 +1514,11 @@ const MembersAdmin: React.FC = () => {
         
         return filtered;
     }, [regularMembers, tierFilter, searchQuery]);
-
-    const openEdit = (member: MemberProfile) => {
-        setSelectedMember(member);
-        setIsEditing(true);
-    };
     
     const handleViewAs = async (member: MemberProfile) => {
         if (!isAdmin) return;
         await setViewAsUser(member);
         navigate('/dashboard');
-    };
-
-    const handleSave = async () => {
-        if (selectedMember) {
-            updateMember(selectedMember);
-            try {
-                const updateData: { role?: string; tags?: string[] } = {};
-                
-                if (isAdmin && selectedMember.role) {
-                    updateData.role = selectedMember.role;
-                }
-                
-                if (selectedMember.tags) {
-                    updateData.tags = selectedMember.tags;
-                }
-                
-                if (Object.keys(updateData).length > 0) {
-                    await fetch(`/api/members/${selectedMember.id}/role`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updateData)
-                    });
-                }
-            } catch (e) {
-                console.error('Failed to update member:', e);
-            }
-        }
-        setIsEditing(false);
     };
 
     return (
@@ -1602,88 +1567,6 @@ const MembersAdmin: React.FC = () => {
                 </p>
             </div>
 
-            {/* Edit Modal */}
-            {isEditing && selectedMember && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95">
-                        <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">
-                            Edit {selectedMember.role === 'staff' || selectedMember.role === 'admin' ? 'Staff' : 'Member'}
-                        </h3>
-                        <div className="space-y-3 mb-6">
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Name</label>
-                                <input className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.name} onChange={e => setSelectedMember({...selectedMember, name: e.target.value})} />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Email</label>
-                                <input className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.email} onChange={e => setSelectedMember({...selectedMember, email: e.target.value})} />
-                            </div>
-                            <div className="flex gap-3">
-                                <div className="flex-1">
-                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Tier</label>
-                                    <select className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.tier} onChange={e => setSelectedMember({...selectedMember, tier: e.target.value})}>
-                                        <option>Social</option>
-                                        <option>Core</option>
-                                        <option>Premium</option>
-                                        <option>Corporate</option>
-                                        <option>VIP</option>
-                                    </select>
-                                </div>
-                                <div className="flex-1">
-                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Status</label>
-                                    <select className="w-full border border-gray-300 p-2 rounded-lg bg-white text-primary dark:bg-black/20 dark:border-white/10 dark:text-white" value={selectedMember.status} onChange={e => setSelectedMember({...selectedMember, status: e.target.value as any})}>
-                                        <option>Active</option>
-                                        <option>Pending</option>
-                                        <option>Suspended</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Tags</label>
-                                <div className="mt-1 space-y-2">
-                                    {AVAILABLE_TAGS.map(tag => {
-                                        const isChecked = selectedMember.tags?.includes(tag) || false;
-                                        return (
-                                            <button 
-                                                key={tag} 
-                                                type="button"
-                                                role="checkbox"
-                                                aria-checked={isChecked}
-                                                onClick={() => {
-                                                    const currentTags = selectedMember.tags || [];
-                                                    if (isChecked) {
-                                                        setSelectedMember({...selectedMember, tags: currentTags.filter(t => t !== tag)});
-                                                    } else {
-                                                        setSelectedMember({...selectedMember, tags: [...currentTags, tag]});
-                                                    }
-                                                }}
-                                                className="flex items-center gap-3 w-full p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                                            >
-                                                <span 
-                                                    className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 shrink-0 ${
-                                                        isChecked 
-                                                            ? 'bg-primary text-white shadow-sm' 
-                                                            : 'bg-white dark:bg-[#39393D] border-2 border-gray-300 dark:border-gray-600'
-                                                    }`}
-                                                >
-                                                    {isChecked && <span className="material-symbols-outlined text-base font-bold">check</span>}
-                                                </span>
-                                                <span className="text-sm text-primary dark:text-white">{tag}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <p className="text-[10px] text-gray-400 mt-1">Select all applicable tags for this member</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-3 justify-end">
-                            <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-gray-500 font-bold">Cancel</button>
-                            <button onClick={handleSave} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md">Save</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            
             {/* Empty State */}
             {filteredList.length === 0 && (
                 <div className="text-center py-12 px-6 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5">
@@ -1705,7 +1588,7 @@ const MembersAdmin: React.FC = () => {
                 {filteredList.map(m => (
                     <div key={m.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
-                            <div onClick={() => openEdit(m)} className="flex-1 cursor-pointer">
+                            <div className="flex-1">
                                 <h4 className="font-bold text-lg text-primary dark:text-white">{m.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
                             </div>
@@ -1717,21 +1600,15 @@ const MembersAdmin: React.FC = () => {
                                     <TagBadge key={tag} tag={tag} size="sm" />
                                 ))}
                             </div>
-                            <div className="flex items-center gap-2">
-                                {/* View As - admin only */}
-                                {isAdmin && (
-                                    <button 
-                                        onClick={() => handleViewAs(m)} 
-                                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
-                                    >
-                                        <span className="material-symbols-outlined text-[14px]">visibility</span>
-                                        View As
-                                    </button>
-                                )}
-                                <button onClick={() => openEdit(m)} className="text-primary dark:text-white text-xs font-bold">
-                                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                            {isAdmin && (
+                                <button 
+                                    onClick={() => handleViewAs(m)} 
+                                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-[14px]">visibility</span>
+                                    View As
                                 </button>
-                            </div>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -1764,19 +1641,15 @@ const MembersAdmin: React.FC = () => {
                                 </td>
                                 <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{m.email}</td>
                                 <td className="p-4">
-                                    <div className="flex items-center gap-2">
-                                        {/* View As - admin only */}
-                                        {isAdmin && (
-                                            <button 
-                                                onClick={() => handleViewAs(m)} 
-                                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[14px]">visibility</span>
-                                                View As
-                                            </button>
-                                        )}
-                                        <button onClick={() => openEdit(m)} className="text-primary dark:text-white hover:underline text-xs font-bold">Edit</button>
-                                    </div>
+                                    {isAdmin && (
+                                        <button 
+                                            onClick={() => handleViewAs(m)} 
+                                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-[14px]">visibility</span>
+                                            View As
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))}
