@@ -41,15 +41,12 @@ const MemberEvents = lazyWithPrefetch(() => import('./pages/Member/Events'));
 const MemberWellness = lazyWithPrefetch(() => import('./pages/Member/Wellness'));
 const Profile = lazyWithPrefetch(() => import('./pages/Member/Profile'));
 const MemberAnnouncements = lazyWithPrefetch(() => import('./pages/Member/Announcements'));
-const Sims = lazy(() => import('./pages/Member/Sims'));
 const Landing = lazy(() => import('./pages/Public/Landing'));
 const Membership = lazy(() => import('./pages/Public/Membership'));
 const Contact = lazy(() => import('./pages/Public/Contact'));
 const Gallery = lazy(() => import('./pages/Public/Gallery'));
 const WhatsOn = lazy(() => import('./pages/Public/WhatsOn'));
 const PrivateHire = lazy(() => import('./pages/Public/PrivateHire'));
-const PrivateEvents = lazy(() => import('./pages/Public/PrivateEvents'));
-const PublicWellness = lazy(() => import('./pages/Public/Wellness'));
 const PublicCafe = lazy(() => import('./pages/Public/Cafe'));
 const FAQ = lazy(() => import('./pages/Public/FAQ'));
 const Login = lazy(() => import('./pages/Public/Login'));
@@ -202,7 +199,6 @@ interface UserNotification {
 const ROUTE_INDICES: Record<string, number> = {
   '/dashboard': 0,
   '/book': 1,
-  '/sims': 1.5,
   '/member-wellness': 2,
   '/member-events': 3,
   '/announcements': 4,
@@ -242,8 +238,6 @@ const AnimatedRoutes: React.FC = () => {
             <Route path="/gallery" element={<DirectionalPageTransition><Gallery /></DirectionalPageTransition>} />
             <Route path="/whats-on" element={<DirectionalPageTransition><WhatsOn /></DirectionalPageTransition>} />
             <Route path="/private-hire" element={<DirectionalPageTransition><PrivateHire /></DirectionalPageTransition>} />
-            <Route path="/private-events" element={<DirectionalPageTransition><PrivateEvents /></DirectionalPageTransition>} />
-            <Route path="/wellness" element={<DirectionalPageTransition><PublicWellness /></DirectionalPageTransition>} />
             <Route path="/menu" element={<DirectionalPageTransition><PublicCafe /></DirectionalPageTransition>} />
             <Route path="/faq" element={<DirectionalPageTransition><FAQ /></DirectionalPageTransition>} />
             <Route path="/login" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
@@ -285,11 +279,6 @@ const AnimatedRoutes: React.FC = () => {
             <Route path="/announcements" element={
               <MemberPortalRoute>
                 <DirectionalPageTransition><MemberAnnouncements /></DirectionalPageTransition>
-              </MemberPortalRoute>
-            } />
-            <Route path="/sims" element={
-              <MemberPortalRoute>
-                <DirectionalPageTransition><Sims /></DirectionalPageTransition>
               </MemberPortalRoute>
             } />
             
@@ -361,7 +350,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   useDebugLayout();
   
-  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/cafe', '/sims', '/announcements'].some(path => location.pathname.startsWith(path));
+  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isDarkTheme = isAdminRoute || (isMemberRoute && effectiveTheme === 'dark');
   const showHeader = !isAdminRoute;
@@ -408,7 +397,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       const path = location.pathname;
       if (path === '/dashboard') return 'home';
       if (path === '/profile') return 'account_circle';
-      if (path.startsWith('/book') || path.startsWith('/sims')) return 'sports_golf';
+      if (path.startsWith('/book')) return 'sports_golf';
       if (path.startsWith('/member-wellness')) return 'spa';
       if (path.startsWith('/announcements')) return 'campaign';
       if (path.startsWith('/member-events')) return 'celebration';

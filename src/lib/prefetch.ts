@@ -7,7 +7,6 @@ const routeImports: Record<string, () => Promise<any>> = {
   '/member-events': () => import('../pages/Member/Events'),
   '/member-wellness': () => import('../pages/Member/Wellness'),
   '/profile': () => import('../pages/Member/Profile'),
-  '/cafe': () => import('../pages/Member/Cafe'),
   '/dashboard': () => import('../pages/Member/Dashboard'),
 };
 
@@ -21,7 +20,7 @@ export const prefetchRoute = (path: string) => {
 };
 
 export const prefetchAdjacentRoutes = (currentPath: string) => {
-  const navOrder = ['/dashboard', '/book', '/member-wellness', '/member-events', '/cafe'];
+  const navOrder = ['/dashboard', '/book', '/member-wellness', '/member-events', '/announcements'];
   const idx = navOrder.indexOf(currentPath);
   if (idx === -1) return;
   
