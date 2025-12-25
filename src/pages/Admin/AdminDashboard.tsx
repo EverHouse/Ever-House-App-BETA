@@ -232,7 +232,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings', adminOnly: true },
-    { id: 'blocks' as TabType, icon: 'block', label: 'Bay Blocks', description: 'View and manage availability blocks' },
+    { id: 'blocks' as TabType, icon: 'block', label: 'Booking Blocks', description: 'Manage closures and availability blocks' },
   ];
 
   const visibleLinks = quickLinks.filter(link => !link.adminOnly || isAdmin);
@@ -991,151 +991,11 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
 
 // --- ANNOUNCEMENTS ADMIN ---
 
-interface ClosureForm {
-    start_date: string;
-    start_time: string;
-    end_date: string;
-    end_time: string;
-    affected_areas: string;
-    reason: string;
-    title: string;
-    notify_members: boolean;
-}
-
-interface Closure {
-    id: number;
-    title: string;
-    reason: string | null;
-    startDate: string;
-    startTime: string | null;
-    endDate: string;
-    endTime: string | null;
-    affectedAreas: string | null;
-    isActive: boolean;
-    createdAt: string;
-    createdBy: string | null;
-}
-
 const AnnouncementsAdmin: React.FC = () => {
-    const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement, actualUser } = useData();
+    const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useData();
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [newItem, setNewItem] = useState<Partial<Announcement>>({ type: 'update' });
-    
-    const [isClosureModalOpen, setIsClosureModalOpen] = useState(false);
-    const [editingClosureId, setEditingClosureId] = useState<number | null>(null);
-    const [closureForm, setClosureForm] = useState<ClosureForm>({
-        start_date: '',
-        start_time: '',
-        end_date: '',
-        end_time: '',
-        affected_areas: 'entire_facility',
-        reason: '',
-        title: '',
-        notify_members: false
-    });
-    const [closureSaving, setClosureSaving] = useState(false);
-    const [bays, setBays] = useState<{id: number; name: string}[]>([]);
-    const [closures, setClosures] = useState<Closure[]>([]);
-    const [closuresLoading, setClosuresLoading] = useState(true);
-    
-    const fetchClosures = async () => {
-        try {
-            const res = await fetch('/api/closures');
-            if (res.ok) {
-                const data = await res.json();
-                setClosures(data);
-            }
-        } catch (err) {
-            console.error('Failed to fetch closures:', err);
-        } finally {
-            setClosuresLoading(false);
-        }
-    };
-    
-    useEffect(() => {
-        fetch('/api/bays')
-            .then(r => r.json())
-            .then(data => setBays(data))
-            .catch(() => {});
-        fetchClosures();
-    }, []);
-    
-    const resetClosureForm = () => {
-        setClosureForm({
-            start_date: '',
-            start_time: '',
-            end_date: '',
-            end_time: '',
-            affected_areas: 'entire_facility',
-            reason: '',
-            title: '',
-            notify_members: false
-        });
-        setEditingClosureId(null);
-    };
-    
-    const handleSaveClosure = async () => {
-        if (!closureForm.start_date || !closureForm.affected_areas) return;
-        setClosureSaving(true);
-        try {
-            const url = editingClosureId 
-                ? `/api/closures/${editingClosureId}` 
-                : '/api/closures';
-            const method = editingClosureId ? 'PUT' : 'POST';
-            
-            const payload = editingClosureId 
-                ? { ...closureForm }
-                : { ...closureForm, created_by: actualUser?.email };
-            
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                setIsClosureModalOpen(false);
-                resetClosureForm();
-                fetchClosures();
-            }
-        } catch (err) {
-            console.error('Failed to save closure:', err);
-        } finally {
-            setClosureSaving(false);
-        }
-    };
-    
-    const handleEditClosure = (closure: Closure) => {
-        setEditingClosureId(closure.id);
-        setClosureForm({
-            start_date: closure.startDate,
-            start_time: closure.startTime || '',
-            end_date: closure.endDate,
-            end_time: closure.endTime || '',
-            affected_areas: closure.affectedAreas || 'entire_facility',
-            reason: closure.reason || '',
-            title: closure.title || '',
-            notify_members: false
-        });
-        setIsClosureModalOpen(true);
-    };
-    
-    const handleDeleteClosure = async (closureId: number) => {
-        if (!confirm('Are you sure you want to delete this closure? This will also remove the calendar event and announcement.')) return;
-        try {
-            const res = await fetch(`/api/closures/${closureId}`, { method: 'DELETE' });
-            if (res.ok) {
-                fetchClosures();
-            }
-        } catch (err) {
-            console.error('Failed to delete closure:', err);
-        }
-    };
-    
-    const openNewClosure = () => {
-        resetClosureForm();
-        setIsClosureModalOpen(true);
-    };
 
     const openCreateUpdate = () => {
         setNewItem({ type: 'update' });
@@ -1180,12 +1040,6 @@ const AnnouncementsAdmin: React.FC = () => {
     return (
         <div>
             <div className="flex justify-end gap-2 mb-4">
-                <button 
-                    onClick={openNewClosure} 
-                    className="border-2 border-red-500 text-red-500 px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm"
-                >
-                    <span className="material-symbols-outlined text-lg">block</span> Closure
-                </button>
                 <button onClick={openCreateUpdate} className="bg-amber-100 text-amber-800 px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-amber-200 transition-colors border border-amber-200">
                     <span className="material-symbols-outlined text-lg">add</span> Update
                 </button>
@@ -1254,187 +1108,6 @@ const AnnouncementsAdmin: React.FC = () => {
                     </div>
                 </div>,
                 document.body
-            )}
-            
-            {isClosureModalOpen && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
-                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-red-500">block</span>
-                                {editingClosureId ? 'Edit Closure' : 'Add Closure'}
-                            </h3>
-                            <div className="space-y-3 mb-5">
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Title</label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="e.g., Holiday Closure, Maintenance" 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                        value={closureForm.title} 
-                                        onChange={e => setClosureForm({...closureForm, title: e.target.value})} 
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Date *</label>
-                                        <input 
-                                            type="date" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                            value={closureForm.start_date} 
-                                            onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Time</label>
-                                        <input 
-                                            type="time" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                            value={closureForm.start_time} 
-                                            onChange={e => setClosureForm({...closureForm, start_time: e.target.value})} 
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Date</label>
-                                        <input 
-                                            type="date" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                            value={closureForm.end_date} 
-                                            onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Time</label>
-                                        <input 
-                                            type="time" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                            value={closureForm.end_time} 
-                                            onChange={e => setClosureForm({...closureForm, end_time: e.target.value})} 
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Resource *</label>
-                                    <select 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
-                                        value={closureForm.affected_areas}
-                                        onChange={e => setClosureForm({...closureForm, affected_areas: e.target.value})}
-                                    >
-                                        <option value="entire_facility">Entire Facility</option>
-                                        <option value="all_bays">All Bays</option>
-                                        {bays.map(bay => (
-                                            <option key={bay.id} value={bay.name}>{bay.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Internal Note</label>
-                                    <textarea 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none" 
-                                        placeholder="e.g., Broken Sensor, Maintenance, etc." 
-                                        rows={2} 
-                                        value={closureForm.reason} 
-                                        onChange={e => setClosureForm({...closureForm, reason: e.target.value})} 
-                                    />
-                                </div>
-                                
-                                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-black/20 rounded-xl">
-                                    <div>
-                                        <p className="font-medium text-primary dark:text-white text-sm">Notify Members?</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Send push notification with internal note</p>
-                                    </div>
-                                    <Toggle
-                                        checked={closureForm.notify_members}
-                                        onChange={(val) => setClosureForm({...closureForm, notify_members: val})}
-                                        label="Notify members about closure"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex gap-3 justify-end">
-                                <button onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
-                                <button 
-                                    onClick={handleSaveClosure} 
-                                    disabled={closureSaving || !closureForm.start_date}
-                                    className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-bold shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
-                                >
-                                    {closureSaving ? 'Saving...' : editingClosureId ? 'Save Changes' : 'Add Closure'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {/* Closures Section */}
-            {closuresLoading && (
-                <div className="mb-8 p-4 bg-gray-50 dark:bg-white/5 rounded-xl text-center">
-                    <span className="text-gray-500 dark:text-gray-400 text-sm">Loading closures...</span>
-                </div>
-            )}
-            {!closuresLoading && closures.length > 0 && (
-                <div className="mb-8">
-                    <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-red-500 text-[18px]">block</span>
-                        Active Closures ({closures.length})
-                    </h3>
-                    <div className="space-y-3">
-                        {closures.map(closure => {
-                            const formatAffectedAreas = (areas: string | null) => {
-                                if (!areas) return 'Unknown';
-                                if (areas === 'entire_facility') return 'Entire Facility';
-                                if (areas === 'all_bays') return 'All Bays';
-                                return areas;
-                            };
-                            
-                            return (
-                                <div 
-                                    key={closure.id} 
-                                    onClick={() => handleEditClosure(closure)}
-                                    className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800/30 shadow-sm flex justify-between items-start cursor-pointer hover:border-red-400 transition-all"
-                                >
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1.5">
-                                            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                            <span className="text-[10px] font-bold uppercase text-red-500">Closure</span>
-                                            <span className="text-[10px] text-red-400">• {formatAffectedAreas(closure.affectedAreas)}</span>
-                                        </div>
-                                        <h4 className="font-bold text-gray-900 dark:text-white mb-1">{closure.title}</h4>
-                                        {closure.reason && (
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2">{closure.reason}</p>
-                                        )}
-                                        <div className="flex flex-wrap gap-2">
-                                            <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
-                                                <span className="material-symbols-outlined text-[12px]">calendar_today</span>
-                                                <span>
-                                                    {closure.startDate}
-                                                    {closure.endDate && closure.endDate !== closure.startDate ? ` - ${closure.endDate}` : ''}
-                                                </span>
-                                            </div>
-                                            {(closure.startTime || closure.endTime) && (
-                                                <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
-                                                    <span className="material-symbols-outlined text-[12px]">schedule</span>
-                                                    <span>{closure.startTime}{closure.endTime ? ` - ${closure.endTime}` : ''}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteClosure(closure.id); }} 
-                                        className="text-red-300 hover:text-red-600 p-1 -mr-2"
-                                    >
-                                        <span className="material-symbols-outlined">delete</span>
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
             )}
 
             {/* Announcements Section */}
@@ -3752,15 +3425,72 @@ interface AvailabilityBlock {
     closure_id: number | null;
 }
 
+interface BlocksClosure {
+    id: number;
+    title: string;
+    reason: string | null;
+    startDate: string;
+    startTime: string | null;
+    endDate: string;
+    endTime: string | null;
+    affectedAreas: string | null;
+    isActive: boolean;
+    createdAt: string;
+    createdBy: string | null;
+}
+
+interface BlocksClosureForm {
+    start_date: string;
+    start_time: string;
+    end_date: string;
+    end_time: string;
+    affected_areas: string;
+    reason: string;
+    title: string;
+    notify_members: boolean;
+}
+
 const BlocksAdmin: React.FC = () => {
+    const { actualUser } = useData();
     const [blocks, setBlocks] = useState<AvailabilityBlock[]>([]);
-    const [bays, setBays] = useState<{ id: number; name: string }[]>([]);
+    const [resources, setResources] = useState<{ id: number; name: string; type: string }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedBlock, setSelectedBlock] = useState<AvailabilityBlock | null>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [filterBay, setFilterBay] = useState<string>('all');
+    const [filterResource, setFilterResource] = useState<string>('all');
     const [filterDate, setFilterDate] = useState<string>('');
     const [showPast, setShowPast] = useState(false);
+    const [activeTab, setActiveTab] = useState<'closures' | 'blocks'>('closures');
+    
+    const [closures, setClosures] = useState<BlocksClosure[]>([]);
+    const [closuresLoading, setClosuresLoading] = useState(true);
+    const [isClosureModalOpen, setIsClosureModalOpen] = useState(false);
+    const [editingClosureId, setEditingClosureId] = useState<number | null>(null);
+    const [closureForm, setClosureForm] = useState<BlocksClosureForm>({
+        start_date: '',
+        start_time: '',
+        end_date: '',
+        end_time: '',
+        affected_areas: 'entire_facility',
+        reason: '',
+        title: '',
+        notify_members: false
+    });
+    const [closureSaving, setClosureSaving] = useState(false);
+
+    const fetchClosures = async () => {
+        try {
+            const res = await fetch('/api/closures');
+            if (res.ok) {
+                const data = await res.json();
+                setClosures(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch closures:', err);
+        } finally {
+            setClosuresLoading(false);
+        }
+    };
 
     const fetchBlocks = async () => {
         setIsLoading(true);
@@ -3770,17 +3500,17 @@ const BlocksAdmin: React.FC = () => {
             if (!showPast) {
                 params.append('start_date', today);
             }
-            if (filterBay !== 'all') {
-                params.append('bay_id', filterBay);
+            if (filterResource !== 'all') {
+                params.append('bay_id', filterResource);
             }
             
-            const [blocksRes, baysRes] = await Promise.all([
+            const [blocksRes, resourcesRes] = await Promise.all([
                 fetch(`/api/availability-blocks?${params}`),
-                fetch('/api/bays')
+                fetch('/api/resources')
             ]);
             
             if (blocksRes.ok) setBlocks(await blocksRes.json());
-            if (baysRes.ok) setBays(await baysRes.json());
+            if (resourcesRes.ok) setResources(await resourcesRes.json());
         } catch (error) {
             console.error('Failed to fetch blocks:', error);
         } finally {
@@ -3790,9 +3520,92 @@ const BlocksAdmin: React.FC = () => {
 
     useEffect(() => {
         fetchBlocks();
-    }, [filterBay, showPast]);
+        fetchClosures();
+    }, []);
 
-    const handleDelete = async (id: number) => {
+    useEffect(() => {
+        fetchBlocks();
+    }, [filterResource, showPast]);
+
+    const resetClosureForm = () => {
+        setClosureForm({
+            start_date: '',
+            start_time: '',
+            end_date: '',
+            end_time: '',
+            affected_areas: 'entire_facility',
+            reason: '',
+            title: '',
+            notify_members: false
+        });
+        setEditingClosureId(null);
+    };
+
+    const handleSaveClosure = async () => {
+        if (!closureForm.start_date || !closureForm.affected_areas) return;
+        setClosureSaving(true);
+        try {
+            const url = editingClosureId 
+                ? `/api/closures/${editingClosureId}` 
+                : '/api/closures';
+            const method = editingClosureId ? 'PUT' : 'POST';
+            
+            const payload = editingClosureId 
+                ? { ...closureForm }
+                : { ...closureForm, created_by: actualUser?.email };
+            
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                setIsClosureModalOpen(false);
+                resetClosureForm();
+                fetchClosures();
+                fetchBlocks();
+            }
+        } catch (err) {
+            console.error('Failed to save closure:', err);
+        } finally {
+            setClosureSaving(false);
+        }
+    };
+
+    const handleEditClosure = (closure: BlocksClosure) => {
+        setEditingClosureId(closure.id);
+        setClosureForm({
+            start_date: closure.startDate,
+            start_time: closure.startTime || '',
+            end_date: closure.endDate,
+            end_time: closure.endTime || '',
+            affected_areas: closure.affectedAreas || 'entire_facility',
+            reason: closure.reason || '',
+            title: closure.title || '',
+            notify_members: false
+        });
+        setIsClosureModalOpen(true);
+    };
+
+    const handleDeleteClosure = async (closureId: number) => {
+        if (!confirm('Are you sure you want to delete this closure? This will also remove the calendar event and announcement.')) return;
+        try {
+            const res = await fetch(`/api/closures/${closureId}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchClosures();
+                fetchBlocks();
+            }
+        } catch (err) {
+            console.error('Failed to delete closure:', err);
+        }
+    };
+
+    const openNewClosure = () => {
+        resetClosureForm();
+        setIsClosureModalOpen(true);
+    };
+
+    const handleDeleteBlock = async (id: number) => {
         if (!confirm('Are you sure you want to delete this availability block?')) return;
         
         try {
@@ -3805,7 +3618,7 @@ const BlocksAdmin: React.FC = () => {
         }
     };
 
-    const handleUpdate = async () => {
+    const handleUpdateBlock = async () => {
         if (!selectedBlock) return;
         
         try {
@@ -3845,11 +3658,22 @@ const BlocksAdmin: React.FC = () => {
         return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
     };
 
+    const formatAffectedAreas = (areas: string | null) => {
+        if (!areas) return 'Unknown';
+        if (areas === 'entire_facility') return 'Entire Facility';
+        if (areas === 'all_bays') return 'All Bays';
+        if (areas === 'conference_room') return 'Conference Room';
+        return areas;
+    };
+
     const filteredBlocks = filterDate 
         ? blocks.filter(b => b.block_date === filterDate)
         : blocks;
 
-    if (isLoading) {
+    const bays = resources.filter(r => r.type === 'simulator');
+    const conferenceRoom = resources.find(r => r.type === 'conference_room');
+
+    if (isLoading && closuresLoading) {
         return (
             <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
@@ -3859,96 +3683,310 @@ const BlocksAdmin: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-wrap gap-3 items-center">
-                <select
-                    value={filterBay}
-                    onChange={(e) => setFilterBay(e.target.value)}
-                    className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm"
+            <div className="flex gap-2 mb-4">
+                <button
+                    onClick={() => setActiveTab('closures')}
+                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${
+                        activeTab === 'closures' 
+                            ? 'bg-red-500 text-white' 
+                            : 'bg-white/10 text-white/70 hover:bg-white/20'
+                    }`}
                 >
-                    <option value="all">All Bays</option>
-                    {bays.map(bay => (
-                        <option key={bay.id} value={bay.id}>{bay.name}</option>
-                    ))}
-                </select>
-                
-                <input
-                    type="date"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                    className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm"
-                />
-                {filterDate && (
-                    <button
-                        onClick={() => setFilterDate('')}
-                        className="px-3 py-2 rounded-xl bg-white/10 text-white/70 text-sm hover:bg-white/20"
-                    >
-                        Clear Date
-                    </button>
-                )}
-                
-                <label className="flex items-center gap-2 text-white/70 text-sm ml-auto">
-                    <input
-                        type="checkbox"
-                        checked={showPast}
-                        onChange={(e) => setShowPast(e.target.checked)}
-                        className="rounded"
-                    />
-                    Show past blocks
-                </label>
+                    <span className="material-symbols-outlined text-lg align-middle mr-1">block</span>
+                    Closures ({closures.length})
+                </button>
+                <button
+                    onClick={() => setActiveTab('blocks')}
+                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${
+                        activeTab === 'blocks' 
+                            ? 'bg-amber-500 text-white' 
+                            : 'bg-white/10 text-white/70 hover:bg-white/20'
+                    }`}
+                >
+                    <span className="material-symbols-outlined text-lg align-middle mr-1">event_busy</span>
+                    Blocks ({blocks.length})
+                </button>
             </div>
 
-            {filteredBlocks.length === 0 ? (
-                <div className="text-center py-12 text-white/50">
-                    <span className="material-symbols-outlined text-4xl mb-2">event_available</span>
-                    <p>No availability blocks found</p>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {filteredBlocks.map(block => (
-                        <div
-                            key={block.id}
-                            className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4"
-                        >
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-bold text-white">{block.bay_name}</span>
-                                    <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs">
-                                        {block.block_type}
-                                    </span>
-                                    {block.closure_id && (
-                                        <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs">
-                                            Closure
-                                        </span>
-                                    )}
+            {activeTab === 'closures' && (
+                <div className="space-y-4">
+                    <button
+                        onClick={openNewClosure}
+                        className="w-full py-3 rounded-xl bg-red-500 text-white font-bold flex items-center justify-center gap-2 hover:bg-red-600 transition-all"
+                    >
+                        <span className="material-symbols-outlined">add</span>
+                        Add Closure
+                    </button>
+
+                    {closuresLoading ? (
+                        <div className="text-center py-8 text-white/50">Loading closures...</div>
+                    ) : closures.length === 0 ? (
+                        <div className="text-center py-12 text-white/50">
+                            <span className="material-symbols-outlined text-4xl mb-2">event_available</span>
+                            <p>No active closures</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {closures.map(closure => (
+                                <div 
+                                    key={closure.id} 
+                                    onClick={() => handleEditClosure(closure)}
+                                    className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 cursor-pointer hover:border-red-500/50 transition-all"
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                                <span className="text-[10px] font-bold uppercase text-red-400">Closure</span>
+                                                <span className="text-[10px] text-red-400/70">• {formatAffectedAreas(closure.affectedAreas)}</span>
+                                            </div>
+                                            <h4 className="font-bold text-white mb-1">{closure.title}</h4>
+                                            {closure.reason && (
+                                                <p className="text-sm text-white/60 leading-relaxed mb-2">{closure.reason}</p>
+                                            )}
+                                            <div className="flex flex-wrap gap-2">
+                                                <div className="inline-flex items-center gap-1 bg-red-500/20 px-2 py-1 rounded text-xs text-red-400">
+                                                    <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                                                    <span>
+                                                        {closure.startDate}
+                                                        {closure.endDate && closure.endDate !== closure.startDate ? ` - ${closure.endDate}` : ''}
+                                                    </span>
+                                                </div>
+                                                {(closure.startTime || closure.endTime) && (
+                                                    <div className="inline-flex items-center gap-1 bg-red-500/20 px-2 py-1 rounded text-xs text-red-400">
+                                                        <span className="material-symbols-outlined text-[12px]">schedule</span>
+                                                        <span>{closure.startTime}{closure.endTime ? ` - ${closure.endTime}` : ''}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteClosure(closure.id); }} 
+                                            className="text-red-400/50 hover:text-red-400 p-1"
+                                        >
+                                            <span className="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <p className="text-white/70 text-sm">
-                                    {formatDate(block.block_date)} · {formatTime(block.start_time)} - {formatTime(block.end_time)}
-                                </p>
-                                {block.notes && (
-                                    <p className="text-white/50 text-xs mt-1 truncate">{block.notes}</p>
-                                )}
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'blocks' && (
+                <div className="space-y-4">
+                    <div className="flex flex-wrap gap-3 items-center">
+                        <select
+                            value={filterResource}
+                            onChange={(e) => setFilterResource(e.target.value)}
+                            className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm"
+                        >
+                            <option value="all">All Resources</option>
+                            {bays.map(bay => (
+                                <option key={bay.id} value={bay.id}>{bay.name}</option>
+                            ))}
+                            {conferenceRoom && (
+                                <option value={conferenceRoom.id}>{conferenceRoom.name}</option>
+                            )}
+                        </select>
+                        
+                        <input
+                            type="date"
+                            value={filterDate}
+                            onChange={(e) => setFilterDate(e.target.value)}
+                            className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm"
+                        />
+                        {filterDate && (
+                            <button
+                                onClick={() => setFilterDate('')}
+                                className="px-3 py-2 rounded-xl bg-white/10 text-white/70 text-sm hover:bg-white/20"
+                            >
+                                Clear
+                            </button>
+                        )}
+                        
+                        <label className="flex items-center gap-2 text-white/70 text-sm ml-auto">
+                            <input
+                                type="checkbox"
+                                checked={showPast}
+                                onChange={(e) => setShowPast(e.target.checked)}
+                                className="rounded"
+                            />
+                            Show past
+                        </label>
+                    </div>
+
+                    {filteredBlocks.length === 0 ? (
+                        <div className="text-center py-12 text-white/50">
+                            <span className="material-symbols-outlined text-4xl mb-2">event_available</span>
+                            <p>No availability blocks found</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredBlocks.map(block => (
+                                <div
+                                    key={block.id}
+                                    className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4"
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-bold text-white">{block.bay_name}</span>
+                                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs">
+                                                {block.block_type}
+                                            </span>
+                                            {block.closure_id && (
+                                                <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs">
+                                                    From Closure
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-white/70 text-sm">
+                                            {formatDate(block.block_date)} · {formatTime(block.start_time)} - {formatTime(block.end_time)}
+                                        </p>
+                                        {block.notes && (
+                                            <p className="text-white/50 text-xs mt-1 truncate">{block.notes}</p>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedBlock(block);
+                                                setIsEditing(true);
+                                            }}
+                                            className="p-2 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">edit</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteBlock(block.id)}
+                                            className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {isClosureModalOpen && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
+                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
+                                <span className="material-symbols-outlined text-red-500">block</span>
+                                {editingClosureId ? 'Edit Closure' : 'Add Closure'}
+                            </h3>
+                            <div className="space-y-3 mb-5">
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Title</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g., Holiday Closure, Maintenance" 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                        value={closureForm.title} 
+                                        onChange={e => setClosureForm({...closureForm, title: e.target.value})} 
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Date *</label>
+                                        <input 
+                                            type="date" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            value={closureForm.start_date} 
+                                            onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Time</label>
+                                        <input 
+                                            type="time" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            value={closureForm.start_time} 
+                                            onChange={e => setClosureForm({...closureForm, start_time: e.target.value})} 
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Date</label>
+                                        <input 
+                                            type="date" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            value={closureForm.end_date} 
+                                            onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Time</label>
+                                        <input 
+                                            type="time" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                            value={closureForm.end_time} 
+                                            onChange={e => setClosureForm({...closureForm, end_time: e.target.value})} 
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Resource *</label>
+                                    <select 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
+                                        value={closureForm.affected_areas}
+                                        onChange={e => setClosureForm({...closureForm, affected_areas: e.target.value})}
+                                    >
+                                        <option value="entire_facility">Entire Facility</option>
+                                        <option value="all_bays">All Bays</option>
+                                        <option value="conference_room">Conference Room</option>
+                                        {bays.map(bay => (
+                                            <option key={bay.id} value={bay.name}>{bay.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Internal Note</label>
+                                    <textarea 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none" 
+                                        placeholder="e.g., Broken Sensor, Maintenance, etc." 
+                                        rows={2} 
+                                        value={closureForm.reason} 
+                                        onChange={e => setClosureForm({...closureForm, reason: e.target.value})} 
+                                    />
+                                </div>
+                                
+                                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-black/20 rounded-xl">
+                                    <div>
+                                        <p className="font-medium text-primary dark:text-white text-sm">Notify Members?</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Send push notification with internal note</p>
+                                    </div>
+                                    <Toggle
+                                        checked={closureForm.notify_members}
+                                        onChange={(val) => setClosureForm({...closureForm, notify_members: val})}
+                                        label="Notify members about closure"
+                                    />
+                                </div>
                             </div>
-                            
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => {
-                                        setSelectedBlock(block);
-                                        setIsEditing(true);
-                                    }}
-                                    className="p-2 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all"
+                            <div className="flex gap-3 justify-end">
+                                <button onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                                <button 
+                                    onClick={handleSaveClosure} 
+                                    disabled={closureSaving || !closureForm.start_date}
+                                    className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-bold shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
                                 >
-                                    <span className="material-symbols-outlined text-lg">edit</span>
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(block.id)}
-                                    className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
-                                >
-                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                    {closureSaving ? 'Saving...' : editingClosureId ? 'Save Changes' : 'Add Closure'}
                                 </button>
                             </div>
                         </div>
-                    ))}
-                </div>
+                    </div>
+                </div>,
+                document.body
             )}
 
             {isEditing && selectedBlock && (
@@ -3958,14 +3996,14 @@ const BlocksAdmin: React.FC = () => {
                         
                         <div className="space-y-4">
                             <div>
-                                <label className="text-white/70 text-sm mb-1 block">Bay</label>
+                                <label className="text-white/70 text-sm mb-1 block">Resource</label>
                                 <select
                                     value={selectedBlock.bay_id}
                                     onChange={(e) => setSelectedBlock({...selectedBlock, bay_id: parseInt(e.target.value)})}
                                     className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
                                 >
-                                    {bays.map(bay => (
-                                        <option key={bay.id} value={bay.id}>{bay.name}</option>
+                                    {resources.map(r => (
+                                        <option key={r.id} value={r.id}>{r.name}</option>
                                     ))}
                                 </select>
                             </div>
@@ -4038,7 +4076,7 @@ const BlocksAdmin: React.FC = () => {
                                 Cancel
                             </button>
                             <button
-                                onClick={handleUpdate}
+                                onClick={handleUpdateBlock}
                                 className="flex-1 py-3 rounded-xl bg-brand-green text-white font-medium hover:opacity-90 transition-all"
                             >
                                 Save Changes
