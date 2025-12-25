@@ -342,6 +342,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isLandingPage = location.pathname === '/';
   const isDarkTheme = isAdminRoute || (isMemberRoute && effectiveTheme === 'dark');
   const showHeader = !isAdminRoute;
 
@@ -403,7 +404,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     ? (isDarkTheme 
         ? "bg-[#0f120a] text-[#F2F2EC] shadow-md border-b border-white/5"
         : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 border-b border-[#1e2810]")
-    : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20";
+    : isLandingPage
+      ? "bg-transparent text-white"
+      : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20";
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
 
   const headerContent = showHeader ? (
@@ -497,7 +500,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <main 
                 id="main-content"
-                className={`flex-1 relative ${showHeader ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''}`}
+                className={`flex-1 relative ${showHeader && !isLandingPage ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''}`}
             >
                 {children}
                 {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}
