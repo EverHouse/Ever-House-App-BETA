@@ -106,6 +106,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'tiers' && 'Manage Tiers'}
                {activeTab === 'blocks' && 'Availability Blocks'}
                {activeTab === 'changelog' && 'Version History'}
+               {activeTab === 'training' && 'Staff Training Guide'}
            </h1>
         </div>
         
@@ -123,6 +124,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'tiers' && actualUser?.role === 'admin' && <TiersAdmin />}
         {activeTab === 'blocks' && <BlocksAdmin />}
         {activeTab === 'changelog' && actualUser?.role === 'admin' && <ChangelogAdmin />}
+        {activeTab === 'training' && <StaffTrainingGuide />}
         <BottomSentinel />
       </main>
 
@@ -143,7 +145,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training';
 
 interface NavItemData {
   id: TabType;
@@ -236,6 +238,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings', adminOnly: true },
     { id: 'blocks' as TabType, icon: 'block', label: 'Booking Blocks', description: 'Manage closures and availability blocks' },
+    { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
     { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes', adminOnly: true },
   ];
 
@@ -4757,6 +4760,275 @@ const ChangelogAdmin: React.FC = () => {
                     </div>
                 </div>
             ))}
+        </div>
+    );
+};
+
+// --- STAFF TRAINING GUIDE ---
+
+interface TrainingSection {
+    id: string;
+    icon: string;
+    title: string;
+    description: string;
+    steps: { title: string; content: string }[];
+}
+
+const TRAINING_SECTIONS: TrainingSection[] = [
+    {
+        id: 'getting-started',
+        icon: 'login',
+        title: 'Getting Started',
+        description: 'How to access and navigate the Staff Portal',
+        steps: [
+            { title: 'Logging In', content: 'Use your registered email to sign in via the magic link system. Check your email for the login link - no password needed. The link expires after 15 minutes for security.' },
+            { title: 'Accessing the Staff Portal', content: 'After logging in, you\'ll be automatically redirected to the Staff Portal dashboard. If you end up on the member portal, tap the menu icon and select "Staff Portal".' },
+            { title: 'Navigation', content: 'The bottom navigation bar has 5 main tabs: Home, Requests, Events, Wellness, and Updates. The Home dashboard shows quick access cards to all other features.' },
+        ]
+    },
+    {
+        id: 'booking-requests',
+        icon: 'event_note',
+        title: 'Managing Booking Requests',
+        description: 'Approve, decline, or manage simulator and conference room bookings',
+        steps: [
+            { title: 'Viewing Requests', content: 'Tap "Requests" in the bottom nav to see all pending booking requests. New requests show at the top. A red badge shows the count of pending requests.' },
+            { title: 'Request Details', content: 'Each request shows the member name, date/time requested, duration, and resource (which simulator bay or conference room).' },
+            { title: 'Approving a Request', content: 'Tap a request to expand it, then tap "Approve". The system will check for conflicts with other approved bookings and facility closures. If there\'s a conflict, you\'ll see an error message explaining why.' },
+            { title: 'Declining a Request', content: 'Tap "Decline" if you cannot accommodate the request. The member will be notified that their request was declined.' },
+            { title: 'Calendar View', content: 'Switch to the Calendar view using the tabs at the top to see all approved bookings in a visual timeline. Red blocks indicate facility closures.' },
+        ]
+    },
+    {
+        id: 'events',
+        icon: 'event',
+        title: 'Managing Events',
+        description: 'Create and manage club events for members',
+        steps: [
+            { title: 'Viewing Events', content: 'Tap "Events" in the bottom nav to see all upcoming and past events. Events sync with the club\'s Google Calendar.' },
+            { title: 'Creating an Event', content: 'Tap the "+" button to create a new event. Fill in the title, date, time, location, and description. Toggle "Members Only" if the event is exclusive to members.' },
+            { title: 'Editing Events', content: 'Tap the edit icon on any event to modify its details. Changes sync automatically to Google Calendar.' },
+            { title: 'Event RSVPs', content: 'View who has RSVPed to each event by expanding the event details. RSVP counts help with planning and capacity management.' },
+            { title: 'Deleting Events', content: 'Tap the delete icon to remove an event. This also removes it from Google Calendar. Members who RSVPed will see it removed from their dashboard.' },
+        ]
+    },
+    {
+        id: 'wellness',
+        icon: 'spa',
+        title: 'Managing Wellness Classes',
+        description: 'Schedule and manage wellness and fitness classes',
+        steps: [
+            { title: 'Viewing Classes', content: 'Tap "Wellness" in the bottom nav to see all scheduled wellness classes. Classes sync with the dedicated Wellness Google Calendar.' },
+            { title: 'Adding a Class', content: 'Tap "+" to add a new class. Enter the class name, instructor, date, time, duration, and capacity.' },
+            { title: 'Recurring Classes', content: 'For weekly classes, you can create them individually or ask an admin to set up recurring entries.' },
+            { title: 'Class Bookings', content: 'Members can book spots in classes through the member portal. You can see the booking count on each class card.' },
+        ]
+    },
+    {
+        id: 'announcements',
+        icon: 'campaign',
+        title: 'Posting Updates & Announcements',
+        description: 'Keep members informed with news and announcements',
+        steps: [
+            { title: 'Viewing Announcements', content: 'Tap "Updates" in the bottom nav to see all announcements. Current/active announcements show first, followed by past ones.' },
+            { title: 'Creating an Announcement', content: 'Tap "+" to create a new announcement. Add a title, content, and optionally set start/end dates for when it should be visible.' },
+            { title: 'Priority Levels', content: 'Set the priority level: Normal for general news, High for important updates (these appear more prominently to members), Urgent for critical notices.' },
+            { title: 'Automatic Announcements', content: 'When you create a facility closure, an announcement is automatically created and linked. When the closure is deleted, its announcement is also removed.' },
+        ]
+    },
+    {
+        id: 'directory',
+        icon: 'groups',
+        title: 'Member Directory',
+        description: 'Search and view member information',
+        steps: [
+            { title: 'Accessing the Directory', content: 'From the Home dashboard, tap "Directory" to open the member search.' },
+            { title: 'Searching Members', content: 'Type a name, email, or phone number in the search bar. Results update as you type.' },
+            { title: 'Member Profiles', content: 'Tap a member to see their profile including membership tier, join date, contact info, and booking history.' },
+            { title: 'Membership Tiers', content: 'Members have different tiers (Social, Core, Premium, Corporate, VIP) which determine their booking privileges, guest passes, and access levels.' },
+        ]
+    },
+    {
+        id: 'cafe',
+        icon: 'local_cafe',
+        title: 'Cafe Menu Management',
+        description: 'Update menu items and prices',
+        steps: [
+            { title: 'Viewing the Menu', content: 'From the Home dashboard, tap "Cafe Menu" to see all menu items organized by category.' },
+            { title: 'Adding Items', content: 'Tap "+" to add a new menu item. Fill in the name, price, description, and category. You can also upload an image.' },
+            { title: 'Editing Items', content: 'Tap the edit icon on any item to modify its details or mark it as unavailable.' },
+            { title: 'Categories', content: 'Use the category filter tabs to quickly find items. Categories include Coffee & Drinks, Food, Snacks, etc.' },
+            { title: 'Image Upload', content: 'When uploading images, they\'re automatically optimized for web viewing (converted to WebP format) to ensure fast loading.' },
+        ]
+    },
+    {
+        id: 'inquiries',
+        icon: 'mail',
+        title: 'Handling Inquiries',
+        description: 'View and respond to form submissions',
+        steps: [
+            { title: 'Viewing Inquiries', content: 'From the Home dashboard, tap "Inquiries" to see all form submissions including contact forms, tour requests, membership applications, and private hire inquiries.' },
+            { title: 'Filtering', content: 'Use the filter buttons to view by type (Contact, Tour Request, Membership, Private Hire) or status (New, Read, Replied, Archived).' },
+            { title: 'Marking Status', content: 'Update the status as you handle each inquiry: mark as Read when reviewed, Replied when you\'ve responded, or Archived when complete.' },
+            { title: 'Adding Notes', content: 'Add internal notes to inquiries for follow-up reminders or to share context with other staff members.' },
+        ]
+    },
+    {
+        id: 'gallery',
+        icon: 'photo_library',
+        title: 'Gallery Management',
+        description: 'Upload and manage venue photos',
+        steps: [
+            { title: 'Viewing the Gallery', content: 'From the Home dashboard, tap "Gallery" to see all venue photos organized by category.' },
+            { title: 'Uploading Photos', content: 'Tap "+" to upload a new photo. Select an image, choose a category, and add an optional caption. Images are automatically optimized.' },
+            { title: 'Organizing', content: 'Drag photos to reorder them, or use the sort options to arrange by date or category.' },
+            { title: 'Removing Photos', content: 'Tap the delete icon to remove a photo. This performs a "soft delete" so it can be recovered if needed.' },
+        ]
+    },
+    {
+        id: 'faqs',
+        icon: 'help_outline',
+        title: 'FAQ Management',
+        description: 'Edit frequently asked questions shown on the public site',
+        steps: [
+            { title: 'Viewing FAQs', content: 'From the Home dashboard, tap "FAQs" to see all questions and answers displayed on the public FAQ page.' },
+            { title: 'Adding FAQs', content: 'Tap "+" to add a new question. Enter the question and answer text. New FAQs appear immediately on the public site.' },
+            { title: 'Editing FAQs', content: 'Tap the edit icon to modify any existing FAQ. Changes are reflected immediately on the public site.' },
+            { title: 'Ordering', content: 'FAQs are displayed in the order they were created. Consider the most common questions when adding new ones.' },
+        ]
+    },
+    {
+        id: 'closures',
+        icon: 'block',
+        title: 'Facility Closures & Availability',
+        description: 'Block booking times for maintenance or special events',
+        steps: [
+            { title: 'Accessing Blocks', content: 'From the Home dashboard, tap "Booking Blocks" to manage facility closures and availability blocks.' },
+            { title: 'Creating a Closure', content: 'Tap "+" to create a closure. Set the date range, time range, affected areas (simulator bays, conference room, or whole facility), and reason.' },
+            { title: 'Affected Areas', content: 'Choose which resources are affected: individual simulator bays (Bay 1, Bay 2, Bay 3), the conference room, or the entire facility.' },
+            { title: 'Calendar Sync', content: 'Closures automatically sync to Google Calendar and appear as red "CLOSED" blocks in the staff calendar view.' },
+            { title: 'Automatic Announcements', content: 'Creating a closure automatically generates an announcement for members with the closure details.' },
+            { title: 'Booking Conflicts', content: 'The system prevents staff from approving bookings that conflict with closures. You\'ll see a clear error message if there\'s a conflict.' },
+        ]
+    },
+];
+
+const ADMIN_SECTIONS: TrainingSection[] = [
+    {
+        id: 'team-access',
+        icon: 'shield_person',
+        title: 'Managing Team Access (Admin Only)',
+        description: 'Add staff members and manage admin privileges',
+        steps: [
+            { title: 'Accessing Team Management', content: 'From the Home dashboard, tap "Team Access" (only visible to admins).' },
+            { title: 'Adding Staff', content: 'Search for a member by email, then promote them to Staff role. They\'ll gain access to the Staff Portal.' },
+            { title: 'Promoting to Admin', content: 'Admins can promote staff to Admin role, which grants access to team management, tier configuration, and version history.' },
+            { title: 'Removing Access', content: 'Demote a user back to Member role to revoke their staff portal access. They\'ll retain their membership but lose admin capabilities.' },
+        ]
+    },
+    {
+        id: 'tiers',
+        icon: 'loyalty',
+        title: 'Tier Configuration (Admin Only)',
+        description: 'Configure membership tier settings and privileges',
+        steps: [
+            { title: 'Viewing Tiers', content: 'From the Home dashboard, tap "Manage Tiers" (only visible to admins) to see all membership tiers.' },
+            { title: 'Tier Settings', content: 'Each tier has configurable limits: daily simulator minutes, guest passes per month, booking window (how far ahead they can book), and access permissions.' },
+            { title: 'Editing Privileges', content: 'Modify tier privileges to adjust what each membership level can access. Changes take effect immediately for all members of that tier.' },
+            { title: 'Display Settings', content: 'Update the tier name, price display, and highlighted features shown on the public membership comparison page.' },
+        ]
+    },
+    {
+        id: 'view-as-member',
+        icon: 'visibility',
+        title: 'View As Member (Admin Only)',
+        description: 'See the app from a member\'s perspective',
+        steps: [
+            { title: 'Starting View As Mode', content: 'In the member directory, find a member and tap "View As" to see the app exactly as they see it.' },
+            { title: 'While Viewing', content: 'You\'ll see the member portal as that member sees it, including their bookings, events, and dashboard. A banner reminds you that you\'re in View As mode.' },
+            { title: 'Taking Actions', content: 'If you try to book or RSVP while in View As mode, you\'ll see a confirmation asking if you want to do this on behalf of the member.' },
+            { title: 'Exiting View As Mode', content: 'Tap the banner or use the profile menu to exit View As mode and return to your admin account.' },
+        ]
+    },
+];
+
+const StaffTrainingGuide: React.FC = () => {
+    const [expandedSection, setExpandedSection] = useState<string | null>(null);
+    const { actualUser } = useData();
+    const isAdmin = actualUser?.role === 'admin';
+    const printRef = useRef<HTMLDivElement>(null);
+
+    const allSections = isAdmin ? [...TRAINING_SECTIONS, ...ADMIN_SECTIONS] : TRAINING_SECTIONS;
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    return (
+        <div className="space-y-6 animate-pop-in pb-32">
+            <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="text-sm text-primary/60 dark:text-white/60">
+                    A complete guide to using the Even House Staff Portal. Tap any section to expand and view detailed instructions.
+                </div>
+                <button
+                    onClick={handlePrint}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary dark:bg-accent text-white dark:text-primary rounded-full text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap print:hidden"
+                >
+                    <span className="material-symbols-outlined text-lg">download</span>
+                    Download PDF
+                </button>
+            </div>
+
+            <div ref={printRef} className="space-y-4 print:space-y-6">
+                <div className="hidden print:block text-center mb-8">
+                    <h1 className="text-2xl font-bold text-primary">Even House Staff Training Guide</h1>
+                    <p className="text-sm text-gray-500 mt-2">Comprehensive instructions for using the Staff Portal</p>
+                </div>
+
+                {allSections.map((section) => (
+                    <div 
+                        key={section.id}
+                        className="bg-white/60 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-primary/10 dark:border-white/10 overflow-hidden print:border print:border-gray-200 print:break-inside-avoid"
+                    >
+                        <button
+                            onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}
+                            className="w-full flex items-center gap-4 p-5 text-left hover:bg-white/40 dark:hover:bg-white/5 transition-colors print:hover:bg-transparent"
+                        >
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-white/10 flex items-center justify-center flex-shrink-0 print:bg-gray-100">
+                                <span className="material-symbols-outlined text-2xl text-primary dark:text-white print:text-gray-700">{section.icon}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-primary dark:text-white print:text-gray-900">{section.title}</h3>
+                                <p className="text-sm text-primary/60 dark:text-white/60 print:text-gray-500">{section.description}</p>
+                            </div>
+                            <span className={`material-symbols-outlined text-primary/40 dark:text-white/40 transition-transform duration-300 print:hidden ${expandedSection === section.id ? 'rotate-180' : ''}`}>
+                                expand_more
+                            </span>
+                        </button>
+
+                        <div className={`overflow-hidden transition-all duration-300 ${expandedSection === section.id ? 'max-h-[2000px]' : 'max-h-0'} print:max-h-none`}>
+                            <div className="px-5 pb-5 space-y-4 print:pt-2">
+                                {section.steps.map((step, index) => (
+                                    <div key={index} className="flex gap-4">
+                                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center text-sm font-bold text-primary dark:text-white print:bg-gray-100 print:text-gray-700">
+                                            {index + 1}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-semibold text-primary dark:text-white text-sm print:text-gray-900">{step.title}</h4>
+                                            <p className="text-sm text-primary/70 dark:text-white/70 mt-1 print:text-gray-600">{step.content}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
+                <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-400">
+                    <p>Even House Members App - Staff Training Guide</p>
+                    <p>Generated on {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                </div>
+            </div>
         </div>
     );
 };

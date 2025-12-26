@@ -874,3 +874,94 @@ img[loading="lazy"] {
     transform: translateX(0.5rem);
   }
 }
+
+/* Print Styles for Training Guide PDF */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Hide navigation, headers, and interactive elements (except training section headers) */
+  header,
+  nav,
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  /* Hide the expand arrow icons in print */
+  .material-symbols-outlined.text-primary\\/40[class*="rotate"],
+  .material-symbols-outlined.dark\\:text-white\\/40[class*="transition-transform"] {
+    display: none !important;
+  }
+  
+  /* Show print-only elements */
+  .print\\:block {
+    display: block !important;
+  }
+  
+  /* Reset glass effects for print */
+  .bg-white\\/60,
+  .dark\\:bg-white\\/5 {
+    background: white !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Ensure all sections are expanded */
+  .max-h-0 {
+    max-height: none !important;
+  }
+  
+  /* Page breaks */
+  .print\\:break-inside-avoid {
+    break-inside: avoid !important;
+  }
+  
+  /* Better text contrast for print */
+  .text-primary,
+  .text-primary\\/80,
+  .text-primary\\/70,
+  .text-primary\\/60,
+  .dark\\:text-white,
+  .dark\\:text-white\\/80,
+  .dark\\:text-white\\/70,
+  .dark\\:text-white\\/60 {
+    color: #333 !important;
+  }
+  
+  .text-primary\\/50,
+  .text-primary\\/40,
+  .dark\\:text-white\\/50,
+  .dark\\:text-white\\/40 {
+    color: #666 !important;
+  }
+  
+  /* Reset border colors */
+  .border-primary\\/10,
+  .dark\\:border-white\\/10 {
+    border-color: #ddd !important;
+  }
+  
+  /* Remove shadows */
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
+  
+  /* Adjust spacing */
+  .pb-32 {
+    padding-bottom: 2rem !important;
+  }
+  
+  /* Page margins */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+}
