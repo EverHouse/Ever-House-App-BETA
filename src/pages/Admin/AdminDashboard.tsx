@@ -237,7 +237,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings', adminOnly: true },
-    { id: 'blocks' as TabType, icon: 'block', label: 'Booking Blocks', description: 'Manage closures and availability blocks' },
+    { id: 'blocks' as TabType, icon: 'block', label: 'Closures', description: 'Manage closures and availability blocks' },
     { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
     { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes', adminOnly: true },
   ];
@@ -4909,7 +4909,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
         title: 'Facility Closures & Availability',
         description: 'Block booking times for maintenance or special events',
         steps: [
-            { title: 'Accessing Blocks', content: 'From the Home dashboard, tap "Booking Blocks" to manage facility closures and availability blocks.' },
+            { title: 'Accessing Blocks', content: 'From the Home dashboard, tap "Closures" to manage facility closures and availability blocks.' },
             { title: 'Creating a Closure', content: 'Tap "+" to create a closure. Set the date range, time range, affected areas (simulator bays, conference room, or whole facility), and reason.' },
             { title: 'Affected Areas', content: 'Choose which resources are affected: individual simulator bays (Bay 1, Bay 2, Bay 3), the conference room, or the entire facility.' },
             { title: 'Calendar Sync', content: 'Closures automatically sync to Google Calendar and appear as red "CLOSED" blocks in the staff calendar view.' },
