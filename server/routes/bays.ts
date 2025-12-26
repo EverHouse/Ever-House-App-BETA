@@ -330,20 +330,29 @@ router.put('/api/booking-requests/:id', async (req, res) => {
       const updated = result[0];
       const approvalMessage = `Your simulator booking for ${updated.requestDate} at ${updated.startTime.substring(0, 5)} has been approved.`;
       
-      await db.insert(notifications).values({
-        userEmail: updated.userEmail,
-        title: 'Booking Request Approved',
-        message: approvalMessage,
-        type: 'booking_approved',
-        relatedId: updated.id,
-        relatedType: 'booking_request'
-      });
+      // Send notifications (non-blocking to prevent update failures)
+      try {
+        await db.insert(notifications).values({
+          userEmail: updated.userEmail,
+          title: 'Booking Request Approved',
+          message: approvalMessage,
+          type: 'booking_approved',
+          relatedId: updated.id,
+          relatedType: 'booking_request'
+        });
+      } catch (notifError) {
+        console.error('Failed to create approval notification (non-blocking):', notifError);
+      }
       
-      await sendPushNotification(updated.userEmail, {
-        title: 'Booking Approved!',
-        body: approvalMessage,
-        url: '/#/sims'
-      });
+      try {
+        await sendPushNotification(updated.userEmail, {
+          title: 'Booking Approved!',
+          body: approvalMessage,
+          url: '/#/sims'
+        });
+      } catch (pushError) {
+        console.error('Failed to send approval push notification (non-blocking):', pushError);
+      }
       
       return res.json(formatRow(result[0]));
     }
@@ -370,20 +379,29 @@ router.put('/api/booking-requests/:id', async (req, res) => {
         ? `Your simulator booking request for ${updated.requestDate} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
         : `Your simulator booking request for ${updated.requestDate} was declined.${staff_notes ? ' Note: ' + staff_notes : ''}`;
       
-      await db.insert(notifications).values({
-        userEmail: updated.userEmail,
-        title: 'Booking Request Declined',
-        message: declineMessage,
-        type: 'booking_declined',
-        relatedId: updated.id,
-        relatedType: 'booking_request'
-      });
+      // Send notifications (non-blocking to prevent update failures)
+      try {
+        await db.insert(notifications).values({
+          userEmail: updated.userEmail,
+          title: 'Booking Request Declined',
+          message: declineMessage,
+          type: 'booking_declined',
+          relatedId: updated.id,
+          relatedType: 'booking_request'
+        });
+      } catch (notifError) {
+        console.error('Failed to create decline notification (non-blocking):', notifError);
+      }
       
-      await sendPushNotification(updated.userEmail, {
-        title: 'Booking Request Update',
-        body: declineMessage,
-        url: '/#/sims'
-      });
+      try {
+        await sendPushNotification(updated.userEmail, {
+          title: 'Booking Request Update',
+          body: declineMessage,
+          url: '/#/sims'
+        });
+      } catch (pushError) {
+        console.error('Failed to send decline push notification (non-blocking):', pushError);
+      }
       
       return res.json(formatRow(result[0]));
     }
