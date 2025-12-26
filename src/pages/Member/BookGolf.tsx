@@ -555,7 +555,7 @@ const BookGolf: React.FC = () => {
                 ))}
               </div>
               <div className={`flex gap-2 p-1 rounded-xl border ${isDark ? 'bg-black/20 border-white/5' : 'bg-black/5 border-black/5'}`}>
-                {[30, 60, 90].map(mins => (
+                {[30, 60, 90].filter(mins => mins !== 90 || tierPermissions.hasExtendedSessions).map(mins => (
                   <button 
                     key={mins}
                     onClick={() => { haptic.selection(); setDuration(mins); }}
