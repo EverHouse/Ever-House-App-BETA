@@ -194,8 +194,8 @@ router.post('/api/booking-requests', async (req, res) => {
       title: 'New Golf Booking Request',
       message: staffMessage,
       type: 'booking',
-      actionUrl: '/#/admin',
-      metadata: { bookingRequestId: row.id }
+      relatedId: row.id,
+      relatedType: 'booking_request'
     });
     
     sendPushNotificationToStaff({
