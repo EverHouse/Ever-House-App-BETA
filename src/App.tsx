@@ -362,9 +362,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [location.pathname]);
 
   useEffect(() => {
-    const metaThemeColor = document.getElementById('theme-color-meta');
-    if (!metaThemeColor) return;
-    
     const isLanding = location.pathname === '/';
     const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
     const isAdmin = location.pathname.startsWith('/admin');
@@ -379,7 +376,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       themeColor = '#293515';
     }
     
-    metaThemeColor.setAttribute('content', themeColor);
+    // Force Safari to re-read theme-color by replacing the meta tag
+    const existingMeta = document.querySelector('meta[name="theme-color"]');
+    if (existingMeta) {
+      existingMeta.remove();
+    }
+    const newMeta = document.createElement('meta');
+    newMeta.name = 'theme-color';
+    newMeta.id = 'theme-color-meta';
+    newMeta.content = themeColor;
+    document.head.appendChild(newMeta);
   }, [location.pathname, hasScrolledPastHero]);
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
