@@ -752,12 +752,14 @@ const EventsAdmin: React.FC = () => {
                 <button 
                     onClick={handleSyncCalendars} 
                     disabled={isSyncing}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md disabled:opacity-50"
+                    className="bg-blue-600 text-white px-4 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-md disabled:opacity-50"
                 >
-                    <span className={`material-symbols-outlined text-[16px] ${isSyncing ? 'animate-spin' : ''}`}>
-                        {isSyncing ? 'progress_activity' : 'calendar_month'}
-                    </span> 
-                    {isSyncing ? 'Syncing...' : 'Sync Calendars'}
+                    {isSyncing ? (
+                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    ) : (
+                        <img src="/images/google-calendar-icon.png" alt="" className="w-5 h-5 object-contain" />
+                    )}
+                    {isSyncing ? 'Syncing...' : 'Sync'}
                 </button>
                 <button 
                     onClick={handleSyncEventbrite} 
@@ -2268,11 +2270,13 @@ const WellnessAdmin: React.FC = () => {
                         <button
                             onClick={handleSyncCalendars}
                             disabled={isSyncing}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
-                            <span className={`material-symbols-outlined text-lg ${isSyncing ? 'animate-spin' : ''}`}>
-                                {isSyncing ? 'progress_activity' : 'calendar_month'}
-                            </span>
+                            {isSyncing ? (
+                                <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                            ) : (
+                                <img src="/images/google-calendar-icon.png" alt="" className="w-5 h-5 object-contain" />
+                            )}
                             {isSyncing ? 'Syncing...' : 'Sync'}
                         </button>
                         <button
