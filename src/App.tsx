@@ -369,18 +369,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
     const isAdmin = location.pathname.startsWith('/admin');
     
-    let statusBarColor: string;
+    let themeColor: string;
     
     if (isLanding && !hasScrolledPastHero) {
-      statusBarColor = '#1a1610';
+      themeColor = '#1a1610';
     } else if (isAdmin || isMember) {
-      statusBarColor = '#0f120a';
+      themeColor = '#0f120a';
     } else {
-      statusBarColor = '#293515';
+      themeColor = '#293515';
     }
     
-    metaThemeColor.setAttribute('content', statusBarColor);
-    document.body.style.backgroundColor = statusBarColor;
+    metaThemeColor.setAttribute('content', themeColor);
   }, [location.pathname, hasScrolledPastHero]);
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
