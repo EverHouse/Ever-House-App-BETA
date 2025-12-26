@@ -181,28 +181,31 @@ router.post('/api/booking-requests', async (req, res) => {
     
     const row = result[0];
     
+    // Send notifications in background - don't block the response
     const formattedDate = new Date(row.requestDate).toLocaleDateString('en-US', { 
       weekday: 'short', 
       month: 'short', 
       day: 'numeric' 
     });
-    const formattedTime = row.startTime.substring(0, 5);
+    const formattedTime = row.startTime?.substring(0, 5) || start_time.substring(0, 5);
     const staffMessage = `${row.userName || row.userEmail} requested ${formattedDate} at ${formattedTime}`;
     
-    await db.insert(notifications).values({
+    // In-app notification - don't fail booking if this fails
+    db.insert(notifications).values({
       userEmail: 'staff@evenhouse.app',
       title: 'New Golf Booking Request',
       message: staffMessage,
       type: 'booking',
       relatedId: row.id,
       relatedType: 'booking_request'
-    });
+    }).catch(err => console.error('Staff in-app notification failed:', err));
     
+    // Push notification - already non-blocking
     sendPushNotificationToStaff({
       title: 'New Golf Booking Request',
       body: staffMessage,
       url: '/#/admin'
-    }).catch(err => console.error('Staff notification failed:', err));
+    }).catch(err => console.error('Staff push notification failed:', err));
     
     res.status(201).json({
       id: row.id,
