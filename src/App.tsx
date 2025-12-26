@@ -539,7 +539,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const appBgClass = isDarkTheme 
     ? 'dark liquid-bg text-white' 
     : isLandingPage 
-      ? 'text-primary' 
+      ? 'bg-[#1a1610] text-primary' 
       : 'bg-[#F2F2EC] text-primary';
 
   return (
@@ -580,7 +580,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <main 
                 id="main-content"
-                className={`flex-1 relative ${showHeader && !isLandingPage ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''}`}
+                className={`flex-1 relative ${showHeader && !isLandingPage ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : 'pt-0'}`}
             >
                 {children}
                 {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}

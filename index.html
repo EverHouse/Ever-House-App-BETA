@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" id="theme-color-light" content="#1a1610" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" id="theme-color-dark" content="#1a1610" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#1a1610" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f120a" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EH Members" />
@@ -32,6 +32,9 @@
         var themeMode = localStorage.getItem('themeMode');
         var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         var isDark = themeMode === 'dark' || (themeMode === 'system' && prefersDark) || (!themeMode && prefersDark);
+        
+        var color = isDark ? '#0f120a' : '#1a1610';
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', color);
         if (isDark) document.documentElement.classList.add('dark');
       })();
     </script>
