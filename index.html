@@ -8,6 +8,25 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EH Members" />
+    <style>
+      :root { --status-bar-color: #1a1610; }
+      html, body { 
+        background-color: #1a1610; 
+        margin: 0; 
+        padding: 0;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: env(safe-area-inset-top, 0px);
+        background-color: var(--status-bar-color, #1a1610);
+        z-index: 99999;
+        pointer-events: none;
+      }
+    </style>
     <script>
       (function() {
         var themeMode = localStorage.getItem('themeMode');
