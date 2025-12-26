@@ -764,12 +764,14 @@ const EventsAdmin: React.FC = () => {
                 <button 
                     onClick={handleSyncEventbrite} 
                     disabled={isSyncing}
-                    className="bg-[#F05537] text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md disabled:opacity-50"
+                    className="bg-[#F05537] text-white px-4 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-md disabled:opacity-50"
                 >
-                    <span className={`material-symbols-outlined text-[16px] ${isSyncing ? 'animate-spin' : ''}`}>
-                        {isSyncing ? 'progress_activity' : 'sync'}
-                    </span> 
-                    {isSyncing ? 'Syncing...' : 'Sync Eventbrite'}
+                    {isSyncing ? (
+                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    ) : (
+                        <img src="/images/eventbrite-icon.png" alt="" className="w-6 h-6 object-contain rounded" />
+                    )}
+                    {isSyncing ? 'Syncing...' : 'Sync'}
                 </button>
                 <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md">
                     <span className="material-symbols-outlined">add</span> Create
