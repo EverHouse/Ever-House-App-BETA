@@ -11,9 +11,11 @@ body::before {
   background-color: var(--status-bar-color, #1a1610);
   z-index: 99999;
   pointer-events: none;
+  transition: background-color 0.3s ease;
 }
 
 :root {
+  --status-bar-color: #1a1610;
   /* Safe Area / Nav Clearance */
   --nav-bottom-offset: 2rem; /* bottom-8 = 32px = 2rem */
   --nav-height: 4rem; /* approximate nav bar height */
