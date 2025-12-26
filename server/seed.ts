@@ -82,7 +82,7 @@ async function seed() {
       await pool.query(
         `INSERT INTO bays (name, description, is_active) 
          VALUES ($1, $2, $3) 
-         ON CONFLICT DO NOTHING`,
+         ON CONFLICT (name) DO NOTHING`,
         [bay.name, bay.description, bay.is_active]
       );
     }
@@ -102,7 +102,7 @@ async function seed() {
       await pool.query(
         `INSERT INTO resources (name, type, description, capacity) 
          VALUES ($1, $2, $3, $4) 
-         ON CONFLICT DO NOTHING`,
+         ON CONFLICT (name) DO NOTHING`,
         [resource.name, resource.type, resource.description, resource.capacity]
       );
     }
@@ -239,7 +239,7 @@ async function seed() {
       await pool.query(
         `INSERT INTO cafe_items (category, name, price, description, icon, is_active, sort_order) 
          VALUES ($1, $2, $3, $4, $5, true, $6) 
-         ON CONFLICT DO NOTHING`,
+         ON CONFLICT (name, category) DO NOTHING`,
         [item.category, item.name, item.price, item.description, item.icon, item.sort_order]
       );
     }
