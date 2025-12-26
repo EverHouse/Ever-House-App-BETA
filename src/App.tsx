@@ -346,41 +346,41 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useDebugLayout();
 
   useEffect(() => {
+    const metaThemeColor = document.getElementById('theme-color-meta');
+    const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
+    const isAdmin = location.pathname.startsWith('/admin');
+    
+    const updateThemeColor = (scrolledPastHero: boolean) => {
+      if (!metaThemeColor) return;
+      
+      let themeColor: string;
+      if (location.pathname === '/' && !scrolledPastHero) {
+        themeColor = '#1a1610';
+      } else if (isAdmin || isMember) {
+        themeColor = '#0f120a';
+      } else {
+        themeColor = '#293515';
+      }
+      metaThemeColor.setAttribute('content', themeColor);
+    };
+    
     if (location.pathname !== '/') {
       setHasScrolledPastHero(false);
+      updateThemeColor(false);
       return;
     }
     
     const handleScroll = () => {
       const heroThreshold = window.innerHeight * 0.6;
-      setHasScrolledPastHero(window.scrollY > heroThreshold);
+      const scrolledPast = window.scrollY > heroThreshold;
+      setHasScrolledPastHero(scrolledPast);
+      updateThemeColor(scrolledPast);
     };
     
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
-
-  useEffect(() => {
-    const metaThemeColor = document.getElementById('theme-color-meta');
-    if (!metaThemeColor) return;
-    
-    const isLanding = location.pathname === '/';
-    const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
-    const isAdmin = location.pathname.startsWith('/admin');
-    
-    let themeColor: string;
-    
-    if (isLanding && !hasScrolledPastHero) {
-      themeColor = '#1a1610';
-    } else if (isAdmin || isMember) {
-      themeColor = '#0f120a';
-    } else {
-      themeColor = '#293515';
-    }
-    
-    metaThemeColor.setAttribute('content', themeColor);
-  }, [location.pathname, hasScrolledPastHero]);
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
