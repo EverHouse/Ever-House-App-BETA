@@ -36,7 +36,8 @@ router.get('/api/announcements', async (req, res) => {
       id: a.id.toString(),
       title: a.title,
       desc: a.message || '',
-      type: (a.priority === 'high' ? 'announcement' : 'update') as 'update' | 'announcement',
+      type: (a.priority === 'high' || a.priority === 'urgent' ? 'announcement' : 'update') as 'update' | 'announcement',
+      priority: (a.priority || 'normal') as 'normal' | 'high' | 'urgent',
       date: a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now',
       startDate: a.startsAt ? new Date(a.startsAt).toISOString().split('T')[0] : undefined,
       endDate: a.endsAt ? new Date(a.endsAt).toISOString().split('T')[0] : undefined,
@@ -53,18 +54,19 @@ router.get('/api/announcements', async (req, res) => {
 
 router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
   try {
-    const { title, description, type, startDate, endDate, linkType, linkTarget } = req.body;
+    const { title, description, type, priority, startDate, endDate, linkType, linkTarget } = req.body;
     
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
     }
     
     const userEmail = (req as any).user?.email || 'system';
+    const finalPriority = priority || (type === 'announcement' ? 'high' : 'normal');
     
     const [newAnnouncement] = await db.insert(announcements).values({
       title,
       message: description || '',
-      priority: type === 'announcement' ? 'high' : 'normal',
+      priority: finalPriority,
       startsAt: startDate ? new Date(startDate) : null,
       endsAt: endDate ? new Date(endDate) : null,
       linkType: linkType || null,
@@ -76,7 +78,8 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
       id: newAnnouncement.id.toString(),
       title: newAnnouncement.title,
       desc: newAnnouncement.message || '',
-      type: (newAnnouncement.priority === 'high' ? 'announcement' : 'update') as 'update' | 'announcement',
+      type: (newAnnouncement.priority === 'high' || newAnnouncement.priority === 'urgent' ? 'announcement' : 'update') as 'update' | 'announcement',
+      priority: (newAnnouncement.priority || 'normal') as 'normal' | 'high' | 'urgent',
       date: 'Just now',
       startDate: newAnnouncement.startsAt ? new Date(newAnnouncement.startsAt).toISOString().split('T')[0] : undefined,
       endDate: newAnnouncement.endsAt ? new Date(newAnnouncement.endsAt).toISOString().split('T')[0] : undefined,
@@ -92,17 +95,19 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
 router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, type, startDate, endDate, linkType, linkTarget } = req.body;
+    const { title, description, type, priority, startDate, endDate, linkType, linkTarget } = req.body;
     
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
     }
     
+    const finalPriority = priority || (type === 'announcement' ? 'high' : 'normal');
+    
     const [updated] = await db.update(announcements)
       .set({
         title,
         message: description || '',
-        priority: type === 'announcement' ? 'high' : 'normal',
+        priority: finalPriority,
         startsAt: startDate ? new Date(startDate) : null,
         endsAt: endDate ? new Date(endDate) : null,
         linkType: linkType || null,
@@ -119,7 +124,8 @@ router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
       id: updated.id.toString(),
       title: updated.title,
       desc: updated.message || '',
-      type: (updated.priority === 'high' ? 'announcement' : 'update') as 'update' | 'announcement',
+      type: (updated.priority === 'high' || updated.priority === 'urgent' ? 'announcement' : 'update') as 'update' | 'announcement',
+      priority: (updated.priority || 'normal') as 'normal' | 'high' | 'urgent',
       date: updated.createdAt ? new Date(updated.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now',
       startDate: updated.startsAt ? new Date(updated.startsAt).toISOString().split('T')[0] : undefined,
       endDate: updated.endsAt ? new Date(updated.endsAt).toISOString().split('T')[0] : undefined,

@@ -40,6 +40,7 @@ export interface Announcement {
   desc: string;
   type: 'update' | 'announcement';
   date: string;
+  priority?: 'normal' | 'high' | 'urgent';
   startDate?: string;
   endDate?: string;
   linkType?: 'events' | 'wellness' | 'golf' | 'external';
@@ -808,6 +809,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           title: item.title,
           description: item.desc,
           type: item.type,
+          priority: item.priority || 'normal',
           startDate: item.startDate || null,
           endDate: item.endDate || null,
           linkType: item.linkType || null,
@@ -833,6 +835,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           title: item.title,
           description: item.desc,
           type: item.type,
+          priority: item.priority || 'normal',
           startDate: item.startDate || null,
           endDate: item.endDate || null,
           linkType: item.linkType || null,

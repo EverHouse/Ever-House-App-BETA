@@ -1034,6 +1034,7 @@ const AnnouncementsAdmin: React.FC = () => {
             desc: newItem.desc || '',
             type: newItem.type || 'update',
             date: newItem.date || 'Just now',
+            priority: newItem.priority || 'normal',
             startDate: newItem.startDate,
             endDate: newItem.endDate,
             linkType: newItem.linkType,
@@ -1075,6 +1076,16 @@ const AnnouncementsAdmin: React.FC = () => {
                             <div className="space-y-4 mb-6">
                                 <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
                                 <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
+                                
+                                {/* Priority Level */}
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Priority Level</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <button type="button" onClick={() => setNewItem({...newItem, priority: 'normal'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${(!newItem.priority || newItem.priority === 'normal') ? 'bg-gray-200 dark:bg-white/20 text-gray-700 dark:text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Normal</button>
+                                        <button type="button" onClick={() => setNewItem({...newItem, priority: 'high'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.priority === 'high' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>High</button>
+                                        <button type="button" onClick={() => setNewItem({...newItem, priority: 'urgent'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.priority === 'urgent' ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Urgent</button>
+                                    </div>
+                                </div>
                                 
                                 {/* Date Durations */}
                                 <div className="grid grid-cols-2 gap-3">
