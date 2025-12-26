@@ -2283,10 +2283,10 @@ const WellnessAdmin: React.FC = () => {
                         <button
                             onClick={handleSyncCalendars}
                             disabled={isSyncing}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
                             {isSyncing ? (
-                                <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                                <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
                             ) : (
                                 <img src="/images/google-calendar-icon.png" alt="" className="w-[44px] h-[44px] object-contain" />
                             )}
@@ -2294,9 +2294,9 @@ const WellnessAdmin: React.FC = () => {
                         </button>
                         <button
                             onClick={openCreate}
-                            className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity"
+                            className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:opacity-90 transition-opacity"
                         >
-                            <span className="material-symbols-outlined text-lg">add</span>
+                            <span className="material-symbols-outlined text-[44px]">add</span>
                             Class
                         </button>
                     </div>
