@@ -2294,9 +2294,9 @@ const WellnessAdmin: React.FC = () => {
                         </button>
                         <button
                             onClick={openCreate}
-                            className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:opacity-90 transition-opacity"
+                            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg font-bold shadow-md hover:opacity-90 transition-opacity"
                         >
-                            <span className="material-symbols-outlined text-[44px]">add</span>
+                            <span className="material-symbols-outlined">add</span>
                             Class
                         </button>
                     </div>
