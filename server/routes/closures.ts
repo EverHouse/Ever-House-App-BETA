@@ -434,8 +434,8 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
           title: notificationTitle,
           message: notificationBody,
           type: 'closure',
-          actionUrl: '/announcements',
-          metadata: { closureId: closureId }
+          relatedId: closureId,
+          relatedType: 'closure'
         }));
         
         await db.insert(notifications).values(notificationValues);
