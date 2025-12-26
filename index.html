@@ -3,46 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#1a1610" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f120a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" id="theme-color-meta" content="#293515" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EH Members" />
-    <style>
-      :root { --status-bar-color: #1a1610; }
-      html, body { 
-        background-color: #1a1610 !important; 
-        margin: 0; 
-        padding: 0;
-      }
-      #root {
-        background-color: inherit;
-      }
-      body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: env(safe-area-inset-top, 0px);
-        background-color: var(--status-bar-color, #1a1610);
-        z-index: 99999;
-        pointer-events: none;
-      }
-    </style>
     <script>
       (function() {
         var themeMode = localStorage.getItem('themeMode');
         var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         var isDark = themeMode === 'dark' || (themeMode === 'system' && prefersDark) || (!themeMode && prefersDark);
-        
-        var color = isDark ? '#0f120a' : '#1a1610';
-        
-        document.documentElement.style.backgroundColor = color;
-        document.body.style.backgroundColor = color;
-        document.documentElement.style.setProperty('--status-bar-color', color);
-        
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', color);
         if (isDark) document.documentElement.classList.add('dark');
       })();
     </script>

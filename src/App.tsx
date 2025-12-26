@@ -18,13 +18,13 @@ import { AnnouncementBadgeProvider, useAnnouncementBadge } from './contexts/Anno
 import { BottomSentinel } from './components/layout/BottomSentinel';
 
 const PageSkeleton: React.FC = () => (
-  <div className="px-6 pt-4 animate-pulse bg-transparent">
-    <div className="h-8 w-48 bg-current/10 rounded-lg mb-2 opacity-10" />
-    <div className="h-4 w-32 bg-current/5 rounded mb-6 opacity-5" />
+  <div className="px-6 pt-4 animate-pulse">
+    <div className="h-8 w-48 bg-white/10 rounded-lg mb-2" />
+    <div className="h-4 w-32 bg-white/5 rounded mb-6" />
     <div className="space-y-4">
-      <div className="h-24 bg-current/5 rounded-xl opacity-5" />
-      <div className="h-24 bg-current/5 rounded-xl opacity-5" />
-      <div className="h-24 bg-current/5 rounded-xl opacity-5" />
+      <div className="h-24 bg-white/5 rounded-xl" />
+      <div className="h-24 bg-white/5 rounded-xl" />
+      <div className="h-24 bg-white/5 rounded-xl" />
     </div>
   </div>
 );
@@ -362,6 +362,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [location.pathname]);
 
   useEffect(() => {
+    const metaThemeColor = document.getElementById('theme-color-meta');
+    if (!metaThemeColor) return;
+    
     const isLanding = location.pathname === '/';
     const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
     const isAdmin = location.pathname.startsWith('/admin');
@@ -369,32 +372,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     let themeColor: string;
     
     if (isLanding && !hasScrolledPastHero) {
-      themeColor = '#1a1610';
+      themeColor = '#293515';
     } else if (isAdmin || isMember) {
       themeColor = '#0f120a';
     } else {
       themeColor = '#293515';
     }
     
-    // Update both light and dark mode theme-color meta tags for Safari
-    const updateThemeColorMeta = (id: string, media: string) => {
-      const existing = document.getElementById(id);
-      if (existing) {
-        existing.remove();
-      }
-      const meta = document.createElement('meta');
-      meta.name = 'theme-color';
-      meta.id = id;
-      meta.content = themeColor;
-      meta.setAttribute('media', media);
-      document.head.appendChild(meta);
-    };
-    
-    updateThemeColorMeta('theme-color-light', '(prefers-color-scheme: light)');
-    updateThemeColorMeta('theme-color-dark', '(prefers-color-scheme: dark)');
-    
-    // Also update CSS variable for the body::before pseudo-element
-    document.documentElement.style.setProperty('--status-bar-color', themeColor);
+    metaThemeColor.setAttribute('content', themeColor);
   }, [location.pathname, hasScrolledPastHero]);
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
@@ -532,29 +517,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     </header>
   ) : null;
 
-  const statusBarColor = isLandingPage 
-    ? (hasScrolledPastHero ? '#293515' : '#1a1610')
-    : '#293515';
-
-  const appBgClass = isDarkTheme 
-    ? 'dark liquid-bg text-white' 
-    : isLandingPage 
-      ? 'bg-[#1a1610] text-primary' 
-      : 'bg-[#F2F2EC] text-primary';
-
   return (
-    <div className={`${appBgClass} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
-      
-      {isLandingPage && (
-        <div 
-          className="fixed top-0 left-0 right-0 z-[10000] pointer-events-none transition-colors duration-300"
-          style={{ 
-            height: 'env(safe-area-inset-top, 0px)',
-            backgroundColor: statusBarColor
-          }}
-          aria-hidden="true"
-        />
-      )}
+    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
       
       {isDarkTheme ? (
         <>
@@ -580,7 +544,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <main 
                 id="main-content"
-                className={`flex-1 relative ${showHeader && !isLandingPage ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : 'pt-0'}`}
+                className={`flex-1 relative ${showHeader && !isLandingPage ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' : ''}`}
             >
                 {children}
                 {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}

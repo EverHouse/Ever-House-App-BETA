@@ -4,8 +4,8 @@
   "description": "Even House Members Club - Golf, Wellness & Community",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1610",
-  "theme_color": "#1a1610",
+  "background_color": "#293515",
+  "theme_color": "#293515",
   "orientation": "portrait",
   "icons": [
     {
