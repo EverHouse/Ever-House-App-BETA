@@ -5281,8 +5281,14 @@ const StaffTrainingGuide: React.FC = () => {
         }
     };
 
+    const [isPrinting, setIsPrinting] = useState(false);
+    
     const handlePrint = () => {
-        window.print();
+        setIsPrinting(true);
+        setTimeout(() => {
+            window.print();
+            setIsPrinting(false);
+        }, 100);
     };
 
     const openAddModal = () => {
@@ -5368,7 +5374,7 @@ const StaffTrainingGuide: React.FC = () => {
                             )}
                         </div>
 
-                        <div className={`overflow-hidden transition-all duration-300 ${expandedSection === String(section.id) ? 'max-h-[2000px]' : 'max-h-0'} print:max-h-none`}>
+                        <div className={`overflow-hidden transition-all duration-300 ${isPrinting || expandedSection === String(section.id) ? 'max-h-[5000px]' : 'max-h-0'}`}>
                             <div className="px-5 pb-5 space-y-4 print:pt-2">
                                 {section.steps.map((step, index) => (
                                     <div key={index} className="flex gap-4">
