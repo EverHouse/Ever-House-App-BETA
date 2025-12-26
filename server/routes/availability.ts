@@ -40,7 +40,7 @@ router.get('/api/availability', async (req, res) => {
     const closeMinutes = resourceType === 'conference_room' ? 18 * 60 : 22 * 60; // 6PM for conference, 10PM for simulators
     
     // Check if the requested date is today to filter out past times (use club's local timezone)
-    const clubTimezone = 'America/New_York';
+    const clubTimezone = 'America/Los_Angeles';
     const now = new Date();
     const localNow = new Date(now.toLocaleString('en-US', { timeZone: clubTimezone }));
     const todayStr = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
