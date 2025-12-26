@@ -11,9 +11,12 @@
     <style>
       :root { --status-bar-color: #1a1610; }
       html, body { 
-        background-color: #1a1610; 
+        background-color: #1a1610 !important; 
         margin: 0; 
         padding: 0;
+      }
+      #root {
+        background-color: inherit;
       }
       body::before {
         content: '';
@@ -34,6 +37,11 @@
         var isDark = themeMode === 'dark' || (themeMode === 'system' && prefersDark) || (!themeMode && prefersDark);
         
         var color = isDark ? '#0f120a' : '#1a1610';
+        
+        document.documentElement.style.backgroundColor = color;
+        document.body.style.backgroundColor = color;
+        document.documentElement.style.setProperty('--status-bar-color', color);
+        
         document.querySelector('meta[name="theme-color"]').setAttribute('content', color);
         if (isDark) document.documentElement.classList.add('dark');
       })();

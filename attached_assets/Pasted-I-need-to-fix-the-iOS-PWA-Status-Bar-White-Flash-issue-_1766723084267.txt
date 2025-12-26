@@ -1,0 +1,76 @@
+I need to fix the iOS PWA Status Bar 'White Flash' issue. The previous attempt did not save. Please apply the following 4 changes exactly as written:
+
+CSS Fix: In src/index.css, change the html, body background-color from #F2F2EC to #1a1610. This sets the underlying browser canvas to Dark Brown.
+
+HTML Fix: In index.html:
+
+Update the light mode <meta name="theme-color"> content to #1a1610.
+
+Add <style>html, body { background-color: #1a1610 !important; }</style> inside the <head> tag (before other styles).
+
+Update the inline script's var color logic to default to #1a1610 instead of #F2F2EC.
+
+Manifest Fix: In public/manifest.webmanifest, change "background_color" and "theme_color" to #1a1610.
+
+Layout Fix: In src/App.tsx, update the Layout component:
+
+Check if location.pathname === '/'.
+
+If it is the landing page, force the wrapper div className to use bg-[#1a1610] and pt-0 (so the image goes under the status bar).
+
+If it is NOT the landing page, use bg-[#F2F2EC] and the calculated padding (pt-[...])."
+
+Exact Code References (For Verification)
+1. src/index.css
+
+CSS
+
+html, body {
+  /* ... other props */
+  background-color: #1a1610; /* Changed from #F2F2EC */
+  /* ... */
+}
+2. index.html
+
+HTML
+
+<head>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#1a1610" media="(prefers-color-scheme: light)" /> 
+  
+  <style>
+    html, body { background-color: #1a1610 !important; }
+  </style>
+
+  <script>
+    // ...
+    var color = isDark ? '#0f120a' : '#1a1610'; // Changed from #F2F2EC
+    // ...
+  </script>
+</head>
+3. src/App.tsx (Layout Component)
+
+TypeScript
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const isLanding = location.pathname === '/'; // Detect Landing Page
+  
+  // ... existing logic ...
+
+  // Logic: Dark Mode -> Dark BG
+  // Landing Page -> Dark Brown (#1a1610)
+  // Normal Page -> Cream (#F2F2EC)
+  const bgClass = isDarkTheme 
+    ? 'dark liquid-bg text-white' 
+    : (isLanding ? 'bg-[#1a1610] text-primary' : 'bg-[#F2F2EC] text-primary');
+
+  // Logic: Landing Page -> No Padding (Image goes behind status bar)
+  // Normal Page -> Safe Area Padding
+  const mainPadding = showHeader && !isLanding 
+    ? 'pt-[max(72px,calc(env(safe-area-inset-top)+56px))]' 
+    : 'pt-0';
+
+  return (
+    <div className={`${bgClass} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
+      {/* ... rest of layout ... */}

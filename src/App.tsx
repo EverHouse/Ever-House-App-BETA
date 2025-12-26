@@ -18,13 +18,13 @@ import { AnnouncementBadgeProvider, useAnnouncementBadge } from './contexts/Anno
 import { BottomSentinel } from './components/layout/BottomSentinel';
 
 const PageSkeleton: React.FC = () => (
-  <div className="px-6 pt-4 animate-pulse">
-    <div className="h-8 w-48 bg-white/10 rounded-lg mb-2" />
-    <div className="h-4 w-32 bg-white/5 rounded mb-6" />
+  <div className="px-6 pt-4 animate-pulse bg-transparent">
+    <div className="h-8 w-48 bg-current/10 rounded-lg mb-2 opacity-10" />
+    <div className="h-4 w-32 bg-current/5 rounded mb-6 opacity-5" />
     <div className="space-y-4">
-      <div className="h-24 bg-white/5 rounded-xl" />
-      <div className="h-24 bg-white/5 rounded-xl" />
-      <div className="h-24 bg-white/5 rounded-xl" />
+      <div className="h-24 bg-current/5 rounded-xl opacity-5" />
+      <div className="h-24 bg-current/5 rounded-xl opacity-5" />
+      <div className="h-24 bg-current/5 rounded-xl opacity-5" />
     </div>
   </div>
 );
