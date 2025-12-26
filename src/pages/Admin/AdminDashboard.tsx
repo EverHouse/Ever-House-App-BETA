@@ -5069,8 +5069,8 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:hidden">
-            <div className="bg-bone dark:bg-[#1a1a1a] rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-start justify-center pt-20 pb-4 px-4 print:hidden overflow-y-auto">
+            <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl w-full max-w-2xl max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col shadow-2xl">
                 <div className="p-6 border-b border-primary/10 dark:border-white/10 flex items-center justify-between">
                     <h2 className="text-xl font-bold text-primary dark:text-white">
                         {section ? 'Edit Training Section' : 'Add Training Section'}
