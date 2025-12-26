@@ -757,7 +757,7 @@ const EventsAdmin: React.FC = () => {
                     {isSyncing ? (
                         <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
                     ) : (
-                        <img src="/images/google-calendar-icon.png" alt="" className="w-6 h-6 object-contain" />
+                        <img src="/images/google-calendar-icon.png" alt="" className="w-7 h-7 object-contain" />
                     )}
                     {isSyncing ? 'Syncing...' : 'Sync'}
                 </button>
@@ -769,7 +769,7 @@ const EventsAdmin: React.FC = () => {
                     {isSyncing ? (
                         <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
                     ) : (
-                        <img src="/images/eventbrite-icon.png" alt="" className="w-6 h-6 object-contain rounded" />
+                        <img src="/images/eventbrite-icon.png" alt="" className="w-7 h-7 object-contain rounded" />
                     )}
                     {isSyncing ? 'Syncing...' : 'Sync'}
                 </button>
@@ -2288,7 +2288,7 @@ const WellnessAdmin: React.FC = () => {
                             {isSyncing ? (
                                 <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
                             ) : (
-                                <img src="/images/google-calendar-icon.png" alt="" className="w-6 h-6 object-contain" />
+                                <img src="/images/google-calendar-icon.png" alt="" className="w-7 h-7 object-contain" />
                             )}
                             {isSyncing ? 'Syncing...' : 'Sync'}
                         </button>
