@@ -517,8 +517,23 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     </header>
   ) : null;
 
+  const statusBarColor = isLandingPage 
+    ? (hasScrolledPastHero ? '#293515' : '#1a1610')
+    : '#293515';
+
   return (
     <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
+      
+      {isLandingPage && (
+        <div 
+          className="fixed top-0 left-0 right-0 z-[10000] pointer-events-none transition-colors duration-300"
+          style={{ 
+            height: 'env(safe-area-inset-top, 0px)',
+            backgroundColor: statusBarColor
+          }}
+          aria-hidden="true"
+        />
+      )}
       
       {isDarkTheme ? (
         <>
