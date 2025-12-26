@@ -376,16 +376,22 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       themeColor = '#293515';
     }
     
-    // Force Safari to re-read theme-color by replacing the meta tag
-    const existingMeta = document.querySelector('meta[name="theme-color"]');
-    if (existingMeta) {
-      existingMeta.remove();
-    }
-    const newMeta = document.createElement('meta');
-    newMeta.name = 'theme-color';
-    newMeta.id = 'theme-color-meta';
-    newMeta.content = themeColor;
-    document.head.appendChild(newMeta);
+    // Update both light and dark mode theme-color meta tags for Safari
+    const updateThemeColorMeta = (id: string, media: string) => {
+      const existing = document.getElementById(id);
+      if (existing) {
+        existing.remove();
+      }
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.id = id;
+      meta.content = themeColor;
+      meta.setAttribute('media', media);
+      document.head.appendChild(meta);
+    };
+    
+    updateThemeColorMeta('theme-color-light', '(prefers-color-scheme: light)');
+    updateThemeColorMeta('theme-color-dark', '(prefers-color-scheme: dark)');
   }, [location.pathname, hasScrolledPastHero]);
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
