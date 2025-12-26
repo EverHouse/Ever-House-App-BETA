@@ -14,7 +14,6 @@ import Toggle from '../../components/Toggle';
 import FaqsAdmin from './FaqsAdmin';
 import InquiriesAdmin from './InquiriesAdmin';
 import GalleryAdmin from './GalleryAdmin';
-import PipelineAdmin from './PipelineAdmin';
 import { changelog } from '../../data/changelog';
 
 const AdminDashboard: React.FC = () => {
@@ -108,7 +107,6 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'blocks' && 'Availability Blocks'}
                {activeTab === 'changelog' && 'Version History'}
                {activeTab === 'training' && 'Staff Training Guide'}
-               {activeTab === 'pipeline' && 'Membership Pipeline'}
            </h1>
         </div>
         
@@ -127,7 +125,6 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'blocks' && <BlocksAdmin />}
         {activeTab === 'changelog' && actualUser?.role === 'admin' && <ChangelogAdmin />}
         {activeTab === 'training' && <StaffTrainingGuide />}
-        {activeTab === 'pipeline' && <PipelineAdmin />}
         <BottomSentinel />
       </main>
 
@@ -148,7 +145,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training' | 'pipeline';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training';
 
 interface NavItemData {
   id: TabType;
@@ -159,9 +156,9 @@ interface NavItemData {
 
 const NAV_ITEMS: NavItemData[] = [
   { id: 'home', icon: 'home', label: 'Home' },
-  { id: 'pipeline', icon: 'handshake', label: 'Pipeline' },
   { id: 'simulator', icon: 'event_note', label: 'Requests' },
   { id: 'events', icon: 'event', label: 'Events' },
+  { id: 'wellness', icon: 'spa', label: 'Wellness' },
   { id: 'announcements', icon: 'campaign', label: 'Updates' },
 ];
 
