@@ -91,7 +91,7 @@ html, body {
   width: 100%;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
-  background-color: #F2F2EC;
+  background-color: #1a1610;
   color: var(--brand-primary);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -99,7 +99,7 @@ html, body {
 }
 
 html.dark, html.dark body {
-  background-color: #0f120a;
+  background-color: #1a1610;
   color: #F2F2EC;
 }
 

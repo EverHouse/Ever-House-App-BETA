@@ -536,8 +536,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     ? (hasScrolledPastHero ? '#293515' : '#1a1610')
     : '#293515';
 
+  const appBgClass = isDarkTheme 
+    ? 'dark liquid-bg text-white' 
+    : isLandingPage 
+      ? 'text-primary' 
+      : 'bg-[#F2F2EC] text-primary';
+
   return (
-    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
+    <div className={`${appBgClass} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
       
       {isLandingPage && (
         <div 
