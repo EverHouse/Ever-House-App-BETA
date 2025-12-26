@@ -54,7 +54,7 @@ const VerifyMagicLink = lazy(() => import('./pages/Public/VerifyMagicLink'));
 const AuthCallback = lazy(() => import('./pages/Public/AuthCallback'));
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 
-import { prefetchRoute, prefetchAdjacentRoutes } from './lib/prefetch';
+import { prefetchRoute, prefetchAdjacentRoutes, prefetchOnIdle } from './lib/prefetch';
 
 const useDebugLayout = () => {
   useEffect(() => {
@@ -198,6 +198,10 @@ const ROUTE_INDICES: Record<string, number> = {
 const AnimatedRoutes: React.FC = () => {
   const location = useLocation();
   const prevPathRef = useRef(location.pathname);
+  
+  useEffect(() => {
+    prefetchOnIdle();
+  }, []);
   
   const transitionState = useMemo(() => {
     const prevPath = prevPathRef.current;

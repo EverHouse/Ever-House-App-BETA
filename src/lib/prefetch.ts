@@ -1,6 +1,7 @@
 type LazyComponent = { prefetch?: () => Promise<any> };
 
 const prefetchedPaths = new Set<string>();
+const prefetchedAPIs = new Set<string>();
 
 const routeImports: Record<string, () => Promise<any>> = {
   '/book': () => import('../pages/Member/BookGolf'),
@@ -8,6 +9,15 @@ const routeImports: Record<string, () => Promise<any>> = {
   '/member-wellness': () => import('../pages/Member/Wellness'),
   '/profile': () => import('../pages/Member/Profile'),
   '/dashboard': () => import('../pages/Member/Dashboard'),
+  '/announcements': () => import('../pages/Member/Announcements'),
+};
+
+const routeAPIs: Record<string, string[]> = {
+  '/book': ['/api/golf-settings', '/api/approved-bookings'],
+  '/member-events': ['/api/events'],
+  '/member-wellness': ['/api/wellness-classes'],
+  '/announcements': ['/api/announcements'],
+  '/dashboard': ['/api/events', '/api/announcements'],
 };
 
 export const prefetchRoute = (path: string) => {
@@ -16,6 +26,15 @@ export const prefetchRoute = (path: string) => {
   if (importFn) {
     prefetchedPaths.add(path);
     importFn();
+  }
+  const apis = routeAPIs[path];
+  if (apis) {
+    apis.forEach(api => {
+      if (!prefetchedAPIs.has(api)) {
+        prefetchedAPIs.add(api);
+        fetch(api, { credentials: 'include' }).catch(() => {});
+      }
+    });
   }
 };
 
@@ -34,7 +53,7 @@ export const prefetchAllNavRoutes = () => {
 
 export const prefetchOnIdle = () => {
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() => prefetchAllNavRoutes());
+    (window as any).requestIdleCallback(() => prefetchAllNavRoutes(), { timeout: 2000 });
   } else {
     setTimeout(prefetchAllNavRoutes, 100);
   }
