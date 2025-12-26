@@ -392,6 +392,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     
     updateThemeColorMeta('theme-color-light', '(prefers-color-scheme: light)');
     updateThemeColorMeta('theme-color-dark', '(prefers-color-scheme: dark)');
+    
+    // Also update CSS variable for the body::before pseudo-element
+    document.documentElement.style.setProperty('--status-bar-color', themeColor);
   }, [location.pathname, hasScrolledPastHero]);
   
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
