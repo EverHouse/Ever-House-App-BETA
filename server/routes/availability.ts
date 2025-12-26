@@ -39,11 +39,13 @@ router.get('/api/availability', async (req, res) => {
     const openMinutes = 8 * 60; // 8:00 AM
     const closeMinutes = resourceType === 'conference_room' ? 18 * 60 : 22 * 60; // 6PM for conference, 10PM for simulators
     
-    // Check if the requested date is today to filter out past times
+    // Check if the requested date is today to filter out past times (use club's local timezone)
+    const clubTimezone = 'America/New_York';
     const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const localNow = new Date(now.toLocaleString('en-US', { timeZone: clubTimezone }));
+    const todayStr = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
     const isToday = date === todayStr;
-    const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() : 0;
+    const currentMinutes = isToday ? localNow.getHours() * 60 + localNow.getMinutes() : 0;
     
     for (let startMins = openMinutes; startMins + durationMinutes <= closeMinutes; startMins += slotIncrement) {
       // Skip past time slots for today
