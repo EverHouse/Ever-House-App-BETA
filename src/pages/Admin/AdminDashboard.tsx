@@ -4952,17 +4952,350 @@ const ADMIN_SECTIONS: TrainingSection[] = [
     },
 ];
 
+interface TrainingSectionDB {
+    id: number;
+    icon: string;
+    title: string;
+    description: string;
+    steps: { title: string; content: string; imageUrl?: string }[];
+    isAdminOnly: boolean;
+    sortOrder: number;
+}
+
+interface TrainingModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    section: TrainingSectionDB | null;
+    onSave: (section: Partial<TrainingSectionDB>) => Promise<void>;
+}
+
+const COMMON_ICONS = [
+    'login', 'event_note', 'event', 'spa', 'campaign', 'groups', 'local_cafe',
+    'mail', 'photo_library', 'help_outline', 'block', 'shield_person', 'loyalty',
+    'visibility', 'settings', 'dashboard', 'person', 'notifications', 'bookmark',
+    'star', 'favorite', 'check_circle', 'info', 'warning', 'error', 'lightbulb',
+    'edit', 'delete', 'add', 'remove', 'search', 'home', 'menu', 'close'
+];
+
+const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, section, onSave }) => {
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [icon, setIcon] = useState('help_outline');
+    const [isAdminOnly, setIsAdminOnly] = useState(false);
+    const [steps, setSteps] = useState<{ title: string; content: string; imageUrl?: string }[]>([{ title: '', content: '' }]);
+    const [saving, setSaving] = useState(false);
+    const [showIconPicker, setShowIconPicker] = useState(false);
+
+    useEffect(() => {
+        if (section) {
+            setTitle(section.title);
+            setDescription(section.description);
+            setIcon(section.icon);
+            setIsAdminOnly(section.isAdminOnly);
+            setSteps(section.steps.length > 0 ? section.steps : [{ title: '', content: '' }]);
+        } else {
+            setTitle('');
+            setDescription('');
+            setIcon('help_outline');
+            setIsAdminOnly(false);
+            setSteps([{ title: '', content: '' }]);
+        }
+    }, [section, isOpen]);
+
+    const handleAddStep = () => {
+        setSteps([...steps, { title: '', content: '' }]);
+    };
+
+    const handleRemoveStep = (index: number) => {
+        if (steps.length > 1) {
+            setSteps(steps.filter((_, i) => i !== index));
+        }
+    };
+
+    const handleStepChange = (index: number, field: 'title' | 'content', value: string) => {
+        const newSteps = [...steps];
+        newSteps[index] = { ...newSteps[index], [field]: value };
+        setSteps(newSteps);
+    };
+
+    const handleStepImageUpload = async (index: number, file: File) => {
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+            const response = await fetch('/api/admin/upload-image', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const newSteps = [...steps];
+                newSteps[index] = { ...newSteps[index], imageUrl: data.imageUrl };
+                setSteps(newSteps);
+            }
+        } catch (error) {
+            console.error('Image upload failed:', error);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!title.trim() || !description.trim()) return;
+        const validSteps = steps.filter(s => s.title.trim() && s.content.trim()).map(s => ({
+            title: s.title.trim(),
+            content: s.content.trim(),
+            ...(s.imageUrl && { imageUrl: s.imageUrl })
+        }));
+        if (validSteps.length === 0) return;
+
+        setSaving(true);
+        try {
+            await onSave({
+                ...(section?.id && { id: section.id }),
+                title: title.trim(),
+                description: description.trim(),
+                icon,
+                isAdminOnly,
+                steps: validSteps,
+                sortOrder: section?.sortOrder ?? 0
+            });
+            onClose();
+        } catch (error) {
+            console.error('Save failed:', error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:hidden">
+            <div className="bg-bone dark:bg-[#1a1a1a] rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-primary/10 dark:border-white/10 flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-primary dark:text-white">
+                        {section ? 'Edit Training Section' : 'Add Training Section'}
+                    </h2>
+                    <button onClick={onClose} className="p-2 hover:bg-primary/10 dark:hover:bg-white/10 rounded-full">
+                        <span className="material-symbols-outlined text-primary dark:text-white">close</span>
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-primary dark:text-white mb-2">Title</label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="e.g., Managing Booking Requests"
+                            className="w-full px-4 py-3 rounded-xl border border-primary/20 dark:border-white/20 bg-white dark:bg-white/5 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-primary dark:text-white mb-2">Short Description</label>
+                        <input
+                            type="text"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="e.g., Approve, decline, or manage simulator bookings"
+                            className="w-full px-4 py-3 rounded-xl border border-primary/20 dark:border-white/20 bg-white dark:bg-white/5 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-primary dark:text-white mb-2">Icon</label>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowIconPicker(!showIconPicker)}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-primary/20 dark:border-white/20 bg-white dark:bg-white/5 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-2xl text-primary dark:text-white">{icon}</span>
+                                <span className="text-primary dark:text-white">{icon}</span>
+                                <span className="material-symbols-outlined text-primary/40 dark:text-white/40 ml-auto">expand_more</span>
+                            </button>
+                            {showIconPicker && (
+                                <div className="absolute top-full left-0 right-0 mt-2 p-4 bg-white dark:bg-[#2a2a2a] rounded-xl border border-primary/10 dark:border-white/10 shadow-lg z-10 grid grid-cols-8 gap-2">
+                                    {COMMON_ICONS.map((iconName) => (
+                                        <button
+                                            key={iconName}
+                                            onClick={() => { setIcon(iconName); setShowIconPicker(false); }}
+                                            className={`p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-white/10 ${icon === iconName ? 'bg-primary/20 dark:bg-white/20' : ''}`}
+                                        >
+                                            <span className="material-symbols-outlined text-primary dark:text-white">{iconName}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="checkbox"
+                            id="adminOnly"
+                            checked={isAdminOnly}
+                            onChange={(e) => setIsAdminOnly(e.target.checked)}
+                            className="w-5 h-5 rounded border-primary/20 dark:border-white/20"
+                        />
+                        <label htmlFor="adminOnly" className="text-sm text-primary dark:text-white">Admin Only (hidden from regular staff)</label>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-primary dark:text-white mb-3">Steps</label>
+                        <div className="space-y-4">
+                            {steps.map((step, index) => (
+                                <div key={index} className="p-4 bg-white/60 dark:bg-white/5 rounded-xl border border-primary/10 dark:border-white/10">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-7 h-7 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center text-sm font-bold text-primary dark:text-white">
+                                            {index + 1}
+                                        </div>
+                                        <span className="text-sm font-medium text-primary dark:text-white flex-1">Step {index + 1}</span>
+                                        {steps.length > 1 && (
+                                            <button onClick={() => handleRemoveStep(index)} className="p-1 hover:bg-red-500/10 rounded-full">
+                                                <span className="material-symbols-outlined text-red-500 text-lg">delete</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={step.title}
+                                        onChange={(e) => handleStepChange(index, 'title', e.target.value)}
+                                        placeholder="Step title"
+                                        className="w-full px-3 py-2 rounded-lg border border-primary/10 dark:border-white/10 bg-white dark:bg-white/5 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 mb-2 text-sm"
+                                    />
+                                    <textarea
+                                        value={step.content}
+                                        onChange={(e) => handleStepChange(index, 'content', e.target.value)}
+                                        placeholder="Step instructions..."
+                                        rows={2}
+                                        className="w-full px-3 py-2 rounded-lg border border-primary/10 dark:border-white/10 bg-white dark:bg-white/5 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 text-sm resize-none"
+                                    />
+                                    <div className="mt-2 flex items-center gap-2">
+                                        <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-primary/20 dark:border-white/20 hover:bg-primary/5 dark:hover:bg-white/5 cursor-pointer text-sm text-primary/60 dark:text-white/60">
+                                            <span className="material-symbols-outlined text-lg">add_photo_alternate</span>
+                                            {step.imageUrl ? 'Change Image' : 'Add Image (optional)'}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => e.target.files?.[0] && handleStepImageUpload(index, e.target.files[0])}
+                                            />
+                                        </label>
+                                        {step.imageUrl && (
+                                            <img src={step.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <button
+                            onClick={handleAddStep}
+                            className="mt-4 flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-primary/30 dark:border-white/30 text-primary dark:text-white hover:bg-primary/5 dark:hover:bg-white/5 transition-colors text-sm"
+                        >
+                            <span className="material-symbols-outlined text-lg">add</span>
+                            Add Step
+                        </button>
+                    </div>
+                </div>
+
+                <div className="p-6 border-t border-primary/10 dark:border-white/10 flex gap-3 justify-end">
+                    <button onClick={onClose} className="px-5 py-2.5 rounded-full text-primary dark:text-white hover:bg-primary/10 dark:hover:bg-white/10">
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving || !title.trim() || !description.trim() || steps.every(s => !s.title.trim() || !s.content.trim())}
+                        className="px-5 py-2.5 rounded-full bg-primary dark:bg-accent text-white dark:text-primary font-medium disabled:opacity-50"
+                    >
+                        {saving ? 'Saving...' : 'Save Section'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const StaffTrainingGuide: React.FC = () => {
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
+    const [sections, setSections] = useState<TrainingSectionDB[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingSection, setEditingSection] = useState<TrainingSectionDB | null>(null);
     const { actualUser } = useData();
     const isAdmin = actualUser?.role === 'admin';
     const printRef = useRef<HTMLDivElement>(null);
 
-    const allSections = isAdmin ? [...TRAINING_SECTIONS, ...ADMIN_SECTIONS] : TRAINING_SECTIONS;
+    useEffect(() => {
+        fetchSections();
+    }, []);
+
+    const fetchSections = async () => {
+        try {
+            const response = await fetch('/api/training-sections', { credentials: 'include' });
+            if (response.ok) {
+                const data = await response.json();
+                setSections(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch training sections:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async (sectionData: Partial<TrainingSectionDB>) => {
+        const isEdit = !!sectionData.id;
+        const url = isEdit ? `/api/admin/training-sections/${sectionData.id}` : '/api/admin/training-sections';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(sectionData)
+        });
+
+        if (!response.ok) throw new Error('Save failed');
+        await fetchSections();
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm('Are you sure you want to delete this training section?')) return;
+        try {
+            const response = await fetch(`/api/admin/training-sections/${id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (response.ok) {
+                await fetchSections();
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+        }
+    };
 
     const handlePrint = () => {
         window.print();
     };
+
+    const openAddModal = () => {
+        setEditingSection(null);
+        setModalOpen(true);
+    };
+
+    const openEditModal = (section: TrainingSectionDB) => {
+        setEditingSection(section);
+        setModalOpen(true);
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-pop-in pb-32">
@@ -4970,13 +5303,24 @@ const StaffTrainingGuide: React.FC = () => {
                 <div className="text-sm text-primary/60 dark:text-white/60">
                     A complete guide to using the Even House Staff Portal. Tap any section to expand and view detailed instructions.
                 </div>
-                <button
-                    onClick={handlePrint}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary dark:bg-accent text-white dark:text-primary rounded-full text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap print:hidden"
-                >
-                    <span className="material-symbols-outlined text-lg">download</span>
-                    Download PDF
-                </button>
+                <div className="flex gap-2 print:hidden">
+                    {isAdmin && (
+                        <button
+                            onClick={openAddModal}
+                            className="flex items-center gap-2 px-4 py-2 bg-accent text-primary rounded-full text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+                        >
+                            <span className="material-symbols-outlined text-lg">add</span>
+                            Add
+                        </button>
+                    )}
+                    <button
+                        onClick={handlePrint}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary dark:bg-accent text-white dark:text-primary rounded-full text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+                    >
+                        <span className="material-symbols-outlined text-lg">download</span>
+                        Download PDF
+                    </button>
+                </div>
             </div>
 
             <div ref={printRef} className="space-y-4 print:space-y-6">
@@ -4985,28 +5329,40 @@ const StaffTrainingGuide: React.FC = () => {
                     <p className="text-sm text-gray-500 mt-2">Comprehensive instructions for using the Staff Portal</p>
                 </div>
 
-                {allSections.map((section) => (
+                {sections.map((section) => (
                     <div 
                         key={section.id}
                         className="bg-white/60 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-primary/10 dark:border-white/10 overflow-hidden print:border print:border-gray-200 print:break-inside-avoid"
                     >
-                        <button
-                            onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}
-                            className="w-full flex items-center gap-4 p-5 text-left hover:bg-white/40 dark:hover:bg-white/5 transition-colors print:hover:bg-transparent"
-                        >
-                            <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-white/10 flex items-center justify-center flex-shrink-0 print:bg-gray-100">
-                                <span className="material-symbols-outlined text-2xl text-primary dark:text-white print:text-gray-700">{section.icon}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-primary dark:text-white print:text-gray-900">{section.title}</h3>
-                                <p className="text-sm text-primary/60 dark:text-white/60 print:text-gray-500">{section.description}</p>
-                            </div>
-                            <span className={`material-symbols-outlined text-primary/40 dark:text-white/40 transition-transform duration-300 print:hidden ${expandedSection === section.id ? 'rotate-180' : ''}`}>
-                                expand_more
-                            </span>
-                        </button>
+                        <div className="flex items-center">
+                            <button
+                                onClick={() => setExpandedSection(expandedSection === String(section.id) ? null : String(section.id))}
+                                className="flex-1 flex items-center gap-4 p-5 text-left hover:bg-white/40 dark:hover:bg-white/5 transition-colors print:hover:bg-transparent"
+                            >
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-white/10 flex items-center justify-center flex-shrink-0 print:bg-gray-100">
+                                    <span className="material-symbols-outlined text-2xl text-primary dark:text-white print:text-gray-700">{section.icon}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-primary dark:text-white print:text-gray-900">{section.title}</h3>
+                                    <p className="text-sm text-primary/60 dark:text-white/60 print:text-gray-500">{section.description}</p>
+                                </div>
+                                <span className={`material-symbols-outlined text-primary/40 dark:text-white/40 transition-transform duration-300 print:hidden ${expandedSection === String(section.id) ? 'rotate-180' : ''}`}>
+                                    expand_more
+                                </span>
+                            </button>
+                            {isAdmin && (
+                                <div className="flex gap-1 pr-4 print:hidden">
+                                    <button onClick={() => openEditModal(section)} className="p-2 hover:bg-primary/10 dark:hover:bg-white/10 rounded-full">
+                                        <span className="material-symbols-outlined text-primary/60 dark:text-white/60">edit</span>
+                                    </button>
+                                    <button onClick={() => handleDelete(section.id)} className="p-2 hover:bg-red-500/10 rounded-full">
+                                        <span className="material-symbols-outlined text-red-500/60">delete</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
 
-                        <div className={`overflow-hidden transition-all duration-300 ${expandedSection === section.id ? 'max-h-[2000px]' : 'max-h-0'} print:max-h-none`}>
+                        <div className={`overflow-hidden transition-all duration-300 ${expandedSection === String(section.id) ? 'max-h-[2000px]' : 'max-h-0'} print:max-h-none`}>
                             <div className="px-5 pb-5 space-y-4 print:pt-2">
                                 {section.steps.map((step, index) => (
                                     <div key={index} className="flex gap-4">
@@ -5016,6 +5372,9 @@ const StaffTrainingGuide: React.FC = () => {
                                         <div className="flex-1 min-w-0">
                                             <h4 className="font-semibold text-primary dark:text-white text-sm print:text-gray-900">{step.title}</h4>
                                             <p className="text-sm text-primary/70 dark:text-white/70 mt-1 print:text-gray-600">{step.content}</p>
+                                            {step.imageUrl && (
+                                                <img src={step.imageUrl} alt="" className="mt-2 rounded-lg max-w-full h-auto print:max-w-xs" />
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -5029,6 +5388,13 @@ const StaffTrainingGuide: React.FC = () => {
                     <p>Generated on {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>
             </div>
+
+            <TrainingSectionModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                section={editingSection}
+                onSave={handleSave}
+            />
         </div>
     );
 };

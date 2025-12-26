@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { getSession, registerAuthRoutes } from './replit_integrations/auth';
 import { setupSupabaseAuthRoutes } from './supabase/auth';
-import { isProduction } from './core/db';
+import { isProduction, pool } from './core/db';
 import { db } from './db';
 import { systemSettings } from '../shared/schema';
 import { eq, sql } from 'drizzle-orm';
