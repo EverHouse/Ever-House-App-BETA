@@ -147,13 +147,13 @@ router.get('/api/booking-requests', async (req, res) => {
 
 router.post('/api/booking-requests', async (req, res) => {
   try {
-    const { user_email, user_name, bay_id, bay_preference, request_date, start_time, duration_minutes, notes } = req.body;
+    const { user_email, user_name, bay_id, bay_preference, request_date, start_time, duration_minutes, notes, user_tier } = req.body;
     
     if (!user_email || !request_date || !start_time || !duration_minutes) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    const limitCheck = await checkDailyBookingLimit(user_email, request_date, duration_minutes);
+    const limitCheck = await checkDailyBookingLimit(user_email, request_date, duration_minutes, user_tier);
     if (!limitCheck.allowed) {
       return res.status(403).json({ 
         error: limitCheck.reason,

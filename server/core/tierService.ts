@@ -126,9 +126,11 @@ export async function getDailyBookedMinutes(email: string, date: string): Promis
 export async function checkDailyBookingLimit(
   email: string, 
   date: string, 
-  requestedMinutes: number
+  requestedMinutes: number,
+  providedTier?: string
 ): Promise<{ allowed: boolean; reason?: string; remainingMinutes?: number }> {
-  const tier = await getMemberTierByEmail(email);
+  // Use provided tier first (from view-as-member), fall back to database lookup
+  const tier = providedTier || await getMemberTierByEmail(email);
   
   if (!tier) {
     return { allowed: false, reason: 'Member not found or no tier assigned' };

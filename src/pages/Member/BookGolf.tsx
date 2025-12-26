@@ -318,6 +318,7 @@ const BookGolf: React.FC = () => {
         body: JSON.stringify({
           user_email: effectiveUser.email,
           user_name: effectiveUser.name,
+          user_tier: effectiveUser.tier,
           bay_id: selectedResource.dbId,
           request_date: selectedDateObj.date,
           start_time: selectedSlot.startTime24,
