@@ -88,7 +88,8 @@ const generateDates = (advanceDays: number = 7): { label: string; date: string; 
   const today = new Date();
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
-  for (let i = 0; i < advanceDays; i++) {
+  // Show today + advanceDays (today doesn't count toward the advance booking window)
+  for (let i = 0; i <= advanceDays; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     const dayName = days[d.getDay()];
