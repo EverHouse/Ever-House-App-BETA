@@ -40,9 +40,9 @@ router.get('/api/availability', async (req, res) => {
     const closeMinutes = resourceType === 'conference_room' ? 18 * 60 : 22 * 60; // 6PM for conference, 10PM for simulators
     
     // Check if the requested date is today to filter out past times
-    const requestedDate = new Date(date as string);
     const now = new Date();
-    const isToday = requestedDate.toDateString() === now.toDateString();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const isToday = date === todayStr;
     const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() : 0;
     
     for (let startMins = openMinutes; startMins + durationMinutes <= closeMinutes; startMins += slotIncrement) {
