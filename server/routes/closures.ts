@@ -397,7 +397,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       const [announcement] = await db.insert(announcements).values({
         title: announcementTitle,
         message: announcementMessage,
-        priority: 'normal',
+        priority: 'high',
         isActive: true,
         closureId: closureId,
         startsAt: null,
