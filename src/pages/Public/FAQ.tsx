@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Footer } from '../../components/Footer';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 interface FaqItem {
   id: number;
@@ -23,9 +24,16 @@ const FALLBACK_FAQS: FaqItem[] = [
 const CATEGORY_ORDER = ['House Rules', 'Membership', 'Booking', 'Amenities', 'Events', 'Policies', 'General'];
 
 const FAQ: React.FC = () => {
+  const { setPageReady } = usePageReady();
   const [faqs, setFaqs] = useState<FaqItem[]>(FALLBACK_FAQS);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loading) {
+      setPageReady(true);
+    }
+  }, [loading, setPageReady]);
 
   useEffect(() => {
     fetch('/api/faqs')

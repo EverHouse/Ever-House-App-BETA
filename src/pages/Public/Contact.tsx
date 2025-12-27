@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import Input from '../../components/Input';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 const Contact: React.FC = () => {
   const navigate = useNavigate();
+  const { setPageReady } = usePageReady();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +16,10 @@ const Contact: React.FC = () => {
     email: '',
     message: ''
   });
+
+  useEffect(() => {
+    setPageReady(true);
+  }, [setPageReady]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import { useData } from '../../contexts/DataContext';
+import { usePageReady } from '../../contexts/PageReadyContext';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 
 const Spinner = () => (
@@ -11,7 +12,12 @@ const Spinner = () => (
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { loginWithMember } = useData();
+  const { setPageReady } = usePageReady();
   const [email, setEmail] = useState('');
+  
+  useEffect(() => {
+    setPageReady(true);
+  }, [setPageReady]);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [devLoading, setDevLoading] = useState(false);

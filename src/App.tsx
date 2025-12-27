@@ -23,12 +23,13 @@ import { PageReadyProvider } from './contexts/PageReadyContext';
 import WalkingGolferLoader from './components/WalkingGolferLoader';
 import NavigationLoader from './components/NavigationLoader';
 
-const INITIAL_LOAD_SAFETY_TIMEOUT_MS = 3000;
+const INITIAL_LOAD_SAFETY_TIMEOUT_MS = 2000;
 
 const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isDataReady } = useData();
   const [showLoader, setShowLoader] = React.useState(true);
   const [hasHiddenLoader, setHasHiddenLoader] = React.useState(false);
+  const safetyTimerFiredRef = React.useRef(false);
 
   React.useEffect(() => {
     if (isDataReady && !hasHiddenLoader) {
@@ -40,13 +41,15 @@ const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [isDataReady, hasHiddenLoader]);
 
   React.useEffect(() => {
+    if (safetyTimerFiredRef.current) return;
+    
     const safetyTimer = setTimeout(() => {
-      if (!hasHiddenLoader) {
-        setShowLoader(false);
-      }
+      safetyTimerFiredRef.current = true;
+      setShowLoader(false);
     }, INITIAL_LOAD_SAFETY_TIMEOUT_MS);
+    
     return () => clearTimeout(safetyTimer);
-  }, [hasHiddenLoader]);
+  }, []);
 
   const handleFadeComplete = () => {
     setHasHiddenLoader(true);

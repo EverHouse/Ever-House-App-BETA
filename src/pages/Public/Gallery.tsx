@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Footer } from '../../components/Footer';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 interface GalleryImage {
   id: number;
@@ -10,10 +11,17 @@ interface GalleryImage {
 }
 
 const Gallery: React.FC = () => {
+  const { setPageReady } = usePageReady();
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [viewerState, setViewerState] = useState<{images: string[], index: number} | null>(null);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setPageReady(true);
+    }
+  }, [isLoading, setPageReady]);
 
   useEffect(() => {
     const fetchGallery = async () => {

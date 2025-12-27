@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import { triggerHaptic } from '../../utils/haptics';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 const PRIVATE_HIRE_FIELDS = [
   { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
@@ -13,7 +14,12 @@ const PRIVATE_HIRE_FIELDS = [
 ];
 
 const PrivateHire: React.FC = () => {
+  const { setPageReady } = usePageReady();
   const [showInquiryForm, setShowInquiryForm] = useState(false);
+
+  useEffect(() => {
+    setPageReady(true);
+  }, [setPageReady]);
 
   const openForm = () => {
     triggerHaptic('light');

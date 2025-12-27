@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import BackToTop from '../../components/BackToTop';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 const MEMBERSHIP_FIELDS = [
   { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
@@ -150,10 +151,17 @@ const Membership: React.FC = () => {
 
 const MembershipOverview: React.FC = () => {
   const navigate = useNavigate();
+  const { setPageReady } = usePageReady();
   const [selectedPass, setSelectedPass] = useState<'workspace' | 'sim' | null>(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!loading) {
+      setPageReady(true);
+    }
+  }, [loading, setPageReady]);
 
   useEffect(() => {
     const fetchTiers = async () => {
@@ -373,6 +381,12 @@ const MembershipCard: React.FC<any> = ({ title, price, suffix="/mo", desc, featu
 );
 
 const Corporate: React.FC = () => {
+    const { setPageReady } = usePageReady();
+
+    useEffect(() => {
+      setPageReady(true);
+    }, [setPageReady]);
+
     return (
       <div className="px-6 pt-6 pb-12 flex flex-col gap-6 bg-[#F2F2EC] min-h-screen">
         <div className="flex flex-col gap-2 mb-2 pt-4 animate-pop-in">
@@ -460,9 +474,16 @@ const DiscountRow: React.FC<{count: string; price: string; icon: string}> = ({ c
 );
 
 const CompareFeatures: React.FC = () => {
+  const { setPageReady } = usePageReady();
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTiers, setSelectedTiers] = useState<string[]>(['Social', 'Core', 'Premium']);
+
+  useEffect(() => {
+    if (!loading) {
+      setPageReady(true);
+    }
+  }, [loading, setPageReady]);
 
   useEffect(() => {
     const fetchTiers = async () => {

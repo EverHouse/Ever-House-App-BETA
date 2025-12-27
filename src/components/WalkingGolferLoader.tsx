@@ -29,19 +29,21 @@ const taglines = [
 
 const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = true, onFadeComplete }) => {
   const [isFadingOut, setIsFadingOut] = React.useState(false);
+  const [shouldRender, setShouldRender] = React.useState(true);
   const [tagline] = React.useState(() => taglines[Math.floor(Math.random() * taglines.length)]);
 
   React.useEffect(() => {
     if (!isVisible && !isFadingOut) {
       setIsFadingOut(true);
       const timer = setTimeout(() => {
+        setShouldRender(false);
         onFadeComplete?.();
       }, 500);
       return () => clearTimeout(timer);
     }
   }, [isVisible, isFadingOut, onFadeComplete]);
 
-  if (!isVisible && !isFadingOut) return null;
+  if (!shouldRender) return null;
 
   return (
     <div 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Footer } from '../../components/Footer';
 import { MenuItemSkeleton, SkeletonList } from '../../components/skeletons';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 interface CafeItem {
   id: string;
@@ -17,6 +18,7 @@ interface CafeItem {
 const PublicCafe: React.FC = () => {
   const navigate = useNavigate();
   const { effectiveTheme } = useTheme();
+  const { setPageReady } = usePageReady();
   const isDark = effectiveTheme === 'dark';
   const [cafeMenu, setCafeMenu] = useState<CafeItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,6 +27,12 @@ const PublicCafe: React.FC = () => {
   const categories = useMemo(() => Array.from(new Set(cafeMenu.map(item => item.category))), [cafeMenu]);
   const [activeCategory, setActiveCategory] = useState('');
   const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setPageReady(true);
+    }
+  }, [isLoading, setPageReady]);
 
   useEffect(() => {
     const fetchMenu = async () => {

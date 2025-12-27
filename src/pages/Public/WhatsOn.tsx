@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import { BookingCardSkeleton, SkeletonList } from '../../components/skeletons';
 import BackToTop from '../../components/BackToTop';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 interface Event {
   id: number;
@@ -36,11 +37,18 @@ type ListItem = Event | WellnessClass;
 
 const WhatsOn: React.FC = () => {
   const navigate = useNavigate();
+  const { setPageReady } = usePageReady();
   const [events, setEvents] = useState<Event[]>([]);
   const [wellnessClasses, setWellnessClasses] = useState<WellnessClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'events' | 'wellness'>('all');
+
+  useEffect(() => {
+    if (!loading) {
+      setPageReady(true);
+    }
+  }, [loading, setPageReady]);
 
   useEffect(() => {
     const fetchData = async () => {

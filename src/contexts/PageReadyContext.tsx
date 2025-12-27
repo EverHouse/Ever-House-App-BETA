@@ -7,7 +7,7 @@ interface PageReadyContextType {
 }
 
 const PageReadyContext = createContext<PageReadyContextType>({
-  isPageReady: false,
+  isPageReady: true,
   setPageReady: () => {},
   resetPageReady: () => {},
 });
@@ -15,7 +15,7 @@ const PageReadyContext = createContext<PageReadyContextType>({
 export const usePageReady = () => useContext(PageReadyContext);
 
 export const PageReadyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isPageReady, setIsPageReady] = useState(false);
+  const [isPageReady, setIsPageReady] = useState(true);
   const readyTimeoutRef = useRef<number | null>(null);
 
   const setPageReady = useCallback((ready: boolean) => {

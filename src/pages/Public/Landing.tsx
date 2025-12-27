@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import BackToTop from '../../components/BackToTop';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 interface MembershipTier {
   id: number;
@@ -25,8 +26,16 @@ const TOUR_REQUEST_FIELDS = [
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
+  const { setPageReady } = usePageReady();
   const [showTourForm, setShowTourForm] = useState(false);
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setPageReady(true);
+    }
+  }, [isLoading, setPageReady]);
 
   useEffect(() => {
     const fetchTiers = async () => {
@@ -38,6 +47,8 @@ const Landing: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to fetch tiers:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchTiers();
