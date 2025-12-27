@@ -92,7 +92,8 @@ const Profile: React.FC = () => {
          const baseTier = getBaseTier(user.tier || 'Social');
          const useDarkLogo = ['Social', 'Premium', 'VIP'].includes(baseTier);
          return (
-            <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-layered mb-8 group animate-pop-in">
+            <>
+            <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-layered group animate-pop-in">
                {/* Card Background */}
                <div className="absolute inset-0" style={{ backgroundColor: cardBgColor }}></div>
                {/* Gloss */}
@@ -124,11 +125,16 @@ const Profile: React.FC = () => {
                      )}
                   </div>
                </div>
-               {/* Tap Hint */}
+               {/* Hover Hint (Desktop) */}
                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm z-20">
                    <span className="font-bold text-sm text-white">View Membership Benefits</span>
                </div>
             </div>
+            {/* Tap Hint (Mobile) */}
+            <p className={`text-center text-xs mt-2 mb-8 ${isDark ? 'text-white/40' : 'text-primary/40'}`}>
+               Tap card to view membership details
+            </p>
+            </>
          );
       })()}
 
