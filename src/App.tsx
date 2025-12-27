@@ -190,7 +190,7 @@ interface UserNotification {
 const getNotificationRoute = (notif: UserNotification, isStaff: boolean): string | null => {
   if (isStaff) {
     if (notif.related_type === 'booking_request' || notif.type === 'booking') {
-      return '/admin?tab=requests';
+      return '/admin?tab=simulator';
     }
     if (notif.related_type === 'event' || notif.type === 'event_rsvp') {
       return '/admin?tab=events';
@@ -199,10 +199,10 @@ const getNotificationRoute = (notif: UserNotification, isStaff: boolean): string
       return '/admin?tab=inquiries';
     }
     if (notif.related_type === 'wellness' || notif.type === 'wellness_booking') {
-      return '/admin?tab=wellness';
+      return '/admin?tab=events';
     }
     if (notif.related_type === 'announcement' || notif.type === 'announcement') {
-      return '/admin?tab=news';
+      return '/admin?tab=announcements';
     }
     return '/admin';
   } else {

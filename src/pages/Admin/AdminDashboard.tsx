@@ -130,12 +130,11 @@ const AdminDashboard: React.FC = () => {
            <h1 className="text-2xl font-bold text-primary dark:text-white">
                {activeTab === 'home' && 'Dashboard'}
                {activeTab === 'cafe' && 'Manage Cafe Menu'}
-               {activeTab === 'events' && 'Manage Events'}
+               {activeTab === 'events' && 'Events & Wellness'}
                {activeTab === 'announcements' && 'Manage Announcements'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Booking Requests'}
                {activeTab === 'team' && 'Manage Team Access'}
-               {activeTab === 'wellness' && 'Manage Wellness Classes'}
                {activeTab === 'faqs' && 'Manage FAQs'}
                {activeTab === 'inquiries' && 'Inquiries'}
                {activeTab === 'gallery' && 'Manage Gallery'}
@@ -148,12 +147,11 @@ const AdminDashboard: React.FC = () => {
         
         {activeTab === 'home' && <StaffDashboardHome setActiveTab={setActiveTab} isAdmin={actualUser?.role === 'admin'} />}
         {activeTab === 'cafe' && <CafeAdmin />}
-        {activeTab === 'events' && <EventsAdmin />}
+        {activeTab === 'events' && <EventsWellnessAdmin />}
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
         {activeTab === 'team' && actualUser?.role === 'admin' && <TeamAdmin />}
-        {activeTab === 'wellness' && <WellnessAdmin />}
         {activeTab === 'faqs' && <FaqsAdmin />}
         {activeTab === 'inquiries' && <InquiriesAdmin />}
         {activeTab === 'gallery' && <GalleryAdmin />}
@@ -181,7 +179,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'wellness' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training';
 
 interface NavItemData {
   id: TabType;
@@ -193,8 +191,7 @@ interface NavItemData {
 const NAV_ITEMS: NavItemData[] = [
   { id: 'home', icon: 'home', label: 'Home' },
   { id: 'simulator', icon: 'event_note', label: 'Requests' },
-  { id: 'events', icon: 'event', label: 'Events' },
-  { id: 'wellness', icon: 'spa', label: 'Wellness' },
+  { id: 'events', icon: 'calendar_month', label: 'Calendar' },
   { id: 'announcements', icon: 'campaign', label: 'News' },
 ];
 
@@ -567,7 +564,7 @@ const CATEGORY_TABS = [
     { id: 'Tournaments', label: 'Tournaments', icon: 'emoji_events' },
 ];
 
-const EventsAdmin: React.FC = () => {
+const EventsAdminContent: React.FC = () => {
     const [events, setEvents] = useState<DBEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState('all');
@@ -576,8 +573,6 @@ const EventsAdmin: React.FC = () => {
     const [newItem, setNewItem] = useState<Partial<DBEvent>>({ category: 'Social' });
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSyncing, setIsSyncing] = useState(false);
-    const [syncMessage, setSyncMessage] = useState<string | null>(null);
     const [isViewingRsvps, setIsViewingRsvps] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<DBEvent | null>(null);
     const [rsvps, setRsvps] = useState<Participant[]>([]);
@@ -597,6 +592,12 @@ const EventsAdmin: React.FC = () => {
 
     useEffect(() => {
         fetchEvents();
+    }, []);
+
+    useEffect(() => {
+        const handleOpenCreate = () => openCreate();
+        window.addEventListener('openEventCreate', handleOpenCreate);
+        return () => window.removeEventListener('openEventCreate', handleOpenCreate);
     }, []);
 
     const filteredEvents = activeCategory === 'all' 
@@ -680,48 +681,6 @@ const EventsAdmin: React.FC = () => {
         }
     };
 
-    const handleSyncEventbrite = async () => {
-        setIsSyncing(true);
-        setSyncMessage(null);
-        try {
-            const res = await fetch('/api/eventbrite/sync', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                setSyncMessage(data.message);
-                await fetchEvents();
-            } else {
-                setSyncMessage(`Error: ${data.error || data.message || 'Sync failed'}`);
-            }
-        } catch (err) {
-            console.error('Failed to sync Eventbrite:', err);
-            setSyncMessage('Failed to sync with Eventbrite');
-        } finally {
-            setIsSyncing(false);
-            setTimeout(() => setSyncMessage(null), 5000);
-        }
-    };
-
-    const handleSyncCalendars = async () => {
-        setIsSyncing(true);
-        setSyncMessage(null);
-        try {
-            const res = await fetch('/api/calendars/sync-all', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                setSyncMessage(data.message);
-                await fetchEvents();
-            } else {
-                setSyncMessage(`Error: ${data.error || data.message || 'Sync failed'}`);
-            }
-        } catch (err) {
-            console.error('Failed to sync calendars:', err);
-            setSyncMessage('Failed to sync with Google Calendar');
-        } finally {
-            setIsSyncing(false);
-            setTimeout(() => setSyncMessage(null), 5000);
-        }
-    };
-
     const handleViewRsvps = async (event: DBEvent) => {
         setSelectedEvent(event);
         setIsViewingRsvps(true);
@@ -772,46 +731,6 @@ const EventsAdmin: React.FC = () => {
                         {tab.label}
                     </button>
                 ))}
-            </div>
-
-            {syncMessage && (
-                <div className={`mb-4 px-4 py-2 rounded-lg text-sm font-medium ${
-                    syncMessage.startsWith('Error') 
-                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' 
-                        : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
-                }`}>
-                    {syncMessage}
-                </div>
-            )}
-
-            <div className="flex justify-end gap-2 mb-4 flex-wrap">
-                <button 
-                    onClick={handleSyncCalendars} 
-                    disabled={isSyncing}
-                    className="bg-blue-600 text-white px-4 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-md disabled:opacity-50"
-                >
-                    {isSyncing ? (
-                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                    ) : (
-                        <img src="/images/google-calendar-icon.png" alt="" className="w-[44px] h-[44px] object-contain" />
-                    )}
-                    {isSyncing ? 'Syncing...' : 'Sync'}
-                </button>
-                <button 
-                    onClick={handleSyncEventbrite} 
-                    disabled={isSyncing}
-                    className="bg-[#F05537] text-white px-4 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-md disabled:opacity-50"
-                >
-                    {isSyncing ? (
-                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                    ) : (
-                        <img src="/images/eventbrite-icon.png" alt="" className="w-[44px] h-[44px] object-contain rounded" />
-                    )}
-                    {isSyncing ? 'Syncing...' : 'Sync'}
-                </button>
-                <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-md">
-                    <span className="material-symbols-outlined">add</span> Create
-                </button>
             </div>
 
             {isEditing && createPortal(
@@ -930,6 +849,137 @@ const EventsAdmin: React.FC = () => {
                 isLoading={isLoadingRsvps}
                 type="rsvp"
             />
+        </div>
+    );
+};
+
+// --- COMBINED EVENTS & WELLNESS ADMIN ---
+
+const EventsWellnessAdmin: React.FC = () => {
+    const [activeSubTab, setActiveSubTab] = useState<'events' | 'wellness'>('events');
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncMessage, setSyncMessage] = useState<string | null>(null);
+    
+    const handleSyncCalendars = async () => {
+        setIsSyncing(true);
+        setSyncMessage(null);
+        try {
+            const res = await fetch('/api/calendars/sync-all', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setSyncMessage(data.message || 'Calendars synced successfully');
+            } else {
+                setSyncMessage(`Error: ${data.error || data.message || 'Sync failed'}`);
+            }
+        } catch (err) {
+            console.error('Failed to sync calendars:', err);
+            setSyncMessage('Failed to sync with Google Calendar');
+        } finally {
+            setIsSyncing(false);
+            setTimeout(() => setSyncMessage(null), 5000);
+        }
+    };
+
+    const handleSyncEventbrite = async () => {
+        setIsSyncing(true);
+        setSyncMessage(null);
+        try {
+            const res = await fetch('/api/eventbrite/sync', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setSyncMessage(data.message || 'Eventbrite synced successfully');
+            } else {
+                setSyncMessage(`Error: ${data.error || data.message || 'Sync failed'}`);
+            }
+        } catch (err) {
+            console.error('Failed to sync Eventbrite:', err);
+            setSyncMessage('Failed to sync with Eventbrite');
+        } finally {
+            setIsSyncing(false);
+            setTimeout(() => setSyncMessage(null), 5000);
+        }
+    };
+
+    return (
+        <div>
+            {syncMessage && (
+                <div className={`mb-4 px-4 py-2 rounded-lg text-sm font-medium ${
+                    syncMessage.startsWith('Error') 
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' 
+                        : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
+                }`}>
+                    {syncMessage}
+                </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                <button 
+                    onClick={handleSyncCalendars} 
+                    disabled={isSyncing}
+                    className="bg-blue-600 text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md disabled:opacity-50 text-xs sm:text-sm"
+                >
+                    {isSyncing ? (
+                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    ) : (
+                        <img src="/images/google-calendar-icon.png" alt="" className="w-5 h-5 object-contain" />
+                    )}
+                    <span className="hidden sm:inline">Calendar</span> Sync
+                </button>
+                <button 
+                    onClick={handleSyncEventbrite} 
+                    disabled={isSyncing}
+                    className="bg-[#F05537] text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md disabled:opacity-50 text-xs sm:text-sm"
+                >
+                    {isSyncing ? (
+                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    ) : (
+                        <img src="/images/eventbrite-icon.png" alt="" className="w-5 h-5 object-contain rounded" />
+                    )}
+                    <span className="hidden sm:inline">Eventbrite</span> Sync
+                </button>
+                <button 
+                    onClick={() => { setActiveSubTab('events'); window.dispatchEvent(new CustomEvent('openEventCreate')); }}
+                    className="bg-primary text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm"
+                >
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    Event
+                </button>
+                <button 
+                    onClick={() => { setActiveSubTab('wellness'); window.dispatchEvent(new CustomEvent('openWellnessCreate')); }}
+                    className="bg-accent text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm"
+                >
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    Wellness
+                </button>
+            </div>
+
+            <div className="flex gap-2 mb-4">
+                <button
+                    onClick={() => setActiveSubTab('events')}
+                    className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                        activeSubTab === 'events'
+                            ? 'bg-primary text-white shadow-md'
+                            : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
+                    }`}
+                >
+                    <span className="material-symbols-outlined text-[18px]">event</span>
+                    Events
+                </button>
+                <button
+                    onClick={() => setActiveSubTab('wellness')}
+                    className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                        activeSubTab === 'wellness'
+                            ? 'bg-primary text-white shadow-md'
+                            : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
+                    }`}
+                >
+                    <span className="material-symbols-outlined text-[18px]">spa</span>
+                    Wellness
+                </button>
+            </div>
+
+            {activeSubTab === 'events' && <EventsAdminContent />}
+            {activeSubTab === 'wellness' && <WellnessAdminContent />}
         </div>
     );
 };
@@ -2134,7 +2184,7 @@ interface WellnessClass {
   is_active: boolean;
 }
 
-const WellnessAdmin: React.FC = () => {
+const WellnessAdminContent: React.FC = () => {
     const [classes, setClasses] = useState<WellnessClass[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -2146,7 +2196,6 @@ const WellnessAdmin: React.FC = () => {
     });
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    const [isSyncing, setIsSyncing] = useState(false);
     const [isViewingEnrollments, setIsViewingEnrollments] = useState(false);
     const [selectedClass, setSelectedClass] = useState<WellnessClass | null>(null);
     const [enrollments, setEnrollments] = useState<Participant[]>([]);
@@ -2156,6 +2205,12 @@ const WellnessAdmin: React.FC = () => {
 
     useEffect(() => {
         fetchClasses();
+    }, []);
+
+    useEffect(() => {
+        const handleOpenCreate = () => openCreate();
+        window.addEventListener('openWellnessCreate', handleOpenCreate);
+        return () => window.removeEventListener('openWellnessCreate', handleOpenCreate);
     }, []);
 
     const fetchClasses = async () => {
@@ -2252,28 +2307,6 @@ const WellnessAdmin: React.FC = () => {
         return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     };
 
-    const handleSyncCalendars = async () => {
-        setIsSyncing(true);
-        setSuccess(null);
-        setError(null);
-        try {
-            const res = await fetch('/api/calendars/sync-all', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                setSuccess(data.message);
-                await fetchClasses();
-            } else {
-                setError(`Sync failed: ${data.error || data.message || 'Unknown error'}`);
-            }
-        } catch (err) {
-            console.error('Failed to sync calendars:', err);
-            setError('Failed to sync with Google Calendar');
-        } finally {
-            setIsSyncing(false);
-            setTimeout(() => { setSuccess(null); setError(null); }, 5000);
-        }
-    };
-
     const handleViewEnrollments = async (cls: WellnessClass) => {
         setSelectedClass(cls);
         setIsViewingEnrollments(true);
@@ -2294,34 +2327,6 @@ const WellnessAdmin: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
-                <div className="mb-4">
-                    <h3 className="text-lg font-bold text-primary dark:text-white">Wellness Classes</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Schedule and manage wellness classes for members
-                    </p>
-                    <div className="flex items-center gap-2 justify-end">
-                        <button
-                            onClick={handleSyncCalendars}
-                            disabled={isSyncing}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:opacity-90 transition-opacity disabled:opacity-50"
-                        >
-                            {isSyncing ? (
-                                <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                            ) : (
-                                <img src="/images/google-calendar-icon.png" alt="" className="w-[44px] h-[44px] object-contain" />
-                            )}
-                            {isSyncing ? 'Syncing...' : 'Sync'}
-                        </button>
-                        <button
-                            onClick={openCreate}
-                            className="flex items-center gap-3 bg-primary text-white px-4 py-2.5 min-h-[60px] rounded-lg font-bold shadow-md hover:opacity-90 transition-opacity"
-                        >
-                            <span className="material-symbols-outlined text-[28px]">add</span>
-                            Class
-                        </button>
-                    </div>
-                </div>
-
                 {success && (
                     <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
                         {success}
@@ -4838,7 +4843,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
         steps: [
             { title: 'Logging In', content: 'Use your registered email to sign in via the magic link system. Check your email for the login link - no password needed. The link expires after 15 minutes for security.' },
             { title: 'Accessing the Staff Portal', content: 'After logging in, you\'ll be automatically redirected to the Staff Portal dashboard. If you end up on the member portal, tap the menu icon and select "Staff Portal".' },
-            { title: 'Navigation', content: 'The bottom navigation bar has 5 main tabs: Home, Requests, Events, Wellness, and News. The Home dashboard shows quick access cards to all other features.' },
+            { title: 'Navigation', content: 'The bottom navigation bar has 4 main tabs: Home, Requests, Calendar (Events & Wellness), and News. The Home dashboard shows quick access cards to all other features.' },
         ]
     },
     {
