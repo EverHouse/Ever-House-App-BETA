@@ -253,7 +253,8 @@ export const changelog: ChangelogEntry[] = [
       "Members now receive notifications when staff manually books them a bay/conference room",
       "Fixed notification badge not clearing after marking notifications as read",
       "Recent Processed section now hides manual bookings and future approved bookings (no duplicates with Upcoming Bookings)",
-      "Member Dashboard shows all upcoming bookings including staff-created manual bookings"
+      "Member Dashboard shows all upcoming bookings including staff-created manual bookings",
+      "Staff notifications auto-dismiss for all staff when any staff member approves, declines, or cancels a booking request"
     ]
   }
 ];
