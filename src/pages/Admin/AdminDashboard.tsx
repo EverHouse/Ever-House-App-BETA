@@ -2201,7 +2201,7 @@ const SimulatorAdmin: React.FC = () => {
         <div className="flex justify-center animate-pop-in">
             <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
             {/* Tab Bar */}
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in px-4" style={{animationDelay: '0.05s'}}>
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in px-4 py-3" style={{animationDelay: '0.05s'}}>
                 <div className="flex">
                     <button
                         onClick={() => setActiveView('requests')}
@@ -2796,8 +2796,10 @@ const ManualBookingModal: React.FC<{
     const timeSlots = useMemo(() => {
         const slots: string[] = [];
         for (let hour = 8; hour <= 21; hour++) {
-            slots.push(`${hour.toString().padStart(2, '0')}:00`);
-            slots.push(`${hour.toString().padStart(2, '0')}:30`);
+            for (let minute = 0; minute < 60; minute += 5) {
+                if (hour === 21 && minute > 30) break;
+                slots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+            }
         }
         return slots;
     }, []);
