@@ -173,60 +173,6 @@ const Profile: React.FC = () => {
 
   return (
     <div className="px-6 pt-6 pb-32">
-      {/* Wallet Pass Preview - only show for regular members */}
-      {!isStaffOrAdminProfile && (() => {
-         const tierColors = getTierColor(user.tier || 'Social');
-         const cardBgColor = tierColors.bg;
-         const cardTextColor = tierColors.text;
-         const baseTier = getBaseTier(user.tier || 'Social');
-         const useDarkLogo = ['Social', 'Premium', 'VIP'].includes(baseTier);
-         return (
-            <>
-            <div onClick={() => setIsCardOpen(true)} className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-layered group animate-pop-in">
-               {/* Card Background */}
-               <div className="absolute inset-0" style={{ backgroundColor: cardBgColor }}></div>
-               {/* Gloss */}
-               <div className="absolute inset-0 bg-glossy opacity-50"></div>
-               {/* Content */}
-               <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
-                  <div className="flex justify-between items-start">
-                     <img src={useDarkLogo ? "/assets/logos/monogram-dark.webp" : "/assets/logos/monogram-white.webp"} className="w-8 h-8 opacity-90" alt="" />
-                     <div className="flex flex-col items-end gap-1">
-                        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${cardTextColor}99` }}>Even House</span>
-                        {(user.tags || []).map((tag) => (
-                           <TagBadge key={tag} tag={tag} size="sm" />
-                        ))}
-                        {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
-                           <TagBadge tag="Founding Member" size="sm" />
-                        )}
-                     </div>
-                  </div>
-                  <div>
-                     <div className="flex items-center gap-2 mb-1">
-                        <TierBadge tier={user.tier || 'Social'} size="sm" />
-                     </div>
-                     <h3 className="text-xl font-bold tracking-wide" style={{ color: cardTextColor }}>{user.name}</h3>
-                     {user.joinDate && (
-                        <p className="text-xs mt-2" style={{ color: `${cardTextColor}80` }}>Joined {user.joinDate}</p>
-                     )}
-                     {user.lifetimeVisits !== undefined && (
-                        <p className="text-xs" style={{ color: `${cardTextColor}80` }}>{user.lifetimeVisits} {user.lifetimeVisits === 1 ? 'golf booking' : 'golf bookings'}</p>
-                     )}
-                  </div>
-               </div>
-               {/* Hover Hint (Desktop) */}
-               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm z-20">
-                   <span className="font-bold text-sm text-white">View Membership Benefits</span>
-               </div>
-            </div>
-            {/* Tap Hint (Mobile) */}
-            <p className={`text-center text-xs mt-2 mb-8 ${isDark ? 'text-white/40' : 'text-primary/40'}`}>
-               Tap card to view membership details
-            </p>
-            </>
-         );
-      })()}
-
       <div className="space-y-6">
          <Section title="Account" isDark={isDark}>
             <Row icon="person" label="Name" value={user.name} isDark={isDark} />
@@ -262,31 +208,6 @@ const Profile: React.FC = () => {
             <Row icon="lock" label="Privacy" arrow isDark={isDark} />
          </Section>
 
-         {/* Guest Passes - only show for regular members with passes */}
-         {!isStaffOrAdminProfile && guestPasses && guestPasses.passes_remaining > 0 && (
-           <Section title="Guest Passes" isDark={isDark}>
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>group_add</span>
-                    <span className={`text-sm ${isDark ? '' : 'text-primary'}`}>Available Passes</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-brand-green'}`}>{guestPasses.passes_remaining}</span>
-                    <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>/ {guestPasses.passes_total}</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowGuestCheckin(true)}
-                  className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${isDark ? 'bg-accent/20 hover:bg-accent/30 text-accent' : 'bg-brand-green/10 hover:bg-brand-green/20 text-brand-green'}`}
-                >
-                  <span className="material-symbols-outlined text-lg">confirmation_number</span>
-                  Check In a Guest
-                </button>
-              </div>
-           </Section>
-         )}
-         
          {/* Password Setup Banner for Staff/Admin */}
          {showPasswordSetupBanner && isStaffOrAdminProfile && (
            <div className={`rounded-2xl p-4 mb-4 ${isDark ? 'bg-accent/20 border border-accent/30' : 'bg-amber-50 border border-amber-200'}`}>
@@ -322,7 +243,7 @@ const Profile: React.FC = () => {
          {isStaffOrAdminProfile && (
            <Section title="Staff Information" isDark={isDark}>
               <Row icon="shield_person" label="Role" value={user?.role === 'admin' ? 'Administrator' : 'Staff'} isDark={isDark} />
-              {user?.jobTitle && <Row icon="work" label="Position" value={user.jobTitle} isDark={isDark} />}
+              {user?.jobTitle && <Row icon="badge" label="Job Title" value={user.jobTitle} isDark={isDark} />}
               <Row icon="verified" label="Portal Access" value="Staff Portal" isDark={isDark} />
            </Section>
          )}

@@ -8,11 +8,22 @@ import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
 import { formatDateShort, getTodayString } from '../../utils/dateUtils';
 import { DashboardSkeleton } from '../../components/skeletons';
-import { getBaseTier } from '../../utils/permissions';
+import { getBaseTier, isFoundingMember } from '../../utils/permissions';
+import { getTierColor } from '../../utils/tierUtils';
+import TierBadge from '../../components/TierBadge';
+import TagBadge from '../../components/TagBadge';
+import HubSpotFormModal from '../../components/HubSpotFormModal';
 import PullToRefresh from '../../components/PullToRefresh';
 import AnnouncementAlert from '../../components/AnnouncementAlert';
 import ClosureAlert from '../../components/ClosureAlert';
 import ErrorState from '../../components/ErrorState';
+
+const GUEST_CHECKIN_FIELDS = [
+  { name: 'guest_firstname', label: 'Guest First Name', type: 'text' as const, required: true, placeholder: 'John' },
+  { name: 'guest_lastname', label: 'Guest Last Name', type: 'text' as const, required: true, placeholder: 'Smith' },
+  { name: 'guest_email', label: 'Guest Email', type: 'email' as const, required: true, placeholder: 'john@example.com' },
+  { name: 'guest_phone', label: 'Guest Phone', type: 'tel' as const, required: false, placeholder: '(555) 123-4567' }
+];
 
 
 interface DBBooking {
@@ -113,6 +124,10 @@ const Dashboard: React.FC = () => {
   const [newTime, setNewTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
+  const [guestPasses, setGuestPasses] = useState<{ passes_used: number; passes_total: number; passes_remaining: number } | null>(null);
+  const [showGuestCheckin, setShowGuestCheckin] = useState(false);
+
+  const isStaffOrAdminProfile = user?.role === 'admin' || user?.role === 'staff';
 
   const fetchUserData = useCallback(async (showLoadingState = true) => {
     if (!user?.email) return;
@@ -159,6 +174,18 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  useEffect(() => {
+    if (user?.email && !isStaffOrAdminProfile) {
+      fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch guest passes');
+          return res.json();
+        })
+        .then(data => setGuestPasses(data))
+        .catch(err => console.error('Error fetching guest passes:', err));
+    }
+  }, [user?.email, user?.tier, isStaffOrAdminProfile]);
 
   const handleRefresh = useCallback(async () => {
     await fetchUserData(false);
@@ -414,6 +441,77 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
 
+        {/* Membership Card - only show for regular members */}
+        {!isStaffOrAdminProfile && (() => {
+          const tierColors = getTierColor(user?.tier || 'Social');
+          const cardBgColor = tierColors.bg;
+          const cardTextColor = tierColors.text;
+          const baseTier = getBaseTier(user?.tier || 'Social');
+          const useDarkLogo = ['Social', 'Premium', 'VIP'].includes(baseTier);
+          return (
+            <div 
+              onClick={() => navigate('/profile')} 
+              className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-layered group animate-pop-in mb-6"
+              style={{animationDelay: '0.11s'}}
+            >
+              <div className="absolute inset-0" style={{ backgroundColor: cardBgColor }}></div>
+              <div className="absolute inset-0 bg-glossy opacity-50"></div>
+              <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
+                <div className="flex justify-between items-start">
+                  <img src={useDarkLogo ? "/assets/logos/monogram-dark.webp" : "/assets/logos/monogram-white.webp"} className="w-8 h-8 opacity-90" alt="" />
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${cardTextColor}99` }}>Even House</span>
+                    {(user?.tags || []).map((tag) => (
+                      <TagBadge key={tag} tag={tag} size="sm" />
+                    ))}
+                    {!user?.tags?.length && isFoundingMember(user?.tier || '', user?.isFounding) && (
+                      <TagBadge tag="Founding Member" size="sm" />
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TierBadge tier={user?.tier || 'Social'} size="sm" />
+                  </div>
+                  <h3 className="text-xl font-bold tracking-wide" style={{ color: cardTextColor }}>{user?.name}</h3>
+                  {user?.joinDate && (
+                    <p className="text-xs mt-2" style={{ color: `${cardTextColor}80` }}>Joined {user.joinDate}</p>
+                  )}
+                  {user?.lifetimeVisits !== undefined && (
+                    <p className="text-xs" style={{ color: `${cardTextColor}80` }}>{user.lifetimeVisits} {user.lifetimeVisits === 1 ? 'golf booking' : 'golf bookings'}</p>
+                  )}
+                </div>
+              </div>
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm z-20">
+                <span className="font-bold text-sm text-white">View Membership Details</span>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Guest Passes - only show for regular members with passes */}
+        {!isStaffOrAdminProfile && guestPasses && guestPasses.passes_remaining > 0 && (
+          <div className={`mb-6 p-5 rounded-3xl animate-pop-in backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`} style={{animationDelay: '0.115s'}}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>group_add</span>
+                <span className={`text-sm font-medium ${isDark ? '' : 'text-primary'}`}>Guest Passes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-brand-green'}`}>{guestPasses.passes_remaining}</span>
+                <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>/ {guestPasses.passes_total}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowGuestCheckin(true)}
+              className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${isDark ? 'bg-accent/20 hover:bg-accent/30 text-accent' : 'bg-brand-green/10 hover:bg-brand-green/20 text-brand-green'}`}
+            >
+              <span className="material-symbols-outlined text-lg">confirmation_number</span>
+              Check In a Guest
+            </button>
+          </div>
+        )}
+
         <div className={`mb-6 p-5 rounded-3xl animate-pop-in backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`} style={{animationDelay: '0.12s'}}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -588,6 +686,31 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
     )}
+
+    {/* Guest Check-In Modal */}
+    <HubSpotFormModal
+      isOpen={showGuestCheckin}
+      onClose={() => setShowGuestCheckin(false)}
+      formType="guest-checkin"
+      title="Guest Check-In"
+      subtitle="Register your guest for today's visit."
+      fields={GUEST_CHECKIN_FIELDS}
+      submitButtonText="Check In Guest"
+      additionalFields={{
+        member_name: user?.name || '',
+        member_email: user?.email || ''
+      }}
+      onSuccess={async () => {
+        try {
+          const res = await fetch(`/api/guest-passes/${encodeURIComponent(user?.email || '')}?tier=${encodeURIComponent(user?.tier || 'Social')}`);
+          if (!res.ok) throw new Error('Failed to refresh guest passes');
+          const data = await res.json();
+          setGuestPasses(data);
+        } catch (err) {
+          console.error('Error refreshing guest passes:', err);
+        }
+      }}
+    />
   </>
   );
 };
