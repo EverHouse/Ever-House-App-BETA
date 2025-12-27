@@ -3,6 +3,7 @@ import { pool, isProduction } from '../core/db';
 import { getHubSpotClient } from '../core/integrations';
 import { db } from '../db';
 import { formSubmissions } from '../../shared/schema';
+import { notifyAllStaff } from '../core/staffNotifications';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -207,7 +208,7 @@ router.post('/api/hubspot/forms/:formType', async (req, res) => {
         }
       }
       
-      await db.insert(formSubmissions).values({
+      const insertResult = await db.insert(formSubmissions).values({
         formType,
         firstName: getFieldValue('firstname') || getFieldValue('first_name') || null,
         lastName: getFieldValue('lastname') || getFieldValue('last_name') || null,
@@ -216,7 +217,26 @@ router.post('/api/hubspot/forms/:formType', async (req, res) => {
         message: getFieldValue('message') || null,
         metadata: Object.keys(metadata).length > 0 ? metadata : null,
         status: 'new',
-      });
+      }).returning();
+      
+      const formTypeLabels: Record<string, string> = {
+        'tour-request': 'Tour Request',
+        'membership': 'Membership Inquiry',
+        'private-hire': 'Private Hire Inquiry',
+        'guest-checkin': 'Guest Check-in',
+        'contact': 'Contact Form'
+      };
+      const formLabel = formTypeLabels[formType] || 'Form Submission';
+      const submitterName = [getFieldValue('firstname') || getFieldValue('first_name'), getFieldValue('lastname') || getFieldValue('last_name')].filter(Boolean).join(' ') || getFieldValue('email') || 'Someone';
+      const staffMessage = `${submitterName} submitted a ${formLabel}`;
+      
+      notifyAllStaff(
+        `New ${formLabel}`,
+        staffMessage,
+        'inquiry',
+        insertResult[0]?.id ?? undefined,
+        'form_submission'
+      ).catch(err => console.error('Staff inquiry notification failed:', err));
     } catch (dbError: any) {
       console.error('Failed to save form submission locally:', dbError);
     }

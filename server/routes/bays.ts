@@ -7,6 +7,7 @@ import { getGoogleCalendarClient } from '../core/integrations';
 import { CALENDAR_CONFIG, getCalendarIdByName, createCalendarEvent, createCalendarEventOnCalendar, deleteCalendarEvent } from '../core/calendar';
 import { sendPushNotification, sendPushNotificationToStaff } from './push';
 import { checkDailyBookingLimit } from '../core/tierService';
+import { notifyAllStaff } from '../core/staffNotifications';
 
 const router = Router();
 
@@ -190,15 +191,14 @@ router.post('/api/booking-requests', async (req, res) => {
     const formattedTime = row.startTime?.substring(0, 5) || start_time.substring(0, 5);
     const staffMessage = `${row.userName || row.userEmail} requested ${formattedDate} at ${formattedTime}`;
     
-    // In-app notification - don't fail booking if this fails
-    db.insert(notifications).values({
-      userEmail: 'staff@evenhouse.app',
-      title: 'New Golf Booking Request',
-      message: staffMessage,
-      type: 'booking',
-      relatedId: row.id,
-      relatedType: 'booking_request'
-    }).catch(err => console.error('Staff in-app notification failed:', err));
+    // In-app notification to all staff - don't fail booking if this fails
+    notifyAllStaff(
+      'New Golf Booking Request',
+      staffMessage,
+      'booking',
+      row.id,
+      'booking_request'
+    ).catch(err => console.error('Staff in-app notification failed:', err));
     
     // Push notification - already non-blocking
     sendPushNotificationToStaff({

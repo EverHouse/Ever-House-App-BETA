@@ -6,6 +6,7 @@ import { events, eventRsvps, users, notifications } from '../../shared/schema';
 import { eq, and, sql, gte, desc } from 'drizzle-orm';
 import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, backfillWellnessToCalendar, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { sendPushNotification } from './push';
+import { notifyAllStaff } from '../core/staffNotifications';
 
 const router = Router();
 
@@ -499,6 +500,16 @@ router.post('/api/rsvps', async (req, res) => {
         body: message,
         url: '/#/member-events'
       }).catch(err => console.error('Push notification failed:', err));
+      
+      const memberName = user_email.split('@')[0];
+      const staffMessage = `${memberName} RSVP'd for ${evt.title} on ${formattedDate}`;
+      notifyAllStaff(
+        'New Event RSVP',
+        staffMessage,
+        'event_rsvp',
+        event_id,
+        'event'
+      ).catch(err => console.error('Staff RSVP notification failed:', err));
     }
     
     res.status(201).json(result[0]);
