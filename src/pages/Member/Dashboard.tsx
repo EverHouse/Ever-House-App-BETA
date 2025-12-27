@@ -516,25 +516,6 @@ const Dashboard: React.FC = () => {
           </div>
         )}
 
-        <div className={`mb-6 p-5 rounded-3xl animate-pop-in backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`} style={{animationDelay: '0.12s'}}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm ${isDark ? 'bg-white/20' : 'bg-white/30'}`}>
-                <span className="material-symbols-outlined text-brand-green text-3xl drop-shadow-sm">schedule</span>
-              </div>
-              <div>
-                <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{user?.lifetimeVisits || 0}</p>
-                <p className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Lifetime Visits</p>
-              </div>
-            </div>
-          </div>
-          {user?.lastBookingDate && (
-            <p className={`mt-4 pt-3 text-xs border-t ${isDark ? 'border-white/15 text-white/50' : 'border-white/30 text-primary/50'}`}>
-              Last visited: {formatLastVisit(user.lastBookingDate)}
-            </p>
-          )}
-        </div>
-
         {error ? (
         <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm flex items-center gap-3 mb-6">
           <span className="material-symbols-outlined">error</span>
@@ -770,6 +751,16 @@ const Dashboard: React.FC = () => {
                         <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Member Since</span>
                       </div>
                       <span className="text-sm font-semibold" style={{ color: cardTextColor }}>{user.joinDate}</span>
+                    </div>
+                  )}
+
+                  {user.lastBookingDate && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>schedule</span>
+                        <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Last Visited</span>
+                      </div>
+                      <span className="text-sm font-semibold" style={{ color: cardTextColor }}>{formatLastVisit(user.lastBookingDate)}</span>
                     </div>
                   )}
                   
