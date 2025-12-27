@@ -2631,7 +2631,6 @@ const SimulatorAdmin: React.FC = () => {
             {showManualBooking && createPortal(
                 <ManualBookingModal 
                     resources={resources}
-                    staffEmail={actualUser?.email || user?.email || ''}
                     onClose={() => setShowManualBooking(false)}
                     onSuccess={() => {
                         setShowManualBooking(false);
@@ -2686,10 +2685,9 @@ const SimulatorAdmin: React.FC = () => {
 
 const ManualBookingModal: React.FC<{
     resources: Resource[];
-    staffEmail: string;
     onClose: () => void;
     onSuccess: () => void;
-}> = ({ resources, staffEmail, onClose, onSuccess }) => {
+}> = ({ resources, onClose, onSuccess }) => {
     const { showToast } = useToast();
     const [memberEmail, setMemberEmail] = useState('');
     const [memberLookupStatus, setMemberLookupStatus] = useState<'idle' | 'checking' | 'found' | 'not_found'>('idle');
@@ -2777,8 +2775,7 @@ const ManualBookingModal: React.FC<{
                     duration_minutes: durationMinutes,
                     guest_count: guestCount,
                     booking_source: bookingSource,
-                    notes: notes || undefined,
-                    staff_email: staffEmail
+                    notes: notes || undefined
                 })
             });
 

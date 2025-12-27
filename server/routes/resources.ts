@@ -413,11 +413,16 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       duration_minutes, 
       guest_count = 0, 
       booking_source, 
-      notes, 
-      staff_email 
+      notes 
     } = req.body;
 
-    if (!member_email || !resource_id || !booking_date || !start_time || !duration_minutes || !booking_source || !staff_email) {
+    // Get staff email from authenticated session (more secure than trusting client input)
+    const staffEmail = (req.session as any)?.user?.email;
+    if (!staffEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!member_email || !resource_id || !booking_date || !start_time || !duration_minutes || !booking_source) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -489,7 +494,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
           `Member: ${member_email}`,
           `Guests: ${guest_count}`,
           `Source: ${booking_source}`,
-          `Created by: ${staff_email}`
+          `Created by: ${staffEmail}`
         ];
         if (notes) {
           descriptionLines.push(`Notes: ${notes}`);
@@ -520,7 +525,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
         notes: notes || null,
         bookingSource: booking_source,
         guestCount: guest_count,
-        createdByStaffId: staff_email,
+        createdByStaffId: staffEmail,
         calendarEventId: calendarEventId
       })
       .returning();
