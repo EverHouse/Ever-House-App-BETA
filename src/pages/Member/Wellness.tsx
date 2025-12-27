@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -9,6 +9,11 @@ import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { MotionList, MotionListItem } from '../../components/motion';
 import { EmptyEvents } from '../../components/EmptyState';
+
+interface WellnessEnrollment {
+  class_id: number;
+  user_email: string;
+}
 
 interface WellnessClass {
     id: number;
@@ -118,7 +123,7 @@ const Wellness: React.FC = () => {
       </section>
 
       <div className="relative z-10">
-        {activeTab === 'classes' && <ClassesView onBook={handleBook} isDark={isDark} />}
+        {activeTab === 'classes' && <ClassesView onBook={handleBook} isDark={isDark} userEmail={user?.email} />}
         {activeTab === 'medspa' && <MedSpaView isDark={isDark} />}
       </div>
 
@@ -137,47 +142,84 @@ const Wellness: React.FC = () => {
   );
 };
 
-const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: boolean}> = ({ onBook, isDark = true }) => {
+const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: boolean; userEmail?: string}> = ({ onBook, isDark = true, userEmail }) => {
   const { showToast } = useToast();
   const { setPageReady } = usePageReady();
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [classes, setClasses] = useState<WellnessClass[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [enrollments, setEnrollments] = useState<WellnessEnrollment[]>([]);
+  const [loadingCancel, setLoadingCancel] = useState<number | null>(null);
   const [categories, setCategories] = useState<string[]>(['All', 'Classes', 'MedSpa', 'Recovery', 'Therapy', 'Nutrition', 'Personal Training', 'Mindfulness', 'Outdoors', 'General']);
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      const { ok, data } = await apiRequest<any[]>('/api/wellness-classes?active_only=true');
-      
-      if (ok && data) {
-        const formatted = data.map((c: any) => {
-          const spotsRemaining = c.spots_remaining !== null ? parseInt(c.spots_remaining, 10) : null;
-          const enrolledCount = parseInt(c.enrolled_count, 10) || 0;
-          return {
-            id: c.id,
-            title: c.title,
-            date: c.date,
-            time: c.time,
-            instructor: c.instructor,
-            duration: c.duration,
-            category: c.category,
-            spots: c.spots,
-            spotsRemaining,
-            enrolledCount,
-            status: spotsRemaining !== null && spotsRemaining <= 0 ? 'Full' : (c.status || 'Open'),
-            description: c.description
-          };
-        });
-        setClasses(formatted);
-      } else {
-        showToast('Unable to load data. Please try again.', 'error');
-      }
-      
-      setIsLoading(false);
-    };
-    fetchClasses();
+  const fetchClasses = useCallback(async () => {
+    const { ok, data } = await apiRequest<any[]>('/api/wellness-classes?active_only=true');
+    
+    if (ok && data) {
+      const formatted = data.map((c: any) => {
+        const spotsRemaining = c.spots_remaining !== null ? parseInt(c.spots_remaining, 10) : null;
+        const enrolledCount = parseInt(c.enrolled_count, 10) || 0;
+        return {
+          id: c.id,
+          title: c.title,
+          date: c.date,
+          time: c.time,
+          instructor: c.instructor,
+          duration: c.duration,
+          category: c.category,
+          spots: c.spots,
+          spotsRemaining,
+          enrolledCount,
+          status: spotsRemaining !== null && spotsRemaining <= 0 ? 'Full' : (c.status || 'Open'),
+          description: c.description
+        };
+      });
+      setClasses(formatted);
+    } else {
+      showToast('Unable to load data. Please try again.', 'error');
+    }
+    
+    setIsLoading(false);
   }, [showToast]);
+
+  const fetchEnrollments = useCallback(async () => {
+    if (!userEmail) return;
+    const { ok, data } = await apiRequest<WellnessEnrollment[]>(`/api/wellness-enrollments?user_email=${encodeURIComponent(userEmail)}`);
+    if (ok && data) {
+      setEnrollments(data);
+    }
+  }, [userEmail]);
+
+  const handleCancel = useCallback(async (classData: WellnessClass) => {
+    if (!userEmail) return;
+    
+    setLoadingCancel(classData.id);
+    const { ok, error } = await apiRequest(`/api/wellness-enrollments/${classData.id}/${encodeURIComponent(userEmail)}`, {
+      method: 'DELETE'
+    });
+    
+    if (ok) {
+      showToast(`Cancelled enrollment for ${classData.title}`, 'success');
+      await fetchEnrollments();
+      await fetchClasses();
+    } else {
+      showToast(error || 'Unable to cancel. Please try again.', 'error');
+    }
+    setLoadingCancel(null);
+  }, [userEmail, showToast, fetchEnrollments, fetchClasses]);
+
+  const isEnrolled = useCallback((classId: number) => {
+    return enrollments.some(e => e.class_id === classId);
+  }, [enrollments]);
+
+  useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
+
+  useEffect(() => {
+    fetchEnrollments();
+  }, [fetchEnrollments]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -222,6 +264,8 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
             {sortedClasses.length > 0 ? (
                 sortedClasses.map((cls) => {
                     const isExpanded = expandedId === cls.id;
+                    const enrolled = isEnrolled(cls.id);
+                    const isCancelling = loadingCancel === cls.id;
                     return (
                     <MotionListItem key={cls.id}>
                         <ClassCard 
@@ -230,6 +274,9 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
                             isExpanded={isExpanded}
                             onToggle={() => setExpandedId(isExpanded ? null : cls.id)}
                             onBook={() => onBook(cls)}
+                            onCancel={() => handleCancel(cls)}
+                            isEnrolled={enrolled}
+                            isCancelling={isCancelling}
                             isDark={isDark}
                         />
                     </MotionListItem>
@@ -344,7 +391,7 @@ const FilterPill: React.FC<{label: string; active?: boolean; onClick?: () => voi
   </button>
 );
 
-const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, spotsRemaining, status, description, isExpanded, onToggle, onBook, isDark = true }) => (
+const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, spotsRemaining, status, description, isExpanded, onToggle, onBook, onCancel, isEnrolled, isCancelling, isDark = true }) => (
   <div 
     className={`rounded-xl relative overflow-hidden transition-all glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}
   >
@@ -357,6 +404,9 @@ const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, cat
           <div className="flex items-center gap-2 mb-1.5">
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${isDark ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>{category}</span>
             <span className={`text-xs font-bold ${isDark ? 'text-white/60' : 'text-primary/60'}`}>• {duration}</span>
+            {isEnrolled && (
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-accent text-brand-green px-1.5 py-0.5 rounded-md whitespace-nowrap">Going</span>
+            )}
           </div>
           <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{title}</h3>
         </div>
@@ -376,16 +426,26 @@ const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, cat
         <p className={`text-sm leading-relaxed ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
           {description || "Join us for a restorative session designed to improve flexibility, strength, and mental clarity."}
         </p>
-        <div className={`flex items-center gap-1.5 text-xs font-bold ${status === 'Full' ? 'text-orange-500' : status === 'Confirmed' ? 'text-green-500' : (isDark ? 'text-white/60' : 'text-primary/60')}`}>
-          <span className={`w-2 h-2 rounded-full ${status === 'Full' ? 'bg-orange-500' : status === 'Confirmed' ? 'bg-green-500' : 'bg-green-500'}`}></span>
-          {status === 'Confirmed' ? 'Booked' : status === 'Full' ? 'Full' : spotsRemaining !== null ? `${spotsRemaining} spots left` : spots}
+        <div className={`flex items-center gap-1.5 text-xs font-bold ${status === 'Full' ? 'text-orange-500' : isEnrolled ? 'text-green-500' : (isDark ? 'text-white/60' : 'text-primary/60')}`}>
+          <span className={`w-2 h-2 rounded-full ${status === 'Full' ? 'bg-orange-500' : isEnrolled ? 'bg-green-500' : 'bg-green-500'}`}></span>
+          {isEnrolled ? 'Booked' : status === 'Full' ? 'Full' : spotsRemaining !== null ? `${spotsRemaining} spots left` : spots}
         </div>
-        <button 
-          onClick={(e) => { e.stopPropagation(); onBook(); }}
-          className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all active:scale-[0.98] ${status === 'Full' ? (isDark ? 'bg-white/10 text-white' : 'bg-black/10 text-primary') : (isDark ? 'bg-white text-brand-green' : 'bg-brand-green text-white')}`}
-        >
-          {status === 'Full' ? 'Join Waitlist' : status === 'Confirmed' ? 'Booked' : 'RSVP'}
-        </button>
+        {isEnrolled ? (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onCancel(); }}
+            disabled={isCancelling}
+            className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all border ${isDark ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' : 'border-red-500/50 text-red-500 hover:bg-red-500/10'} ${isCancelling ? 'opacity-50 cursor-not-allowed' : 'active:scale-[0.98]'}`}
+          >
+            {isCancelling ? 'Cancelling...' : 'Cancel'}
+          </button>
+        ) : (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onBook(); }}
+            className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all active:scale-[0.98] ${status === 'Full' ? (isDark ? 'bg-white/10 text-white' : 'bg-black/10 text-primary') : (isDark ? 'bg-white text-brand-green' : 'bg-brand-green text-white')}`}
+          >
+            {status === 'Full' ? 'Join Waitlist' : 'RSVP'}
+          </button>
+        )}
       </div>
     </div>
   </div>

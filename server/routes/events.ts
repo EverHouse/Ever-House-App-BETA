@@ -522,12 +522,38 @@ router.post('/api/rsvps', async (req, res) => {
 router.delete('/api/rsvps/:event_id/:user_email', async (req, res) => {
   try {
     const { event_id, user_email } = req.params;
+    
+    const eventData = await db.select({
+      title: events.title,
+      eventDate: events.eventDate,
+    }).from(events).where(eq(events.id, parseInt(event_id)));
+    
     await db.update(eventRsvps)
       .set({ status: 'cancelled' })
       .where(and(
         eq(eventRsvps.eventId, parseInt(event_id)),
         eq(eventRsvps.userEmail, user_email)
       ));
+    
+    if (eventData.length > 0) {
+      const evt = eventData[0];
+      const formattedDate = new Date(evt.eventDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+      const memberName = user_email.split('@')[0];
+      const staffMessage = `${memberName} cancelled their RSVP for ${evt.title} on ${formattedDate}`;
+      
+      notifyAllStaff(
+        'Event RSVP Cancelled',
+        staffMessage,
+        'event_rsvp_cancelled',
+        parseInt(event_id),
+        'event'
+      ).catch(err => console.error('Staff cancellation notification failed:', err));
+    }
+    
     res.json({ success: true });
   } catch (error: any) {
     if (!isProduction) console.error('API error:', error);

@@ -4,6 +4,7 @@ import { isStaffOrAdmin } from '../core/middleware';
 import { syncWellnessCalendarEvents, discoverCalendarIds, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { db } from '../db';
 import { wellnessEnrollments, wellnessClasses, users, notifications } from '../../shared/schema';
+import { notifyAllStaff } from '../core/staffNotifications';
 import { eq, and, gte, sql, isNull, asc, desc } from 'drizzle-orm';
 import { sendPushNotification } from './push';
 
@@ -414,6 +415,16 @@ router.post('/api/wellness-enrollments', async (req, res) => {
         body: message,
         url: '/#/member-wellness'
       }).catch(err => console.error('Push notification failed:', err));
+      
+      const memberName = user_email.split('@')[0];
+      const staffMessage = `${memberName} enrolled in ${cls.title} on ${formattedDate}`;
+      notifyAllStaff(
+        'New Wellness Enrollment',
+        staffMessage,
+        'wellness_enrollment',
+        class_id,
+        'wellness_class'
+      ).catch(err => console.error('Staff enrollment notification failed:', err));
     }
     
     res.status(201).json(result[0]);
@@ -427,12 +438,36 @@ router.delete('/api/wellness-enrollments/:class_id/:user_email', async (req, res
   try {
     const { class_id, user_email } = req.params;
     
+    const classData = await db.select({
+      title: wellnessClasses.title,
+      date: wellnessClasses.date,
+    }).from(wellnessClasses).where(eq(wellnessClasses.id, parseInt(class_id)));
+    
     await db.update(wellnessEnrollments)
       .set({ status: 'cancelled' })
       .where(and(
         eq(wellnessEnrollments.classId, parseInt(class_id)),
         eq(wellnessEnrollments.userEmail, user_email)
       ));
+    
+    if (classData.length > 0) {
+      const cls = classData[0];
+      const formattedDate = new Date(cls.date).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+      const memberName = user_email.split('@')[0];
+      const staffMessage = `${memberName} cancelled their enrollment for ${cls.title} on ${formattedDate}`;
+      
+      notifyAllStaff(
+        'Wellness Enrollment Cancelled',
+        staffMessage,
+        'wellness_cancellation',
+        parseInt(class_id),
+        'wellness_class'
+      ).catch(err => console.error('Staff cancellation notification failed:', err));
+    }
     
     res.json({ success: true });
   } catch (error: any) {
