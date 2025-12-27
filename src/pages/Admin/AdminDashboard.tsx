@@ -1811,6 +1811,9 @@ const SimulatorAdmin: React.FC = () => {
     const [conflictDetails, setConflictDetails] = useState<string | null>(null);
     const [showTrackmanConfirm, setShowTrackmanConfirm] = useState(false);
     const [showManualBooking, setShowManualBooking] = useState(false);
+    const [rescheduleEmail, setRescheduleEmail] = useState<string | null>(null);
+    const [selectedCalendarBooking, setSelectedCalendarBooking] = useState<BookingRequest | null>(null);
+    const [isCancellingFromModal, setIsCancellingFromModal] = useState(false);
     
     const [calendarDate, setCalendarDate] = useState(() => new Date().toISOString().split('T')[0]);
 
@@ -1878,8 +1881,9 @@ const SimulatorAdmin: React.FC = () => {
 
     useEffect(() => {
         const fetchCalendarData = async () => {
-            const startDate = calendarDate;
-            const endDate = new Date(new Date(calendarDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
+            const startDate = activeView === 'calendar' ? calendarDate : today;
+            const endDate = new Date(new Date(startDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             try {
                 const [bookingsRes, closuresRes] = await Promise.all([
                     fetch(`/api/approved-bookings?start_date=${startDate}&end_date=${endDate}`),
@@ -1902,9 +1906,7 @@ const SimulatorAdmin: React.FC = () => {
                 console.error('Failed to fetch calendar data:', err);
             }
         };
-        if (activeView === 'calendar') {
-            fetchCalendarData();
-        }
+        fetchCalendarData();
     }, [activeView, calendarDate]);
 
     useEffect(() => {
@@ -1986,6 +1988,19 @@ const SimulatorAdmin: React.FC = () => {
 
     const pendingRequests = requests.filter(r => r.status === 'pending' || r.status === 'pending_approval');
     const processedRequests = requests.filter(r => r.status !== 'pending' && r.status !== 'pending_approval');
+
+    const upcomingBookings = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return approvedBookings
+            .filter(b => (b.status === 'approved' || b.status === 'confirmed') && b.request_date >= today)
+            .sort((a, b) => {
+                if (a.request_date !== b.request_date) {
+                    return a.request_date.localeCompare(b.request_date);
+                }
+                return a.start_time.localeCompare(b.start_time);
+            })
+            .slice(0, 10);
+    }, [approvedBookings]);
 
     const initiateApproval = () => {
         if (!selectedRequest) return;
@@ -2245,6 +2260,38 @@ const SimulatorAdmin: React.FC = () => {
                 </div>
             ) : activeView === 'requests' ? (
                 <div className="space-y-6 p-5 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                    {/* Upcoming Bookings Section */}
+                    {upcomingBookings.length > 0 && (
+                        <div className="animate-pop-in" style={{animationDelay: '0.05s'}}>
+                            <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-blue-500">calendar_today</span>
+                                Upcoming Bookings ({upcomingBookings.length})
+                            </h3>
+                            <div className="space-y-2">
+                                {upcomingBookings.map((booking, index) => (
+                                    <div key={`upcoming-${booking.id}`} className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border border-blue-200 dark:border-blue-500/20 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.1 + index * 0.03}s`}}>
+                                        <div>
+                                            <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {formatDateShort(booking.request_date)} • {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
+                                            </p>
+                                            {booking.bay_name && (
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{booking.bay_name}</p>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => { setSelectedRequest(booking); setActionModal('decline'); }}
+                                            className="py-1.5 px-3 bg-red-500 text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-red-600 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-xs">close</span>
+                                            Cancel
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-yellow-500">pending</span>
@@ -2416,18 +2463,19 @@ const SimulatorAdmin: React.FC = () => {
                                             return (
                                                 <div
                                                     key={`${resource.id}-${slot}`}
-                                                    title={closure ? `CLOSED: ${closure.title}` : undefined}
+                                                    title={closure ? `CLOSED: ${closure.title}` : booking ? `${booking.user_name || 'Booked'} - Click for details` : undefined}
+                                                    onClick={booking && !closure ? () => setSelectedCalendarBooking(booking) : undefined}
                                                     className={`h-8 rounded border ${
                                                         closure
                                                             ? 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/30'
                                                             : booking 
                                                                 ? isConference
-                                                                    ? 'bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-500/30'
-                                                                    : 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30' 
+                                                                    ? 'bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-500/30 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-500/30'
+                                                                    : 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30 cursor-pointer hover:bg-green-200 dark:hover:bg-green-500/30' 
                                                                 : isConference
                                                                     ? 'bg-purple-50/50 dark:bg-purple-500/5 border-purple-100 dark:border-purple-500/10 hover:bg-purple-100/50 dark:hover:bg-purple-500/10'
                                                                     : 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5'
-                                                    }`}
+                                                    } transition-colors`}
                                                 >
                                                     {closure ? (
                                                         <div className="px-1 h-full flex items-center">
@@ -2631,9 +2679,11 @@ const SimulatorAdmin: React.FC = () => {
             {showManualBooking && createPortal(
                 <ManualBookingModal 
                     resources={resources}
-                    onClose={() => setShowManualBooking(false)}
+                    defaultMemberEmail={rescheduleEmail || undefined}
+                    onClose={() => { setShowManualBooking(false); setRescheduleEmail(null); }}
                     onSuccess={() => {
                         setShowManualBooking(false);
+                        setRescheduleEmail(null);
                         const fetchUpdatedData = async () => {
                             try {
                                 const [requestsRes, pendingRes] = await Promise.all([
@@ -2678,6 +2728,176 @@ const SimulatorAdmin: React.FC = () => {
                 />,
                 document.body
             )}
+
+            {selectedCalendarBooking && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50" onClick={() => setSelectedCalendarBooking(null)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-bold text-primary dark:text-white">
+                                    Booking Details
+                                </h3>
+                                <button
+                                    onClick={() => setSelectedCalendarBooking(null)}
+                                    className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-gray-500 dark:text-gray-400">close</span>
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="material-symbols-outlined text-primary dark:text-white text-lg">person</span>
+                                        <div>
+                                            <p className="font-bold text-primary dark:text-white">{selectedCalendarBooking.user_name || 'Unknown'}</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{selectedCalendarBooking.user_email}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Date</p>
+                                        <p className="font-medium text-primary dark:text-white text-sm">{formatDateShort(selectedCalendarBooking.request_date)}</p>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Time</p>
+                                        <p className="font-medium text-primary dark:text-white text-sm">
+                                            {formatTime12(selectedCalendarBooking.start_time)} - {formatTime12(selectedCalendarBooking.end_time)}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Duration</p>
+                                        <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking.duration_minutes} min</p>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bay/Resource</p>
+                                        <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking.bay_name || selectedCalendarBooking.resource_name || '-'}</p>
+                                    </div>
+                                </div>
+
+                                {((selectedCalendarBooking as any).booking_source || (selectedCalendarBooking as any).guest_count) && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {(selectedCalendarBooking as any).booking_source && (
+                                            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Booking Source</p>
+                                                <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).booking_source}</p>
+                                            </div>
+                                        )}
+                                        {(selectedCalendarBooking as any).guest_count !== undefined && (selectedCalendarBooking as any).guest_count > 0 && (
+                                            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Guest Count</p>
+                                                <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).guest_count}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {selectedCalendarBooking.notes && (
+                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Notes</p>
+                                        <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking.notes}</p>
+                                    </div>
+                                )}
+
+                                {(selectedCalendarBooking as any).created_by_staff_id && (
+                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Created by Staff</p>
+                                        <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).created_by_staff_id}</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="flex flex-col gap-2 mt-6">
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setRescheduleEmail(selectedCalendarBooking.user_email);
+                                            setSelectedCalendarBooking(null);
+                                            setShowManualBooking(true);
+                                        }}
+                                        className="flex-1 py-3 px-4 rounded-lg bg-accent text-primary font-medium flex items-center justify-center gap-2"
+                                        disabled={isCancellingFromModal}
+                                    >
+                                        <span className="material-symbols-outlined text-sm">schedule</span>
+                                        Reschedule
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!selectedCalendarBooking) return;
+                                            
+                                            setIsCancellingFromModal(true);
+                                            try {
+                                                const res = await fetch(`/api/booking-requests/${selectedCalendarBooking.id}`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({
+                                                        status: 'cancelled',
+                                                        staff_notes: 'Cancelled from calendar view',
+                                                        cancelled_by: actualUser?.email || user?.email
+                                                    })
+                                                });
+                                                
+                                                if (!res.ok) {
+                                                    const errData = await res.json();
+                                                    throw new Error(errData.error || 'Failed to cancel booking');
+                                                }
+                                                
+                                                try {
+                                                    await fetch('/api/notifications', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({
+                                                            user_email: selectedCalendarBooking.user_email,
+                                                            title: 'Booking Cancelled',
+                                                            message: `Your booking for ${formatDateShort(selectedCalendarBooking.request_date)} at ${formatTime12(selectedCalendarBooking.start_time)} has been cancelled by staff.`,
+                                                            type: 'booking_cancelled',
+                                                            related_id: selectedCalendarBooking.id,
+                                                            related_type: 'booking'
+                                                        })
+                                                    });
+                                                } catch (notifErr) {
+                                                    console.error('Failed to create cancellation notification:', notifErr);
+                                                }
+                                                
+                                                setApprovedBookings(prev => prev.filter(b => b.id !== selectedCalendarBooking.id));
+                                                setSelectedCalendarBooking(null);
+                                            } catch (err: any) {
+                                                console.error('Failed to cancel booking:', err);
+                                                alert(err.message || 'Failed to cancel booking');
+                                            } finally {
+                                                setIsCancellingFromModal(false);
+                                            }
+                                        }}
+                                        disabled={isCancellingFromModal}
+                                        className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isCancellingFromModal ? (
+                                            <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-sm">close</span>
+                                        )}
+                                        Cancel
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedCalendarBooking(null)}
+                                    className="w-full py-2 px-4 rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                                    disabled={isCancellingFromModal}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
             </div>
         </div>
     );
@@ -2687,9 +2907,10 @@ const ManualBookingModal: React.FC<{
     resources: Resource[];
     onClose: () => void;
     onSuccess: () => void;
-}> = ({ resources, onClose, onSuccess }) => {
+    defaultMemberEmail?: string;
+}> = ({ resources, onClose, onSuccess, defaultMemberEmail }) => {
     const { showToast } = useToast();
-    const [memberEmail, setMemberEmail] = useState('');
+    const [memberEmail, setMemberEmail] = useState(defaultMemberEmail || '');
     const [memberLookupStatus, setMemberLookupStatus] = useState<'idle' | 'checking' | 'found' | 'not_found'>('idle');
     const [memberName, setMemberName] = useState<string | null>(null);
     const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().split('T')[0]);
