@@ -466,14 +466,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </button>
       
       {isMemberRoute ? (
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+        <button 
+          className={`absolute left-1/2 -translate-x-1/2 flex items-center justify-center ${isProfilePage ? 'cursor-pointer hover:opacity-70 active:scale-95 transition-all' : 'cursor-default'}`}
+          onClick={() => isProfilePage && navigate('/dashboard')}
+          aria-label={isProfilePage ? 'Go to dashboard' : undefined}
+        >
           <span 
             key={getCenterIcon()}
             className={`material-symbols-outlined text-[32px] animate-icon-morph ${isDarkTheme ? 'text-[#F2F2EC]' : 'text-[#F2F2EC]'}`}
           >
             {getCenterIcon()}
           </span>
-        </div>
+        </button>
       ) : (
         <button 
           className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
