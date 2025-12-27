@@ -16,6 +16,7 @@ import InquiriesAdmin from './InquiriesAdmin';
 import GalleryAdmin from './GalleryAdmin';
 import { changelog } from '../../data/changelog';
 import { useToast } from '../../components/Toast';
+import { APP_VERSION, formatLastUpdated } from '../../config/version';
 import Avatar from '../../components/Avatar';
 
 const AdminDashboard: React.FC = () => {
@@ -381,6 +382,12 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
           </div>
         </div>
       )}
+
+      <div className="mt-10 pt-6 border-t border-primary/10 dark:border-white/10 text-center">
+        <p className="text-xs text-primary/40 dark:text-white/40">
+          v{APP_VERSION} · Updated {formatLastUpdated()}
+        </p>
+      </div>
     </div>
   );
 };

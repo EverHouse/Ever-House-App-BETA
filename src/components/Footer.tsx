@@ -1,5 +1,6 @@
 import React from 'react';
 import Logo from './Logo';
+import { APP_VERSION, formatLastUpdated } from '../config/version';
 
 export const Footer: React.FC = () => (
   <footer className="bg-[#293515] text-[#E7E7DC] py-16 px-6 text-center rounded-t-[2.5rem] mt-8 -mx-4 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)]">
@@ -41,6 +42,7 @@ export const Footer: React.FC = () => (
      <div className="flex flex-col items-center gap-2">
         <a href="https://evenhouse.club" target="_blank" rel="noreferrer" className="text-[10px] opacity-40 hover:opacity-100 transition-opacity">evenhouse.club</a>
         <p className="text-[10px] opacity-40">© {new Date().getFullYear()} Even House. All rights reserved.</p>
+        <p className="text-[10px] opacity-30">v{APP_VERSION} · Updated {formatLastUpdated()}</p>
      </div>
   </footer>
 );
