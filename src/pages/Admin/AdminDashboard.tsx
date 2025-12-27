@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
+import { NotificationContext } from '../../contexts/NotificationContext';
 import MenuOverlay from '../../components/MenuOverlay';
 import Logo from '../../components/Logo';
 import TierBadge from '../../components/TierBadge';
@@ -20,9 +21,11 @@ import { useToast } from '../../components/Toast';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { actualUser } = useData();
+  const { openNotifications } = useContext(NotificationContext);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   
   // Fetch pending requests count for badge
   useEffect(() => {
@@ -50,6 +53,25 @@ const AdminDashboard: React.FC = () => {
     const interval = setInterval(fetchPendingCount, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    if (!actualUser?.email) return;
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}&unread=true`);
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadNotifCount(data.length);
+        }
+      } catch (err) {
+        console.error('Failed to fetch unread notifications:', err);
+      }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [actualUser?.email]);
   
   // Protect route - use actualUser so admins can still access while viewing as member
   useEffect(() => {
@@ -73,12 +95,25 @@ const AdminDashboard: React.FC = () => {
         <Logo type="mascot" variant="white" className="h-14 w-auto" />
       </div>
 
-      <button 
-        onClick={() => navigate('/profile')}
-        className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
-      >
-        <span className="material-symbols-outlined text-[24px]">settings</span>
-      </button>
+      <div className="flex items-center gap-1">
+        <button 
+          onClick={() => openNotifications()}
+          className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity relative"
+        >
+          <span className="material-symbols-outlined text-[24px]">notifications</span>
+          {unreadNotifCount > 0 && (
+            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+            </span>
+          )}
+        </button>
+        <button 
+          onClick={() => navigate('/profile')}
+          className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
+        >
+          <span className="material-symbols-outlined text-[24px]">settings</span>
+        </button>
+      </div>
     </header>
   );
 
