@@ -432,6 +432,7 @@ export type SystemSetting = typeof systemSettings.$inferSelect;
 // Training sections table - for staff training guide content
 export const trainingSections = pgTable("training_sections", {
   id: serial("id").primaryKey(),
+  guideId: varchar("guide_id").unique(),
   icon: varchar("icon").notNull(),
   title: varchar("title").notNull(),
   description: text("description").notNull(),
