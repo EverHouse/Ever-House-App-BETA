@@ -15,24 +15,98 @@ interface MembershipTier {
 }
 
 
+interface TourFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
+
 const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
-  
+  const [step, setStep] = useState<'form' | 'calendar'>('form');
+  const [formData, setFormData] = useState<TourFormData>({ firstName: '', lastName: '', email: '', phone: '' });
+  const [tourId, setTourId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
   useEffect(() => {
-    if (isOpen && containerRef.current) {
+    if (!isOpen) {
+      setStep('form');
+      setFormData({ firstName: '', lastName: '', email: '', phone: '' });
+      setTourId(null);
+      setError(null);
+      setBookingConfirmed(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (step === 'calendar' && containerRef.current && formData.email) {
       containerRef.current.innerHTML = '';
       const script = document.createElement('script');
       script.src = 'https://static.hsappstatic.net/MeetingsEmbed/ex/MeetingsEmbedCode.js';
       script.async = true;
       
+      const params = new URLSearchParams({
+        embed: 'true',
+        firstname: formData.firstName,
+        lastname: formData.lastName,
+        email: formData.email,
+        ...(formData.phone && { phone: formData.phone })
+      });
+      
       const meetingsDiv = document.createElement('div');
       meetingsDiv.className = 'meetings-iframe-container';
-      meetingsDiv.setAttribute('data-src', 'https://meetings-na2.hubspot.com/memberships/tourbooking?embed=true');
+      meetingsDiv.setAttribute('data-src', `https://meetings-na2.hubspot.com/memberships/tourbooking?${params.toString()}`);
       
       containerRef.current.appendChild(meetingsDiv);
       containerRef.current.appendChild(script);
     }
-  }, [isOpen]);
+  }, [step, formData]);
+
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.meetingBookSucceeded && tourId) {
+        try {
+          await fetch(`/api/tours/${tourId}/confirm`, { method: 'PATCH' });
+          setBookingConfirmed(true);
+        } catch (err) {
+          console.error('Failed to confirm tour:', err);
+        }
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [tourId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      const res = await fetch('/api/tours/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to submit');
+      }
+      
+      const data = await res.json();
+      setTourId(data.id);
+      setStep('calendar');
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -42,14 +116,103 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
       <div className="relative w-full max-w-2xl bg-[#F2F2EC] dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-primary/10 dark:border-white/10">
           <div>
-            <h2 className="text-xl font-bold text-primary dark:text-white">Book a Tour</h2>
-            <p className="text-sm text-primary/60 dark:text-white/60 mt-1">Schedule a visit to experience Even House firsthand.</p>
+            <h2 className="text-xl font-bold text-[#293515] dark:text-white">Book a Tour</h2>
+            <p className="text-sm text-[#293515]/60 dark:text-white/60 mt-1">
+              {step === 'form' ? 'Tell us a bit about yourself.' : bookingConfirmed ? 'Your tour is confirmed!' : 'Select a time that works for you.'}
+            </p>
           </div>
-          <button onClick={onClose} className="w-10 h-10 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center hover:bg-primary/20 dark:hover:bg-white/20 transition-colors">
-            <span className="material-symbols-outlined text-primary dark:text-white">close</span>
+          <button onClick={onClose} className="w-10 h-10 rounded-full bg-[#293515]/10 dark:bg-white/10 flex items-center justify-center hover:bg-[#293515]/20 dark:hover:bg-white/20 transition-colors">
+            <span className="material-symbols-outlined text-[#293515] dark:text-white">close</span>
           </button>
         </div>
-        <div ref={containerRef} className="p-4 overflow-y-auto flex-1 min-h-[500px]"></div>
+        
+        {step === 'form' ? (
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[#293515]/70 dark:text-white/70 mb-1">First Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.firstName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-white/5 border border-[#293515]/10 dark:border-white/10 text-[#293515] dark:text-white placeholder-[#293515]/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CCB8E4]/50"
+                  placeholder="Jane"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#293515]/70 dark:text-white/70 mb-1">Last Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.lastName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-white/5 border border-[#293515]/10 dark:border-white/10 text-[#293515] dark:text-white placeholder-[#293515]/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CCB8E4]/50"
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#293515]/70 dark:text-white/70 mb-1">Email *</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-white/5 border border-[#293515]/10 dark:border-white/10 text-[#293515] dark:text-white placeholder-[#293515]/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CCB8E4]/50"
+                placeholder="jane@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#293515]/70 dark:text-white/70 mb-1">Phone</label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-white/5 border border-[#293515]/10 dark:border-white/10 text-[#293515] dark:text-white placeholder-[#293515]/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CCB8E4]/50"
+                placeholder="(949) 555-0100"
+              />
+            </div>
+            
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
+            
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-4 rounded-xl bg-[#293515] text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Continue to Select Time
+                  <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                </>
+              )}
+            </button>
+          </form>
+        ) : bookingConfirmed ? (
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-4xl text-green-600">check_circle</span>
+            </div>
+            <h3 className="text-xl font-bold text-[#293515] dark:text-white mb-2">Tour Confirmed!</h3>
+            <p className="text-[#293515]/60 dark:text-white/60 mb-6">We've received your booking. You'll receive a confirmation email shortly.</p>
+            <button
+              onClick={onClose}
+              className="px-8 py-3 rounded-xl bg-[#293515] text-white font-bold text-sm hover:opacity-90 transition-opacity"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <div ref={containerRef} className="p-4 overflow-y-auto flex-1 min-h-[500px]"></div>
+        )}
       </div>
     </div>
   );

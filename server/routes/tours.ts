@@ -85,6 +85,73 @@ router.post('/api/tours/sync', isStaffOrAdmin, async (req, res) => {
   }
 });
 
+router.post('/api/tours/book', async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone } = req.body;
+    
+    if (!firstName || !lastName || !email) {
+      return res.status(400).json({ error: 'First name, last name, and email are required' });
+    }
+    
+    const guestName = `${firstName} ${lastName}`.trim();
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+    
+    const [newTour] = await db.insert(tours).values({
+      title: `Tour Request - ${guestName}`,
+      guestName,
+      guestEmail: email,
+      guestPhone: phone || null,
+      tourDate: today,
+      startTime: '00:00:00',
+      status: 'pending',
+    }).returning();
+    
+    await notifyAllStaff(
+      'New Tour Request',
+      `${guestName} requested a tour and is selecting a time`,
+      'tour_scheduled',
+      newTour.id,
+      'tour'
+    );
+    
+    res.json({ id: newTour.id, message: 'Tour request created' });
+  } catch (error: any) {
+    if (!isProduction) console.error('Tour booking error:', error);
+    res.status(500).json({ error: 'Failed to create tour request' });
+  }
+});
+
+router.patch('/api/tours/:id/confirm', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [updated] = await db.update(tours)
+      .set({
+        status: 'scheduled',
+        updatedAt: new Date(),
+      })
+      .where(eq(tours.id, parseInt(id)))
+      .returning();
+    
+    if (!updated) {
+      return res.status(404).json({ error: 'Tour not found' });
+    }
+    
+    await notifyAllStaff(
+      'Tour Confirmed',
+      `${updated.guestName || 'Guest'} confirmed their tour booking`,
+      'tour_scheduled',
+      updated.id,
+      'tour'
+    );
+    
+    res.json(updated);
+  } catch (error: any) {
+    if (!isProduction) console.error('Tour confirm error:', error);
+    res.status(500).json({ error: 'Failed to confirm tour' });
+  }
+});
+
 export async function syncToursFromCalendar(): Promise<{ synced: number; created: number; updated: number; error?: string }> {
   try {
     await discoverCalendarIds();
