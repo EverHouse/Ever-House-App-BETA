@@ -35,17 +35,52 @@ router.get('/api/availability', async (req, res) => {
     );
     
     const slots = [];
-    // Different business hours based on resource type
-    const openMinutes = 8 * 60; // 8:00 AM
-    const closeMinutes = resourceType === 'conference_room' ? 18 * 60 : 22 * 60; // 6PM for conference, 10PM for simulators
     
-    // Check if the requested date is today to filter out past times (use club's local timezone)
+    // Club timezone and current time
     const clubTimezone = 'America/Los_Angeles';
     const now = new Date();
     const localNow = new Date(now.toLocaleString('en-US', { timeZone: clubTimezone }));
     const todayStr = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
     const isToday = date === todayStr;
     const currentMinutes = isToday ? localNow.getHours() * 60 + localNow.getMinutes() : 0;
+    
+    // Get day of week for the requested date (0 = Sunday, 1 = Monday, etc.)
+    const requestedDate = new Date(date as string + 'T12:00:00');
+    const dayOfWeek = requestedDate.getDay();
+    
+    // Business hours by day of week:
+    // Monday (1): Closed
+    // Tuesday-Thursday (2-4): 8:30 AM - 8 PM
+    // Friday-Saturday (5-6): 8:30 AM - 10 PM
+    // Sunday (0): 8:30 AM - 6 PM
+    const getBusinessHours = (day: number): { open: number; close: number } | null => {
+      const openMinutes = 8 * 60 + 30; // 8:30 AM
+      switch (day) {
+        case 1: // Monday - Closed
+          return null;
+        case 2: // Tuesday
+        case 3: // Wednesday
+        case 4: // Thursday
+          return { open: openMinutes, close: 20 * 60 }; // 8 PM
+        case 5: // Friday
+        case 6: // Saturday
+          return { open: openMinutes, close: 22 * 60 }; // 10 PM
+        case 0: // Sunday
+          return { open: openMinutes, close: 18 * 60 }; // 6 PM
+        default:
+          return null;
+      }
+    };
+    
+    const hours = getBusinessHours(dayOfWeek);
+    
+    // Return empty slots if closed (Monday or invalid day)
+    if (!hours) {
+      return res.json([]);
+    }
+    
+    const openMinutes = hours.open;
+    const closeMinutes = hours.close;
     
     for (let startMins = openMinutes; startMins + durationMinutes <= closeMinutes; startMins += slotIncrement) {
       // Skip past time slots for today
