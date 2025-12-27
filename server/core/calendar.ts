@@ -23,6 +23,9 @@ export const CALENDAR_CONFIG = {
   wellness: {
     name: 'Wellness & Classes',
     businessHours: { start: 6, end: 21 },
+  },
+  tours: {
+    name: 'Tours Scheduled',
   }
 };
 

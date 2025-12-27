@@ -444,3 +444,25 @@ export const trainingSections = pgTable("training_sections", {
 
 export type TrainingSection = typeof trainingSections.$inferSelect;
 export type InsertTrainingSection = typeof trainingSections.$inferInsert;
+
+// Tours table - scheduled tours synced from Google Calendar
+export const tours = pgTable("tours", {
+  id: serial("id").primaryKey(),
+  googleCalendarId: varchar("google_calendar_id").unique(),
+  title: varchar("title").notNull(),
+  guestName: varchar("guest_name"),
+  guestEmail: varchar("guest_email"),
+  guestPhone: varchar("guest_phone"),
+  tourDate: date("tour_date").notNull(),
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time"),
+  notes: text("notes"),
+  status: varchar("status").default("scheduled"),
+  checkedInAt: timestamp("checked_in_at"),
+  checkedInBy: varchar("checked_in_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type Tour = typeof tours.$inferSelect;
+export type InsertTour = typeof tours.$inferInsert;
