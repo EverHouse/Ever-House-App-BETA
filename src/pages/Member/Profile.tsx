@@ -77,13 +77,9 @@ const Profile: React.FC = () => {
   }, [user?.email, isStaffOrAdminProfile]);
 
   useEffect(() => {
-    const state = location.state as { showPasswordSetup?: boolean; openMembershipModal?: boolean } | null;
+    const state = location.state as { showPasswordSetup?: boolean } | null;
     if (state?.showPasswordSetup && isStaffOrAdminProfile) {
       setShowPasswordSetupBanner(true);
-      window.history.replaceState({}, document.title);
-    }
-    if (state?.openMembershipModal) {
-      setIsCardOpen(true);
       window.history.replaceState({}, document.title);
     }
   }, [location.state, isStaffOrAdminProfile]);
