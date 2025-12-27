@@ -15,6 +15,7 @@ import FaqsAdmin from './FaqsAdmin';
 import InquiriesAdmin from './InquiriesAdmin';
 import GalleryAdmin from './GalleryAdmin';
 import { changelog } from '../../data/changelog';
+import { useToast } from '../../components/Toast';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -3476,6 +3477,7 @@ interface BlocksClosureForm {
 
 const BlocksAdmin: React.FC = () => {
     const { actualUser } = useData();
+    const { showToast } = useToast();
     const [blocks, setBlocks] = useState<AvailabilityBlock[]>([]);
     const [resources, setResources] = useState<{ id: number; name: string; type: string }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -3588,9 +3590,17 @@ const BlocksAdmin: React.FC = () => {
                 resetClosureForm();
                 fetchClosures();
                 fetchBlocks();
+                showToast(
+                    editingClosureId ? 'Closure updated successfully' : 'Closure created successfully',
+                    'success'
+                );
+            } else {
+                const error = await res.json().catch(() => ({}));
+                showToast(error.error || 'Failed to save closure', 'error');
             }
         } catch (err) {
             console.error('Failed to save closure:', err);
+            showToast('Failed to save closure', 'error');
         } finally {
             setClosureSaving(false);
         }
@@ -3618,9 +3628,13 @@ const BlocksAdmin: React.FC = () => {
             if (res.ok) {
                 fetchClosures();
                 fetchBlocks();
+                showToast('Closure deleted successfully', 'success');
+            } else {
+                showToast('Failed to delete closure', 'error');
             }
         } catch (err) {
             console.error('Failed to delete closure:', err);
+            showToast('Failed to delete closure', 'error');
         }
     };
 
