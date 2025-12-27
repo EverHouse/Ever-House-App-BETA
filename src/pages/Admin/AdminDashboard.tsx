@@ -33,7 +33,7 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const tabParam = searchParams.get('tab') as TabType | null;
-    const validTabs: TabType[] = ['home', 'cafe', 'events', 'announcements', 'directory', 'simulator', 'team', 'faqs', 'inquiries', 'gallery', 'tiers', 'blocks', 'changelog', 'training', 'updates'];
+    const validTabs: TabType[] = ['home', 'cafe', 'events', 'announcements', 'directory', 'simulator', 'team', 'faqs', 'inquiries', 'gallery', 'tiers', 'blocks', 'changelog', 'training', 'updates', 'tours'];
     if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam);
     } else if (!tabParam) {
@@ -138,6 +138,7 @@ const AdminDashboard: React.FC = () => {
       case 'training': return 'Training';
       case 'conflicts': return 'Conflicts';
       case 'updates': return 'Updates';
+      case 'tours': return 'Tours';
       default: return 'Dashboard';
     }
   };

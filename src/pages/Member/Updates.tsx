@@ -49,6 +49,10 @@ const getNotificationRoute = (notif: UserNotification, isStaffOrAdmin: boolean):
   if (notif.type === 'event_reminder') {
     return '/member-events';
   }
+  // Tour notifications - navigate staff/admin to tours admin page
+  if ((notif.type === 'tour_scheduled' || notif.type === 'tour_reminder') && isStaffOrAdmin) {
+    return '/admin?tab=tours';
+  }
   return null;
 };
 
