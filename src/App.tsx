@@ -574,15 +574,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         ) : (
           <button 
             onClick={handleTopRightClick}
-            className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
-            aria-label={user ? 'Go to dashboard' : 'Login'}
+            className={`px-4 py-2 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-full border border-white/30 text-sm font-semibold tracking-wide`}
+            aria-label={user ? 'Go to dashboard' : 'Members login'}
           >
-            <span 
-              key={getTopRightIcon()}
-              className="material-symbols-outlined text-[24px] animate-icon-morph"
-            >
-               {getTopRightIcon()}
-            </span>
+            Members
           </button>
         )}
       </div>
