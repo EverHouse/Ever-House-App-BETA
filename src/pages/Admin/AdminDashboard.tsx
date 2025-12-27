@@ -115,13 +115,13 @@ const AdminDashboard: React.FC = () => {
     <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-[9998] pointer-events-auto">
       <button 
         onClick={() => navigate('/')}
-        className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
+        className="flex items-center justify-center hover:opacity-70 transition-opacity py-1"
         aria-label="Go to home"
       >
         <img 
-          src="/assets/logos/monogram-white.webp" 
+          src="/assets/logos/mascot-white.webp" 
           alt="Even House" 
-          className="w-8 h-8 object-contain"
+          className="h-10 w-auto object-contain"
         />
       </button>
       

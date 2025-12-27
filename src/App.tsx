@@ -509,13 +509,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {isMemberRoute ? (
         <button 
           onClick={() => navigate('/')}
-          className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
+          className={`flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg py-1`}
           aria-label="Go to home"
         >
           <img 
-            src="/assets/logos/monogram-white.webp" 
+            src="/assets/logos/mascot-white.webp" 
             alt="Even House" 
-            className="w-8 h-8 object-contain"
+            className="h-10 w-auto object-contain"
           />
         </button>
       ) : (
