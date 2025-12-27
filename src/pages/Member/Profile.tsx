@@ -621,7 +621,7 @@ const Profile: React.FC = () => {
 const Section: React.FC<{title: string; children: React.ReactNode; isDark?: boolean}> = ({ title, children, isDark = true }) => (
   <div>
      <h3 className={`text-xs font-bold uppercase tracking-wider ml-2 mb-3 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>{title}</h3>
-     <div className={`rounded-2xl overflow-hidden ${isDark ? 'glass-card divide-y divide-white/5' : 'bg-white border border-black/5 shadow-sm divide-y divide-black/5'}`}>
+     <div className={`rounded-2xl overflow-hidden glass-card divide-y ${isDark ? 'divide-white/5 border-white/10' : 'divide-black/5 border-black/10'}`}>
         {children}
      </div>
   </div>

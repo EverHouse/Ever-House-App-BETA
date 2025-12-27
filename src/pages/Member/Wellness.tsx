@@ -331,7 +331,7 @@ const FilterPill: React.FC<{label: string; active?: boolean; onClick?: () => voi
 
 const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, spotsRemaining, status, description, isExpanded, onToggle, onBook, isDark = true }) => (
   <div 
-    className={`rounded-xl relative overflow-hidden transition-all ${isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered'}`}
+    className={`rounded-xl relative overflow-hidden transition-all glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}
   >
     <div 
       onClick={onToggle}
@@ -377,7 +377,7 @@ const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, cat
 );
 
 const MedSpaCard: React.FC<{title: string; subtitle?: string; children: React.ReactNode; isDark?: boolean}> = ({ title, subtitle, children, isDark = true }) => (
-  <div className={`rounded-2xl p-5 border ${isDark ? 'glass-card border-white/5' : 'bg-white border-black/10 shadow-sm'}`}>
+  <div className={`rounded-2xl p-5 border glass-card ${isDark ? 'border-white/5' : 'border-black/10'}`}>
     <div className="flex items-center justify-between mb-4">
       <h3 className={`font-bold text-xl ${isDark ? 'text-white' : 'text-primary'}`}>
         {title}

@@ -181,7 +181,7 @@ const MemberEvents: React.FC = () => {
                     <MotionListItem 
                         key={event.id} 
                         onClick={() => setSelectedEvent(event)}
-                        className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all ${isDark ? 'glass-card hover:bg-white/10' : 'bg-white hover:bg-black/5 border border-black/5 shadow-sm'}`}
+                        className={`flex gap-4 p-4 rounded-xl relative overflow-hidden group cursor-pointer transition-all glass-card ${isDark ? 'border-white/10 hover:bg-white/10' : 'border-black/10 hover:bg-black/5'}`}
                     >
                         <div className={`w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden relative ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
                             <img src={event.image} alt={event.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-90" />
@@ -217,7 +217,7 @@ const MemberEvents: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-end justify-center pt-16">
           <div className={`absolute inset-0 backdrop-blur-sm transition-opacity ${isDark ? 'bg-black/60' : 'bg-black/40'}`} onClick={() => setSelectedEvent(null)}></div>
           
-          <div className={`relative w-full max-w-md h-[calc(90vh-4rem)] rounded-t-3xl shadow-2xl animate-slide-up flex flex-col overflow-hidden border-t ${isDark ? 'glass-card bg-[#1a210d] border-white/10' : 'bg-white border-black/10'}`}>
+          <div className={`relative w-full max-w-md h-[calc(90vh-4rem)] rounded-t-3xl shadow-2xl animate-slide-up flex flex-col overflow-hidden border-t glass-card ${isDark ? 'border-white/10 bg-[#1a210d]' : 'border-black/10'}`}>
              <div className={`relative h-56 w-full flex-shrink-0 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
                 <img src={selectedEvent.image} alt={selectedEvent.title} className="w-full h-full object-cover opacity-90" />
                 <button 
@@ -321,7 +321,7 @@ const MemberEvents: React.FC = () => {
       {showViewAsConfirm && viewAsUser && selectedEvent && (
         <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowViewAsConfirm(false)} />
-          <div className={`relative w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 border ${isDark ? 'bg-[#1a1d15] border-white/10' : 'bg-white border-black/10'}`}>
+          <div className={`relative w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
                 <span className="material-symbols-outlined text-2xl text-amber-500">warning</span>

@@ -421,7 +421,7 @@ const BookGolf: React.FC = () => {
       </section>
 
       {activeTab === 'simulator' && isTierLoaded && !canBookSimulators ? (
-        <section className={`rounded-2xl p-6 border text-center ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
+        <section className={`rounded-2xl p-6 border text-center glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
           <span className="material-symbols-outlined text-4xl text-accent mb-4">lock</span>
           <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Upgrade to Book Simulators</h3>
           <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
@@ -436,7 +436,7 @@ const BookGolf: React.FC = () => {
           </a>
         </section>
       ) : activeTab === 'conference' && isTierLoaded && !canBookConference ? (
-        <section className={`rounded-2xl p-6 border text-center ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
+        <section className={`rounded-2xl p-6 border text-center glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
           <span className="material-symbols-outlined text-4xl text-accent mb-4">lock</span>
           <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Upgrade for Conference Room Access</h3>
           <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
@@ -453,7 +453,7 @@ const BookGolf: React.FC = () => {
       ) : activeTab === 'my-requests' ? (
         <div className="space-y-4">
           {myRequests.length === 0 ? (
-            <div className={`text-center py-12 rounded-2xl border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
+            <div className={`text-center py-12 rounded-2xl border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
               <span className={`material-symbols-outlined text-5xl mb-4 ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
               <p className={`${isDark ? 'text-white/60' : 'text-primary/60'}`}>No booking requests yet</p>
             </div>
@@ -469,7 +469,7 @@ const BookGolf: React.FC = () => {
                 .map(request => (
                 <div 
                   key={request.id} 
-                  className={`rounded-xl p-4 border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}
+                  className={`rounded-xl p-4 border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -527,7 +527,7 @@ const BookGolf: React.FC = () => {
                 }
                 return !request.notes?.includes('Conference room booking');
               }).length === 0 && (
-                <div className={`text-center py-12 rounded-2xl border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
+                <div className={`text-center py-12 rounded-2xl border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
                   <span className={`material-symbols-outlined text-5xl mb-4 ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
                   <p className={`${isDark ? 'text-white/60' : 'text-primary/60'}`}>
                     No {previousTab === 'conference' ? 'conference room' : 'simulator'} requests yet
@@ -539,7 +539,7 @@ const BookGolf: React.FC = () => {
         </div>
       ) : (
         <div className="relative z-10 animate-pop-in space-y-6">
-          <section className={`rounded-2xl p-4 border ${isDark ? 'glass-card border-white/10' : 'bg-white border-black/10 shadow-sm'}`}>
+          <section className={`rounded-2xl p-4 border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
             <div className="flex items-center justify-between mb-3">
               <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Date & Duration</span>
             </div>
