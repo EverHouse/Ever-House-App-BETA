@@ -1,9 +1,11 @@
 import React, { useCallback } from 'react';
-import { Link, LinkProps } from 'react-router-dom';
+import { Link, LinkProps, useLocation } from 'react-router-dom';
 import { prefetchRoute } from '../lib/prefetch';
+import { useNavigationLoading } from '../contexts/NavigationLoadingContext';
 
 interface PrefetchLinkProps extends LinkProps {
   prefetchOn?: 'hover' | 'focus' | 'both';
+  showLoader?: boolean;
 }
 
 export const PrefetchLink: React.FC<PrefetchLinkProps> = ({ 
@@ -11,9 +13,13 @@ export const PrefetchLink: React.FC<PrefetchLinkProps> = ({
   to,
   onMouseEnter,
   onFocus,
+  onClick,
+  showLoader = true,
   ...props 
 }) => {
   const path = typeof to === 'string' ? to : to.pathname || '';
+  const location = useLocation();
+  const { startNavigation } = useNavigationLoading();
 
   const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
     if (prefetchOn === 'hover' || prefetchOn === 'both') {
@@ -29,11 +35,20 @@ export const PrefetchLink: React.FC<PrefetchLinkProps> = ({
     onFocus?.(e);
   }, [path, prefetchOn, onFocus]);
 
+  const handleClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    const currentPath = location.pathname;
+    if (showLoader && path !== currentPath) {
+      startNavigation();
+    }
+    onClick?.(e);
+  }, [path, location.pathname, showLoader, startNavigation, onClick]);
+
   return (
     <Link
       to={to}
       onMouseEnter={handleMouseEnter}
       onFocus={handleFocus}
+      onClick={handleClick}
       {...props}
     />
   );

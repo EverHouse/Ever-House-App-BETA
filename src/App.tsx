@@ -20,6 +20,7 @@ import { BottomSentinel } from './components/layout/BottomSentinel';
 import MemberBottomNav from './components/MemberBottomNav';
 import { NavigationLoadingProvider, useNavigationLoading } from './contexts/NavigationLoadingContext';
 import WalkingGolferLoader from './components/WalkingGolferLoader';
+import NavigationLoader from './components/NavigationLoader';
 
 const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isDataReady } = useData();
@@ -598,6 +599,7 @@ const App: React.FC = () => {
           <NavigationLoadingProvider>
           <InitialLoadingScreen>
             <OfflineBanner />
+            <NavigationLoader />
             <HashRouter>
               <SmoothScrollProvider>
                 <ScrollToTop />
