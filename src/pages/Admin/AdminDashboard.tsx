@@ -77,7 +77,7 @@ const AdminDashboard: React.FC = () => {
         onClick={() => navigate('/profile')}
         className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
       >
-        <span className="material-symbols-outlined text-[24px]">account_circle</span>
+        <span className="material-symbols-outlined text-[24px]">settings</span>
       </button>
     </header>
   );
