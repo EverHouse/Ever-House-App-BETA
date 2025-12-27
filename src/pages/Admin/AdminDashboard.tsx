@@ -114,11 +114,15 @@ const AdminDashboard: React.FC = () => {
   const headerContent = (
     <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-[9998] pointer-events-auto">
       <button 
-        onClick={() => setIsMenuOpen(true)}
+        onClick={() => navigate('/')}
         className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
-        aria-label="Open menu"
+        aria-label="Go to home"
       >
-        <span className="material-symbols-outlined text-[24px]">menu</span>
+        <img 
+          src="/assets/logos/monogram-white.webp" 
+          alt="Even House" 
+          className="w-8 h-8 object-contain"
+        />
       </button>
       
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
