@@ -89,7 +89,7 @@ const AdminDashboard: React.FC = () => {
     if (!actualUser?.email) return;
     const fetchUnread = async () => {
       try {
-        const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}&unread=true`);
+        const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}&unread_only=true`);
         if (res.ok) {
           const data = await res.json();
           setUnreadNotifCount(data.length);
@@ -100,7 +100,15 @@ const AdminDashboard: React.FC = () => {
     };
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
+    
+    // Listen for notifications-read event to refresh badge immediately
+    const handleNotificationsRead = () => fetchUnread();
+    window.addEventListener('notifications-read', handleNotificationsRead);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notifications-read', handleNotificationsRead);
+    };
   }, [actualUser?.email]);
   
   // Protect route - use actualUser so admins can still access while viewing as member

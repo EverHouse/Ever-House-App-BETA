@@ -104,7 +104,7 @@ export const useUserStore = create<UserState>()(
         if (!user?.email) return;
         
         const { ok, data } = await apiRequest<any[]>(
-          `/api/notifications?user_email=${encodeURIComponent(user.email)}&unread=true`
+          `/api/notifications?user_email=${encodeURIComponent(user.email)}&unread_only=true`
         );
         if (ok && data) {
           set({ unreadNotifications: data.length });

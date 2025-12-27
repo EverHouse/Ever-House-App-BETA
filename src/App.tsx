@@ -350,7 +350,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (user?.email) {
       const fetchUnreadCount = async () => {
         try {
-          const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}&unread=true`);
+          const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}&unread_only=true`);
           if (res.ok) {
             const data = await res.json();
             setUnreadCount(data.length);
