@@ -2041,10 +2041,10 @@ const SimulatorAdmin: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="flex justify-center px-2 pb-4">
-                        <div className="inline-block" style={{ marginLeft: '-20px' }}>
-                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, 52px)` }}>
-                                <div className="h-10"></div>
+                    <div className="overflow-x-auto px-2 pb-4">
+                        <div className="inline-block min-w-full">
+                            <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, minmax(60px, 1fr))` }}>
+                                <div className="h-10 sticky left-0 z-10 bg-white dark:bg-surface-dark"></div>
                                 {resources.map(resource => (
                                     <div key={resource.id} className={`h-10 flex items-center justify-center font-bold text-[10px] text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10 px-0.5 ${resource.type === 'conference_room' ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}>
                                         {resource.type === 'conference_room' ? 'Conf' : resource.name.replace('Simulator Bay ', 'Bay ')}
@@ -2053,7 +2053,7 @@ const SimulatorAdmin: React.FC = () => {
                                 
                                 {timeSlots.map(slot => (
                                     <React.Fragment key={slot}>
-                                        <div className="h-8 flex items-center justify-end pr-1 text-[9px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+                                        <div className="h-8 flex items-center justify-end pr-1 text-[9px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap sticky left-0 z-10 bg-white dark:bg-surface-dark">
                                             {formatTime12(slot)}
                                         </div>
                                         {resources.map(resource => {
