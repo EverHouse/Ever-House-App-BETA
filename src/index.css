@@ -235,7 +235,7 @@ html.dark body {
 /* CSS Custom Properties for Liquid Glass */
 :root {
   --liquid-glass-blur: 20px;
-  --liquid-glass-bg-light: rgba(255, 255, 255, 0.4);
+  --liquid-glass-bg-light: rgba(255, 255, 255, 0.85);
   --liquid-glass-bg-dark: rgba(0, 0, 0, 0.4);
   --liquid-glass-border: rgba(255, 255, 255, 0.5);
   --liquid-glass-border-dark: rgba(255, 255, 255, 0.3);

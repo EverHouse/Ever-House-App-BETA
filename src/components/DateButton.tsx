@@ -20,7 +20,7 @@ const DateButton: React.FC<DateButtonProps> = ({ day, date, active, onClick, isD
       onClick={handleClick} 
       className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-transform active:scale-95 border ${active ? 'bg-[#E7E7DC] text-[#293515] shadow-glow border-[#E7E7DC]' : `glass-card ${isDark ? 'text-white border-white/10' : 'text-primary border-black/10'}`}`}
     >
-      <span className={`text-xs font-medium mb-1 ${active ? 'opacity-80' : 'opacity-60'}`}>{day}</span>
+      <span className={`text-xs font-medium mb-1 ${active ? 'opacity-90' : 'opacity-80'}`}>{day}</span>
       <span className="text-xl font-bold">{date}</span>
     </button>
   );
