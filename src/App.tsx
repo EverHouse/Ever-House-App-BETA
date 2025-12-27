@@ -43,6 +43,7 @@ const MemberEvents = lazyWithPrefetch(() => import('./pages/Member/Events'));
 const MemberWellness = lazyWithPrefetch(() => import('./pages/Member/Wellness'));
 const Profile = lazyWithPrefetch(() => import('./pages/Member/Profile'));
 const MemberAnnouncements = lazyWithPrefetch(() => import('./pages/Member/Announcements'));
+const MemberUpdates = lazyWithPrefetch(() => import('./pages/Member/Updates'));
 const Landing = lazy(() => import('./pages/Public/Landing'));
 const Membership = lazy(() => import('./pages/Public/Membership'));
 const Contact = lazy(() => import('./pages/Public/Contact'));
@@ -177,61 +178,12 @@ const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children
   return <>{children}</>;
 };
 
-interface UserNotification {
-  id: number;
-  type: string;
-  title: string;
-  message: string;
-  is_read: boolean;
-  created_at: string;
-  related_id?: number;
-  related_type?: string;
-}
-
-const getNotificationRoute = (notif: UserNotification, isStaff: boolean): string | null => {
-  if (isStaff) {
-    if (notif.related_type === 'booking_request' || notif.type === 'booking') {
-      return '/admin?tab=simulator';
-    }
-    if (notif.related_type === 'event' || notif.type === 'event_rsvp') {
-      return '/admin?tab=events';
-    }
-    if (notif.related_type === 'form_submission' || notif.type === 'inquiry') {
-      return '/admin?tab=inquiries';
-    }
-    if (notif.related_type === 'wellness' || notif.type === 'wellness_booking') {
-      return '/admin?tab=events';
-    }
-    if (notif.related_type === 'announcement' || notif.type === 'announcement') {
-      return '/admin?tab=announcements';
-    }
-    return '/admin';
-  } else {
-    switch (notif.type) {
-      case 'booking_approved':
-      case 'booking_declined':
-      case 'booking_cancelled':
-        return '/book';
-      case 'event_reminder':
-      case 'event_update':
-        return '/member-events';
-      case 'wellness_reminder':
-      case 'wellness_booking':
-        return '/member-wellness';
-      case 'announcement':
-        return '/announcements';
-      default:
-        return '/dashboard';
-    }
-  }
-};
-
 const ROUTE_INDICES: Record<string, number> = {
   '/dashboard': 0,
   '/book': 1,
   '/member-wellness': 2,
   '/member-events': 3,
-  '/announcements': 4,
+  '/updates': 4,
   '/profile': 5,
 };
 
@@ -314,6 +266,11 @@ const AnimatedRoutes: React.FC = () => {
                 <DirectionalPageTransition><MemberAnnouncements /></DirectionalPageTransition>
               </MemberPortalRoute>
             } />
+            <Route path="/updates" element={
+              <MemberPortalRoute>
+                <DirectionalPageTransition><MemberUpdates /></DirectionalPageTransition>
+              </MemberPortalRoute>
+            } />
             
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -331,64 +288,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Check if actual user is staff/admin (for header logic)
   const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notifTab, setNotifTab] = useState<'updates' | 'announcements'>('updates');
-  const [userNotifications, setUserNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
-      const fetchNotifications = async () => {
+      const fetchUnreadCount = async () => {
         try {
-          const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}`);
+          const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}&unread=true`);
           if (res.ok) {
             const data = await res.json();
-            setUserNotifications(data);
-            setUnreadCount(data.filter((n: UserNotification) => !n.is_read).length);
+            setUnreadCount(data.length);
           }
         } catch (err) {
           console.error('Failed to fetch notifications:', err);
         }
       };
-      fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000);
+      fetchUnreadCount();
+      const interval = setInterval(fetchUnreadCount, 30000);
       return () => clearInterval(interval);
     }
   }, [user?.email]);
-
-  const handleNotificationClick = async (notif: UserNotification) => {
-    if (!notif.is_read) {
-      try {
-        await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
-        setUserNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      } catch (err) {
-        console.error('Failed to mark notification as read:', err);
-      }
-    }
-    
-    const route = getNotificationRoute(notif, isStaffOrAdmin);
-    if (route) {
-      setIsNotificationsOpen(false);
-      navigate(route);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    if (!user?.email) return;
-    try {
-      await fetch('/api/notifications/mark-all-read', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_email: user.email }),
-      });
-      setUserNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
-    } catch (err) {
-      console.error('Failed to mark all as read:', err);
-    }
-  };
   
   useDebugLayout();
 
@@ -429,7 +349,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
   
-  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
+  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements', '/updates'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isLandingPage = location.pathname === '/';
   const isDarkTheme = isAdminRoute || (isMemberRoute && effectiveTheme === 'dark');
@@ -484,13 +404,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       if (path.startsWith('/book')) return 'Book Golf';
       if (path.startsWith('/member-wellness')) return 'Wellness';
       if (path.startsWith('/announcements')) return 'News';
+      if (path.startsWith('/updates')) return 'Updates';
       if (path.startsWith('/member-events')) return 'Events';
       return 'Dashboard';
   };
 
   const openNotifications = (tab?: 'updates' | 'announcements') => {
-    if (tab) setNotifTab(tab);
-    setIsNotificationsOpen(true);
+    navigate(`/updates?tab=${tab || 'activity'}`);
   };
   
   const headerClasses = isMemberRoute 
@@ -551,7 +471,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div className="flex items-center gap-1 ml-auto">
         {isMemberRoute && user && (
           <button 
-            onClick={() => setIsNotificationsOpen(true)}
+            onClick={() => navigate('/updates?tab=activity')}
             className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg relative`}
             aria-label="Notifications"
           >
@@ -622,100 +542,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             )}
 
             <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-            
-            {isNotificationsOpen && (
-              <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4">
-                 <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" onClick={() => setIsNotificationsOpen(false)}></div>
-                 <div className="relative w-full max-w-sm glass-card rounded-2xl p-6 animate-in slide-in-from-top-5 duration-300 border border-white/10">
-                    <div className="flex justify-between items-center mb-4">
-                       <h3 className="font-bold text-xl text-white">Notifications</h3>
-                       <div className="flex items-center gap-2">
-                         {unreadCount > 0 && (
-                           <button 
-                             onClick={markAllAsRead}
-                             className="text-xs text-white/70 hover:text-white transition-colors"
-                           >
-                             Mark all read
-                           </button>
-                         )}
-                         <button onClick={() => setIsNotificationsOpen(false)} className="w-8 h-8 rounded-lg glass-button flex items-center justify-center" aria-label="Close notifications">
-                            <span className="material-symbols-outlined text-sm">close</span>
-                         </button>
-                       </div>
-                    </div>
-                    
-                    <div className="h-[350px] overflow-y-auto space-y-3 scrollbar-hide">
-                      {userNotifications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-white/50">
-                          <span className="material-symbols-outlined text-4xl mb-2">notifications_off</span>
-                          <p className="text-sm">No notifications yet</p>
-                        </div>
-                      ) : (
-                        userNotifications.map((notif) => (
-                          <div
-                            key={notif.id}
-                            onClick={() => handleNotificationClick(notif)}
-                            className={`flex gap-3 p-3 rounded-xl transition-colors cursor-pointer ${
-                              notif.is_read 
-                                ? 'bg-white/5 hover:bg-white/10' 
-                                : 'bg-accent/20 hover:bg-accent/30 border border-accent/30'
-                            }`}
-                          >
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                              notif.type === 'booking_approved' ? 'bg-green-500/20' :
-                              notif.type === 'booking_declined' ? 'bg-red-500/20' :
-                              'bg-accent/20'
-                            }`}>
-                              <span className={`material-symbols-outlined text-[20px] ${
-                                notif.type === 'booking_approved' ? 'text-green-400' :
-                                notif.type === 'booking_declined' ? 'text-red-400' :
-                                'text-white'
-                              }`}>
-                                {notif.type === 'booking_approved' ? 'check_circle' :
-                                 notif.type === 'booking_declined' ? 'cancel' :
-                                 'notifications'}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-start">
-                                <h4 className={`font-bold text-sm ${notif.is_read ? 'text-white/70' : 'text-white'}`}>
-                                  {notif.title}
-                                </h4>
-                                <span className="text-[10px] text-white/50 ml-2 shrink-0">
-                                  {new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
-                              </div>
-                              <p className={`text-xs mt-0.5 ${notif.is_read ? 'text-white/50' : 'text-white/70'}`}>
-                                {notif.message}
-                              </p>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                 </div>
-              </div>
-            )}
         </div>
       </NotificationContext.Provider>
     </div>
   );
 };
-
-const NotifItem: React.FC<{icon: string; title: string; desc: string; time: string}> = ({ icon, title, desc, time }) => (
-  <div className="flex gap-3 p-3 rounded-xl glass-button border-0 bg-white/5 hover:bg-white/10 transition-colors">
-     <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
-        <span className="material-symbols-outlined text-[20px] text-white">{icon}</span>
-     </div>
-     <div>
-        <div className="flex justify-between items-center w-full">
-           <h4 className="font-bold text-sm text-white">{title}</h4>
-           <span className="text-[10px] text-white/50 ml-2">{time}</span>
-        </div>
-        <p className="text-xs text-white/70 mt-0.5">{desc}</p>
-     </div>
-  </div>
-);
 
 const App: React.FC = () => {
   return (

@@ -24,7 +24,8 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **WCAG Accessibility**: All interactive elements meet WCAG AA contrast requirements (4.5:1 for normal text, 3:1 for large text/UI). Menu hover states use 80% opacity for sufficient contrast. Deep Green (#293515) on light backgrounds achieves ~12:1 contrast.
 - **Selection States**: All active/selected states (date buttons, duration, time slots, filters, theme toggles) use lavender fill (`bg-accent` #CCB8E4) with Deep Green text for consistent visual language and WCAG-compliant contrast.
 - **Branding**: EH monogram logo on public pages; page titles in portal headers.
-- **Header Navigation Pattern**: Unified header across portals - Left: hamburger menu, Center: page title text, Right: notifications + avatar (initials). Avatar component shows user's initials and navigates to profile.
+- **Header Navigation Pattern**: Unified header across portals - Left: mascot icon (member portal) or hamburger menu (public pages), Center: page title text, Right: bell icon (navigates to Updates Activity tab) + avatar (initials). Avatar component shows user's initials and navigates to profile.
+- **Member Bottom Nav**: 4-item navigation: Home, Book, Wellness, Events. News removed in favor of header bell icon leading to Updates page.
 - **Profile Page Navigation**: Profile page shows role-appropriate bottom nav (MemberBottomNav for members, StaffBottomNavSimple for staff/admin) for easy navigation back to portals.
 - **Dashboard Member Features**: Member Dashboard displays membership wallet card (with tier badge, tags, join/visit info) and guest passes section with check-in functionality. Staff/admin users don't see these sections.
 - **Staff Info Display**: Profile page Staff Information section shows Role, Job Title (if available), and Portal Access for staff/admin users.
@@ -77,7 +78,8 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 
 ### Feature Specifications
 - **Public Pages**: Landing, Login, Contact, FAQ (database-driven), Gallery, Membership details, Cafe Menu (view-only).
-- **Member-Only Pages**: Dashboard, Book Golf, Announcements/News, Events, Profile, Wellness.
+- **Member-Only Pages**: Dashboard, Book Golf, Updates (tabbed: Announcements + Activity), Events, Profile, Wellness.
+- **Updates Page**: Consolidated view with two tabs - Announcements (club news/broadcasts) and Activity (personal notifications for bookings, RSVPs, etc.). Header bell icon navigates to Activity tab. Unread count badge shown on bell icon.
 - **Staff Portal**: Simplified 5-tab navigation (Home, Sims, Events, Wellness, News). Dashboard home with quick access cards for: Directory, Cafe Menu, Team Access, Gallery, FAQs, Inquiries, Data Conflicts.
 - **Admin Functionality**: Management of members, events, cafe menu, announcements/news, booking requests, FAQs, gallery photos, and inquiry submissions.
 - **FAQ Admin**: Full CRUD for managing FAQs with seeding capability. FAQs stored in PostgreSQL and served via API.
