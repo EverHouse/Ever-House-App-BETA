@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SafeAreaBottomOverlay } from './layout/SafeAreaBottomOverlay';
+import { useNavigationLoading } from '../contexts/NavigationLoadingContext';
 
 interface StaffNavItem {
   path: string;
@@ -18,7 +19,17 @@ const STAFF_NAV_ITEMS: StaffNavItem[] = [
 
 const StaffBottomNavSimple: React.FC = () => {
   const navigate = useNavigate();
+  const { startNavigation } = useNavigationLoading();
+  const navigatingRef = useRef(false);
   const itemCount = STAFF_NAV_ITEMS.length;
+  
+  const handleNavigation = useCallback((path: string) => {
+    if (navigatingRef.current) return;
+    navigatingRef.current = true;
+    startNavigation();
+    navigate(path);
+    setTimeout(() => { navigatingRef.current = false; }, 500);
+  }, [navigate, startNavigation]);
   
   const navContent = (
     <nav 
@@ -31,7 +42,7 @@ const StaffBottomNavSimple: React.FC = () => {
           <button
             type="button"
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => handleNavigation(item.path)}
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             aria-label={item.label}
             className="flex-1 flex flex-col items-center gap-0.5 py-2 px-1 relative z-10 cursor-pointer transition-all duration-300 ease-out active:scale-90 text-white/50 hover:text-white/80"

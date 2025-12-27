@@ -18,6 +18,8 @@ import { BottomNavProvider } from './contexts/BottomNavContext';
 import { AnnouncementBadgeProvider } from './contexts/AnnouncementBadgeContext';
 import { BottomSentinel } from './components/layout/BottomSentinel';
 import MemberBottomNav from './components/MemberBottomNav';
+import { NavigationLoadingProvider, useNavigationLoading } from './contexts/NavigationLoadingContext';
+import WalkingGolferLoader from './components/WalkingGolferLoader';
 
 const PageSkeleton: React.FC = () => (
   <div className="px-6 pt-4 animate-pulse">
@@ -284,6 +286,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const { announcements, user, actualUser, isViewingAs } = useData();
   const { effectiveTheme } = useTheme();
+  const { endNavigation } = useNavigationLoading();
+  
+  // End navigation loading when route changes
+  useEffect(() => {
+    endNavigation();
+  }, [location.pathname, location.search, endNavigation]);
   
   // Check if actual user is staff/admin (for header logic)
   const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
@@ -556,7 +564,9 @@ const App: React.FC = () => {
           <ToastProvider>
           <BottomNavProvider>
           <AnnouncementBadgeProvider>
+          <NavigationLoadingProvider>
           <OfflineBanner />
+          <WalkingGolferLoader />
           <HashRouter>
             <SmoothScrollProvider>
               <ScrollToTop />
@@ -565,6 +575,7 @@ const App: React.FC = () => {
               </Layout>
             </SmoothScrollProvider>
           </HashRouter>
+          </NavigationLoadingProvider>
           </AnnouncementBadgeProvider>
           </BottomNavProvider>
           </ToastProvider>

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SafeAreaBottomOverlay } from './layout/SafeAreaBottomOverlay';
 import { prefetchRoute, prefetchAdjacentRoutes } from '../lib/prefetch';
+import { useNavigationLoading } from '../contexts/NavigationLoadingContext';
 
 interface MemberNavItem {
   path: string;
@@ -25,6 +26,7 @@ const MemberBottomNav: React.FC<MemberBottomNavProps> = ({ currentPath, isDarkTh
   const navigate = useNavigate();
   const navigatingRef = useRef(false);
   const lastTapRef = useRef(0);
+  const { startNavigation } = useNavigationLoading();
   
   useEffect(() => {
     prefetchAdjacentRoutes(currentPath);
@@ -36,11 +38,12 @@ const MemberBottomNav: React.FC<MemberBottomNavProps> = ({ currentPath, isDarkTh
     if (path === currentPath) return;
     
     navigatingRef.current = true;
+    startNavigation();
     if (import.meta.env.DEV) {
       console.log(`[MemberNav] navigating to "${label}"`);
     }
     navigate(path);
-  }, [navigate, currentPath]);
+  }, [navigate, currentPath, startNavigation]);
   
   const activeIndex = MEMBER_NAV_ITEMS.findIndex(item => item.path === currentPath);
   const itemCount = MEMBER_NAV_ITEMS.length;

@@ -811,6 +811,77 @@ html.dark .text-accent-accessible {
   will-change: transform, opacity;
 }
 
+/* Walking Golfer Loading Animation */
+@keyframes golferWalk {
+  0% {
+    transform: translateX(-100px) translateY(0);
+  }
+  10% {
+    transform: translateX(-70px) translateY(-3px);
+  }
+  20% {
+    transform: translateX(-40px) translateY(0);
+  }
+  30% {
+    transform: translateX(-10px) translateY(-3px);
+  }
+  40% {
+    transform: translateX(20px) translateY(0);
+  }
+  50% {
+    transform: translateX(50px) translateY(-3px);
+  }
+  60% {
+    transform: translateX(80px) translateY(0);
+  }
+  70% {
+    transform: translateX(110px) translateY(-3px);
+  }
+  80% {
+    transform: translateX(140px) translateY(0);
+  }
+  90% {
+    transform: translateX(170px) translateY(-3px);
+  }
+  100% {
+    transform: translateX(200px) translateY(0);
+  }
+}
+
+@keyframes legSwingRight {
+  0%, 100% {
+    transform: rotate(-8deg);
+    transform-origin: 50% 130px;
+  }
+  50% {
+    transform: rotate(8deg);
+    transform-origin: 50% 130px;
+  }
+}
+
+@keyframes legSwingLeft {
+  0%, 100% {
+    transform: rotate(8deg);
+    transform-origin: 80px 130px;
+  }
+  50% {
+    transform: rotate(-8deg);
+    transform-origin: 80px 130px;
+  }
+}
+
+.walking-golfer-container {
+  animation: golferWalk 1.5s ease-in-out infinite;
+}
+
+.walking-golfer .leg-right {
+  animation: legSwingRight 0.4s ease-in-out infinite;
+}
+
+.walking-golfer .leg-left {
+  animation: legSwingLeft 0.4s ease-in-out infinite;
+}
+
 /* Hover effects only for pointer devices (not touch) */
 @media (hover: hover) and (pointer: fine) {
   .glass-panel:hover {
