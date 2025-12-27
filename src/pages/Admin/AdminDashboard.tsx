@@ -300,37 +300,55 @@ const StaffBottomNav: React.FC<{
 // --- STAFF DASHBOARD HOME ---
 
 const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdmin?: boolean }> = ({ setActiveTab, isAdmin }) => {
-  const quickLinks = [
+  const staffLinks = [
     { id: 'simulator' as TabType, icon: 'event_note', label: 'Bookings', description: 'Manage booking requests and approvals' },
     { id: 'events' as TabType, icon: 'calendar_month', label: 'Calendar', description: 'View and manage events and wellness' },
     { id: 'announcements' as TabType, icon: 'campaign', label: 'Announcements', description: 'Post news and updates for members' },
     { id: 'directory' as TabType, icon: 'groups', label: 'Directory', description: 'Search and manage members' },
     { id: 'cafe' as TabType, icon: 'local_cafe', label: 'Cafe Menu', description: 'Update menu items and prices' },
-    { id: 'team' as TabType, icon: 'shield_person', label: 'Team Access', description: 'Manage staff and admins', adminOnly: true },
     { id: 'gallery' as TabType, icon: 'photo_library', label: 'Gallery', description: 'Manage venue photos' },
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
-    { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings', adminOnly: true },
     { id: 'blocks' as TabType, icon: 'event_busy', label: 'Closures', description: 'Manage closures and availability blocks' },
     { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
-    { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes', adminOnly: true },
   ];
 
-  const visibleLinks = quickLinks.filter(link => !link.adminOnly || isAdmin);
+  const adminLinks = [
+    { id: 'team' as TabType, icon: 'shield_person', label: 'Team Access', description: 'Manage staff and admins' },
+    { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings' },
+    { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes' },
+  ];
+
+  const CardButton = ({ link }: { link: { id: TabType; icon: string; label: string; description: string } }) => (
+    <button
+      key={link.id}
+      onClick={() => setActiveTab(link.id)}
+      className="flex flex-col items-start p-5 rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-lg border border-primary/10 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 transition-all text-left group shadow-sm"
+    >
+      <span className="material-symbols-outlined text-3xl text-primary dark:text-white mb-3 group-hover:scale-110 transition-transform">{link.icon}</span>
+      <span className="font-bold text-primary dark:text-white text-sm">{link.label}</span>
+      <span className="text-xs text-primary/60 dark:text-white/60 mt-1">{link.description}</span>
+    </button>
+  );
 
   return (
-    <div className="grid grid-cols-2 gap-4 animate-pop-in">
-      {visibleLinks.map((link) => (
-        <button
-          key={link.id}
-          onClick={() => setActiveTab(link.id)}
-          className="flex flex-col items-start p-5 rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-lg border border-primary/10 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 transition-all text-left group shadow-sm"
-        >
-          <span className="material-symbols-outlined text-3xl text-primary dark:text-white mb-3 group-hover:scale-110 transition-transform">{link.icon}</span>
-          <span className="font-bold text-primary dark:text-white text-sm">{link.label}</span>
-          <span className="text-xs text-primary/60 dark:text-white/60 mt-1">{link.description}</span>
-        </button>
-      ))}
+    <div className="animate-pop-in">
+      <div className="grid grid-cols-2 gap-4">
+        {staffLinks.map((link) => (
+          <CardButton key={link.id} link={link} />
+        ))}
+      </div>
+
+      {isAdmin && (
+        <div className="mt-8">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Admin Settings</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {adminLinks.map((link) => (
+              <CardButton key={link.id} link={link} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
