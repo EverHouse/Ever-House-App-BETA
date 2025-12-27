@@ -253,7 +253,7 @@ const MembershipOverview: React.FC = () => {
         </Link>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5 animate-pop-in" style={{animationDelay: '0.15s'}}>
         {socialTier && (
           <MembershipCard 
             title={`${socialTier.name} Membership`}
@@ -375,7 +375,7 @@ const MembershipCard: React.FC<any> = ({ title, price, suffix="/mo", desc, featu
 const Corporate: React.FC = () => {
     return (
       <div className="px-6 pt-6 pb-12 flex flex-col gap-6 bg-[#F2F2EC] min-h-screen">
-        <div className="flex flex-col gap-2 mb-2 pt-4">
+        <div className="flex flex-col gap-2 mb-2 pt-4 animate-pop-in">
             <div className="flex items-center gap-2">
                 <span className="px-4 py-1 bg-white/50 backdrop-blur text-primary text-[10px] font-bold rounded-full uppercase tracking-wider border border-primary/5 shadow-sm">
                     For the team
@@ -389,7 +389,7 @@ const Corporate: React.FC = () => {
             </p>
         </div>
 
-        <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60">
+        <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60 animate-pop-in" style={{animationDelay: '0.05s'}}>
             <ul className="space-y-8">
                 <li className="flex gap-4 items-start">
                     <div className="w-10 h-10 rounded-full bg-[#E8E8E0] flex items-center justify-center shrink-0">
@@ -421,7 +421,7 @@ const Corporate: React.FC = () => {
             </ul>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
              <div className="flex justify-between items-center mb-6 px-2">
                 <h2 className="text-2xl font-medium text-primary tracking-tight">Volume Discounts</h2>
                 <span className="px-3 py-1 bg-white/50 rounded-full border border-primary/5 text-[10px] font-bold text-primary/60 uppercase tracking-wider">Per employee / mo</span>
@@ -439,7 +439,7 @@ const Corporate: React.FC = () => {
              </p>
         </div>
 
-        <Link to="/contact" className="w-full py-5 px-6 rounded-2xl bg-primary text-white font-bold text-sm uppercase tracking-widest hover:bg-primary/90 shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-4 mb-8 group">
+        <Link to="/contact" className="w-full py-5 px-6 rounded-2xl bg-primary text-white font-bold text-sm uppercase tracking-widest hover:bg-primary/90 shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-4 mb-8 group animate-pop-in" style={{animationDelay: '0.15s'}}>
             Apply for Corporate Membership
             <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
         </Link>
@@ -516,14 +516,14 @@ const CompareFeatures: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 pt-6 px-4 pb-12 bg-[#F2F2EC] min-h-screen">
-       <div className="text-center px-2 pt-4">
+       <div className="text-center px-2 pt-4 animate-pop-in">
         <h2 className="text-3xl font-medium tracking-tight text-primary mb-3">Compare Features</h2>
         <p className="text-primary/70 text-base font-light leading-relaxed max-w-[320px] mx-auto">
           Select up to 3 memberships to compare side-by-side.
         </p>
       </div>
       
-      <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-4 shadow-sm border border-white/60">
+      <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-4 shadow-sm border border-white/60 animate-pop-in" style={{animationDelay: '0.05s'}}>
         <h3 className="text-xs font-bold text-primary/50 mb-3 uppercase tracking-wider">Select to Compare (Max 3)</h3>
         <div className="flex flex-wrap gap-2">
           {tierNames.map(t => {
@@ -542,7 +542,7 @@ const CompareFeatures: React.FC = () => {
         </div>
       </div>
 
-      <div className="w-full bg-white/40 backdrop-blur-xl rounded-3xl p-4 shadow-sm border border-white/60 overflow-x-auto">
+      <div className="w-full bg-white/40 backdrop-blur-xl rounded-3xl p-4 shadow-sm border border-white/60 overflow-x-auto animate-pop-in" style={{animationDelay: '0.1s'}}>
         <div className="min-w-[320px]">
           <div className="grid grid-cols-[25%_1fr_1fr_1fr] gap-1 mb-4 border-b border-primary/5 pb-4 items-end">
              <div className="text-[10px] font-bold text-primary/40 uppercase tracking-widest pl-1">Features</div>

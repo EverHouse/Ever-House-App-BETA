@@ -174,13 +174,13 @@ const Profile: React.FC = () => {
   return (
     <div className="px-6 pt-6 pb-32">
       <div className="space-y-6">
-         <Section title="Account" isDark={isDark}>
+         <Section title="Account" isDark={isDark} delay="0.05s">
             <Row icon="person" label="Name" value={user.name} isDark={isDark} />
             <Row icon="mail" label="Email" value={user.email} isDark={isDark} />
             <Row icon="call" label="Phone" value={user.phone} isDark={isDark} />
          </Section>
 
-         <Section title="Settings" isDark={isDark}>
+         <Section title="Settings" isDark={isDark} delay="0.1s">
             <div className={`p-4 flex items-center justify-between transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
               <div className="flex items-center gap-4">
                 <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>notifications</span>
@@ -241,7 +241,7 @@ const Profile: React.FC = () => {
 
          {/* Staff Info - only show for staff/admin users */}
          {isStaffOrAdminProfile && (
-           <Section title="Staff Information" isDark={isDark}>
+           <Section title="Staff Information" isDark={isDark} delay="0.15s">
               <Row icon="shield_person" label="Role" value={user?.role === 'admin' ? 'Administrator' : 'Staff'} isDark={isDark} />
               {user?.jobTitle && <Row icon="badge" label="Job Title" value={user.jobTitle} isDark={isDark} />}
               <Row icon="verified" label="Portal Access" value="Staff Portal" isDark={isDark} />
@@ -250,7 +250,7 @@ const Profile: React.FC = () => {
 
          {/* Password Section - only show for staff/admin users */}
          {isStaffOrAdminProfile && (
-           <Section title="Security" isDark={isDark}>
+           <Section title="Security" isDark={isDark} delay="0.2s">
               <div 
                 className={`p-4 flex items-center justify-between transition-colors cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}
                 onClick={() => setShowPasswordSection(!showPasswordSection)}
@@ -331,7 +331,7 @@ const Profile: React.FC = () => {
            </Section>
          )}
 
-         <Section title="Appearance" isDark={isDark}>
+         <Section title="Appearance" isDark={isDark} delay="0.15s">
             <div className="p-4">
               <div className="flex items-center gap-3 mb-3">
                 <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>palette</span>
@@ -355,7 +355,7 @@ const Profile: React.FC = () => {
             </div>
          </Section>
 
-         <button onClick={() => { logout(); navigate('/login'); }} className={`w-full py-4 rounded-xl text-red-400 font-bold text-sm transition-colors ${isDark ? 'glass-button hover:bg-red-500/10' : 'bg-white border border-black/5 hover:bg-red-50'}`}>
+         <button onClick={() => { logout(); navigate('/login'); }} className={`w-full py-4 rounded-xl text-red-400 font-bold text-sm transition-colors animate-pop-in ${isDark ? 'glass-button hover:bg-red-500/10' : 'bg-white border border-black/5 hover:bg-red-50'}`} style={{animationDelay: '0.2s'}}>
             Sign Out
          </button>
       </div>
@@ -539,8 +539,8 @@ const Profile: React.FC = () => {
   );
 };
 
-const Section: React.FC<{title: string; children: React.ReactNode; isDark?: boolean}> = ({ title, children, isDark = true }) => (
-  <div>
+const Section: React.FC<{title: string; children: React.ReactNode; isDark?: boolean; delay?: string}> = ({ title, children, isDark = true, delay }) => (
+  <div className="animate-pop-in" style={delay ? {animationDelay: delay} : undefined}>
      <h3 className={`text-xs font-bold uppercase tracking-wider ml-2 mb-3 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>{title}</h3>
      <div className={`rounded-2xl overflow-hidden glass-card divide-y ${isDark ? 'divide-white/5 border-white/10' : 'divide-black/5 border-black/10'}`}>
         {children}

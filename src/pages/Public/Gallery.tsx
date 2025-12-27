@@ -95,7 +95,7 @@ const Gallery: React.FC = () => {
         <p className="text-primary/70 text-base mt-2 font-light">Explore the exclusive spaces of Even House.</p>
       </div>
 
-      <div className="pl-5 pr-5 py-2 w-full overflow-x-auto scrollbar-hide mb-6">
+      <div className="pl-5 pr-5 py-2 w-full overflow-x-auto scrollbar-hide mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
         <div className="flex gap-3 min-w-max pr-5">
           {categories.map(cat => (
             <FilterButton 
@@ -109,7 +109,7 @@ const Gallery: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-5 flex-1">
+      <div className="px-5 flex-1 animate-pop-in" style={{animationDelay: '0.1s'}}>
         {isLoading ? (
           <div className="columns-2 gap-4 space-y-4">
             {[...Array(8)].map((_, i) => {
