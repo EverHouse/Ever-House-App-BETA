@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
