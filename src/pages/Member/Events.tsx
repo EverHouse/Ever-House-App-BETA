@@ -153,7 +153,7 @@ const MemberEvents: React.FC = () => {
                 <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>{currentMonthYear}</span>
               </div>
             </div>
-            <div className="flex gap-3 overflow-x-auto py-4 -mx-6 px-6 scrollbar-hide">
+            <div className="flex gap-3 overflow-x-auto py-6 -mx-6 px-6 scrollbar-hide">
               {upcomingDates.map((dateObj, index) => (
                 <DateButton 
                   key={dateObj.date}
