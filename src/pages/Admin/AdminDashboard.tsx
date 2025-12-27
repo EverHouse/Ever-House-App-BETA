@@ -559,8 +559,6 @@ interface DBEvent {
 const CATEGORY_TABS = [
     { id: 'all', label: 'All', icon: 'calendar_month' },
     { id: 'Social', label: 'Events', icon: 'celebration' },
-    { id: 'Wellness', label: 'Classes', icon: 'fitness_center' },
-    { id: 'MedSpa', label: 'MedSpa', icon: 'spa' },
     { id: 'Tournaments', label: 'Tournaments', icon: 'emoji_events' },
 ];
 
@@ -748,8 +746,7 @@ const EventsAdminContent: React.FC = () => {
                                 <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
                                 <select className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
                                     <option value="Social">Event</option>
-                                    <option value="Wellness">Class</option>
-                                    <option value="MedSpa">MedSpa</option>
+                                    <option value="Tournaments">Tournament</option>
                                     <option value="Dining">Dining</option>
                                     <option value="Sport">Sport</option>
                                 </select>
@@ -802,7 +799,7 @@ const EventsAdminContent: React.FC = () => {
                                         <img src={event.image_url} alt="" className="w-full h-full object-cover" />
                                     ) : (
                                         <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-white/20">
-                                            {event.category === 'Wellness' ? 'fitness_center' : event.category === 'MedSpa' ? 'spa' : event.category === 'Dining' ? 'restaurant' : 'celebration'}
+                                            {event.category === 'Tournaments' ? 'emoji_events' : event.category === 'Dining' ? 'restaurant' : event.category === 'Sport' ? 'sports_tennis' : 'celebration'}
                                         </span>
                                     )}
                                 </div>
@@ -2184,13 +2181,20 @@ interface WellnessClass {
   is_active: boolean;
 }
 
+const WELLNESS_CATEGORY_TABS = [
+    { id: 'all', label: 'All', icon: 'calendar_month' },
+    { id: 'Classes', label: 'Classes', icon: 'fitness_center' },
+    { id: 'MedSpa', label: 'MedSpa', icon: 'spa' },
+];
+
 const WellnessAdminContent: React.FC = () => {
     const [classes, setClasses] = useState<WellnessClass[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeCategory, setActiveCategory] = useState('all');
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
     const [formData, setFormData] = useState<Partial<WellnessClass>>({
-        category: 'Yoga',
+        category: 'Classes',
         status: 'available',
         duration: '60 min'
     });
@@ -2201,7 +2205,7 @@ const WellnessAdminContent: React.FC = () => {
     const [enrollments, setEnrollments] = useState<Participant[]>([]);
     const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
 
-    const categories = ['Yoga', 'Pilates', 'Meditation', 'HIIT', 'Stretch'];
+    const categories = ['Classes', 'MedSpa'];
 
     useEffect(() => {
         fetchClasses();
@@ -2242,7 +2246,7 @@ const WellnessAdminContent: React.FC = () => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         setFormData({
-            category: 'Yoga',
+            category: activeCategory === 'all' ? 'Classes' : activeCategory,
             status: 'available',
             duration: '60 min',
             date: tomorrow.toISOString().split('T')[0]
@@ -2251,6 +2255,10 @@ const WellnessAdminContent: React.FC = () => {
         setIsEditing(true);
         setError(null);
     };
+
+    const filteredClasses = activeCategory === 'all' 
+        ? classes 
+        : classes.filter(c => c.category === activeCategory);
 
     const handleSave = async () => {
         if (!formData.title || !formData.time || !formData.instructor || !formData.date || !formData.spots) {
@@ -2272,7 +2280,7 @@ const WellnessAdminContent: React.FC = () => {
             if (res.ok) {
                 await fetchClasses();
                 setIsEditing(false);
-                setFormData({ category: 'Yoga', status: 'available', duration: '60 min' });
+                setFormData({ category: 'Classes', status: 'available', duration: '60 min' });
                 setSuccess(editId ? 'Class updated successfully' : 'Class created successfully');
                 setTimeout(() => setSuccess(null), 3000);
             } else {
@@ -2326,6 +2334,23 @@ const WellnessAdminContent: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4">
+                {WELLNESS_CATEGORY_TABS.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveCategory(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-all flex-shrink-0 ${
+                            activeCategory === tab.id 
+                                ? 'bg-primary text-white shadow-md' 
+                                : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-[14px] sm:text-[16px]">{tab.icon}</span>
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
             <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
                 {success && (
                     <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
@@ -2341,13 +2366,13 @@ const WellnessAdminContent: React.FC = () => {
 
                 {isLoading ? (
                     <div className="py-8 text-center text-gray-500">Loading...</div>
-                ) : classes.length === 0 ? (
+                ) : filteredClasses.length === 0 ? (
                     <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No wellness classes scheduled. Add your first class!
+                        No {activeCategory === 'all' ? 'wellness classes' : activeCategory.toLowerCase()} scheduled. Add your first!
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {classes.map(cls => (
+                        {filteredClasses.map(cls => (
                             <div 
                                 key={cls.id}
                                 className={`flex items-center justify-between p-4 rounded-xl border ${
