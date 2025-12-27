@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { triggerHaptic } from '../utils/haptics';
+import WalkingGolferSpinner from './WalkingGolferSpinner';
 
 
 const getHubspotCookie = (): string | null => {
@@ -229,7 +230,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                 >
                   {loading ? (
                     <>
-                      <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                      <WalkingGolferSpinner size="sm" className="text-white dark:text-brand-green" />
                       Submitting...
                     </>
                   ) : (

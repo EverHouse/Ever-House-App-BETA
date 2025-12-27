@@ -1,4 +1,5 @@
 import React from 'react';
+import WalkingGolferSpinner from './WalkingGolferSpinner';
 
 interface LoadingStateProps {
   message?: string;
@@ -12,7 +13,7 @@ const LoadingState: React.FC<LoadingStateProps> = ({
   if (variant === 'inline') {
     return (
       <div className="flex items-center gap-2 text-primary/60 dark:text-white/60">
-        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        <WalkingGolferSpinner size="sm" />
         <span className="text-sm">{message}</span>
       </div>
     );
@@ -23,9 +24,7 @@ const LoadingState: React.FC<LoadingStateProps> = ({
   return (
     <div className={`flex flex-col items-center justify-center text-center ${isCompact ? 'py-8 px-4' : 'py-16 px-6'} animate-pop-in`}>
       <div className={`relative ${isCompact ? 'mb-3' : 'mb-6'}`}>
-        <div className={`${isCompact ? 'w-16 h-16' : 'w-24 h-24'} rounded-full bg-gradient-to-br from-brand-bone to-secondary flex items-center justify-center relative`}>
-          <div className="absolute inset-2 rounded-full border-4 border-accent/30 border-t-accent animate-spin" />
-        </div>
+        <WalkingGolferSpinner size={isCompact ? 'md' : 'lg'} />
       </div>
 
       <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-primary/60 dark:text-white/60`}>

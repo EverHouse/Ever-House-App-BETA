@@ -11,6 +11,7 @@ import { haptic } from '../../utils/haptics';
 import { useTierPermissions } from '../../hooks/useTierPermissions';
 import { canAccessResource } from '../../services/tierService';
 import { getDateString, formatDateShort } from '../../utils/dateUtils';
+import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 
 
 interface APIResource {
@@ -656,7 +657,7 @@ const BookGolf: React.FC = () => {
           >
             {isBooking ? (
               <>
-                <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+                <WalkingGolferSpinner size="sm" />
                 <span>Booking...</span>
               </>
             ) : (

@@ -882,6 +882,28 @@ html.dark .text-accent-accessible {
   animation: legSwingLeft 0.4s ease-in-out infinite;
 }
 
+/* Walking in place spinner */
+.walking-golfer-inplace {
+  animation: golferBob 0.4s ease-in-out infinite;
+}
+
+.walking-golfer-inplace .leg-right-inplace {
+  transform-origin: 40px 130px;
+  animation: legSwingRight 0.4s ease-in-out infinite;
+}
+
+.walking-golfer-inplace .leg-left-inplace {
+  transform-origin: 100px 130px;
+  animation: legSwingLeft 0.4s ease-in-out infinite;
+}
+
+@keyframes golferBob {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-2px); }
+  50% { transform: translateY(0); }
+  75% { transform: translateY(-2px); }
+}
+
 /* Hover effects only for pointer devices (not touch) */
 @media (hover: hover) and (pointer: fine) {
   .glass-panel:hover {

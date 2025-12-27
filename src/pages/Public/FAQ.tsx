@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Footer } from '../../components/Footer';
+import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 
 interface FaqItem {
   id: number;
@@ -93,7 +94,7 @@ const FAQ: React.FC = () => {
       <div className="px-6 pb-12 flex-1 space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
         {loading ? (
           <div className="flex justify-center py-8">
-            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            <WalkingGolferSpinner size="md" />
           </div>
         ) : filteredFaqs.length === 0 ? (
           <div className="text-center py-8 text-primary/50">
