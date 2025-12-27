@@ -103,7 +103,7 @@ const AdminDashboard: React.FC = () => {
       case 'inquiries': return 'mail';
       case 'gallery': return 'photo_library';
       case 'tiers': return 'loyalty';
-      case 'blocks': return 'block';
+      case 'blocks': return 'event_busy';
       case 'changelog': return 'history';
       case 'training': return 'menu_book';
       case 'conflicts': return 'warning';
@@ -301,6 +301,9 @@ const StaffBottomNav: React.FC<{
 
 const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdmin?: boolean }> = ({ setActiveTab, isAdmin }) => {
   const quickLinks = [
+    { id: 'simulator' as TabType, icon: 'event_note', label: 'Bookings', description: 'Manage booking requests and approvals' },
+    { id: 'events' as TabType, icon: 'calendar_month', label: 'Calendar', description: 'View and manage events and wellness' },
+    { id: 'announcements' as TabType, icon: 'campaign', label: 'Announcements', description: 'Post news and updates for members' },
     { id: 'directory' as TabType, icon: 'groups', label: 'Directory', description: 'Search and manage members' },
     { id: 'cafe' as TabType, icon: 'local_cafe', label: 'Cafe Menu', description: 'Update menu items and prices' },
     { id: 'team' as TabType, icon: 'shield_person', label: 'Team Access', description: 'Manage staff and admins', adminOnly: true },
@@ -308,7 +311,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings', adminOnly: true },
-    { id: 'blocks' as TabType, icon: 'block', label: 'Closures', description: 'Manage closures and availability blocks' },
+    { id: 'blocks' as TabType, icon: 'event_busy', label: 'Closures', description: 'Manage closures and availability blocks' },
     { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
     { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes', adminOnly: true },
   ];
