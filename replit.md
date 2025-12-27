@@ -59,7 +59,10 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Real-Time Booking**: Database-backed booking with shared availability, duration-aware slot generation, and collision detection.
 
 ### Motion Architecture
-- **CSS Animations**: Pure CSS keyframe animations for page transitions (fade-in, slide-in-up, pop-in).
+- **CSS Animations**: Pure CSS keyframe animations for page transitions (fade-in, slide-in-up, pop-in, page-enter). All animations are hardware-accelerated (transform/opacity only) and kept under 300ms for responsiveness.
+- **Menu Overlay Animation**: Side menu slides in from left with backdrop fade. Uses isClosing state for proper enter/exit animations (slide-in-left, slide-out-left).
+- **Staggered Content Animations**: Page sections use animate-pop-in with staggered delays (0.05s increments) for premium sequential reveal effect.
+- **MotionList/MotionListItem**: Reusable components for animating lists and card grids with fade-in and slide-in-up effects.
 - **Native Browser Scrolling**: Uses native window.scrollTo for consistent scroll behavior across all devices.
 - **Scroll-Aware Bottom Nav**: BottomSentinel detects scroll direction and auto-hides nav on downward scroll.
 - **Persistent UI**: Bottom nav bar and header remain static during transitions.
