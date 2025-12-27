@@ -611,7 +611,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <main 
                 id="main-content"
-                className={`flex-1 relative ${showHeader && !isLandingPage ? 'pt-[max(96px,calc(env(safe-area-inset-top)+80px))]' : ''}`}
+                className={`flex-1 relative ${showHeader && !isLandingPage ? 'pt-[max(88px,calc(env(safe-area-inset-top)+72px))]' : ''}`}
             >
                 {children}
                 {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}

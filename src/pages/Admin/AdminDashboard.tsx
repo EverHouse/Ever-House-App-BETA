@@ -162,7 +162,7 @@ const AdminDashboard: React.FC = () => {
       {createPortal(headerContent, document.body)}
 
       {/* Main Content Area - add top padding for fixed header */}
-      <main className="flex-1 px-4 md:px-8 max-w-4xl mx-auto pt-[max(96px,calc(env(safe-area-inset-top)+80px))] w-full relative z-0">
+      <main className="flex-1 px-4 md:px-8 max-w-4xl mx-auto pt-[max(112px,calc(env(safe-area-inset-top)+96px))] w-full relative z-0">
         {activeTab === 'home' && <StaffDashboardHome setActiveTab={setActiveTab} isAdmin={actualUser?.role === 'admin'} />}
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsWellnessAdmin />}
