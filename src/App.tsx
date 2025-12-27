@@ -184,7 +184,46 @@ interface UserNotification {
   is_read: boolean;
   created_at: string;
   related_id?: number;
+  related_type?: string;
 }
+
+const getNotificationRoute = (notif: UserNotification, isStaff: boolean): string | null => {
+  if (isStaff) {
+    if (notif.related_type === 'booking_request' || notif.type === 'booking') {
+      return '/admin?tab=requests';
+    }
+    if (notif.related_type === 'event' || notif.type === 'event_rsvp') {
+      return '/admin?tab=events';
+    }
+    if (notif.related_type === 'form_submission' || notif.type === 'inquiry') {
+      return '/admin?tab=inquiries';
+    }
+    if (notif.related_type === 'wellness' || notif.type === 'wellness_booking') {
+      return '/admin?tab=wellness';
+    }
+    if (notif.related_type === 'announcement' || notif.type === 'announcement') {
+      return '/admin?tab=news';
+    }
+    return '/admin';
+  } else {
+    switch (notif.type) {
+      case 'booking_approved':
+      case 'booking_declined':
+      case 'booking_cancelled':
+        return '/book';
+      case 'event_reminder':
+      case 'event_update':
+        return '/member-events';
+      case 'wellness_reminder':
+      case 'wellness_booking':
+        return '/member-wellness';
+      case 'announcement':
+        return '/announcements';
+      default:
+        return '/dashboard';
+    }
+  }
+};
 
 const ROUTE_INDICES: Record<string, number> = {
   '/dashboard': 0,
@@ -318,13 +357,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [user?.email]);
 
-  const markAsRead = async (notifId: number) => {
-    try {
-      await fetch(`/api/notifications/${notifId}/read`, { method: 'PUT' });
-      setUserNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (err) {
-      console.error('Failed to mark notification as read:', err);
+  const handleNotificationClick = async (notif: UserNotification) => {
+    if (!notif.is_read) {
+      try {
+        await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+        setUserNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error('Failed to mark notification as read:', err);
+      }
+    }
+    
+    const route = getNotificationRoute(notif, isStaffOrAdmin);
+    if (route) {
+      setIsNotificationsOpen(false);
+      navigate(route);
     }
   };
 
@@ -592,7 +639,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         userNotifications.map((notif) => (
                           <div
                             key={notif.id}
-                            onClick={() => !notif.is_read && markAsRead(notif.id)}
+                            onClick={() => handleNotificationClick(notif)}
                             className={`flex gap-3 p-3 rounded-xl transition-colors cursor-pointer ${
                               notif.is_read 
                                 ? 'bg-white/5 hover:bg-white/10' 
