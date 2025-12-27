@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { pool, isProduction } from '../core/db';
+import { pool } from '../core/db';
+import { logAndRespond, createErrorResponse } from '../core/logger';
 
 const router = Router();
 
@@ -8,7 +9,7 @@ router.get('/api/notifications', async (req, res) => {
     const { user_email, unread_only } = req.query;
     
     if (!user_email) {
-      return res.status(400).json({ error: 'user_email is required' });
+      return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
     }
     
     let query = 'SELECT * FROM notifications WHERE user_email = $1';
@@ -23,8 +24,7 @@ router.get('/api/notifications', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error: any) {
-    if (!isProduction) console.error('Notifications error:', error);
-    res.status(500).json({ error: 'Failed to fetch notifications' });
+    logAndRespond(req, res, 500, 'Failed to fetch notifications', error, 'NOTIFICATIONS_FETCH_ERROR');
   }
 });
 
@@ -33,7 +33,7 @@ router.get('/api/notifications/count', async (req, res) => {
     const { user_email } = req.query;
     
     if (!user_email) {
-      return res.status(400).json({ error: 'user_email is required' });
+      return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
     }
     
     const result = await pool.query(
@@ -43,8 +43,7 @@ router.get('/api/notifications/count', async (req, res) => {
     
     res.json({ count: parseInt(result.rows[0].count) });
   } catch (error: any) {
-    if (!isProduction) console.error('Notification count error:', error);
-    res.status(500).json({ error: 'Failed to fetch notification count' });
+    logAndRespond(req, res, 500, 'Failed to fetch notification count', error, 'NOTIFICATION_COUNT_ERROR');
   }
 });
 
@@ -59,8 +58,7 @@ router.put('/api/notifications/:id/read', async (req, res) => {
     
     res.json(result.rows[0]);
   } catch (error: any) {
-    if (!isProduction) console.error('Notification update error:', error);
-    res.status(500).json({ error: 'Failed to update notification' });
+    logAndRespond(req, res, 500, 'Failed to update notification', error, 'NOTIFICATION_UPDATE_ERROR');
   }
 });
 
@@ -69,7 +67,7 @@ router.put('/api/notifications/mark-all-read', async (req, res) => {
     const { user_email } = req.body;
     
     if (!user_email) {
-      return res.status(400).json({ error: 'user_email is required' });
+      return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
     }
     
     await pool.query(
@@ -79,8 +77,7 @@ router.put('/api/notifications/mark-all-read', async (req, res) => {
     
     res.json({ success: true });
   } catch (error: any) {
-    if (!isProduction) console.error('Mark all read error:', error);
-    res.status(500).json({ error: 'Failed to mark notifications as read' });
+    logAndRespond(req, res, 500, 'Failed to mark notifications as read', error, 'MARK_ALL_READ_ERROR');
   }
 });
 

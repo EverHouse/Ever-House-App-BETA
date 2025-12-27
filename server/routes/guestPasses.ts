@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { eq, sql, and, lt } from 'drizzle-orm';
 import { db } from '../db';
 import { guestPasses, notifications } from '../../shared/schema';
-import { isProduction } from '../core/db';
 import { getTierLimits } from '../core/tierService';
 import { sendPushNotification } from './push';
+import { logAndRespond } from '../core/logger';
 
 const router = Router();
 
@@ -13,7 +13,6 @@ router.get('/api/guest-passes/:email', async (req, res) => {
     const { email } = req.params;
     const { tier } = req.query;
     
-    // Get guest pass limit from database-driven tier configuration
     const tierLimits = tier ? await getTierLimits(tier as string) : null;
     const passesTotal = tierLimits?.guest_passes_per_month || 4;
     
@@ -45,8 +44,7 @@ router.get('/api/guest-passes/:email', async (req, res) => {
       passes_remaining: data.passesTotal - data.passesUsed
     });
   } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Request failed' });
+    logAndRespond(req, res, 500, 'Failed to fetch guest passes', error, 'GUEST_PASSES_FETCH_ERROR');
   }
 });
 
@@ -93,8 +91,7 @@ router.post('/api/guest-passes/:email/use', async (req, res) => {
       passes_remaining: remaining
     });
   } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Request failed' });
+    logAndRespond(req, res, 500, 'Failed to use guest pass', error, 'GUEST_PASS_USE_ERROR');
   }
 });
 
@@ -119,8 +116,7 @@ router.put('/api/guest-passes/:email', async (req, res) => {
       passes_remaining: data.passesTotal - data.passesUsed
     });
   } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Request failed' });
+    logAndRespond(req, res, 500, 'Failed to update guest passes', error, 'GUEST_PASS_UPDATE_ERROR');
   }
 });
 

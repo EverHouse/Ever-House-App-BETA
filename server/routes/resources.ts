@@ -2,10 +2,10 @@ import { Router } from 'express';
 import { eq, and, or, sql, desc, asc } from 'drizzle-orm';
 import { db } from '../db';
 import { bookings, resources, users, facilityClosures, bays } from '../../shared/schema';
-import { isProduction } from '../core/db';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
 import { isStaffOrAdmin } from '../core/middleware';
 import { createCalendarEventOnCalendar, getCalendarIdByName, CALENDAR_CONFIG } from '../core/calendar';
+import { logAndRespond, logger } from '../core/logger';
 
 const router = Router();
 
@@ -16,8 +16,7 @@ router.get('/api/resources', async (req, res) => {
       .orderBy(asc(resources.type), asc(resources.name));
     res.json(result);
   } catch (error: any) {
-    if (!isProduction) console.error('Resources error:', error);
-    res.status(500).json({ error: 'Failed to fetch resources' });
+    logAndRespond(req, res, 500, 'Failed to fetch resources', error, 'RESOURCES_FETCH_ERROR');
   }
 });
 
@@ -59,8 +58,7 @@ router.get('/api/bookings', async (req, res) => {
     
     res.json(result);
   } catch (error: any) {
-    if (!isProduction) console.error('Bookings error:', error);
-    res.status(500).json({ error: 'Failed to fetch bookings' });
+    logAndRespond(req, res, 500, 'Failed to fetch bookings', error, 'BOOKINGS_FETCH_ERROR');
   }
 });
 
@@ -89,8 +87,7 @@ router.get('/api/pending-bookings', async (req, res) => {
       .orderBy(desc(bookings.createdAt));
     res.json(result);
   } catch (error: any) {
-    if (!isProduction) console.error('Pending bookings error:', error);
-    res.status(500).json({ error: 'Failed to fetch pending bookings' });
+    logAndRespond(req, res, 500, 'Failed to fetch pending bookings', error, 'PENDING_BOOKINGS_ERROR');
   }
 });
 
@@ -267,8 +264,7 @@ router.put('/api/bookings/:id/approve', async (req, res) => {
     
     res.json(result[0]);
   } catch (error: any) {
-    if (!isProduction) console.error('Approve booking error:', error);
-    res.status(500).json({ error: 'Failed to approve booking' });
+    logAndRespond(req, res, 500, 'Failed to approve booking', error, 'APPROVE_BOOKING_ERROR');
   }
 });
 
@@ -285,8 +281,7 @@ router.put('/api/bookings/:id/decline', async (req, res) => {
     }
     res.json(result[0]);
   } catch (error: any) {
-    if (!isProduction) console.error('Decline booking error:', error);
-    res.status(500).json({ error: 'Failed to decline booking' });
+    logAndRespond(req, res, 500, 'Failed to decline booking', error, 'DECLINE_BOOKING_ERROR');
   }
 });
 
@@ -367,8 +362,7 @@ router.post('/api/bookings', async (req, res) => {
       message: 'Request sent! Concierge will confirm shortly.'
     });
   } catch (error: any) {
-    if (!isProduction) console.error('Booking request error:', error);
-    res.status(500).json({ error: 'Failed to submit booking request' });
+    logAndRespond(req, res, 500, 'Failed to submit booking request', error, 'BOOKING_REQUEST_ERROR');
   }
 });
 
@@ -380,8 +374,7 @@ router.delete('/api/bookings/:id', async (req, res) => {
       .where(eq(bookings.id, parseInt(id)));
     res.json({ success: true });
   } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Request failed' });
+    logAndRespond(req, res, 500, 'Failed to cancel booking', error, 'BOOKING_CANCEL_ERROR');
   }
 });
 
@@ -398,8 +391,7 @@ router.post('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
     }
     res.json({ success: true, booking: result[0] });
   } catch (error: any) {
-    if (!isProduction) console.error('Check-in error:', error);
-    res.status(500).json({ error: 'Failed to check in' });
+    logAndRespond(req, res, 500, 'Failed to check in', error, 'CHECKIN_ERROR');
   }
 });
 
@@ -511,7 +503,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
         );
       }
     } catch (calErr) {
-      if (!isProduction) console.error('Calendar event creation error:', calErr);
+      logger.error('Calendar event creation error', { error: calErr as Error, requestId: req.requestId });
     }
 
     const [newBooking] = await db.insert(bookings)
@@ -549,8 +541,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       message: 'Booking created successfully'
     });
   } catch (error: any) {
-    if (!isProduction) console.error('Manual booking error:', error);
-    res.status(500).json({ error: 'Failed to create manual booking' });
+    logAndRespond(req, res, 500, 'Failed to create manual booking', error, 'MANUAL_BOOKING_ERROR');
   }
 });
 

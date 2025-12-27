@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { getSession, registerAuthRoutes } from './replit_integrations/auth';
 import { setupSupabaseAuthRoutes } from './supabase/auth';
 import { isProduction, pool } from './core/db';
+import { requestIdMiddleware, logRequest } from './core/logger';
 import { db } from './db';
 import { systemSettings } from '../shared/schema';
 import { eq, sql } from 'drizzle-orm';
@@ -93,6 +94,8 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
+app.use(requestIdMiddleware);
+app.use(logRequest);
 app.use(cors(corsOptions));
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
