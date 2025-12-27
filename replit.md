@@ -38,7 +38,7 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Database**: PostgreSQL.
 - **Styling**: Tailwind CSS with PostCSS.
 - **Server Architecture**: Modular routes under `server/`, shared modules in `server/core/`, and domain-specific routers in `server/routes/`.
-- **Error Handling**: Generic error messages to prevent info leaks.
+- **Error Handling**: Generic error messages to prevent info leaks. Structured JSON logging with request IDs for debugging - every API response includes a `requestId` that can be matched to server logs.
 - **Member Tiers & Tags**: Manages access, booking limits, and guest passes based on membership levels (Social, Core, Premium, Corporate, VIP) and custom JSONB tags.
 - **Database-Driven Tier System**: All tier configuration stored in `membership_tiers` table with display fields (name, price_string), marketing fields (highlighted_features), and logic/enforcement fields (daily_sim_minutes, guest_passes_per_month, booking_window_days, can_book_simulators, etc.). Backend `server/core/tierService.ts` provides cached tier lookups (5-minute TTL) with automatic invalidation on updates. Daily booking limits are enforced when members create booking requests. Frontend uses `src/services/tierService.ts` and `src/hooks/useTierPermissions.ts` to dynamically fetch tier permissions from API with 5-minute client-side caching. The membership comparison table (`/membership/compare`) reads directly from privilege columns via `FEATURE_DISPLAY` mapping, ensuring admin tier edits reflect immediately on the public site.
 - **Mindbody Data Import**: Imports member data from Mindbody/Trackman CSV, mapping to internal tiers and extracting tags.
