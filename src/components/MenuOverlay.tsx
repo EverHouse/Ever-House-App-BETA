@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
@@ -16,25 +16,37 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const { stop, start } = useSmoothScroll();
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setIsVisible(true);
+      setIsClosing(false);
       document.body.style.overflow = 'hidden';
       stop();
-      
-      return () => {
+    } else if (isVisible) {
+      setIsClosing(true);
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setIsClosing(false);
         document.body.style.overflow = '';
         start();
-      };
+      }, 250);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen, stop, start]);
+  }, [isOpen]);
 
-  const handleNav = (path: string) => {
-    navigate(path);
+  const handleClose = () => {
     onClose();
   };
 
-  if (!isOpen) return null;
+  const handleNav = (path: string) => {
+    navigate(path);
+    handleClose();
+  };
+
+  if (!isVisible) return null;
 
   const getActionButtonConfig = () => {
     if (actualUser?.role === 'admin' || actualUser?.role === 'staff') {
@@ -51,11 +63,11 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const menuContent = (
     <div className="fixed inset-0 z-[12000] flex justify-start overflow-hidden pointer-events-auto">
       <div 
-        className="absolute inset-0 bg-black/20 backdrop-blur-xl transition-opacity duration-500" 
-        onClick={onClose}
+        className={`absolute inset-0 bg-black/20 backdrop-blur-xl ${isClosing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        onClick={handleClose}
       ></div>
 
-      <div className="relative w-[85%] md:w-[320px] lg:w-[360px] h-full flex flex-col animate-slide-in-left overflow-hidden glass-navbar rounded-none rounded-r-[2rem] border-l-0">
+      <div className={`relative w-[85%] md:w-[320px] lg:w-[360px] h-full flex flex-col overflow-hidden glass-navbar rounded-none rounded-r-[2rem] border-l-0 ${isClosing ? 'animate-slide-out-left' : 'animate-slide-in-left'}`}>
         
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-multiply"></div>
 
@@ -63,7 +75,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
             
             <div className="flex items-center justify-end mb-8">
                 <button 
-                  onClick={onClose}
+                  onClick={handleClose}
                   aria-label="Close menu"
                   className={`w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center hover:rotate-90 transition-transform duration-300 rounded-full active:scale-90 ${isDark ? 'text-[#F2F2EC] hover:bg-white/10' : 'text-[#293515] hover:bg-black/5'}`}
                 >
