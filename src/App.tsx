@@ -25,15 +25,23 @@ const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ childre
   const { isLoading } = useData();
   const [showLoader, setShowLoader] = React.useState(true);
   const [hasHiddenLoader, setHasHiddenLoader] = React.useState(false);
+  const [minTimeElapsed, setMinTimeElapsed] = React.useState(false);
 
   React.useEffect(() => {
-    if (!isLoading && !hasHiddenLoader) {
+    const minTimer = setTimeout(() => {
+      setMinTimeElapsed(true);
+    }, 800);
+    return () => clearTimeout(minTimer);
+  }, []);
+
+  React.useEffect(() => {
+    if (!isLoading && minTimeElapsed && !hasHiddenLoader) {
       const timer = setTimeout(() => {
         setShowLoader(false);
-      }, 300);
+      }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, hasHiddenLoader]);
+  }, [isLoading, minTimeElapsed, hasHiddenLoader]);
 
   const handleFadeComplete = () => {
     setHasHiddenLoader(true);
