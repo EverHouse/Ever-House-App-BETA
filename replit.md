@@ -21,8 +21,9 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Icons**: Material Symbols Outlined (weight 300, `.filled` for active states).
 - **Color Palette**: Deep Green (#293515), Lavender (#CCB8E4), Bone (#F2F2EC), Background Dark (#0f120a).
 - **Liquid Glass Design System**: iOS-inspired glassmorphism applied globally with backdrop blur, reflective edges, inner depth, extra-large rounded corners, and fluid interactions. Utilizes specific CSS classes (e.g., `.glass-card`) and CSS variables.
-- **Branding**: EH monogram logo on public pages; dynamic, page-specific icons in the member portal header.
-- **Dynamic Header Navigation**: Member portal header includes a profile/dashboard toggle and page-specific center icons.
+- **Branding**: EH monogram logo on public pages; page titles in portal headers.
+- **Header Navigation Pattern**: Unified header across portals - Left: hamburger menu, Center: page title text, Right: notifications + avatar (initials). Avatar component shows user's initials and navigates to profile.
+- **Profile Page Navigation**: Profile page shows role-appropriate bottom nav (MemberBottomNav for members, StaffBottomNavSimple for staff/admin) for easy navigation back to portals.
 - **Responsive Design**: Optimized for iPhone, iPad, and Desktop viewports.
 - **Theme System**: Light, Dark, and System themes, persisted via `localStorage`.
 
