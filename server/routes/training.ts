@@ -220,21 +220,37 @@ export const TRAINING_SEED_DATA = [
 
 // Function to seed training sections with upsert logic (exported for use in startup)
 // Updates existing guides by guideId, inserts new ones, preserves custom guides
+// Also handles migration of old records without guideIds by matching title
 export async function seedTrainingSections() {
   const existing = await db.select().from(trainingSections);
+  
+  // Build maps for matching: by guideId (preferred) and by title (fallback for migration)
   const existingByGuideId = new Map(
     existing.filter(s => s.guideId).map(s => [s.guideId, s])
+  );
+  const existingByTitle = new Map(
+    existing.filter(s => !s.guideId).map(s => [s.title, s])
   );
   
   let updated = 0;
   let inserted = 0;
+  let migrated = 0;
   
   for (const seedData of TRAINING_SEED_DATA) {
-    const existingSection = existingByGuideId.get(seedData.guideId);
+    // First try to find by guideId
+    let existingSection = existingByGuideId.get(seedData.guideId);
+    
+    // Fallback: if no guideId match, try matching by title (for migration)
+    if (!existingSection) {
+      existingSection = existingByTitle.get(seedData.title);
+    }
     
     if (existingSection) {
-      // Update existing section if content differs
-      const needsUpdate = 
+      // Check if we need to add guideId (migration case)
+      const needsGuideId = !existingSection.guideId;
+      
+      // Check if content differs
+      const needsContentUpdate = 
         existingSection.icon !== seedData.icon ||
         existingSection.title !== seedData.title ||
         existingSection.description !== seedData.description ||
@@ -242,9 +258,10 @@ export async function seedTrainingSections() {
         existingSection.isAdminOnly !== seedData.isAdminOnly ||
         JSON.stringify(existingSection.steps) !== JSON.stringify(seedData.steps);
       
-      if (needsUpdate) {
+      if (needsGuideId || needsContentUpdate) {
         await db.update(trainingSections)
           .set({
+            guideId: seedData.guideId,
             icon: seedData.icon,
             title: seedData.title,
             description: seedData.description,
@@ -254,7 +271,8 @@ export async function seedTrainingSections() {
             updatedAt: new Date(),
           })
           .where(eq(trainingSections.id, existingSection.id));
-        updated++;
+        if (needsGuideId) migrated++;
+        else updated++;
       }
     } else {
       // Insert new section
@@ -263,7 +281,7 @@ export async function seedTrainingSections() {
     }
   }
   
-  console.log(`[Training] Seed complete: ${updated} updated, ${inserted} inserted`);
+  console.log(`[Training] Seed complete: ${updated} updated, ${inserted} inserted, ${migrated} migrated`);
 }
 
 router.get('/api/training-sections', isStaffOrAdmin, async (req, res) => {
