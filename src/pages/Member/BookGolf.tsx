@@ -544,7 +544,7 @@ const BookGolf: React.FC = () => {
               <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Date & Duration</span>
             </div>
             <div className="space-y-4">
-              <div className="flex gap-3 overflow-x-auto py-6 px-2 -mx-2 scrollbar-hide">
+              <div className="flex gap-3 overflow-x-auto py-8 px-3 -mx-3 scrollbar-hide">
                 {dates.map((d) => (
                   <DateButton 
                     key={d.date}
