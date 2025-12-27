@@ -558,8 +558,15 @@ interface DBEvent {
 
 const CATEGORY_TABS = [
     { id: 'all', label: 'All', icon: 'calendar_month' },
-    { id: 'Social', label: 'Events', icon: 'celebration' },
+    { id: 'Social', label: 'Social', icon: 'celebration' },
+    { id: 'Golf', label: 'Golf', icon: 'golf_course' },
     { id: 'Tournaments', label: 'Tournaments', icon: 'emoji_events' },
+    { id: 'Dining', label: 'Dining', icon: 'restaurant' },
+    { id: 'Networking', label: 'Networking', icon: 'handshake' },
+    { id: 'Workshops', label: 'Workshops', icon: 'school' },
+    { id: 'Family', label: 'Family', icon: 'family_restroom' },
+    { id: 'Entertainment', label: 'Entertainment', icon: 'music_note' },
+    { id: 'Charity', label: 'Charity', icon: 'volunteer_activism' },
 ];
 
 const EventsAdminContent: React.FC = () => {
@@ -745,10 +752,15 @@ const EventsAdminContent: React.FC = () => {
                             <div className="space-y-3 mb-6">
                                 <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
                                 <select className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
-                                    <option value="Social">Event</option>
-                                    <option value="Tournaments">Tournament</option>
+                                    <option value="Social">Social</option>
+                                    <option value="Golf">Golf</option>
+                                    <option value="Tournaments">Tournaments</option>
                                     <option value="Dining">Dining</option>
-                                    <option value="Sport">Sport</option>
+                                    <option value="Networking">Networking</option>
+                                    <option value="Workshops">Workshops</option>
+                                    <option value="Family">Family</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Charity">Charity</option>
                                 </select>
                                 <div className="grid grid-cols-1 gap-3">
                                     <input type="date" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.event_date || ''} onChange={e => setNewItem({...newItem, event_date: e.target.value})} />
@@ -799,7 +811,7 @@ const EventsAdminContent: React.FC = () => {
                                         <img src={event.image_url} alt="" className="w-full h-full object-cover" />
                                     ) : (
                                         <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-white/20">
-                                            {event.category === 'Tournaments' ? 'emoji_events' : event.category === 'Dining' ? 'restaurant' : event.category === 'Sport' ? 'sports_tennis' : 'celebration'}
+                                            {event.category === 'Golf' ? 'golf_course' : event.category === 'Tournaments' ? 'emoji_events' : event.category === 'Dining' ? 'restaurant' : event.category === 'Networking' ? 'handshake' : event.category === 'Workshops' ? 'school' : event.category === 'Family' ? 'family_restroom' : event.category === 'Entertainment' ? 'music_note' : event.category === 'Charity' ? 'volunteer_activism' : 'celebration'}
                                         </span>
                                     )}
                                 </div>
@@ -2185,6 +2197,13 @@ const WELLNESS_CATEGORY_TABS = [
     { id: 'all', label: 'All', icon: 'calendar_month' },
     { id: 'Classes', label: 'Classes', icon: 'fitness_center' },
     { id: 'MedSpa', label: 'MedSpa', icon: 'spa' },
+    { id: 'Recovery', label: 'Recovery', icon: 'ac_unit' },
+    { id: 'Therapy', label: 'Therapy', icon: 'healing' },
+    { id: 'Nutrition', label: 'Nutrition', icon: 'nutrition' },
+    { id: 'Personal Training', label: 'Training', icon: 'sports' },
+    { id: 'Mindfulness', label: 'Mindfulness', icon: 'self_improvement' },
+    { id: 'Outdoors', label: 'Outdoors', icon: 'hiking' },
+    { id: 'General', label: 'General', icon: 'category' },
 ];
 
 const WellnessAdminContent: React.FC = () => {
@@ -2205,7 +2224,7 @@ const WellnessAdminContent: React.FC = () => {
     const [enrollments, setEnrollments] = useState<Participant[]>([]);
     const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
 
-    const categories = ['Classes', 'MedSpa'];
+    const categories = ['Classes', 'MedSpa', 'Recovery', 'Therapy', 'Nutrition', 'Personal Training', 'Mindfulness', 'Outdoors', 'General'];
 
     useEffect(() => {
         fetchClasses();
