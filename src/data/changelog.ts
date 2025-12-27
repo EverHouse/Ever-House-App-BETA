@@ -256,5 +256,16 @@ export const changelog: ChangelogEntry[] = [
       "Member Dashboard shows all upcoming bookings including staff-created manual bookings",
       "Staff notifications auto-dismiss for all staff when any staff member approves, declines, or cancels a booking request"
     ]
+  },
+  {
+    version: "3.5",
+    date: "2025-12-27",
+    title: "Training Guide Stability",
+    changes: [
+      "Added stable guideId identifiers to training sections for reliable updates",
+      "Training guide seeding now uses upsert logic (updates existing, inserts new)",
+      "Custom training guides added by admins are now preserved during updates",
+      "Fixed production auto-seed to populate guideIds correctly"
+    ]
   }
 ];
