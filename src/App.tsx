@@ -421,7 +421,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       // For staff/admin not viewing as member, show admin icon
       if (isStaffOrAdmin && !isViewingAs) return 'admin_panel_settings';
       if (isProfilePage) return 'dashboard';
-      if (isMemberRoute) return 'account_circle';
+      // Gear icon for member portal settings, profile circle for public pages
+      if (isMemberRoute) return 'settings';
       return 'account_circle';
   };
 
