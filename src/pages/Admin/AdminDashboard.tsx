@@ -116,6 +116,7 @@ const AdminDashboard: React.FC = () => {
       <button 
         onClick={() => setIsMenuOpen(true)}
         className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
+        aria-label="Open menu"
       >
         <span className="material-symbols-outlined text-[24px]">menu</span>
       </button>
@@ -136,6 +137,7 @@ const AdminDashboard: React.FC = () => {
         <button 
           onClick={() => openNotifications()}
           className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity relative"
+          aria-label="Notifications"
         >
           <span className="material-symbols-outlined text-[24px]">notifications</span>
           {unreadNotifCount > 0 && (
@@ -147,6 +149,7 @@ const AdminDashboard: React.FC = () => {
         <button 
           onClick={() => navigate('/profile')}
           className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
+          aria-label="Settings"
         >
           <span className="material-symbols-outlined text-[24px]">settings</span>
         </button>
@@ -269,6 +272,8 @@ const StaffBottomNav: React.FC<{
             key={item.id}
             onClick={() => setActiveTab(item.id)}
             style={{ touchAction: 'manipulation' }}
+            aria-label={item.label}
+            aria-current={activeTab === item.id ? 'page' : undefined}
             className={`
               flex-1 flex flex-col items-center gap-0.5 py-2 px-1 relative z-10 cursor-pointer
               transition-all duration-300 ease-out active:scale-90

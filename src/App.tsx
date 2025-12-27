@@ -624,7 +624,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                              Mark all read
                            </button>
                          )}
-                         <button onClick={() => setIsNotificationsOpen(false)} className="w-8 h-8 rounded-lg glass-button flex items-center justify-center">
+                         <button onClick={() => setIsNotificationsOpen(false)} className="w-8 h-8 rounded-lg glass-button flex items-center justify-center" aria-label="Close notifications">
                             <span className="material-symbols-outlined text-sm">close</span>
                          </button>
                        </div>
