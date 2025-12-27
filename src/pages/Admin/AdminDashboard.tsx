@@ -170,13 +170,13 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'events' && 'Events & Wellness'}
                {activeTab === 'announcements' && 'Manage Announcements'}
                {activeTab === 'directory' && 'Directory'}
-               {activeTab === 'simulator' && 'Booking Requests'}
+               {activeTab === 'simulator' && 'Bookings'}
                {activeTab === 'team' && 'Manage Team Access'}
                {activeTab === 'faqs' && 'Manage FAQs'}
                {activeTab === 'inquiries' && 'Inquiries'}
                {activeTab === 'gallery' && 'Manage Gallery'}
                {activeTab === 'tiers' && 'Manage Tiers'}
-               {activeTab === 'blocks' && 'Availability Blocks'}
+               {activeTab === 'blocks' && 'Closures'}
                {activeTab === 'changelog' && 'Version History'}
                {activeTab === 'training' && 'Staff Training Guide'}
            </h1>
@@ -227,9 +227,10 @@ interface NavItemData {
 
 const NAV_ITEMS: NavItemData[] = [
   { id: 'home', icon: 'home', label: 'Home' },
-  { id: 'simulator', icon: 'event_note', label: 'Requests' },
+  { id: 'simulator', icon: 'event_note', label: 'Bookings' },
+  { id: 'blocks', icon: 'event_busy', label: 'Closures' },
   { id: 'events', icon: 'calendar_month', label: 'Calendar' },
-  { id: 'announcements', icon: 'campaign', label: 'News' },
+  { id: 'announcements', icon: 'campaign', label: 'Announcements' },
 ];
 
 const StaffBottomNav: React.FC<{
