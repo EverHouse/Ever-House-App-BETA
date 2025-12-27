@@ -30,14 +30,14 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F2F2EC',
+        backgroundColor: '#293515',
         transition: 'opacity 0.5s ease-out',
         opacity: isFadingOut ? 0 : 1,
       }}
     >
       <div className="walking-mascot">
         <img 
-          src="/assets/logos/mascot-dark.webp" 
+          src="/assets/logos/mascot-white.webp" 
           alt="Loading..." 
           style={{
             width: '120px',
