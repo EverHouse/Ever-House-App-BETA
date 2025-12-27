@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePageReady } from '../../contexts/PageReadyContext';
 import { useToast } from '../../components/Toast';
 import { apiRequest } from '../../lib/apiRequest';
 import TabButton from '../../components/TabButton';
@@ -36,12 +37,19 @@ const Wellness: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { user } = useData();
   const { effectiveTheme } = useTheme();
+  const { setPageReady } = usePageReady();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   const initialTab = searchParams.get('tab') === 'medspa' ? 'medspa' : 'classes';
   const [activeTab, setActiveTab] = useState<'classes' | 'medspa'>(initialTab);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('Booking confirmed.');
+
+  useEffect(() => {
+    if (activeTab === 'medspa') {
+      setPageReady(true);
+    }
+  }, [activeTab, setPageReady]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -131,11 +139,16 @@ const Wellness: React.FC = () => {
 
 const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: boolean}> = ({ onBook, isDark = true }) => {
   const { showToast } = useToast();
+  const { setPageReady } = usePageReady();
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [classes, setClasses] = useState<WellnessClass[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>(['All', 'Classes', 'MedSpa', 'Recovery', 'Therapy', 'Nutrition', 'Personal Training', 'Mindfulness', 'Outdoors', 'General']);
+
+  useEffect(() => {
+    setPageReady(false);
+  }, []);
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -169,6 +182,12 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
     };
     fetchClasses();
   }, [showToast]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setPageReady(true);
+    }
+  }, [isLoading, setPageReady]);
 
   const sortedClasses = classes
     .filter(cls => selectedFilter === 'All' || cls.category === selectedFilter)

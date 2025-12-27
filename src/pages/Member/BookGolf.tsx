@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePageReady } from '../../contexts/PageReadyContext';
 import { useToast } from '../../components/Toast';
 import { apiRequest } from '../../lib/apiRequest';
 import DateButton from '../../components/DateButton';
@@ -109,6 +110,7 @@ const BookGolf: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { addBooking, user, viewAsUser, actualUser, isViewingAs } = useData();
   const { effectiveTheme } = useTheme();
+  const { setPageReady } = usePageReady();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   const initialTab = searchParams.get('tab') === 'conference' ? 'conference' : 'simulator';
@@ -130,6 +132,16 @@ const BookGolf: React.FC = () => {
   
   // Check if admin is viewing as a member
   const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
+
+  useEffect(() => {
+    setPageReady(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setPageReady(true);
+    }
+  }, [isLoading, setPageReady]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');

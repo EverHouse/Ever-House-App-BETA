@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData, Booking } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePageReady } from '../../contexts/PageReadyContext';
 import { useToast } from '../../components/Toast';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
@@ -110,6 +111,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, addBooking, deleteBooking } = useData();
   const { effectiveTheme } = useTheme();
+  const { setPageReady } = usePageReady();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   
@@ -176,8 +178,15 @@ const Dashboard: React.FC = () => {
   }, [user?.email]);
 
   useEffect(() => {
+    setPageReady(false);
     fetchUserData();
   }, [fetchUserData]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setPageReady(true);
+    }
+  }, [isLoading, setPageReady]);
 
   useEffect(() => {
     if (user?.email && !isStaffOrAdminProfile) {

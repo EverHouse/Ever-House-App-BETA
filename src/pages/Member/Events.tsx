@@ -1,7 +1,8 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useData, EventData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePageReady } from '../../contexts/PageReadyContext';
 import { useToast } from '../../components/Toast';
 import { apiRequest } from '../../lib/apiRequest';
 import Skeleton from '../../components/Skeleton';
@@ -34,6 +35,7 @@ const generateUpcomingDates = (days: number = 14): { day: string; date: string; 
 const MemberEvents: React.FC = () => {
   const { events, addBooking, isLoading, user, actualUser, isViewingAs, viewAsUser } = useData();
   const { effectiveTheme } = useTheme();
+  const { setPageReady } = usePageReady();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
   const [filter, setFilter] = useState('All');
@@ -42,6 +44,16 @@ const MemberEvents: React.FC = () => {
   
   // Check if admin is viewing as a member
   const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
+
+  useEffect(() => {
+    setPageReady(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setPageReady(true);
+    }
+  }, [isLoading, setPageReady]);
   
   const upcomingDates = useMemo(() => generateUpcomingDates(14), []);
   const [selectedDateIndex, setSelectedDateIndex] = useState<number | null>(null);

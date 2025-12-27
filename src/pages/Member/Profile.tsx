@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePageReady } from '../../contexts/PageReadyContext';
 import { isFoundingMember, getBaseTier } from '../../utils/permissions';
 import { getTierColor } from '../../utils/tierUtils';
 import { useTierPermissions } from '../../hooks/useTierPermissions';
@@ -28,6 +29,7 @@ const Profile: React.FC = () => {
   const location = useLocation();
   const { user, logout, actualUser, isViewingAs } = useData();
   const { themeMode, setThemeMode, effectiveTheme } = useTheme();
+  const { setPageReady } = usePageReady();
   const isDark = effectiveTheme === 'dark';
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [showGuestCheckin, setShowGuestCheckin] = useState(false);
@@ -52,6 +54,10 @@ const Profile: React.FC = () => {
   const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
 
   const { permissions: tierPermissions } = useTierPermissions(user?.tier);
+
+  useEffect(() => {
+    setPageReady(true);
+  }, [setPageReady]);
 
   useEffect(() => {
     if (user?.email) {

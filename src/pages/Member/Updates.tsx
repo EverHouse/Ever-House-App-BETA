@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useData, Announcement } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { usePageReady } from '../../contexts/PageReadyContext';
 import SwipeablePage from '../../components/SwipeablePage';
 import { MotionList, MotionListItem } from '../../components/motion';
 
@@ -56,6 +57,7 @@ const MemberUpdates: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { announcements, isLoading, user, actualUser } = useData();
   const { effectiveTheme } = useTheme();
+  const { setPageReady } = usePageReady();
   const isDark = effectiveTheme === 'dark';
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
@@ -69,6 +71,16 @@ const MemberUpdates: React.FC = () => {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    setPageReady(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && !notificationsLoading) {
+      setPageReady(true);
+    }
+  }, [isLoading, notificationsLoading, setPageReady]);
 
   useEffect(() => {
     if (tabParam === 'activity' || tabParam === 'announcements') {
