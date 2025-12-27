@@ -26,6 +26,8 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Branding**: EH monogram logo on public pages; page titles in portal headers.
 - **Header Navigation Pattern**: Unified header across portals - Left: hamburger menu, Center: page title text, Right: notifications + avatar (initials). Avatar component shows user's initials and navigates to profile.
 - **Profile Page Navigation**: Profile page shows role-appropriate bottom nav (MemberBottomNav for members, StaffBottomNavSimple for staff/admin) for easy navigation back to portals.
+- **Dashboard Member Features**: Member Dashboard displays membership wallet card (with tier badge, tags, join/visit info) and guest passes section with check-in functionality. Staff/admin users don't see these sections.
+- **Staff Info Display**: Profile page Staff Information section shows Role, Job Title (if available), and Portal Access for staff/admin users.
 - **Responsive Design**: Optimized for iPhone, iPad, and Desktop viewports.
 - **Theme System**: Light, Dark, and System themes, persisted via `localStorage`.
 
