@@ -43,7 +43,7 @@ const Login: React.FC = () => {
         const data = await res.json();
         setIsStaffOrAdmin(data.isStaffOrAdmin);
         setHasPassword(data.hasPassword);
-        if (data.isStaffOrAdmin) {
+        if (data.isStaffOrAdmin && data.hasPassword) {
           setShowPasswordField(true);
         }
       }
@@ -216,7 +216,15 @@ const Login: React.FC = () => {
       }
       
       loginWithMember(data.member);
-      navigate(data.member.role === 'admin' || data.member.role === 'staff' ? '/admin' : '/member/dashboard');
+      
+      const isStaff = data.member.role === 'admin' || data.member.role === 'staff';
+      const destination = isStaff ? '/admin' : '/member/dashboard';
+      
+      if (data.shouldSetupPassword && isStaff) {
+        navigate(destination, { state: { showPasswordSetup: true } });
+      } else {
+        navigate(destination);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to verify code');
       setOtpInputs(['', '', '', '', '', '']);
@@ -320,7 +328,7 @@ const Login: React.FC = () => {
                     Member's Portal
                 </h2>
                 <p className="mt-2 text-base text-primary/60 font-medium">
-                    {isStaffOrAdmin ? 'Sign in with your password or verification code.' : 'Enter your email to receive a verification code.'}
+                    {isStaffOrAdmin && hasPassword ? 'Sign in with your password or verification code.' : 'Enter your email to receive a verification code.'}
                 </p>
             </div>
 
@@ -347,22 +355,16 @@ const Login: React.FC = () => {
                     )}
                   </div>
                   
-                  {showPasswordField && (
+                  {showPasswordField && hasPassword && (
                     <div className="animate-pop-in">
                       <input
                         type="password"
-                        placeholder={hasPassword ? "Password" : "Set a new password (min 8 chars)"}
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl border border-black/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-primary placeholder:text-primary/40"
-                        required={hasPassword}
-                        minLength={hasPassword ? undefined : 8}
+                        required
                       />
-                      {!hasPassword && (
-                        <p className="text-xs text-primary/50 mt-1 pl-1">
-                          No password set yet. Enter one to create it, or use verification code below.
-                        </p>
-                      )}
                     </div>
                   )}
                   
@@ -374,43 +376,6 @@ const Login: React.FC = () => {
                     >
                       {loading ? <Spinner /> : <span className="material-symbols-outlined">login</span>}
                       {loading ? 'Signing in...' : 'Sign In'}
-                    </button>
-                  ) : showPasswordField && !hasPassword && password.length >= 8 ? (
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={async () => {
-                        setLoading(true);
-                        setError('');
-                        try {
-                          const res = await fetch('/api/auth/set-password', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email, password })
-                          });
-                          const data = await res.json();
-                          if (!res.ok) throw new Error(data.error);
-                          setHasPassword(true);
-                          const loginRes = await fetch('/api/auth/password-login', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email, password }),
-                            credentials: 'include'
-                          });
-                          const loginData = await loginRes.json();
-                          if (!loginRes.ok) throw new Error(loginData.error);
-                          loginWithMember(loginData.member);
-                          navigate(loginData.member.role === 'admin' || loginData.member.role === 'staff' ? '/admin' : '/member/dashboard');
-                        } catch (err: any) {
-                          setError(err.message || 'Failed to set password');
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="flex w-full justify-center items-center gap-3 rounded-xl bg-primary px-3 py-4 text-sm font-bold leading-6 text-white shadow-lg hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all active:scale-[0.98] disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined">key</span>
-                      {loading ? 'Setting up...' : 'Set Password & Sign In'}
                     </button>
                   ) : (
                     <button
@@ -424,7 +389,7 @@ const Login: React.FC = () => {
                   )}
                 </form>
 
-                {showPasswordField && (
+                {showPasswordField && hasPassword && (
                   <div className="animate-pop-in">
                     <hr className="border-black/10" />
                     <button

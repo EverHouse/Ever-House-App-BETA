@@ -538,6 +538,27 @@ router.post('/api/auth/verify-otp', async (req, res) => {
     const contact = searchResponse.results[0];
     
     const role = await getUserRole(normalizedEmail);
+    
+    let shouldSetupPassword = false;
+    if (role === 'admin' || role === 'staff') {
+      const adminPw = await db.select({ passwordHash: adminUsers.passwordHash })
+        .from(adminUsers)
+        .where(and(eq(adminUsers.email, normalizedEmail), eq(adminUsers.isActive, true)))
+        .limit(1);
+      
+      if (adminPw.length > 0) {
+        shouldSetupPassword = !adminPw[0].passwordHash;
+      } else {
+        const staffPw = await db.select({ passwordHash: staffUsers.passwordHash })
+          .from(staffUsers)
+          .where(and(eq(staffUsers.email, normalizedEmail), eq(staffUsers.isActive, true)))
+          .limit(1);
+        
+        if (staffPw.length > 0) {
+          shouldSetupPassword = !staffPw[0].passwordHash;
+        }
+      }
+    }
 
     const sessionTtl = 7 * 24 * 60 * 60 * 1000;
     const tags = parseDiscountReasonToTags(contact.properties.membership_discount_reason);
@@ -575,7 +596,7 @@ router.post('/api/auth/verify-otp', async (req, res) => {
         if (!isProduction) console.error('Session save error:', err);
         return res.status(500).json({ error: 'Failed to create session' });
       }
-      res.json({ success: true, member });
+      res.json({ success: true, member, shouldSetupPassword });
     });
   } catch (error: any) {
     if (!isProduction) console.error('OTP verification error:', error);
@@ -787,44 +808,78 @@ router.post('/api/auth/password-login', async (req, res) => {
 
 router.post('/api/auth/set-password', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const sessionUser = (req.session as any)?.user;
+    if (!sessionUser?.email) {
+      return res.status(401).json({ error: 'You must be logged in to set a password' });
+    }
     
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    const { password, currentPassword } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
     }
     
     if (password.length < 8) {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
     
-    const normalizedEmail = email.toLowerCase();
-    const passwordHash = await bcrypt.hash(password, 10);
+    const normalizedEmail = sessionUser.email.toLowerCase();
     
-    const adminResult = await db.update(adminUsers)
-      .set({ passwordHash })
+    const adminRecord = await db.select({ id: adminUsers.id, passwordHash: adminUsers.passwordHash })
+      .from(adminUsers)
       .where(and(
         eq(adminUsers.email, normalizedEmail),
         eq(adminUsers.isActive, true)
       ))
-      .returning({ id: adminUsers.id });
+      .limit(1);
     
-    if (adminResult.length > 0) {
+    if (adminRecord.length > 0) {
+      if (adminRecord[0].passwordHash) {
+        if (!currentPassword) {
+          return res.status(400).json({ error: 'Current password is required' });
+        }
+        const isValid = await bcrypt.compare(currentPassword, adminRecord[0].passwordHash);
+        if (!isValid) {
+          return res.status(400).json({ error: 'Current password is incorrect' });
+        }
+      }
+      
+      const passwordHash = await bcrypt.hash(password, 10);
+      await db.update(adminUsers)
+        .set({ passwordHash })
+        .where(eq(adminUsers.id, adminRecord[0].id));
+      
       return res.json({ success: true, message: 'Password set successfully' });
     }
     
-    const staffResult = await db.update(staffUsers)
-      .set({ passwordHash })
+    const staffRecord = await db.select({ id: staffUsers.id, passwordHash: staffUsers.passwordHash })
+      .from(staffUsers)
       .where(and(
         eq(staffUsers.email, normalizedEmail),
         eq(staffUsers.isActive, true)
       ))
-      .returning({ id: staffUsers.id });
+      .limit(1);
     
-    if (staffResult.length > 0) {
+    if (staffRecord.length > 0) {
+      if (staffRecord[0].passwordHash) {
+        if (!currentPassword) {
+          return res.status(400).json({ error: 'Current password is required' });
+        }
+        const isValid = await bcrypt.compare(currentPassword, staffRecord[0].passwordHash);
+        if (!isValid) {
+          return res.status(400).json({ error: 'Current password is incorrect' });
+        }
+      }
+      
+      const passwordHash = await bcrypt.hash(password, 10);
+      await db.update(staffUsers)
+        .set({ passwordHash })
+        .where(eq(staffUsers.id, staffRecord[0].id));
+      
       return res.json({ success: true, message: 'Password set successfully' });
     }
     
-    res.status(404).json({ error: 'User not found' });
+    res.status(403).json({ error: 'Password can only be set for staff or admin accounts' });
   } catch (error: any) {
     if (!isProduction) console.error('Set password error:', error);
     res.status(500).json({ error: 'Failed to set password' });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import MenuOverlay from '../../components/MenuOverlay';
@@ -20,12 +20,20 @@ import { useToast } from '../../components/Toast';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { actualUser } = useData();
   const { openNotifications } = useContext(NotificationContext);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+
+  useEffect(() => {
+    const state = location.state as { showPasswordSetup?: boolean } | null;
+    if (state?.showPasswordSetup) {
+      navigate('/profile', { state: { showPasswordSetup: true } });
+    }
+  }, [location.state, navigate]);
   
   // Fetch pending requests count for badge
   useEffect(() => {

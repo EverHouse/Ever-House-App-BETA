@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { isFoundingMember, getBaseTier } from '../../utils/permissions';
@@ -22,6 +22,7 @@ const GUEST_CHECKIN_FIELDS = [
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, actualUser, isViewingAs } = useData();
   const { themeMode, setThemeMode, effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -31,6 +32,16 @@ const Profile: React.FC = () => {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [showPasswordSetupBanner, setShowPasswordSetupBanner] = useState(false);
 
   // Check if viewing a staff/admin profile (either directly or via view-as)
   const isStaffOrAdminProfile = user?.role === 'admin' || user?.role === 'staff';
@@ -50,6 +61,81 @@ const Profile: React.FC = () => {
         .catch(err => console.error('Error fetching guest passes:', err));
     }
   }, [user?.email, user?.tier]);
+
+  useEffect(() => {
+    if (isStaffOrAdminProfile && user?.email) {
+      fetch(`/api/auth/check-staff-admin?email=${encodeURIComponent(user.email)}`)
+        .then(res => res.json())
+        .then(data => {
+          setHasPassword(data.hasPassword || false);
+        })
+        .catch(() => {});
+    }
+  }, [user?.email, isStaffOrAdminProfile]);
+
+  useEffect(() => {
+    const state = location.state as { showPasswordSetup?: boolean } | null;
+    if (state?.showPasswordSetup && isStaffOrAdminProfile) {
+      setShowPasswordSetupBanner(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, isStaffOrAdminProfile]);
+
+  const handlePasswordSubmit = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    
+    if (hasPassword && !currentPassword) {
+      setPasswordError('Current password is required');
+      return;
+    }
+    
+    setPasswordLoading(true);
+    
+    try {
+      const res = await fetch('/api/auth/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          password: newPassword,
+          currentPassword: hasPassword ? currentPassword : undefined
+        }),
+        credentials: 'include'
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to set password');
+      }
+      
+      setPasswordSuccess('Password updated successfully');
+      setHasPassword(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordSetupBanner(false);
+      
+      setTimeout(() => {
+        setShowPasswordSection(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } catch (err: any) {
+      setPasswordError(err.message || 'Failed to set password');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   useEffect(() => {
     const checkPush = async () => {
@@ -198,12 +284,126 @@ const Profile: React.FC = () => {
            </Section>
          )}
          
+         {/* Password Setup Banner for Staff/Admin */}
+         {showPasswordSetupBanner && isStaffOrAdminProfile && (
+           <div className={`rounded-2xl p-4 mb-4 ${isDark ? 'bg-accent/20 border border-accent/30' : 'bg-amber-50 border border-amber-200'}`}>
+             <div className="flex items-start gap-3">
+               <span className={`material-symbols-outlined text-xl ${isDark ? 'text-accent' : 'text-amber-600'}`}>key</span>
+               <div className="flex-1">
+                 <p className={`font-semibold text-sm ${isDark ? 'text-accent' : 'text-amber-800'}`}>
+                   Set Up Password Login (Optional)
+                 </p>
+                 <p className={`text-xs mt-1 ${isDark ? 'text-white/60' : 'text-amber-700'}`}>
+                   For faster access, you can set a password to log in without email codes.
+                 </p>
+                 <div className="flex gap-2 mt-3">
+                   <button
+                     onClick={() => { setShowPasswordSection(true); setShowPasswordSetupBanner(false); }}
+                     className={`px-4 py-2 rounded-lg text-xs font-bold ${isDark ? 'bg-accent text-primary' : 'bg-amber-600 text-white'}`}
+                   >
+                     Set Password
+                   </button>
+                   <button
+                     onClick={() => setShowPasswordSetupBanner(false)}
+                     className={`px-4 py-2 rounded-lg text-xs font-medium ${isDark ? 'bg-white/10 text-white/70' : 'bg-amber-100 text-amber-700'}`}
+                   >
+                     Maybe Later
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         )}
+
          {/* Staff Info - only show for staff/admin users */}
          {isStaffOrAdminProfile && (
            <Section title="Staff Information" isDark={isDark}>
               <Row icon="shield_person" label="Role" value={user?.role === 'admin' ? 'Administrator' : 'Staff'} isDark={isDark} />
               {user?.jobTitle && <Row icon="work" label="Position" value={user.jobTitle} isDark={isDark} />}
               <Row icon="verified" label="Portal Access" value="Staff Portal" isDark={isDark} />
+           </Section>
+         )}
+
+         {/* Password Section - only show for staff/admin users */}
+         {isStaffOrAdminProfile && (
+           <Section title="Security" isDark={isDark}>
+              <div 
+                className={`p-4 flex items-center justify-between transition-colors cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}
+                onClick={() => setShowPasswordSection(!showPasswordSection)}
+              >
+                <div className="flex items-center gap-4">
+                  <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>key</span>
+                  <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>
+                    {hasPassword ? 'Change Password' : 'Set Up Password'}
+                  </span>
+                </div>
+                <span className={`material-symbols-outlined text-sm ${isDark ? 'opacity-40' : 'text-primary/40'}`}>
+                  {showPasswordSection ? 'expand_less' : 'expand_more'}
+                </span>
+              </div>
+              
+              {showPasswordSection && (
+                <div className={`p-4 pt-0 space-y-4 animate-pop-in ${isDark ? 'border-t border-white/5' : 'border-t border-black/5'}`}>
+                  {passwordError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
+                      {passwordError}
+                    </div>
+                  )}
+                  {passwordSuccess && (
+                    <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-xs">
+                      {passwordSuccess}
+                    </div>
+                  )}
+                  
+                  {hasPassword && (
+                    <input
+                      type="password"
+                      placeholder="Current Password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className={`w-full px-4 py-3 rounded-xl border text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/40' : 'bg-white border-black/10 text-primary placeholder:text-primary/40'}`}
+                    />
+                  )}
+                  
+                  <input
+                    type="password"
+                    placeholder="New Password (min 8 characters)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/40' : 'bg-white border-black/10 text-primary placeholder:text-primary/40'}`}
+                  />
+                  
+                  <input
+                    type="password"
+                    placeholder="Confirm New Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/40' : 'bg-white border-black/10 text-primary placeholder:text-primary/40'}`}
+                  />
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handlePasswordSubmit}
+                      disabled={passwordLoading || !newPassword || !confirmPassword}
+                      className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${isDark ? 'bg-accent text-primary' : 'bg-primary text-white'}`}
+                    >
+                      {passwordLoading ? 'Saving...' : (hasPassword ? 'Update Password' : 'Set Password')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowPasswordSection(false);
+                        setCurrentPassword('');
+                        setNewPassword('');
+                        setConfirmPassword('');
+                        setPasswordError('');
+                      }}
+                      className={`px-4 py-3 rounded-xl text-sm font-medium ${isDark ? 'bg-white/10 text-white/70' : 'bg-black/5 text-primary/70'}`}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
            </Section>
          )}
 
