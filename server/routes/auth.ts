@@ -96,22 +96,29 @@ interface UpsertUserData {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  jobTitle?: string;
   mindbodyClientId?: string;
   tags?: string[];
   membershipStartDate?: string;
+  role?: 'admin' | 'staff' | 'member';
 }
 
 async function upsertUserWithTier(data: UpsertUserData): Promise<void> {
   try {
     const normalizedEmail = data.email.toLowerCase();
-    const normalizedTier = data.tierName || 'Core';
+    const isStaffOrAdmin = data.role === 'admin' || data.role === 'staff';
     
-    const tierResult = await db.select({ id: membershipTiers.id })
-      .from(membershipTiers)
-      .where(sql`LOWER(${membershipTiers.name}) = LOWER(${normalizedTier})`)
-      .limit(1);
+    // Staff/admin users don't have membership tiers
+    const normalizedTier = isStaffOrAdmin ? null : (data.tierName || 'Core');
+    let tierId: number | null = null;
     
-    const tierId = tierResult.length > 0 ? tierResult[0].id : null;
+    if (!isStaffOrAdmin && normalizedTier) {
+      const tierResult = await db.select({ id: membershipTiers.id })
+        .from(membershipTiers)
+        .where(sql`LOWER(${membershipTiers.name}) = LOWER(${normalizedTier})`)
+        .limit(1);
+      tierId = tierResult.length > 0 ? tierResult[0].id : null;
+    }
     
     await db.insert(users)
       .values({
@@ -122,9 +129,10 @@ async function upsertUserWithTier(data: UpsertUserData): Promise<void> {
         tier: normalizedTier,
         tierId: tierId,
         phone: data.phone || null,
-        mindbodyClientId: data.mindbodyClientId || null,
-        tags: data.tags && data.tags.length > 0 ? data.tags : [],
-        membershipStartDate: data.membershipStartDate || null
+        mindbodyClientId: isStaffOrAdmin ? null : (data.mindbodyClientId || null),
+        tags: isStaffOrAdmin ? [] : (data.tags && data.tags.length > 0 ? data.tags : []),
+        membershipStartDate: isStaffOrAdmin ? null : (data.membershipStartDate || null),
+        role: data.role || 'member'
       })
       .onConflictDoUpdate({
         target: users.email,
@@ -134,14 +142,15 @@ async function upsertUserWithTier(data: UpsertUserData): Promise<void> {
           firstName: sql`COALESCE(${data.firstName || null}, ${users.firstName})`,
           lastName: sql`COALESCE(${data.lastName || null}, ${users.lastName})`,
           phone: sql`COALESCE(${data.phone || null}, ${users.phone})`,
-          mindbodyClientId: sql`COALESCE(${data.mindbodyClientId || null}, ${users.mindbodyClientId})`,
-          membershipStartDate: sql`COALESCE(${data.membershipStartDate || null}, ${users.membershipStartDate})`,
-          tags: data.tags && data.tags.length > 0 ? data.tags : [],
+          mindbodyClientId: isStaffOrAdmin ? null : sql`COALESCE(${data.mindbodyClientId || null}, ${users.mindbodyClientId})`,
+          membershipStartDate: isStaffOrAdmin ? null : sql`COALESCE(${data.membershipStartDate || null}, ${users.membershipStartDate})`,
+          tags: isStaffOrAdmin ? [] : (data.tags && data.tags.length > 0 ? data.tags : []),
+          role: data.role || 'member',
           updatedAt: new Date()
         }
       });
     
-    if (!isProduction) console.log(`[Auth] Updated user ${normalizedEmail} with tier ${normalizedTier}, mindbodyId: ${data.mindbodyClientId || 'none'}`);
+    if (!isProduction) console.log(`[Auth] Updated user ${normalizedEmail} with role ${data.role}, tier ${normalizedTier || 'none'}`);
   } catch (error) {
     console.error('[Auth] Error upserting user tier:', error);
   }
@@ -678,7 +687,8 @@ router.post('/api/auth/verify-otp', async (req, res) => {
       phone: member.phone,
       mindbodyClientId: member.mindbodyClientId,
       tags,
-      membershipStartDate: member.membershipStartDate
+      membershipStartDate: member.membershipStartDate,
+      role
     });
     
     req.session.save((err) => {
@@ -769,7 +779,8 @@ router.post('/api/auth/verify-token', async (req, res) => {
       phone: member.phone,
       mindbodyClientId: member.mindbodyClientId,
       tags,
-      membershipStartDate: member.membershipStartDate
+      membershipStartDate: member.membershipStartDate,
+      role
     });
     
     req.session.save((err) => {
@@ -970,7 +981,8 @@ router.post('/api/auth/password-login', async (req, res) => {
       phone: member.phone,
       mindbodyClientId: member.mindbodyClientId,
       tags: member.tags,
-      membershipStartDate: member.membershipStartDate
+      membershipStartDate: member.membershipStartDate,
+      role: userRole
     });
     
     req.session.save((err) => {

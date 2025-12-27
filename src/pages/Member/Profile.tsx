@@ -84,8 +84,8 @@ const Profile: React.FC = () => {
 
   return (
     <div className="px-6 pt-6 pb-32">
-      {/* Wallet Pass Preview */}
-      {(() => {
+      {/* Wallet Pass Preview - only show for regular members */}
+      {!isStaffOrAdminProfile && (() => {
          const tierColors = getTierColor(user.tier || 'Social');
          const cardBgColor = tierColors.bg;
          const cardTextColor = tierColors.text;
@@ -140,9 +140,9 @@ const Profile: React.FC = () => {
 
       <div className="space-y-6">
          <Section title="Account" isDark={isDark}>
+            <Row icon="person" label="Name" value={user.name} isDark={isDark} />
             <Row icon="mail" label="Email" value={user.email} isDark={isDark} />
             <Row icon="call" label="Phone" value={user.phone} isDark={isDark} />
-            {user.jobTitle && <Row icon="badge" label="Role" value={user.jobTitle} isDark={isDark} />}
          </Section>
 
          <Section title="Settings" isDark={isDark}>
