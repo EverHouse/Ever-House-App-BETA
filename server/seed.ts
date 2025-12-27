@@ -251,7 +251,7 @@ async function seed() {
       { icon: 'login', title: 'Getting Started', description: 'How to access and navigate the Staff Portal', is_admin_only: false, sort_order: 1, steps: JSON.stringify([
         { title: 'Logging In', content: 'Use your registered email to sign in via the magic link system. Check your email for the login link - no password needed. The link expires after 15 minutes for security.' },
         { title: 'Accessing the Staff Portal', content: 'After logging in, you\'ll be automatically redirected to the Staff Portal dashboard. If you end up on the member portal, tap the menu icon and select "Staff Portal".' },
-        { title: 'Navigation', content: 'The bottom navigation bar has 5 main tabs: Home, Requests, Events, Wellness, and Updates. The Home dashboard shows quick access cards to all other features.' },
+        { title: 'Navigation', content: 'The bottom navigation bar has 5 main tabs: Home, Requests, Events, Wellness, and News. The Home dashboard shows quick access cards to all other features.' },
       ])},
       { icon: 'event_note', title: 'Managing Booking Requests', description: 'Approve, decline, or manage simulator and conference room bookings', is_admin_only: false, sort_order: 2, steps: JSON.stringify([
         { title: 'Viewing Requests', content: 'Tap "Requests" in the bottom nav to see all pending booking requests. New requests show at the top. A red badge shows the count of pending requests.' },
@@ -273,10 +273,10 @@ async function seed() {
         { title: 'Recurring Classes', content: 'For weekly classes, you can create them individually or ask an admin to set up recurring entries.' },
         { title: 'Class Bookings', content: 'Members can book spots in classes through the member portal. You can see the booking count on each class card.' },
       ])},
-      { icon: 'campaign', title: 'Posting Updates & Announcements', description: 'Keep members informed with news and announcements', is_admin_only: false, sort_order: 5, steps: JSON.stringify([
-        { title: 'Viewing Announcements', content: 'Tap "Updates" in the bottom nav to see all announcements. Current/active announcements show first, followed by past ones.' },
-        { title: 'Creating an Announcement', content: 'Tap "+" to create a new announcement. Add a title, content, and optionally set start/end dates for when it should be visible.' },
-        { title: 'Priority Levels', content: 'Set the priority level: Normal for general news, High for important updates (these appear more prominently to members), Urgent for critical notices.' },
+      { icon: 'campaign', title: 'Managing Announcements', description: 'Keep members informed with news and announcements', is_admin_only: false, sort_order: 5, steps: JSON.stringify([
+        { title: 'Viewing Announcements', content: 'Tap "News" in the bottom nav to see all announcements. Current/active announcements show first, followed by past ones.' },
+        { title: 'Creating an Announcement', content: 'Tap "+ Announcement" to create a new announcement. Add a title, content, and optionally set start/end dates for when it should be visible.' },
+        { title: 'Priority Levels', content: 'Set the priority level: Normal for general news, High for important notices (these appear more prominently to members), Urgent for critical alerts.' },
         { title: 'Automatic Announcements', content: 'When you create a facility closure, an announcement is automatically created and linked. When the closure is deleted, its announcement is also removed.' },
       ])},
       { icon: 'groups', title: 'Member Directory', description: 'Search and view member information', is_admin_only: false, sort_order: 6, steps: JSON.stringify([

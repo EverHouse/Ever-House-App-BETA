@@ -131,7 +131,7 @@ const AdminDashboard: React.FC = () => {
                {activeTab === 'home' && 'Dashboard'}
                {activeTab === 'cafe' && 'Manage Cafe Menu'}
                {activeTab === 'events' && 'Manage Events'}
-               {activeTab === 'announcements' && 'Manage Updates'}
+               {activeTab === 'announcements' && 'Manage Announcements'}
                {activeTab === 'directory' && 'Directory'}
                {activeTab === 'simulator' && 'Booking Requests'}
                {activeTab === 'team' && 'Manage Team Access'}
@@ -195,7 +195,7 @@ const NAV_ITEMS: NavItemData[] = [
   { id: 'simulator', icon: 'event_note', label: 'Requests' },
   { id: 'events', icon: 'event', label: 'Events' },
   { id: 'wellness', icon: 'spa', label: 'Wellness' },
-  { id: 'announcements', icon: 'campaign', label: 'Updates' },
+  { id: 'announcements', icon: 'campaign', label: 'News' },
 ];
 
 const StaffBottomNav: React.FC<{
@@ -1042,15 +1042,9 @@ const AnnouncementsAdmin: React.FC = () => {
     const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useData();
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
-    const [newItem, setNewItem] = useState<Partial<Announcement>>({ type: 'update' });
+    const [newItem, setNewItem] = useState<Partial<Announcement>>({ type: 'announcement' });
 
-    const openCreateUpdate = () => {
-        setNewItem({ type: 'update' });
-        setEditId(null);
-        setIsEditing(true);
-    };
-
-    const openCreateAnnouncement = () => {
+    const openCreate = () => {
         setNewItem({ type: 'announcement' });
         setEditId(null);
         setIsEditing(true);
@@ -1088,10 +1082,7 @@ const AnnouncementsAdmin: React.FC = () => {
     return (
         <div>
             <div className="flex justify-end gap-2 mb-4">
-                <button onClick={openCreateUpdate} className="bg-amber-100 text-amber-800 px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-amber-200 transition-colors border border-amber-200">
-                    <span className="material-symbols-outlined text-lg">add</span> Update
-                </button>
-                <button onClick={openCreateAnnouncement} className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-accent/90 transition-colors">
+                <button onClick={openCreate} className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-accent/90 transition-colors">
                     <span className="material-symbols-outlined text-lg">add</span> Announcement
                 </button>
             </div>
@@ -1102,12 +1093,8 @@ const AnnouncementsAdmin: React.FC = () => {
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
                             <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
-                                {newItem.type === 'update' ? (
-                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                                ) : (
-                                    <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-                                )}
-                                {editId ? `Edit ${newItem.type === 'update' ? 'Update' : 'Announcement'}` : `New ${newItem.type === 'update' ? 'Update' : 'Announcement'}`}
+                                <span className="w-2.5 h-2.5 rounded-full bg-accent" />
+                                {editId ? 'Edit Announcement' : 'New Announcement'}
                             </h3>
                             <div className="space-y-4 mb-6">
                                 <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
@@ -1135,28 +1122,26 @@ const AnnouncementsAdmin: React.FC = () => {
                                     </div>
                                 </div>
                                 
-                                {/* Link Destination (for Announcements type) */}
-                                {newItem.type === 'announcement' && (
-                                    <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-white/10">
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block">Link Destination</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: undefined, linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${!newItem.linkType ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>None</button>
-                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'events', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'events' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Events</button>
-                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'wellness', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'wellness' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Wellness</button>
-                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'golf', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'golf' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Book Golf</button>
-                                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'external', linkTarget: newItem.linkTarget || ''})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors col-span-2 ${newItem.linkType === 'external' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>External URL</button>
-                                        </div>
-                                        {newItem.linkType === 'external' && (
-                                            <input 
-                                                type="url" 
-                                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                                placeholder="https://example.com" 
-                                                value={newItem.linkTarget || ''} 
-                                                onChange={e => setNewItem({...newItem, linkTarget: e.target.value})} 
-                                            />
-                                        )}
+                                {/* Link Destination */}
+                                <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-white/10">
+                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block">Link Destination</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: undefined, linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${!newItem.linkType ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>None</button>
+                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: 'events', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'events' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Events</button>
+                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: 'wellness', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'wellness' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Wellness</button>
+                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: 'golf', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'golf' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Book Golf</button>
+                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: 'external', linkTarget: newItem.linkTarget || ''})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors col-span-2 ${newItem.linkType === 'external' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>External URL</button>
                                     </div>
-                                )}
+                                    {newItem.linkType === 'external' && (
+                                        <input 
+                                            type="url" 
+                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                            placeholder="https://example.com" 
+                                            value={newItem.linkTarget || ''} 
+                                            onChange={e => setNewItem({...newItem, linkTarget: e.target.value})} 
+                                        />
+                                    )}
+                                </div>
                             </div>
                             <div className="flex gap-3 justify-end">
                                 <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
@@ -1173,16 +1158,15 @@ const AnnouncementsAdmin: React.FC = () => {
                 {announcements.length > 0 && (
                     <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
                         <span className="material-symbols-outlined text-amber-500 text-[18px]">campaign</span>
-                        Updates & Announcements ({announcements.length})
+                        Announcements ({announcements.length})
                     </h3>
                 )}
                 {announcements.map(item => (
                     <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm flex justify-between items-start cursor-pointer hover:border-primary/30 transition-all">
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
-                                <span className={`w-2 h-2 rounded-full ${item.type === 'update' ? 'bg-amber-400' : 'bg-accent'}`}></span>
-                                <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500">{item.type}</span>
-                                <span className="text-[10px] text-gray-300 dark:text-gray-600">• {item.date}</span>
+                                <span className="w-2 h-2 rounded-full bg-accent"></span>
+                                <span className="text-[10px] text-gray-300 dark:text-gray-600">{item.date}</span>
                             </div>
                             <h4 className="font-bold text-gray-900 dark:text-white mb-1">{item.title}</h4>
                             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2">{item.desc}</p>
@@ -4854,7 +4838,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
         steps: [
             { title: 'Logging In', content: 'Use your registered email to sign in via the magic link system. Check your email for the login link - no password needed. The link expires after 15 minutes for security.' },
             { title: 'Accessing the Staff Portal', content: 'After logging in, you\'ll be automatically redirected to the Staff Portal dashboard. If you end up on the member portal, tap the menu icon and select "Staff Portal".' },
-            { title: 'Navigation', content: 'The bottom navigation bar has 5 main tabs: Home, Requests, Events, Wellness, and Updates. The Home dashboard shows quick access cards to all other features.' },
+            { title: 'Navigation', content: 'The bottom navigation bar has 5 main tabs: Home, Requests, Events, Wellness, and News. The Home dashboard shows quick access cards to all other features.' },
         ]
     },
     {
@@ -4898,12 +4882,12 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     {
         id: 'announcements',
         icon: 'campaign',
-        title: 'Posting Updates & Announcements',
+        title: 'Managing Announcements',
         description: 'Keep members informed with news and announcements',
         steps: [
-            { title: 'Viewing Announcements', content: 'Tap "Updates" in the bottom nav to see all announcements. Current/active announcements show first, followed by past ones.' },
-            { title: 'Creating an Announcement', content: 'Tap "+" to create a new announcement. Add a title, content, and optionally set start/end dates for when it should be visible.' },
-            { title: 'Priority Levels', content: 'Set the priority level: Normal for general news, High for important updates (these appear more prominently to members), Urgent for critical notices.' },
+            { title: 'Viewing Announcements', content: 'Tap "News" in the bottom nav to see all announcements. Current/active announcements show first, followed by past ones.' },
+            { title: 'Creating an Announcement', content: 'Tap "+ Announcement" to create a new announcement. Add a title, content, and optionally set start/end dates for when it should be visible.' },
+            { title: 'Priority Levels', content: 'Set the priority level: Normal for general news, High for important notices (these appear more prominently to members), Urgent for critical alerts.' },
             { title: 'Automatic Announcements', content: 'When you create a facility closure, an announcement is automatically created and linked. When the closure is deleted, its announcement is also removed.' },
         ]
     },

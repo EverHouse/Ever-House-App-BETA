@@ -36,7 +36,7 @@ router.get('/api/announcements', async (req, res) => {
       id: a.id.toString(),
       title: a.title,
       desc: a.message || '',
-      type: (a.priority === 'high' || a.priority === 'urgent' ? 'announcement' : 'update') as 'update' | 'announcement',
+      type: 'announcement' as const,
       priority: (a.priority || 'normal') as 'normal' | 'high' | 'urgent',
       date: a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now',
       startDate: a.startsAt ? new Date(a.startsAt).toISOString().split('T')[0] : undefined,
@@ -61,7 +61,7 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
     }
     
     const userEmail = (req as any).user?.email || 'system';
-    const finalPriority = priority || (type === 'announcement' ? 'high' : 'normal');
+    const finalPriority = priority || 'normal';
     
     const [newAnnouncement] = await db.insert(announcements).values({
       title,
@@ -78,7 +78,7 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
       id: newAnnouncement.id.toString(),
       title: newAnnouncement.title,
       desc: newAnnouncement.message || '',
-      type: (newAnnouncement.priority === 'high' || newAnnouncement.priority === 'urgent' ? 'announcement' : 'update') as 'update' | 'announcement',
+      type: 'announcement' as const,
       priority: (newAnnouncement.priority || 'normal') as 'normal' | 'high' | 'urgent',
       date: 'Just now',
       startDate: newAnnouncement.startsAt ? new Date(newAnnouncement.startsAt).toISOString().split('T')[0] : undefined,
@@ -101,7 +101,7 @@ router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Title is required' });
     }
     
-    const finalPriority = priority || (type === 'announcement' ? 'high' : 'normal');
+    const finalPriority = priority || 'normal';
     
     const [updated] = await db.update(announcements)
       .set({
@@ -124,7 +124,7 @@ router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
       id: updated.id.toString(),
       title: updated.title,
       desc: updated.message || '',
-      type: (updated.priority === 'high' || updated.priority === 'urgent' ? 'announcement' : 'update') as 'update' | 'announcement',
+      type: 'announcement' as const,
       priority: (updated.priority || 'normal') as 'normal' | 'high' | 'urgent',
       date: updated.createdAt ? new Date(updated.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now',
       startDate: updated.startsAt ? new Date(updated.startsAt).toISOString().split('T')[0] : undefined,
