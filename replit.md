@@ -48,6 +48,7 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Role Management**: Admin dashboard for assigning member/staff/admin roles.
 - **View As Member**: Admin-only feature allowing admins to impersonate members to view the app from their perspective. Staff users cannot use this feature. Confirmation popups warn admins before taking actions (booking, RSVP) on behalf of members. Uses `flushSync` for synchronous state updates.
 - **Portal Separation**: Staff and admin users are automatically redirected from Members Portal to Staff Portal. Only admins in "view as member" mode can access member routes. Profile page shows different content (role/position) for staff/admin vs membership benefits for regular members.
+- **Staff/Admin Profile Sync**: During login, profile data (firstName, lastName, phone, jobTitle) is synced from `admin_users`/`staff_users` tables to the `users` table. Staff/admin users have `tier` and `tierId` set to NULL (no membership tier data). Profile page hides membership card for staff/admin, showing only Account (Name, Email, Phone) and Staff Information (Role, Position, Portal Access) sections.
 - **Guest Pass System**: Tracks and atomically consumes guest passes.
 - **Real-Time Booking**: Database-backed booking with shared availability, duration-aware slot generation, and collision detection.
 
