@@ -50,7 +50,6 @@ const PrivateHire = lazy(() => import('./pages/Public/PrivateHire'));
 const PublicCafe = lazy(() => import('./pages/Public/Cafe'));
 const FAQ = lazy(() => import('./pages/Public/FAQ'));
 const Login = lazy(() => import('./pages/Public/Login'));
-const VerifyMagicLink = lazy(() => import('./pages/Public/VerifyMagicLink'));
 const AuthCallback = lazy(() => import('./pages/Public/AuthCallback'));
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 
@@ -274,7 +273,6 @@ const AnimatedRoutes: React.FC = () => {
             <Route path="/menu" element={<DirectionalPageTransition><PublicCafe /></DirectionalPageTransition>} />
             <Route path="/faq" element={<DirectionalPageTransition><FAQ /></DirectionalPageTransition>} />
             <Route path="/login" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
-            <Route path="/verify" element={<DirectionalPageTransition><VerifyMagicLink /></DirectionalPageTransition>} />
             <Route path="/auth/callback" element={<DirectionalPageTransition><AuthCallback /></DirectionalPageTransition>} />
             <Route path="/reset-password" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
 

@@ -4885,7 +4885,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
         title: 'Getting Started',
         description: 'How to access and navigate the Staff Portal',
         steps: [
-            { title: 'Logging In', content: 'Use your registered email to sign in via the magic link system. Check your email for the login link - no password needed. The link expires after 15 minutes for security.' },
+            { title: 'Logging In', content: 'Use your registered email to sign in via the verification code system. Enter your email and receive a 6-digit code - no password needed. The code expires after 15 minutes for security.' },
             { title: 'Accessing the Staff Portal', content: 'After logging in, you\'ll be automatically redirected to the Staff Portal dashboard. If you end up on the member portal, tap the menu icon and select "Staff Portal".' },
             { title: 'Navigation', content: 'The bottom navigation bar has 4 main tabs: Home, Requests, Calendar (Events & Wellness), and News. The Home dashboard shows quick access cards to all other features.' },
         ]

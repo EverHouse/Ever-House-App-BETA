@@ -90,7 +90,7 @@ export const changelog: ChangelogEntry[] = [
     date: "2025-12-21",
     title: "Security & Stability",
     changes: [
-      "Magic link authentication (email-based, passwordless)",
+      "Verification code authentication (email-based, passwordless)",
       "Sessions stored in PostgreSQL",
       "Vite security update",
       "Network access restrictions"
