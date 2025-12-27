@@ -506,17 +506,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const headerContent = showHeader ? (
     <header className={`fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 z-[9998] pointer-events-auto transition-all duration-300 ${headerClasses}`} role="banner">
-      <button 
-        onClick={() => navigate('/')}
-        className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
-        aria-label="Go to home"
-      >
-        <img 
-          src="/assets/logos/monogram-white.webp" 
-          alt="Even House" 
-          className="w-8 h-8 object-contain"
-        />
-      </button>
+      {isMemberRoute ? (
+        <button 
+          onClick={() => navigate('/')}
+          className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
+          aria-label="Go to home"
+        >
+          <img 
+            src="/assets/logos/monogram-white.webp" 
+            alt="Even House" 
+            className="w-8 h-8 object-contain"
+          />
+        </button>
+      ) : (
+        <button 
+          onClick={handleTopLeftClick}
+          className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
+          aria-label="Open menu"
+        >
+          <span className="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+      )}
       
       {isMemberRoute ? (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
