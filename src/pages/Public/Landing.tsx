@@ -93,12 +93,12 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
         body: JSON.stringify(formData)
       });
       
+      const data = await res.json();
+      
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Failed to submit');
       }
       
-      const data = await res.json();
       setTourId(data.id);
       setStep('calendar');
     } catch (err: any) {
