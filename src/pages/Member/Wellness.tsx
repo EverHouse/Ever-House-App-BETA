@@ -135,7 +135,7 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [classes, setClasses] = useState<WellnessClass[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<string[]>(['All']);
+  const [categories, setCategories] = useState<string[]>(['All', 'Classes', 'MedSpa', 'Recovery', 'Therapy', 'Nutrition', 'Personal Training', 'Mindfulness', 'Outdoors', 'General']);
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -161,9 +161,6 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
           };
         });
         setClasses(formatted);
-        
-        const uniqueCategories = ['All', ...new Set(formatted.map((c: WellnessClass) => c.category))];
-        setCategories(uniqueCategories as string[]);
       } else {
         showToast('Unable to load data. Please try again.', 'error');
       }

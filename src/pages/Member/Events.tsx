@@ -123,7 +123,7 @@ const MemberEvents: React.FC = () => {
 
       <section className={`mb-8 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide">
-          {['All', 'Social', 'Dining', 'Wellness', 'Sport'].map(cat => (
+          {['All', 'Social', 'Golf', 'Tournaments', 'Dining', 'Networking', 'Workshops', 'Family', 'Entertainment', 'Charity'].map(cat => (
             <TabButton 
                 key={cat} 
                 label={cat} 
