@@ -13,7 +13,7 @@ const STAFF_NAV_ITEMS: StaffNavItem[] = [
   { path: '/admin?tab=simulator', icon: 'event_note', label: 'Bookings' },
   { path: '/admin?tab=blocks', icon: 'event_busy', label: 'Closures' },
   { path: '/admin?tab=events', icon: 'calendar_month', label: 'Calendar' },
-  { path: '/admin?tab=announcements', icon: 'campaign', label: 'Announcements' },
+  { path: '/admin?tab=inquiries', icon: 'mail', label: 'Inquiries' },
 ];
 
 const StaffBottomNavSimple: React.FC = () => {

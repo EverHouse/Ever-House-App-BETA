@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import MenuOverlay from '../../components/MenuOverlay';
@@ -21,12 +21,32 @@ import Avatar from '../../components/Avatar';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { actualUser } = useData();
   const { openNotifications } = useContext(NotificationContext);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as TabType | null;
+    const validTabs: TabType[] = ['home', 'cafe', 'events', 'announcements', 'directory', 'simulator', 'team', 'faqs', 'inquiries', 'gallery', 'tiers', 'blocks', 'changelog', 'training', 'updates'];
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam);
+    } else if (!tabParam) {
+      setActiveTab('home');
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (tab === 'home') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab });
+    }
+  };
 
   useEffect(() => {
     const state = location.state as { showPasswordSetup?: boolean } | null;
@@ -107,6 +127,7 @@ const AdminDashboard: React.FC = () => {
       case 'changelog': return 'Changelog';
       case 'training': return 'Training';
       case 'conflicts': return 'Conflicts';
+      case 'updates': return 'Updates';
       default: return 'Dashboard';
     }
   };
@@ -133,11 +154,11 @@ const AdminDashboard: React.FC = () => {
 
       <div className="flex items-center gap-1 ml-auto">
         <button 
-          onClick={() => openNotifications()}
+          onClick={() => handleTabChange('updates')}
           className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity relative"
-          aria-label="Notifications"
+          aria-label="Updates"
         >
-          <span className="material-symbols-outlined text-[24px]">notifications</span>
+          <span className="material-symbols-outlined text-[24px]">campaign</span>
           {unreadNotifCount > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
               {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
@@ -163,7 +184,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content Area - add top padding for fixed header */}
       <main className="flex-1 px-4 md:px-8 max-w-4xl mx-auto pt-[max(112px,calc(env(safe-area-inset-top)+96px))] w-full relative z-0">
-        {activeTab === 'home' && <StaffDashboardHome setActiveTab={setActiveTab} isAdmin={actualUser?.role === 'admin'} />}
+        {activeTab === 'home' && <StaffDashboardHome onTabChange={handleTabChange} isAdmin={actualUser?.role === 'admin'} />}
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsWellnessAdmin />}
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
@@ -177,13 +198,14 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'blocks' && <BlocksAdmin />}
         {activeTab === 'changelog' && actualUser?.role === 'admin' && <ChangelogAdmin />}
         {activeTab === 'training' && <StaffTrainingGuide />}
+        {activeTab === 'updates' && <StaffUpdatesAdmin />}
         <BottomSentinel />
       </main>
 
       {/* Bottom Nav - Floating Pill with Liquid Glass */}
       <StaffBottomNav 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        onTabChange={handleTabChange} 
         isAdmin={actualUser?.role === 'admin'}
         pendingRequestsCount={pendingRequestsCount}
       />
@@ -197,7 +219,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training' | 'updates';
 
 interface NavItemData {
   id: TabType;
@@ -211,15 +233,15 @@ const NAV_ITEMS: NavItemData[] = [
   { id: 'simulator', icon: 'event_note', label: 'Bookings' },
   { id: 'blocks', icon: 'event_busy', label: 'Closures' },
   { id: 'events', icon: 'calendar_month', label: 'Calendar' },
-  { id: 'announcements', icon: 'campaign', label: 'Announcements' },
+  { id: 'inquiries', icon: 'mail', label: 'Inquiries' },
 ];
 
 const StaffBottomNav: React.FC<{
   activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
+  onTabChange: (tab: TabType) => void;
   isAdmin?: boolean;
   pendingRequestsCount?: number;
-}> = ({ activeTab, setActiveTab, isAdmin, pendingRequestsCount = 0 }) => {
+}> = ({ activeTab, onTabChange, isAdmin, pendingRequestsCount = 0 }) => {
   const navRef = useRef<HTMLDivElement>(null);
   
   const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
@@ -248,7 +270,7 @@ const StaffBottomNav: React.FC<{
           <button
             type="button"
             key={item.id}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => onTabChange(item.id)}
             style={{ touchAction: 'manipulation' }}
             aria-label={item.label}
             aria-current={activeTab === item.id ? 'page' : undefined}
@@ -282,7 +304,7 @@ const StaffBottomNav: React.FC<{
 
 // --- STAFF DASHBOARD HOME ---
 
-const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdmin?: boolean }> = ({ setActiveTab, isAdmin }) => {
+const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmin?: boolean }> = ({ onTabChange, isAdmin }) => {
   const employeeResourcesLinks = [
     { id: 'directory' as TabType, icon: 'groups', label: 'Directory', description: 'Search and manage members' },
     { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
@@ -291,7 +313,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
   const operationsLinks = [
     { id: 'simulator' as TabType, icon: 'event_note', label: 'Bookings', description: 'Manage booking requests and approvals' },
     { id: 'events' as TabType, icon: 'calendar_month', label: 'Calendar', description: 'View and manage events and wellness' },
-    { id: 'announcements' as TabType, icon: 'campaign', label: 'Announcements', description: 'Post news and updates for members' },
+    { id: 'updates' as TabType, icon: 'campaign', label: 'Updates', description: 'Activity and announcements for members' },
     { id: 'blocks' as TabType, icon: 'event_busy', label: 'Closures', description: 'Manage closures and availability blocks' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
   ];
@@ -311,7 +333,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
   const CardButton = ({ link }: { link: { id: TabType; icon: string; label: string; description: string } }) => (
     <button
       key={link.id}
-      onClick={() => setActiveTab(link.id)}
+      onClick={() => onTabChange(link.id)}
       className="flex flex-col items-start p-5 rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-lg border border-primary/10 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 transition-all text-left group shadow-sm"
     >
       <span className="material-symbols-outlined text-3xl text-primary dark:text-white mb-3 group-hover:scale-110 transition-transform">{link.icon}</span>
@@ -1161,6 +1183,193 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
             </div>
         </div>,
         document.body
+    );
+};
+
+// --- STAFF UPDATES ADMIN (Activity + Announcements) ---
+
+interface StaffNotification {
+    id: number;
+    user_email: string;
+    type: string;
+    title: string;
+    message: string;
+    data?: Record<string, any>;
+    is_read: boolean;
+    created_at: string;
+}
+
+const StaffUpdatesAdmin: React.FC = () => {
+    const { actualUser } = useData();
+    const [activeSubTab, setActiveSubTab] = useState<'activity' | 'announcements'>('activity');
+    const [notifications, setNotifications] = useState<StaffNotification[]>([]);
+    const [notificationsLoading, setNotificationsLoading] = useState(true);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        if (actualUser?.email) {
+            const fetchNotifications = async () => {
+                try {
+                    const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setNotifications(data);
+                        setUnreadCount(data.filter((n: StaffNotification) => !n.is_read).length);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch notifications:', err);
+                } finally {
+                    setNotificationsLoading(false);
+                }
+            };
+            fetchNotifications();
+            const interval = setInterval(fetchNotifications, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [actualUser?.email]);
+
+    const handleNotificationClick = async (notif: StaffNotification) => {
+        if (!notif.is_read) {
+            try {
+                await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+                setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            } catch (err) {
+                console.error('Failed to mark notification as read:', err);
+            }
+        }
+    };
+
+    const markAllAsRead = async () => {
+        if (!actualUser?.email) return;
+        try {
+            await fetch('/api/notifications/mark-all-read', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_email: actualUser.email }),
+            });
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            setUnreadCount(0);
+        } catch (err) {
+            console.error('Failed to mark all as read:', err);
+        }
+    };
+
+    const renderActivityTab = () => (
+        <div className="animate-pop-in" style={{animationDelay: '0.1s'}}>
+            {unreadCount > 0 && (
+                <div className="flex justify-end mb-4">
+                    <button 
+                        onClick={markAllAsRead}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10 dark:text-white/70 dark:hover:text-white dark:bg-white/5 dark:hover:bg-white/10"
+                    >
+                        Mark all as read
+                    </button>
+                </div>
+            )}
+            
+            {notificationsLoading ? (
+                <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="p-4 rounded-2xl animate-pulse bg-white dark:bg-white/[0.03]">
+                            <div className="flex gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-white/10" />
+                                <div className="flex-1">
+                                    <div className="h-4 w-1/2 rounded mb-2 bg-gray-200 dark:bg-white/10" />
+                                    <div className="h-3 w-3/4 rounded bg-gray-100 dark:bg-white/5" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : notifications.length === 0 ? (
+                <div className="text-center py-16 text-primary/50 dark:text-white/50">
+                    <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">notifications_off</span>
+                    <p className="text-lg font-medium">No activity yet</p>
+                    <p className="text-sm mt-1 opacity-70">System alerts and updates will appear here.</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {notifications.map((notif, index) => (
+                        <div
+                            key={notif.id}
+                            onClick={() => handleNotificationClick(notif)}
+                            className={`rounded-2xl transition-all cursor-pointer overflow-hidden animate-pop-in ${
+                                notif.is_read 
+                                    ? 'bg-white hover:bg-gray-50 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]' 
+                                    : 'bg-accent/10 hover:bg-accent/15 border border-accent/30 dark:border-accent/20'
+                            } shadow-layered dark:shadow-layered-dark`}
+                            style={{animationDelay: `${0.15 + index * 0.03}s`}}
+                        >
+                            <div className="flex gap-3 p-4">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                                    notif.type === 'booking_request' ? 'bg-blue-500/20' :
+                                    notif.type === 'system_alert' ? 'bg-amber-500/20' :
+                                    'bg-accent/20'
+                                }`}>
+                                    <span className={`material-symbols-outlined text-[20px] ${
+                                        notif.type === 'booking_request' ? 'text-blue-500' :
+                                        notif.type === 'system_alert' ? 'text-amber-500' :
+                                        'text-primary dark:text-white'
+                                    }`}>
+                                        {notif.type === 'booking_request' ? 'event_note' :
+                                         notif.type === 'system_alert' ? 'warning' :
+                                         'notifications'}
+                                    </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className={`font-bold text-sm ${notif.is_read ? 'text-primary/70 dark:text-white/70' : 'text-primary dark:text-white'}`}>
+                                            {notif.title}
+                                        </h4>
+                                        <span className="text-[10px] ml-2 shrink-0 text-primary/50 dark:text-white/50">
+                                            {notif.created_at ? new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now'}
+                                        </span>
+                                    </div>
+                                    <p className={`text-xs mt-0.5 ${notif.is_read ? 'text-primary/50 dark:text-white/50' : 'text-primary/70 dark:text-white/70'}`}>
+                                        {notif.message}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    return (
+        <div className="animate-pop-in pb-32">
+            <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
+                <button
+                    onClick={() => setActiveSubTab('activity')}
+                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all relative ${
+                        activeSubTab === 'activity'
+                            ? 'bg-accent text-primary'
+                            : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
+                    }`}
+                >
+                    Activity
+                    {unreadCount > 0 && activeSubTab !== 'activity' && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
+                </button>
+                <button
+                    onClick={() => setActiveSubTab('announcements')}
+                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
+                        activeSubTab === 'announcements'
+                            ? 'bg-accent text-primary'
+                            : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
+                    }`}
+                >
+                    Announcements
+                </button>
+            </div>
+
+            {activeSubTab === 'activity' ? renderActivityTab() : <AnnouncementsAdmin />}
+        </div>
     );
 };
 
