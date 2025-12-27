@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
-import HubSpotFormModal from '../../components/HubSpotFormModal';
 import BackToTop from '../../components/BackToTop';
 import { usePageReady } from '../../contexts/PageReadyContext';
 
@@ -15,19 +14,51 @@ interface MembershipTier {
   highlighted_features: string[];
 }
 
-const TOUR_REQUEST_FIELDS = [
-  { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
-  { name: 'lastname', label: 'Last Name', type: 'text' as const, required: true, placeholder: 'Doe' },
-  { name: 'email', label: 'Email', type: 'email' as const, required: true, placeholder: 'jane@example.com' },
-  { name: 'phone', label: 'Phone', type: 'tel' as const, required: false, placeholder: '(949) 555-0100' },
-  { name: 'visit_type', label: 'Type of Visit', type: 'select' as const, required: true, options: ['Personal Tour', 'Group Tour', 'Membership Inquiry', 'Other'] },
-  { name: 'message', label: 'Preferred Date/Time', type: 'textarea' as const, required: false, placeholder: 'Let us know when you\'d like to visit...' }
-];
+
+const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      containerRef.current.innerHTML = '';
+      const script = document.createElement('script');
+      script.src = 'https://static.hsappstatic.net/MeetingsEmbed/ex/MeetingsEmbedCode.js';
+      script.async = true;
+      
+      const meetingsDiv = document.createElement('div');
+      meetingsDiv.className = 'meetings-iframe-container';
+      meetingsDiv.setAttribute('data-src', 'https://meetings-na2.hubspot.com/memberships/tourbooking?embed=true');
+      
+      containerRef.current.appendChild(meetingsDiv);
+      containerRef.current.appendChild(script);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-2xl bg-[#F2F2EC] dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-primary/10 dark:border-white/10">
+          <div>
+            <h2 className="text-xl font-bold text-primary dark:text-white">Book a Tour</h2>
+            <p className="text-sm text-primary/60 dark:text-white/60 mt-1">Schedule a visit to experience Even House firsthand.</p>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center hover:bg-primary/20 dark:hover:bg-white/20 transition-colors">
+            <span className="material-symbols-outlined text-primary dark:text-white">close</span>
+          </button>
+        </div>
+        <div ref={containerRef} className="p-4 overflow-y-auto flex-1 min-h-[500px]"></div>
+      </div>
+    </div>
+  );
+};
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
   const { setPageReady } = usePageReady();
-  const [showTourForm, setShowTourForm] = useState(false);
+  const [showTourModal, setShowTourModal] = useState(false);
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -89,7 +120,7 @@ const Landing: React.FC = () => {
              <Link to="/membership" className="w-full py-4 rounded-2xl bg-white/30 backdrop-blur-xl text-white font-bold text-xs uppercase tracking-[0.15em] shadow-lg hover:scale-[1.02] hover:bg-white/40 transition-all text-center border border-white/40">
                 Apply for Membership
              </Link>
-             <button onClick={() => setShowTourForm(true)} className="w-full py-3 text-white font-medium text-sm hover:opacity-80 transition-opacity flex items-center justify-center gap-2 group">
+             <button onClick={() => setShowTourModal(true)} className="w-full py-3 text-white font-medium text-sm hover:opacity-80 transition-opacity flex items-center justify-center gap-2 group">
                 Book a Tour
                 <span className="material-symbols-outlined text-lg group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
              </button>
@@ -221,15 +252,7 @@ const Landing: React.FC = () => {
 
       <Footer />
 
-      <HubSpotFormModal
-        isOpen={showTourForm}
-        onClose={() => setShowTourForm(false)}
-        formType="tour-request"
-        title="Book a Tour"
-        subtitle="Schedule a visit to experience Even House firsthand."
-        fields={TOUR_REQUEST_FIELDS}
-        submitButtonText="Request Tour"
-      />
+      <HubSpotMeetingModal isOpen={showTourModal} onClose={() => setShowTourModal(false)} />
 
       <BackToTop threshold={500} />
     </div>

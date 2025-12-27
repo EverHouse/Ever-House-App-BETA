@@ -201,6 +201,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'changelog' && actualUser?.role === 'admin' && <ChangelogAdmin />}
         {activeTab === 'training' && <StaffTrainingGuide />}
         {activeTab === 'updates' && <StaffUpdatesAdmin />}
+        {activeTab === 'tours' && <ToursAdmin />}
         <BottomSentinel />
       </main>
 
@@ -221,7 +222,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training' | 'updates';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training' | 'updates' | 'tours';
 
 interface NavItemData {
   id: TabType;
@@ -315,6 +316,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
   const operationsLinks = [
     { id: 'simulator' as TabType, icon: 'event_note', label: 'Bookings', description: 'Manage booking requests and approvals' },
     { id: 'events' as TabType, icon: 'calendar_month', label: 'Calendar', description: 'View and manage events and wellness' },
+    { id: 'tours' as TabType, icon: 'directions_walk', label: 'Tours', description: 'View scheduled tours and check-ins' },
     { id: 'updates' as TabType, icon: 'campaign', label: 'Updates', description: 'Activity and announcements for members' },
     { id: 'blocks' as TabType, icon: 'event_busy', label: 'Closures', description: 'Manage closures and availability blocks' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
@@ -6623,6 +6625,307 @@ const StaffTrainingGuide: React.FC = () => {
             />
         </div>
     );
+};
+
+// --- TOURS ADMIN ---
+interface Tour {
+  id: number;
+  googleCalendarId: string | null;
+  title: string;
+  guestName: string | null;
+  guestEmail: string | null;
+  guestPhone: string | null;
+  tourDate: string;
+  startTime: string;
+  endTime: string | null;
+  notes: string | null;
+  status: string;
+  checkedInAt: string | null;
+  checkedInBy: string | null;
+}
+
+const ToursAdmin: React.FC = () => {
+  const { setPageReady } = usePageReady();
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [todayTours, setTodayTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [checkInModalOpen, setCheckInModalOpen] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
+  const typeformContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setPageReady(true);
+  }, [setPageReady]);
+
+  const fetchTours = useCallback(async () => {
+    try {
+      const [todayRes, upcomingRes] = await Promise.all([
+        fetch('/api/tours/today', { credentials: 'include' }),
+        fetch('/api/tours?upcoming=true', { credentials: 'include' })
+      ]);
+      
+      if (todayRes.ok) {
+        const data = await todayRes.json();
+        setTodayTours(data);
+      }
+      
+      if (upcomingRes.ok) {
+        const data = await upcomingRes.json();
+        setTours(data.filter((t: Tour) => t.tourDate !== new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })));
+      }
+    } catch (err) {
+      console.error('Failed to fetch tours:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTours();
+  }, [fetchTours]);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await fetch('/api/tours/sync', { method: 'POST', credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncMessage(`Synced ${data.synced} tours (${data.created} new, ${data.updated} updated)`);
+        fetchTours();
+      } else {
+        setSyncMessage(data.error || 'Sync failed');
+      }
+    } catch (err) {
+      setSyncMessage('Network error');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const openCheckIn = (tour: Tour) => {
+    setSelectedTour(tour);
+    setCheckInModalOpen(true);
+  };
+
+  const handleCheckIn = async () => {
+    if (!selectedTour) return;
+    try {
+      const res = await fetch(`/api/tours/${selectedTour.id}/checkin`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        fetchTours();
+        setCheckInModalOpen(false);
+        setSelectedTour(null);
+      }
+    } catch (err) {
+      console.error('Check-in failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (checkInModalOpen && typeformContainerRef.current && selectedTour) {
+      typeformContainerRef.current.innerHTML = '';
+      const script = document.createElement('script');
+      script.src = '//embed.typeform.com/next/embed.js';
+      script.async = true;
+      
+      const formDiv = document.createElement('div');
+      formDiv.setAttribute('data-tf-live', '01KDGXG8YBRCC5S8Z1YZWDBQB8');
+      formDiv.style.width = '100%';
+      formDiv.style.height = '500px';
+      
+      typeformContainerRef.current.appendChild(formDiv);
+      typeformContainerRef.current.appendChild(script);
+    }
+  }, [checkInModalOpen, selectedTour]);
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:${minutes} ${ampm}`;
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T12:00:00');
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const TourCard = ({ tour, isToday = false }: { tour: Tour; isToday?: boolean }) => (
+    <div className={`p-4 rounded-2xl border ${tour.status === 'checked_in' 
+      ? 'bg-green-500/10 border-green-500/30' 
+      : 'bg-white/60 dark:bg-white/5 border-primary/10 dark:border-white/10'
+    }`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-bold text-primary dark:text-white">
+              {formatTime(tour.startTime)}
+            </span>
+            {tour.endTime && (
+              <span className="text-xs text-primary/50 dark:text-white/50">
+                - {formatTime(tour.endTime)}
+              </span>
+            )}
+          </div>
+          <h4 className="font-semibold text-primary dark:text-white truncate">
+            {tour.guestName || tour.title}
+          </h4>
+          {tour.guestEmail && (
+            <p className="text-xs text-primary/60 dark:text-white/60 truncate">{tour.guestEmail}</p>
+          )}
+          {tour.guestPhone && (
+            <p className="text-xs text-primary/60 dark:text-white/60">{tour.guestPhone}</p>
+          )}
+          {!isToday && (
+            <p className="text-xs text-primary/50 dark:text-white/50 mt-1">{formatDate(tour.tourDate)}</p>
+          )}
+        </div>
+        <div className="flex-shrink-0">
+          {tour.status === 'checked_in' ? (
+            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-green-500/20 text-green-700 dark:text-green-400 text-xs font-bold">
+              <span className="material-symbols-outlined text-sm">check_circle</span>
+              Checked In
+            </span>
+          ) : isToday ? (
+            <button
+              onClick={() => openCheckIn(tour)}
+              className="px-4 py-2 rounded-full bg-accent text-primary text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-sm">how_to_reg</span>
+              Check In
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 dark:bg-white/10 text-primary/70 dark:text-white/70 text-xs font-medium">
+              <span className="material-symbols-outlined text-sm">schedule</span>
+              Scheduled
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 animate-pop-in pb-32">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-primary/60 dark:text-white/60">
+          Tours synced from Google Calendar
+        </p>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary dark:bg-white/10 text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          <span className={`material-symbols-outlined text-sm ${syncing ? 'animate-spin' : ''}`}>
+            {syncing ? 'sync' : 'sync'}
+          </span>
+          {syncing ? 'Syncing...' : 'Sync Calendar'}
+        </button>
+      </div>
+
+      {syncMessage && (
+        <div className="p-3 rounded-xl bg-accent/20 text-primary dark:text-accent text-sm text-center">
+          {syncMessage}
+        </div>
+      )}
+
+      {todayTours.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-3 flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg">today</span>
+            Today's Tours ({todayTours.length})
+          </h3>
+          <div className="space-y-3">
+            {todayTours.map((tour) => (
+              <TourCard key={tour.id} tour={tour} isToday />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {todayTours.length === 0 && (
+        <div className="text-center py-8 bg-white/40 dark:bg-white/5 rounded-2xl">
+          <span className="material-symbols-outlined text-4xl text-primary/30 dark:text-white/30 mb-2">event_available</span>
+          <p className="text-primary/60 dark:text-white/60 text-sm">No tours scheduled for today</p>
+        </div>
+      )}
+
+      {tours.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-3 flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg">upcoming</span>
+            Upcoming Tours ({tours.length})
+          </h3>
+          <div className="space-y-3">
+            {tours.map((tour) => (
+              <TourCard key={tour.id} tour={tour} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {todayTours.length === 0 && tours.length === 0 && (
+        <div className="text-center py-12">
+          <span className="material-symbols-outlined text-5xl text-primary/20 dark:text-white/20 mb-3">directions_walk</span>
+          <p className="text-primary/50 dark:text-white/50">No upcoming tours</p>
+          <p className="text-sm text-primary/40 dark:text-white/40 mt-1">
+            Tours will appear here after syncing from Google Calendar
+          </p>
+        </div>
+      )}
+
+      {checkInModalOpen && selectedTour && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setCheckInModalOpen(false)}></div>
+          <div className="relative w-full max-w-2xl bg-bone dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-primary/10 dark:border-white/10">
+              <div>
+                <h2 className="text-xl font-bold text-primary dark:text-white">Check In: {selectedTour.guestName || selectedTour.title}</h2>
+                <p className="text-sm text-primary/60 dark:text-white/60 mt-1">Complete the check-in form below</p>
+              </div>
+              <button 
+                onClick={() => setCheckInModalOpen(false)} 
+                className="w-10 h-10 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center hover:bg-primary/20 dark:hover:bg-white/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-primary dark:text-white">close</span>
+              </button>
+            </div>
+            <div ref={typeformContainerRef} className="flex-1 min-h-[500px] overflow-y-auto"></div>
+            <div className="p-4 border-t border-primary/10 dark:border-white/10 flex justify-end gap-3">
+              <button
+                onClick={() => setCheckInModalOpen(false)}
+                className="px-4 py-2 rounded-full text-sm font-medium text-primary/70 dark:text-white/70 hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCheckIn}
+                className="px-6 py-2 rounded-full bg-accent text-primary text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm">check_circle</span>
+                Mark as Checked In
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default AdminDashboard;
