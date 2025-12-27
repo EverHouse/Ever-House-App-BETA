@@ -21,6 +21,37 @@ import MemberBottomNav from './components/MemberBottomNav';
 import { NavigationLoadingProvider, useNavigationLoading } from './contexts/NavigationLoadingContext';
 import WalkingGolferLoader from './components/WalkingGolferLoader';
 
+const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoading } = useData();
+  const [showLoader, setShowLoader] = React.useState(true);
+  const [hasHiddenLoader, setHasHiddenLoader] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isLoading && !hasHiddenLoader) {
+      const timer = setTimeout(() => {
+        setShowLoader(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, hasHiddenLoader]);
+
+  const handleFadeComplete = () => {
+    setHasHiddenLoader(true);
+  };
+
+  return (
+    <>
+      {!hasHiddenLoader && (
+        <WalkingGolferLoader 
+          isVisible={showLoader} 
+          onFadeComplete={handleFadeComplete} 
+        />
+      )}
+      {children}
+    </>
+  );
+};
+
 const PageSkeleton: React.FC = () => (
   <div className="px-6 pt-4 animate-pulse">
     <div className="h-8 w-48 bg-white/10 rounded-lg mb-2" />
@@ -565,16 +596,17 @@ const App: React.FC = () => {
           <BottomNavProvider>
           <AnnouncementBadgeProvider>
           <NavigationLoadingProvider>
-          <OfflineBanner />
-          <WalkingGolferLoader />
-          <HashRouter>
-            <SmoothScrollProvider>
-              <ScrollToTop />
-              <Layout>
-                <AnimatedRoutes />
-              </Layout>
-            </SmoothScrollProvider>
-          </HashRouter>
+          <InitialLoadingScreen>
+            <OfflineBanner />
+            <HashRouter>
+              <SmoothScrollProvider>
+                <ScrollToTop />
+                <Layout>
+                  <AnimatedRoutes />
+                </Layout>
+              </SmoothScrollProvider>
+            </HashRouter>
+          </InitialLoadingScreen>
           </NavigationLoadingProvider>
           </AnnouncementBadgeProvider>
           </BottomNavProvider>
