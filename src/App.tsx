@@ -400,7 +400,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         if (isStaffOrAdmin && !isViewingAs) {
             navigate('/admin');
         } else if (isProfilePage) {
-            navigate('/dashboard');
+            // Do nothing - user is already on profile, use center icon to go back
+            return;
         } else if (isMemberRoute) {
             navigate('/profile');
         } else {
@@ -420,9 +421,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       if (!user) return 'login';
       // For staff/admin not viewing as member, show admin icon
       if (isStaffOrAdmin && !isViewingAs) return 'admin_panel_settings';
-      // Home icon on profile page to go back to dashboard
-      if (isProfilePage) return 'home';
-      // Gear icon for member portal settings, profile circle for public pages
+      // Gear icon for member portal (including profile page)
       if (isMemberRoute) return 'settings';
       return 'account_circle';
   };
