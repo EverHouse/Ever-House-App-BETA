@@ -450,7 +450,7 @@ const Dashboard: React.FC = () => {
           const useDarkLogo = ['Social', 'Premium', 'VIP'].includes(baseTier);
           return (
             <div 
-              onClick={() => navigate('/profile')} 
+              onClick={() => navigate('/profile', { state: { openMembershipModal: true } })} 
               className="relative h-48 w-full rounded-[1.5rem] overflow-hidden cursor-pointer transform transition-transform active:scale-95 shadow-layered group animate-pop-in mb-6"
               style={{animationDelay: '0.11s'}}
             >
