@@ -1208,8 +1208,8 @@ const AnnouncementsAdmin: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="flex justify-end gap-2 mb-4">
+        <div className="animate-pop-in">
+            <div className="flex justify-end gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <button onClick={openCreate} className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-accent/90 transition-colors">
                     <span className="material-symbols-outlined text-lg">add</span> Announcement
                 </button>
@@ -1282,15 +1282,15 @@ const AnnouncementsAdmin: React.FC = () => {
             )}
 
             {/* Announcements Section */}
-            <div className="space-y-4">
+            <div className="space-y-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
                 {announcements.length > 0 && (
                     <h3 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
                         <span className="material-symbols-outlined text-amber-500 text-[18px]">campaign</span>
                         Announcements ({announcements.length})
                     </h3>
                 )}
-                {announcements.map(item => (
-                    <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm flex justify-between items-start cursor-pointer hover:border-primary/30 transition-all">
+                {announcements.map((item, index) => (
+                    <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm flex justify-between items-start cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.15 + index * 0.05}s`}}>
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
                                 <span className="w-2 h-2 rounded-full bg-accent"></span>
@@ -1988,10 +1988,10 @@ const SimulatorAdmin: React.FC = () => {
     };
 
     return (
-        <div className="flex justify-center">
+        <div className="flex justify-center animate-pop-in">
             <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
             {/* Tab Bar */}
-            <div className="flex justify-center border-b border-gray-200 dark:border-white/10 mb-0">
+            <div className="flex justify-center border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <button
                     onClick={() => setActiveView('requests')}
                     className={`py-3 px-6 font-medium text-sm transition-all relative ${
@@ -2025,7 +2025,7 @@ const SimulatorAdmin: React.FC = () => {
                     <span className="material-symbols-outlined animate-spin text-primary dark:text-white">progress_activity</span>
                 </div>
             ) : activeView === 'requests' ? (
-                <div className="space-y-6 p-5">
+                <div className="space-y-6 p-5 animate-pop-in" style={{animationDelay: '0.1s'}}>
                     <div>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-yellow-500">pending</span>
@@ -2037,8 +2037,8 @@ const SimulatorAdmin: React.FC = () => {
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {pendingRequests.map(req => (
-                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10">
+                                {pendingRequests.map((req, index) => (
+                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10 animate-pop-in" style={{animationDelay: `${0.15 + index * 0.05}s`}}>
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
                                                 <p className="font-bold text-primary dark:text-white">{req.user_name || req.user_email}</p>
@@ -2083,7 +2083,7 @@ const SimulatorAdmin: React.FC = () => {
                         )}
                     </div>
                     
-                    <div>
+                    <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-gray-400">history</span>
                             Recent Processed ({processedRequests.length})
@@ -2128,9 +2128,9 @@ const SimulatorAdmin: React.FC = () => {
                     </div>
                 </div>
             ) : (
-                <div>
+                <div className="animate-pop-in" style={{animationDelay: '0.1s'}}>
                     {/* Date Selector Row */}
-                    <div className="bg-gray-50 dark:bg-white/5 py-3 mb-4">
+                    <div className="bg-gray-50 dark:bg-white/5 py-3 mb-4 animate-pop-in" style={{animationDelay: '0.2s'}}>
                         <div className="flex items-center justify-center gap-2">
                             <button
                                 onClick={() => {
@@ -2161,7 +2161,7 @@ const SimulatorAdmin: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="overflow-x-auto px-2 pb-4 scroll-fade-right">
+                    <div className="overflow-x-auto px-2 pb-4 scroll-fade-right animate-pop-in" style={{animationDelay: '0.25s'}}>
                         <div className="inline-block min-w-full">
                             <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, minmax(60px, 1fr))` }}>
                                 <div className="h-10 sticky left-0 z-10 bg-white dark:bg-surface-dark"></div>
@@ -4029,8 +4029,8 @@ const BlocksAdmin: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex gap-2 mb-4">
+        <div className="space-y-6 animate-pop-in">
+            <div className="flex gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <button
                     onClick={() => setActiveTab('closures')}
                     className={`flex-1 py-3 rounded-xl font-medium transition-all ${
@@ -4056,7 +4056,7 @@ const BlocksAdmin: React.FC = () => {
             </div>
 
             {activeTab === 'closures' && (
-                <div className="space-y-4">
+                <div className="space-y-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
                     <button
                         onClick={openNewClosure}
                         className="w-full py-3 rounded-xl bg-red-500 text-white font-bold flex items-center justify-center gap-2 hover:bg-red-600 transition-all"
@@ -4074,11 +4074,12 @@ const BlocksAdmin: React.FC = () => {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {closures.map(closure => (
+                            {closures.map((closure, index) => (
                                 <div 
                                     key={closure.id} 
                                     onClick={() => handleEditClosure(closure)}
-                                    className="p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 cursor-pointer hover:border-red-400 dark:hover:border-red-500/50 transition-all"
+                                    className="p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 cursor-pointer hover:border-red-400 dark:hover:border-red-500/50 transition-all animate-pop-in"
+                                    style={{animationDelay: `${0.15 + index * 0.05}s`}}
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
@@ -4122,8 +4123,8 @@ const BlocksAdmin: React.FC = () => {
             )}
 
             {activeTab === 'blocks' && (
-                <div className="space-y-4">
-                    <div className="flex flex-wrap gap-3 items-center">
+                <div className="space-y-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                    <div className="flex flex-wrap gap-3 items-center animate-pop-in" style={{animationDelay: '0.15s'}}>
                         <select
                             value={filterResource}
                             onChange={(e) => setFilterResource(e.target.value)}
@@ -4171,10 +4172,11 @@ const BlocksAdmin: React.FC = () => {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {filteredBlocks.map(block => (
+                            {filteredBlocks.map((block, index) => (
                                 <div
                                     key={block.id}
-                                    className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center gap-4"
+                                    className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center gap-4 animate-pop-in"
+                                    style={{animationDelay: `${0.2 + index * 0.05}s`}}
                                 >
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
