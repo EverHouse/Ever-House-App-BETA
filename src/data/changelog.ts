@@ -232,5 +232,17 @@ export const changelog: ChangelogEntry[] = [
       "Training Guide: comprehensive content for all portal features",
       "Enhanced print CSS for cleaner PDF exports"
     ]
+  },
+  {
+    version: "3.3",
+    date: "2025-12-27",
+    title: "Loading Screen Reliability",
+    changes: [
+      "Fixed loading screen race condition that could cause indefinite loading",
+      "Improved WalkingGolferLoader fade-out animation timing",
+      "Added safety timeout (2s) to ensure loader always dismisses",
+      "Enhanced React StrictMode compatibility for loading animations",
+      "Public pages now properly signal ready state after data loads"
+    ]
   }
 ];
