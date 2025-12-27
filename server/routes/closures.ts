@@ -620,8 +620,9 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
         
         // Determine what resources are affected
         const affectsConferenceRoom = newAffectedAreas === 'entire_facility' || newAffectedAreas === 'conference_room';
+        const calendarAffectedBayIds = await getAffectedBayIds(newAffectedAreas);
         const affectsBays = newAffectedAreas === 'entire_facility' || newAffectedAreas === 'all_bays' || 
-          newAffectedAreas.includes('bay_') || affectedBayIds.length > 0;
+          newAffectedAreas.includes('bay_') || calendarAffectedBayIds.length > 0;
         
         // Create golf calendar event only if bays are affected
         if (golfCalendarId && affectsBays) {
