@@ -22,6 +22,8 @@ import { NavigationLoadingProvider, useNavigationLoading } from './contexts/Navi
 import WalkingGolferLoader from './components/WalkingGolferLoader';
 import NavigationLoader from './components/NavigationLoader';
 
+const INITIAL_LOAD_SAFETY_TIMEOUT_MS = 3000;
+
 const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isDataReady } = useData();
   const [showLoader, setShowLoader] = React.useState(true);
@@ -35,6 +37,15 @@ const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ childre
       return () => clearTimeout(timer);
     }
   }, [isDataReady, hasHiddenLoader]);
+
+  React.useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      if (!hasHiddenLoader) {
+        setShowLoader(false);
+      }
+    }, INITIAL_LOAD_SAFETY_TIMEOUT_MS);
+    return () => clearTimeout(safetyTimer);
+  }, [hasHiddenLoader]);
 
   const handleFadeComplete = () => {
     setHasHiddenLoader(true);

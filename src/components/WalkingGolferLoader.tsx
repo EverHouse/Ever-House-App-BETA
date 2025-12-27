@@ -56,6 +56,7 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         backgroundColor: '#293515',
         transition: 'opacity 0.5s ease-out',
         opacity: isFadingOut ? 0 : 1,
+        pointerEvents: isFadingOut ? 'none' : 'auto',
       }}
     >
       <div className="loader-content">
