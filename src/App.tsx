@@ -441,12 +441,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   const handleTopRightClick = () => {
     if (user) {
+        // On profile page, do nothing - already on settings
+        if (isProfilePage) {
+            return;
+        }
         // For staff/admin (not viewing as member), go to Staff Portal
         if (isStaffOrAdmin && !isViewingAs) {
             navigate('/admin');
-        } else if (isProfilePage) {
-            // Do nothing - user is already on profile, use center icon to go back
-            return;
         } else if (isMemberRoute) {
             navigate('/profile');
         } else {
@@ -464,6 +465,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const getTopRightIcon = () => {
       if (!user) return 'login';
+      // On profile page, show gear icon (already on settings)
+      if (isProfilePage) return 'settings';
       // For staff/admin not viewing as member, show admin icon
       if (isStaffOrAdmin && !isViewingAs) return 'admin_panel_settings';
       // Gear icon for member portal (including profile page)
