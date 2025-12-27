@@ -13,9 +13,10 @@ interface TrainingStep {
   pageIcon?: string;
 }
 
-// Seed data for training sections
-const TRAINING_SEED_DATA = [
+// Seed data for training sections - guideId is a stable identifier for upsert logic
+export const TRAINING_SEED_DATA = [
   {
+    guideId: 'getting-started',
     icon: 'home',
     title: 'Getting Started',
     description: 'Learn how to navigate the Staff Portal',
@@ -30,6 +31,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'booking-requests',
     icon: 'event_note',
     title: 'Managing Booking Requests',
     description: 'Approve, decline, or manage simulator and conference room bookings',
@@ -45,6 +47,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'tours',
     icon: 'directions_walk',
     title: 'Tours',
     description: 'View and manage scheduled facility tours',
@@ -59,6 +62,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'facility-closures',
     icon: 'event_busy',
     title: 'Facility Closures',
     description: 'Schedule closures and availability blocks',
@@ -74,6 +78,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'events-wellness',
     icon: 'calendar_month',
     title: 'Events & Wellness Calendar',
     description: 'Manage events and wellness classes',
@@ -89,6 +94,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'updates-announcements',
     icon: 'campaign',
     title: 'Updates & Announcements',
     description: 'Create announcements and view activity',
@@ -104,6 +110,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'member-directory',
     icon: 'groups',
     title: 'Member Directory',
     description: 'Search and view member profiles',
@@ -118,6 +125,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'inquiries',
     icon: 'mail',
     title: 'Inquiries',
     description: 'Manage form submissions',
@@ -133,6 +141,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'cafe-menu',
     icon: 'local_cafe',
     title: 'Cafe Menu',
     description: 'Update menu items and prices',
@@ -147,6 +156,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'gallery',
     icon: 'photo_library',
     title: 'Gallery',
     description: 'Manage venue photos',
@@ -161,6 +171,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'faqs',
     icon: 'help_outline',
     title: 'FAQs',
     description: 'Edit frequently asked questions',
@@ -175,6 +186,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'team-access',
     icon: 'shield_person',
     title: 'Team Access',
     description: 'Manage staff and admin accounts',
@@ -189,6 +201,7 @@ const TRAINING_SEED_DATA = [
     ]
   },
   {
+    guideId: 'membership-tiers',
     icon: 'loyalty',
     title: 'Membership Tiers',
     description: 'Configure tier settings and permissions',
@@ -205,12 +218,52 @@ const TRAINING_SEED_DATA = [
   },
 ];
 
-// Function to seed training sections (exported for use in startup)
+// Function to seed training sections with upsert logic (exported for use in startup)
+// Updates existing guides by guideId, inserts new ones, preserves custom guides
 export async function seedTrainingSections() {
-  await db.transaction(async (tx) => {
-    await tx.delete(trainingSections);
-    await tx.insert(trainingSections).values(TRAINING_SEED_DATA);
-  });
+  const existing = await db.select().from(trainingSections);
+  const existingByGuideId = new Map(
+    existing.filter(s => s.guideId).map(s => [s.guideId, s])
+  );
+  
+  let updated = 0;
+  let inserted = 0;
+  
+  for (const seedData of TRAINING_SEED_DATA) {
+    const existingSection = existingByGuideId.get(seedData.guideId);
+    
+    if (existingSection) {
+      // Update existing section if content differs
+      const needsUpdate = 
+        existingSection.icon !== seedData.icon ||
+        existingSection.title !== seedData.title ||
+        existingSection.description !== seedData.description ||
+        existingSection.sortOrder !== seedData.sortOrder ||
+        existingSection.isAdminOnly !== seedData.isAdminOnly ||
+        JSON.stringify(existingSection.steps) !== JSON.stringify(seedData.steps);
+      
+      if (needsUpdate) {
+        await db.update(trainingSections)
+          .set({
+            icon: seedData.icon,
+            title: seedData.title,
+            description: seedData.description,
+            steps: seedData.steps,
+            sortOrder: seedData.sortOrder,
+            isAdminOnly: seedData.isAdminOnly,
+            updatedAt: new Date(),
+          })
+          .where(eq(trainingSections.id, existingSection.id));
+        updated++;
+      }
+    } else {
+      // Insert new section
+      await db.insert(trainingSections).values(seedData);
+      inserted++;
+    }
+  }
+  
+  console.log(`[Training] Seed complete: ${updated} updated, ${inserted} inserted`);
 }
 
 router.get('/api/training-sections', isStaffOrAdmin, async (req, res) => {
