@@ -22,6 +22,7 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 - **Color Palette**: Deep Green (#293515), Lavender (#CCB8E4), Bone (#F2F2EC), Background Dark (#0f120a).
 - **Liquid Glass Design System**: iOS-inspired glassmorphism applied consistently in both light and dark modes with backdrop blur, reflective edges, inner depth, extra-large rounded corners, and fluid hover animations (scale + shadow lift). Light mode uses 85% opacity glass for WCAG AA text contrast compliance. Utilizes specific CSS classes (e.g., `.glass-card`) and CSS variables.
 - **WCAG Accessibility**: All interactive elements meet WCAG AA contrast requirements (4.5:1 for normal text, 3:1 for large text/UI). Menu hover states use 80% opacity for sufficient contrast. Deep Green (#293515) on light backgrounds achieves ~12:1 contrast.
+- **Selection States**: All active/selected states (date buttons, duration, time slots, filters, theme toggles) use lavender fill (`bg-accent` #CCB8E4) with Deep Green text for consistent visual language and WCAG-compliant contrast.
 - **Branding**: EH monogram logo on public pages; page titles in portal headers.
 - **Header Navigation Pattern**: Unified header across portals - Left: hamburger menu, Center: page title text, Right: notifications + avatar (initials). Avatar component shows user's initials and navigates to profile.
 - **Profile Page Navigation**: Profile page shows role-appropriate bottom nav (MemberBottomNav for members, StaffBottomNavSimple for staff/admin) for easy navigation back to portals.
