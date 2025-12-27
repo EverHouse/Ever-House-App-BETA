@@ -1,10 +1,18 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useNavigationLoading } from '../contexts/NavigationLoadingContext';
 
 const NavigationLoader: React.FC = () => {
-  const { isNavigating } = useNavigationLoading();
+  const { isNavigating, endNavigation } = useNavigationLoading();
+  const location = useLocation();
   const [visible, setVisible] = React.useState(false);
   const [fadeOut, setFadeOut] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isNavigating) {
+      endNavigation();
+    }
+  }, [location.pathname]);
 
   React.useEffect(() => {
     if (isNavigating) {
@@ -15,7 +23,7 @@ const NavigationLoader: React.FC = () => {
       const timer = setTimeout(() => {
         setVisible(false);
         setFadeOut(false);
-      }, 300);
+      }, 200);
       return () => clearTimeout(timer);
     }
   }, [isNavigating, visible]);
@@ -31,18 +39,18 @@ const NavigationLoader: React.FC = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(41, 53, 21, 0.95)',
-        backdropFilter: 'blur(8px)',
-        transition: 'opacity 0.3s ease-out',
+        backgroundColor: 'rgba(41, 53, 21, 0.92)',
+        backdropFilter: 'blur(4px)',
+        transition: 'opacity 0.2s ease-out',
         opacity: fadeOut ? 0 : 1,
       }}
     >
       <div className="navigation-loader-mascot">
         <img 
           src="/assets/logos/mascot-white.webp" 
-          alt="Loading..." 
+          alt="" 
           style={{
-            width: '80px',
+            width: '64px',
             height: 'auto',
           }}
         />
@@ -50,16 +58,12 @@ const NavigationLoader: React.FC = () => {
 
       <style>{`
         .navigation-loader-mascot {
-          animation: navWalk 0.5s ease-in-out infinite;
+          animation: navWalk 0.4s ease-in-out infinite;
         }
 
         @keyframes navWalk {
-          0%, 100% { 
-            transform: translateY(0) rotate(-1deg); 
-          }
-          50% { 
-            transform: translateY(-5px) rotate(1deg); 
-          }
+          0%, 100% { transform: translateY(0) rotate(-1deg); }
+          50% { transform: translateY(-4px) rotate(1deg); }
         }
       `}</style>
     </div>

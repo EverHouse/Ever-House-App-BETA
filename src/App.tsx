@@ -599,8 +599,8 @@ const App: React.FC = () => {
           <NavigationLoadingProvider>
           <InitialLoadingScreen>
             <OfflineBanner />
-            <NavigationLoader />
             <HashRouter>
+              <NavigationLoader />
               <SmoothScrollProvider>
                 <ScrollToTop />
                 <Layout>
