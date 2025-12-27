@@ -90,6 +90,27 @@ const AdminDashboard: React.FC = () => {
 
   if (!actualUser || (actualUser.role !== 'admin' && actualUser.role !== 'staff')) return null;
 
+  const getCenterIcon = () => {
+    switch (activeTab) {
+      case 'home': return 'dashboard';
+      case 'cafe': return 'restaurant_menu';
+      case 'events': return 'celebration';
+      case 'announcements': return 'campaign';
+      case 'directory': return 'group';
+      case 'simulator': return 'sports_golf';
+      case 'team': return 'shield_person';
+      case 'faqs': return 'help';
+      case 'inquiries': return 'mail';
+      case 'gallery': return 'photo_library';
+      case 'tiers': return 'loyalty';
+      case 'blocks': return 'block';
+      case 'changelog': return 'history';
+      case 'training': return 'menu_book';
+      case 'conflicts': return 'warning';
+      default: return 'dashboard';
+    }
+  };
+
   const headerContent = (
     <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-[9998] pointer-events-auto">
       <button 
@@ -99,11 +120,19 @@ const AdminDashboard: React.FC = () => {
         <span className="material-symbols-outlined text-[24px]">menu</span>
       </button>
       
-      <div className="cursor-pointer flex items-center justify-center" onClick={() => navigate('/')}>
-        <Logo type="mascot" variant="white" className="h-14 w-auto" />
+      <div 
+        className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center" 
+        onClick={() => setActiveTab('home')}
+      >
+        <span 
+          key={getCenterIcon()}
+          className="material-symbols-outlined text-[32px] animate-icon-morph"
+        >
+          {getCenterIcon()}
+        </span>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 ml-auto">
         <button 
           onClick={() => openNotifications()}
           className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity relative"
