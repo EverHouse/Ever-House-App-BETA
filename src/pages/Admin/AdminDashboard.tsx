@@ -243,7 +243,7 @@ interface NavItemData {
 const NAV_ITEMS: NavItemData[] = [
   { id: 'home', icon: 'home', label: 'Home' },
   { id: 'simulator', icon: 'event_note', label: 'Bookings' },
-  { id: 'blocks', icon: 'event_busy', label: 'Closures' },
+  { id: 'tours', icon: 'directions_walk', label: 'Tours' },
   { id: 'events', icon: 'calendar_month', label: 'Calendar' },
   { id: 'inquiries', icon: 'mail', label: 'Inquiries' },
 ];
