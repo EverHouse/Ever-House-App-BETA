@@ -5512,7 +5512,7 @@ interface TrainingSectionDB {
     icon: string;
     title: string;
     description: string;
-    steps: { title: string; content: string; imageUrl?: string }[];
+    steps: { title: string; content: string; imageUrl?: string; pageIcon?: string }[];
     isAdminOnly: boolean;
     sortOrder: number;
 }
@@ -5537,7 +5537,7 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
     const [description, setDescription] = useState('');
     const [icon, setIcon] = useState('help_outline');
     const [isAdminOnly, setIsAdminOnly] = useState(false);
-    const [steps, setSteps] = useState<{ title: string; content: string; imageUrl?: string }[]>([{ title: '', content: '' }]);
+    const [steps, setSteps] = useState<{ title: string; content: string; imageUrl?: string; pageIcon?: string }[]>([{ title: '', content: '' }]);
     const [saving, setSaving] = useState(false);
     const [showIconPicker, setShowIconPicker] = useState(false);
 
@@ -5567,9 +5567,9 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
         }
     };
 
-    const handleStepChange = (index: number, field: 'title' | 'content', value: string) => {
+    const handleStepChange = (index: number, field: 'title' | 'content' | 'pageIcon', value: string) => {
         const newSteps = [...steps];
-        newSteps[index] = { ...newSteps[index], [field]: value };
+        newSteps[index] = { ...newSteps[index], [field]: value || undefined };
         setSteps(newSteps);
     };
 
@@ -5598,7 +5598,8 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
         const validSteps = steps.filter(s => s.title.trim() && s.content.trim()).map(s => ({
             title: s.title.trim(),
             content: s.content.trim(),
-            ...(s.imageUrl && { imageUrl: s.imageUrl })
+            ...(s.imageUrl && { imageUrl: s.imageUrl }),
+            ...(s.pageIcon && { pageIcon: s.pageIcon })
         }));
         if (validSteps.length === 0) return;
 
@@ -5712,13 +5713,22 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
                                             </button>
                                         )}
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={step.title}
-                                        onChange={(e) => handleStepChange(index, 'title', e.target.value)}
-                                        placeholder="Step title"
-                                        className="w-full px-3 py-2 rounded-lg border border-primary/10 dark:border-white/10 bg-white dark:bg-white/5 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 mb-2 text-sm"
-                                    />
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            type="text"
+                                            value={step.title}
+                                            onChange={(e) => handleStepChange(index, 'title', e.target.value)}
+                                            placeholder="Step title"
+                                            className="flex-1 px-3 py-2 rounded-lg border border-primary/10 dark:border-white/10 bg-white dark:bg-white/5 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 text-sm"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={step.pageIcon || ''}
+                                            onChange={(e) => handleStepChange(index, 'pageIcon', e.target.value)}
+                                            placeholder="Icon (optional)"
+                                            className="w-28 px-3 py-2 rounded-lg border border-primary/10 dark:border-white/10 bg-white dark:bg-white/5 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 text-sm"
+                                        />
+                                    </div>
                                     <textarea
                                         value={step.content}
                                         onChange={(e) => handleStepChange(index, 'content', e.target.value)}
@@ -5726,10 +5736,10 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
                                         rows={2}
                                         className="w-full px-3 py-2 rounded-lg border border-primary/10 dark:border-white/10 bg-white dark:bg-white/5 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 text-sm resize-none"
                                     />
-                                    <div className="mt-2 flex items-center gap-2">
+                                    <div className="mt-2 flex items-center gap-2 flex-wrap">
                                         <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-primary/20 dark:border-white/20 hover:bg-primary/5 dark:hover:bg-white/5 cursor-pointer text-sm text-primary/60 dark:text-white/60">
                                             <span className="material-symbols-outlined text-lg">add_photo_alternate</span>
-                                            {step.imageUrl ? 'Change Image' : 'Add Image (optional)'}
+                                            {step.imageUrl ? 'Replace' : 'Add Image'}
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -5738,7 +5748,21 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
                                             />
                                         </label>
                                         {step.imageUrl && (
-                                            <img src={step.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                                            <>
+                                                <img src={step.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newSteps = [...steps];
+                                                        newSteps[index] = { ...newSteps[index], imageUrl: undefined };
+                                                        setSteps(newSteps);
+                                                    }}
+                                                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-red-500 hover:bg-red-500/10"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">close</span>
+                                                    Remove
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -5860,23 +5884,23 @@ const StaffTrainingGuide: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-pop-in pb-32">
-            <div className="flex items-start justify-between gap-4 mb-6">
-                <div className="text-sm text-primary/60 dark:text-white/60">
+            <div className="mb-6">
+                <p className="text-sm text-primary/60 dark:text-white/60 mb-4">
                     A complete guide to using the Even House Staff Portal. Tap any section to expand and view detailed instructions.
-                </div>
+                </p>
                 <div className="flex gap-2 print:hidden">
                     {isAdmin && (
                         <button
                             onClick={openAddModal}
-                            className="flex items-center gap-2 px-4 py-2 bg-accent text-primary rounded-full text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+                            className="flex items-center gap-2 px-4 py-2.5 bg-accent text-primary rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
                         >
                             <span className="material-symbols-outlined text-lg">add</span>
-                            Add
+                            Add Section
                         </button>
                     )}
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary dark:bg-accent text-white dark:text-primary rounded-full text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-primary dark:bg-white/10 text-white rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
                     >
                         <span className="material-symbols-outlined text-lg">download</span>
                         Download PDF
@@ -5931,7 +5955,14 @@ const StaffTrainingGuide: React.FC = () => {
                                             {index + 1}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold text-primary dark:text-white text-sm print:text-gray-900">{step.title}</h4>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-semibold text-primary dark:text-white text-sm print:text-gray-900">{step.title}</h4>
+                                                {step.pageIcon && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20 dark:bg-accent/30 text-xs text-primary dark:text-accent print:bg-gray-200 print:text-gray-700">
+                                                        <span className="material-symbols-outlined text-xs">{step.pageIcon}</span>
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-sm text-primary/70 dark:text-white/70 mt-1 print:text-gray-600">{step.content}</p>
                                             {step.imageUrl && (
                                                 <img src={step.imageUrl} alt="" className="mt-2 rounded-lg max-w-full h-auto print:max-w-xs" />

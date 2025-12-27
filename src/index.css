@@ -949,11 +949,27 @@ img[loading="lazy"] {
     line-height: 1.5 !important;
   }
   
-  /* Hide navigation, headers, and interactive elements (except training section headers) */
+  /* Hide navigation, headers, floating elements, and interactive elements */
   header,
   nav,
-  .print\\:hidden {
+  .print\\:hidden,
+  [class*="fixed"][class*="bottom"],
+  [class*="fixed"][class*="top"]:not([class*="print"]) {
     display: none !important;
+  }
+  
+  /* Hide floating overlays and backgrounds but keep content visible */
+  .fixed.inset-0:not(main):not([class*="training"]),
+  [class*="liquid-bg"]::before,
+  [class*="liquid-bg"]::after,
+  [class*="animate-pulse-slow"] {
+    display: none !important;
+  }
+  
+  /* Reset backdrop-blur for content (don't hide, just remove effect) */
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
   
   /* Hide the expand arrow icons in print */

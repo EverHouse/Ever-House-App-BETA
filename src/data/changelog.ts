@@ -213,5 +213,24 @@ export const changelog: ChangelogEntry[] = [
       "Fixed 'View as Member' mode by bypassing database tier lookups",
       "Updated database constraints to support all notification types"
     ]
+  },
+  {
+    version: "3.2",
+    date: "2025-12-27",
+    title: "Staff Portal Navigation & Training Guide",
+    isMajor: true,
+    changes: [
+      "Restructured staff portal navigation: Inquiries in bottom nav, campaign icon in header",
+      "New Updates page with Activity tab (staff notifications) and Announcements tab",
+      "URL parameter syncing for all staff portal tabs (deep linking support)",
+      "Staff header icon shows campaign icon linking to Updates page",
+      "Optimized animation system (animate-pop-in from 0.4s to 0.25s)",
+      "Staggered animations with 0.05s increments across all portal pages",
+      "Training Guide improvements: buttons repositioned below description",
+      "Training Guide: add/remove image support for step instructions",
+      "Training Guide: page icon badges showing relevant portal pages",
+      "Training Guide: comprehensive content for all portal features",
+      "Enhanced print CSS for cleaner PDF exports"
+    ]
   }
 ];

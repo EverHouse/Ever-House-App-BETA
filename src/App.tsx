@@ -471,11 +471,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div className="flex items-center gap-1 ml-auto">
         {isMemberRoute && user && (
           <button 
-            onClick={() => navigate('/updates?tab=activity')}
+            onClick={() => isStaffOrAdmin && !isViewingAs ? navigate('/admin?tab=updates') : navigate('/updates?tab=activity')}
             className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg relative`}
-            aria-label="Notifications"
+            aria-label={isStaffOrAdmin && !isViewingAs ? "Updates" : "Notifications"}
           >
-            <span className="material-symbols-outlined text-[24px]">notifications</span>
+            <span className="material-symbols-outlined text-[24px]">{isStaffOrAdmin && !isViewingAs ? 'campaign' : 'notifications'}</span>
             {unreadCount > 0 && (
               <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
