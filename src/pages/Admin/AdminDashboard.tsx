@@ -1869,7 +1869,7 @@ const SimulatorAdmin: React.FC = () => {
 
     return (
         <div className="flex justify-center">
-            <div className="w-full max-w-md bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
+            <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
             {/* Tab Bar */}
             <div className="flex justify-center border-b border-gray-200 dark:border-white/10 mb-0">
                 <button
