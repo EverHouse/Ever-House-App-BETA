@@ -172,5 +172,46 @@ export const changelog: ChangelogEntry[] = [
       "Admin-only changelog page showing version history",
       "Versioned updates with timestamps"
     ]
+  },
+  {
+    version: "2.9",
+    date: "2025-12-26",
+    title: "Booking System Refinements",
+    changes: [
+      "Updated to use correct API endpoints for booking page prefetch",
+      "Booking requests now succeed even if notifications fail (non-blocking)",
+      "Fixed notification creation errors for closure events",
+      "Improved booking request notification delivery to staff",
+      "Limit 90-minute duration option to Premium+ tiers",
+      "Updated club timezone to Pacific (America/Los_Angeles) for accurate time filtering",
+      "Adjusted time slot availability to account for Pacific timezone",
+      "Filter out unavailable time slots for same-day bookings",
+      "Removed past booking times from availability choices",
+      "Adjusted booking date picker to exclude current day from advance booking limits"
+    ]
+  },
+  {
+    version: "3.0",
+    date: "2025-12-26",
+    title: "UI/UX Polish & Visual Consistency",
+    changes: [
+      "Standardized class creation button height to match sync button (min-h-[60px])",
+      "Improved button styling for consistent visual appearance across all sections",
+      "Aligned wellness administration buttons with event button styling",
+      "Made wellness class action buttons consistent with event buttons",
+      "Increased external service icons on admin dashboard (sync, integration buttons)",
+      "Made event sync icons larger to fill button space",
+      "Made integration/connector icons larger for better visual prominence"
+    ]
+  },
+  {
+    version: "3.1",
+    date: "2025-12-26",
+    title: "Frontend Infrastructure",
+    changes: [
+      "Passed member tier information from frontend to booking API",
+      "Fixed 'View as Member' mode by bypassing database tier lookups",
+      "Updated database constraints to support all notification types"
+    ]
   }
 ];
