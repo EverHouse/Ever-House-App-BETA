@@ -1622,6 +1622,7 @@ const SimulatorAdmin: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [availabilityStatus, setAvailabilityStatus] = useState<'checking' | 'available' | 'conflict' | null>(null);
     const [conflictDetails, setConflictDetails] = useState<string | null>(null);
+    const [showTrackmanConfirm, setShowTrackmanConfirm] = useState(false);
     
     const [calendarDate, setCalendarDate] = useState(() => new Date().toISOString().split('T')[0]);
 
@@ -1798,13 +1799,19 @@ const SimulatorAdmin: React.FC = () => {
     const pendingRequests = requests.filter(r => r.status === 'pending' || r.status === 'pending_approval');
     const processedRequests = requests.filter(r => r.status !== 'pending' && r.status !== 'pending_approval');
 
-    const handleApprove = async () => {
+    const initiateApproval = () => {
         if (!selectedRequest) return;
         
         if (selectedRequest.source !== 'booking' && !selectedBayId) {
             setError('Please select a bay');
             return;
         }
+        
+        setShowTrackmanConfirm(true);
+    };
+
+    const handleApprove = async () => {
+        if (!selectedRequest) return;
         
         setIsProcessing(true);
         setError(null);
@@ -1840,12 +1847,14 @@ const SimulatorAdmin: React.FC = () => {
                     ? { ...r, status: 'confirmed' as const } 
                     : r
             ));
+            setShowTrackmanConfirm(false);
             setActionModal(null);
             setSelectedRequest(null);
             setSelectedBayId(null);
             setStaffNotes('');
         } catch (err: any) {
             setError(err.message);
+            setShowTrackmanConfirm(false);
         } finally {
             setIsProcessing(false);
         }
@@ -2249,7 +2258,7 @@ const SimulatorAdmin: React.FC = () => {
 
             {actionModal && selectedRequest && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); }} />
+                    <div className="fixed inset-0 bg-black/50" onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
@@ -2331,14 +2340,14 @@ const SimulatorAdmin: React.FC = () => {
                             
                             <div className="flex gap-3">
                                 <button
-                                    onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); }}
+                                    onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }}
                                     className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
                                     disabled={isProcessing}
                                 >
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={actionModal === 'approve' ? handleApprove : handleDecline}
+                                    onClick={actionModal === 'approve' ? initiateApproval : handleDecline}
                                     disabled={isProcessing || (actionModal === 'approve' && (!selectedBayId || availabilityStatus === 'conflict' || availabilityStatus === 'checking'))}
                                     className={`flex-1 py-3 px-4 rounded-lg text-white font-medium flex items-center justify-center gap-2 ${
                                         actionModal === 'approve' 
@@ -2354,6 +2363,66 @@ const SimulatorAdmin: React.FC = () => {
                                         </span>
                                     )}
                                     {actionModal === 'approve' ? 'Approve' : (selectedRequest?.status === 'approved' ? 'Cancel Booking' : 'Decline')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {showTrackmanConfirm && selectedRequest && createPortal(
+                <div className="fixed inset-0 z-[10002] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50" onClick={() => setShowTrackmanConfirm(false)} />
+                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-sm w-full shadow-xl pointer-events-auto">
+                            <div className="text-center mb-4">
+                                <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mx-auto mb-3">
+                                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-2xl">sports_golf</span>
+                                </div>
+                                <h3 className="text-lg font-bold text-primary dark:text-white mb-2">Trackman Confirmation</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Have you created this booking in Trackman?
+                                </p>
+                            </div>
+                            
+                            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg mb-4 text-sm">
+                                <p className="font-medium text-primary dark:text-white">{selectedRequest.user_name || selectedRequest.user_email}</p>
+                                <p className="text-gray-500 dark:text-gray-400">
+                                    {formatDateShort(selectedRequest.request_date)} • {formatTime12(selectedRequest.start_time)} - {formatTime12(selectedRequest.end_time)}
+                                </p>
+                                {selectedBayId && (
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        {resources.find(r => r.id === selectedBayId)?.name || `Bay ${selectedBayId}`}
+                                    </p>
+                                )}
+                            </div>
+
+                            {error && (
+                                <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
+                                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                                </div>
+                            )}
+                            
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowTrackmanConfirm(false)}
+                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                                    disabled={isProcessing}
+                                >
+                                    Go Back
+                                </button>
+                                <button
+                                    onClick={handleApprove}
+                                    disabled={isProcessing}
+                                    className="flex-1 py-3 px-4 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isProcessing ? (
+                                        <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                                    ) : (
+                                        <span className="material-symbols-outlined text-sm">check</span>
+                                    )}
+                                    Yes, Approve
                                 </button>
                             </div>
                         </div>
