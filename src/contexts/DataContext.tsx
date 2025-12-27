@@ -86,6 +86,7 @@ interface DataContextType {
   members: MemberProfile[];
   bookings: Booking[];
   isLoading: boolean;
+  isDataReady: boolean;
   
   // Auth Actions
   login: (email: string) => Promise<void>;
@@ -328,11 +329,16 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [actualUser, setActualUser] = useState<MemberProfile | null>(null);
   const [viewAsUser, setViewAsUserState] = useState<MemberProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [cafeMenuLoaded, setCafeMenuLoaded] = useState(false);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+  const [announcementsLoaded, setAnnouncementsLoaded] = useState(false);
   const [cafeMenu, setCafeMenu] = useState<CafeItem[]>([]);
   const [events, setEvents] = useState<EventData[]>(INITIAL_EVENTS);
   const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
   const [members, setMembers] = useState<MemberProfile[]>(INITIAL_MEMBERS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  
+  const isDataReady = !isLoading && cafeMenuLoaded && eventsLoaded && announcementsLoaded;
   
   const isViewingAs = viewAsUser !== null;
   const user = viewAsUser || actualUser;
@@ -496,6 +502,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     fetchAndCache<any[]>('cafe_menu', '/api/cafe-menu', (data) => {
       if (isValidCafeData(data)) {
         setCafeMenu(formatCafeData(data));
+        setCafeMenuLoaded(true);
       }
     });
 
@@ -508,14 +515,17 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             const data = await res.json();
             if (isValidCafeData(data)) {
               setCafeMenu(formatCafeData(data));
+              setCafeMenuLoaded(true);
             }
           }
         }
       } catch {}
+      setCafeMenuLoaded(true);
     };
 
     const timer = setTimeout(() => {
       if (cafeMenu.length === 0) directFetch();
+      else setCafeMenuLoaded(true);
     }, 1500);
 
     return () => clearTimeout(timer);
@@ -534,6 +544,8 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
         }
       } catch (err) {
         console.error('Failed to fetch announcements:', err);
+      } finally {
+        setAnnouncementsLoaded(true);
       }
     };
     fetchAnnouncements();
@@ -598,7 +610,10 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
 
     fetchAndCache<any[]>('events', '/api/events', (data) => {
       if (data?.length) setEvents(formatEventData(data));
+      setEventsLoaded(true);
     });
+    
+    setTimeout(() => setEventsLoaded(true), 2000);
   }, []);
 
   // Auth Logic - verify member email
@@ -876,7 +891,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     <DataContext.Provider value={{
       user, actualUser, viewAsUser, isViewingAs,
       login, loginWithMember, logout, refreshUser, setViewAsUser, clearViewAsUser,
-      cafeMenu, events, announcements, members, bookings, isLoading,
+      cafeMenu, events, announcements, members, bookings, isLoading, isDataReady,
       addCafeItem, updateCafeItem, deleteCafeItem, refreshCafeMenu,
       addEvent, updateEvent, deleteEvent, syncEventbrite,
       addAnnouncement, updateAnnouncement, deleteAnnouncement,

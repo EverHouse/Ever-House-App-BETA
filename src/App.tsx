@@ -22,18 +22,18 @@ import { NavigationLoadingProvider, useNavigationLoading } from './contexts/Navi
 import WalkingGolferLoader from './components/WalkingGolferLoader';
 
 const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isLoading } = useData();
+  const { isDataReady } = useData();
   const [showLoader, setShowLoader] = React.useState(true);
   const [hasHiddenLoader, setHasHiddenLoader] = React.useState(false);
 
   React.useEffect(() => {
-    if (!isLoading && !hasHiddenLoader) {
+    if (isDataReady && !hasHiddenLoader) {
       const timer = setTimeout(() => {
         setShowLoader(false);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, hasHiddenLoader]);
+  }, [isDataReady, hasHiddenLoader]);
 
   const handleFadeComplete = () => {
     setHasHiddenLoader(true);
