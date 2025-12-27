@@ -347,12 +347,12 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
       
       if (event.start?.dateTime) {
         const startDt = new Date(event.start.dateTime);
-        eventDate = startDt.toISOString().split('T')[0];
-        startTime = startDt.toTimeString().substring(0, 8);
+        eventDate = startDt.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+        startTime = startDt.toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour12: false });
         
         if (event.end?.dateTime) {
           const endDt = new Date(event.end.dateTime);
-          endTime = endDt.toTimeString().substring(0, 8);
+          endTime = endDt.toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour12: false });
         }
       } else if (event.start?.date) {
         eventDate = event.start.date;
@@ -433,12 +433,9 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
       
       if (event.start?.dateTime) {
         const startDt = new Date(event.start.dateTime);
-        eventDate = startDt.toISOString().split('T')[0];
-        const hours = startDt.getHours();
-        const minutes = startDt.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-        startTime = `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+        eventDate = startDt.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+        const pacificTime = startDt.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hour12: true });
+        startTime = pacificTime;
         
         if (event.end?.dateTime) {
           const endDt = new Date(event.end.dateTime);

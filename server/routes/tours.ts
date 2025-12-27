@@ -207,12 +207,12 @@ export async function syncToursFromCalendar(): Promise<{ synced: number; created
       
       if (event.start?.dateTime) {
         const startDt = new Date(event.start.dateTime);
-        tourDate = startDt.toISOString().split('T')[0];
-        startTime = startDt.toTimeString().substring(0, 8);
+        tourDate = startDt.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+        startTime = startDt.toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour12: false });
         
         if (event.end?.dateTime) {
           const endDt = new Date(event.end.dateTime);
-          endTime = endDt.toTimeString().substring(0, 8);
+          endTime = endDt.toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour12: false });
         }
       } else if (event.start?.date) {
         tourDate = event.start.date;
