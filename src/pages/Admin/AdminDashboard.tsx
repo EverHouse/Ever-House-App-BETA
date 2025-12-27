@@ -300,17 +300,20 @@ const StaffBottomNav: React.FC<{
 // --- STAFF DASHBOARD HOME ---
 
 const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdmin?: boolean }> = ({ setActiveTab, isAdmin }) => {
-  const staffLinks = [
+  const operationsLinks = [
     { id: 'simulator' as TabType, icon: 'event_note', label: 'Bookings', description: 'Manage booking requests and approvals' },
     { id: 'events' as TabType, icon: 'calendar_month', label: 'Calendar', description: 'View and manage events and wellness' },
     { id: 'announcements' as TabType, icon: 'campaign', label: 'Announcements', description: 'Post news and updates for members' },
+    { id: 'blocks' as TabType, icon: 'event_busy', label: 'Closures', description: 'Manage closures and availability blocks' },
     { id: 'directory' as TabType, icon: 'groups', label: 'Directory', description: 'Search and manage members' },
+    { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
+    { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
+  ];
+
+  const publicContentLinks = [
     { id: 'cafe' as TabType, icon: 'local_cafe', label: 'Cafe Menu', description: 'Update menu items and prices' },
     { id: 'gallery' as TabType, icon: 'photo_library', label: 'Gallery', description: 'Manage venue photos' },
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
-    { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
-    { id: 'blocks' as TabType, icon: 'event_busy', label: 'Closures', description: 'Manage closures and availability blocks' },
-    { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
   ];
 
   const adminLinks = [
@@ -334,9 +337,18 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
   return (
     <div className="animate-pop-in">
       <div className="grid grid-cols-2 gap-4">
-        {staffLinks.map((link) => (
+        {operationsLinks.map((link) => (
           <CardButton key={link.id} link={link} />
         ))}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Public Content</h2>
+        <div className="grid grid-cols-2 gap-4">
+          {publicContentLinks.map((link) => (
+            <CardButton key={link.id} link={link} />
+          ))}
+        </div>
       </div>
 
       {isAdmin && (
