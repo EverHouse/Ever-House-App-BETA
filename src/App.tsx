@@ -9,6 +9,7 @@ import DirectionalPageTransition, { TransitionContext } from './components/motio
 import Logo from './components/Logo';
 import MenuOverlay from './components/MenuOverlay';
 import ViewAsBanner from './components/ViewAsBanner';
+import Avatar from './components/Avatar';
 import { ToastProvider } from './components/Toast';
 import OfflineBanner from './components/OfflineBanner';
 import { NotificationContext } from './contexts/NotificationContext';
@@ -474,16 +475,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       return 'account_circle';
   };
 
-  const getCenterIcon = () => {
+  const getPageTitle = () => {
       if (!isMemberRoute) return null;
       const path = location.pathname;
-      if (path === '/dashboard') return 'home';
-      if (path === '/profile') return 'account_circle';
-      if (path.startsWith('/book')) return 'sports_golf';
-      if (path.startsWith('/member-wellness')) return 'spa';
-      if (path.startsWith('/announcements')) return 'campaign';
-      if (path.startsWith('/member-events')) return 'celebration';
-      return 'home';
+      if (path === '/dashboard') return 'Dashboard';
+      if (path === '/profile') return 'Profile';
+      if (path.startsWith('/book')) return 'Book Golf';
+      if (path.startsWith('/member-wellness')) return 'Wellness';
+      if (path.startsWith('/announcements')) return 'News';
+      if (path.startsWith('/member-events')) return 'Events';
+      return 'Dashboard';
   };
 
   const openNotifications = (tab?: 'updates' | 'announcements') => {
@@ -513,18 +514,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </button>
       
       {isMemberRoute ? (
-        <button 
-          className={`absolute left-1/2 -translate-x-1/2 flex items-center justify-center ${isProfilePage ? 'cursor-pointer hover:opacity-70 active:scale-95 transition-all' : 'cursor-default'}`}
-          onClick={() => isProfilePage && navigate('/dashboard')}
-          aria-label={isProfilePage ? 'Go to dashboard' : undefined}
-        >
-          <span 
-            key={getCenterIcon()}
-            className={`material-symbols-outlined text-[32px] animate-icon-morph ${isDarkTheme ? 'text-[#F2F2EC]' : 'text-[#F2F2EC]'}`}
-          >
-            {getCenterIcon()}
-          </span>
-        </button>
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+          <h1 className="text-lg font-bold text-[#F2F2EC] tracking-wide">
+            {getPageTitle()}
+          </h1>
+        </div>
       ) : (
         <button 
           className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
@@ -554,18 +548,28 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             )}
           </button>
         )}
-        <button 
-          onClick={handleTopRightClick}
-          className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
-          aria-label={user ? (isMemberRoute ? 'View profile' : 'Go to dashboard') : 'Login'}
-        >
-          <span 
-            key={getTopRightIcon()}
-            className="material-symbols-outlined text-[24px] animate-icon-morph"
+        {isMemberRoute && user ? (
+          <button 
+            onClick={handleTopRightClick}
+            className={`flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-full`}
+            aria-label="View profile"
           >
-             {getTopRightIcon()}
-          </span>
-        </button>
+            <Avatar name={user.name} email={user.email} size="md" />
+          </button>
+        ) : (
+          <button 
+            onClick={handleTopRightClick}
+            className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
+            aria-label={user ? 'Go to dashboard' : 'Login'}
+          >
+            <span 
+              key={getTopRightIcon()}
+              className="material-symbols-outlined text-[24px] animate-icon-morph"
+            >
+               {getTopRightIcon()}
+            </span>
+          </button>
+        )}
       </div>
     </header>
   ) : null;

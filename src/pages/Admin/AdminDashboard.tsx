@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import MenuOverlay from '../../components/MenuOverlay';
-import Logo from '../../components/Logo';
 import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
 import { AVAILABLE_TAGS } from '../../utils/tierUtils';
@@ -17,6 +16,7 @@ import InquiriesAdmin from './InquiriesAdmin';
 import GalleryAdmin from './GalleryAdmin';
 import { changelog } from '../../data/changelog';
 import { useToast } from '../../components/Toast';
+import Avatar from '../../components/Avatar';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -90,29 +90,29 @@ const AdminDashboard: React.FC = () => {
 
   if (!actualUser || (actualUser.role !== 'admin' && actualUser.role !== 'staff')) return null;
 
-  const getCenterIcon = () => {
+  const getTabTitle = () => {
     switch (activeTab) {
-      case 'home': return 'dashboard';
-      case 'cafe': return 'restaurant_menu';
-      case 'events': return 'celebration';
-      case 'announcements': return 'campaign';
-      case 'directory': return 'group';
-      case 'simulator': return 'sports_golf';
-      case 'team': return 'shield_person';
-      case 'faqs': return 'help';
-      case 'inquiries': return 'mail';
-      case 'gallery': return 'photo_library';
-      case 'tiers': return 'loyalty';
-      case 'blocks': return 'event_busy';
-      case 'changelog': return 'history';
-      case 'training': return 'menu_book';
-      case 'conflicts': return 'warning';
-      default: return 'dashboard';
+      case 'home': return 'Dashboard';
+      case 'cafe': return 'Cafe Menu';
+      case 'events': return 'Events';
+      case 'announcements': return 'News';
+      case 'directory': return 'Directory';
+      case 'simulator': return 'Bookings';
+      case 'team': return 'Team Access';
+      case 'faqs': return 'FAQs';
+      case 'inquiries': return 'Inquiries';
+      case 'gallery': return 'Gallery';
+      case 'tiers': return 'Tiers';
+      case 'blocks': return 'Closures';
+      case 'changelog': return 'Changelog';
+      case 'training': return 'Training';
+      case 'conflicts': return 'Conflicts';
+      default: return 'Dashboard';
     }
   };
 
   const headerContent = (
-    <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 py-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-[9998] pointer-events-auto">
+    <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 bg-[#293515] shadow-md transition-all duration-200 text-[#F2F2EC] z-[9998] pointer-events-auto">
       <button 
         onClick={() => setIsMenuOpen(true)}
         className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
@@ -121,16 +121,10 @@ const AdminDashboard: React.FC = () => {
         <span className="material-symbols-outlined text-[24px]">menu</span>
       </button>
       
-      <div 
-        className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center" 
-        onClick={() => setActiveTab('home')}
-      >
-        <span 
-          key={getCenterIcon()}
-          className="material-symbols-outlined text-[32px] animate-icon-morph"
-        >
-          {getCenterIcon()}
-        </span>
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+        <h1 className="text-lg font-bold text-[#F2F2EC] tracking-wide">
+          {getTabTitle()}
+        </h1>
       </div>
 
       <div className="flex items-center gap-1 ml-auto">
@@ -148,10 +142,10 @@ const AdminDashboard: React.FC = () => {
         </button>
         <button 
           onClick={() => navigate('/profile')}
-          className="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity"
-          aria-label="Settings"
+          className="flex items-center justify-center hover:opacity-70 transition-opacity rounded-full"
+          aria-label="View profile"
         >
-          <span className="material-symbols-outlined text-[24px]">settings</span>
+          <Avatar name={actualUser?.name} email={actualUser?.email} size="md" />
         </button>
       </div>
     </header>
@@ -164,27 +158,7 @@ const AdminDashboard: React.FC = () => {
       {createPortal(headerContent, document.body)}
 
       {/* Main Content Area - add top padding for fixed header */}
-      <main className="flex-1 px-4 md:px-8 max-w-4xl mx-auto pt-24 w-full relative z-0">
-        <div className="mb-6 animate-pop-in">
-           <span className="text-xs font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 block mb-1">Staff Portal</span>
-           <h1 className="text-2xl font-bold text-primary dark:text-white">
-               {activeTab === 'home' && 'Dashboard'}
-               {activeTab === 'cafe' && 'Manage Cafe Menu'}
-               {activeTab === 'events' && 'Events & Wellness'}
-               {activeTab === 'announcements' && 'Manage Announcements'}
-               {activeTab === 'directory' && 'Directory'}
-               {activeTab === 'simulator' && 'Bookings'}
-               {activeTab === 'team' && 'Manage Team Access'}
-               {activeTab === 'faqs' && 'Manage FAQs'}
-               {activeTab === 'inquiries' && 'Inquiries'}
-               {activeTab === 'gallery' && 'Manage Gallery'}
-               {activeTab === 'tiers' && 'Manage Tiers'}
-               {activeTab === 'blocks' && 'Closures'}
-               {activeTab === 'changelog' && 'Version History'}
-               {activeTab === 'training' && 'Staff Training Guide'}
-           </h1>
-        </div>
-        
+      <main className="flex-1 px-4 md:px-8 max-w-4xl mx-auto pt-[max(96px,calc(env(safe-area-inset-top)+80px))] w-full relative z-0">
         {activeTab === 'home' && <StaffDashboardHome setActiveTab={setActiveTab} isAdmin={actualUser?.role === 'admin'} />}
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsWellnessAdmin />}
