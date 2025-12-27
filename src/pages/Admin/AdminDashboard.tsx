@@ -2339,7 +2339,7 @@ const SimulatorAdmin: React.FC = () => {
                                 </button>
                                 <button
                                     onClick={actionModal === 'approve' ? handleApprove : handleDecline}
-                                    disabled={isProcessing || (actionModal === 'approve' && !selectedBayId)}
+                                    disabled={isProcessing || (actionModal === 'approve' && (!selectedBayId || availabilityStatus === 'conflict' || availabilityStatus === 'checking'))}
                                     className={`flex-1 py-3 px-4 rounded-lg text-white font-medium flex items-center justify-center gap-2 ${
                                         actionModal === 'approve' 
                                             ? 'bg-green-500 hover:bg-green-600' 
