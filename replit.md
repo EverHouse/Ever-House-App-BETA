@@ -82,7 +82,7 @@ The application uses a React 19 frontend with Vite, styled with Tailwind CSS, an
 
 ## External Dependencies
 
--   **Magic Link Authentication**: Email-based passwordless authentication. Sessions stored in PostgreSQL. Emails sent via Resend. Rate-limited.
+-   **Verification Code Authentication**: Email-based passwordless authentication using 6-digit OTP codes. Sessions stored in PostgreSQL. Emails sent via Resend. Rate-limited. Staff/admin can also use password login.
 -   **HubSpot CRM**: Integrated for contact and member management; access tokens refreshed via Replit Connectors.
 -   **HubSpot Forms**: Application forms submit directly to HubSpot Forms API, utilizing `hutk` cookie. Submissions also stored locally in PostgreSQL for faster queries and offline access.
 -   **Eventbrite**: Syncs members-only events from a specified Eventbrite organization to the application database.
