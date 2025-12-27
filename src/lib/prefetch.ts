@@ -13,7 +13,7 @@ const routeImports: Record<string, () => Promise<any>> = {
 };
 
 const routeAPIs: Record<string, string[]> = {
-  '/book': ['/api/golf-settings', '/api/approved-bookings'],
+  '/book': ['/api/bays', '/api/approved-bookings'],
   '/member-events': ['/api/events'],
   '/member-wellness': ['/api/wellness-classes'],
   '/announcements': ['/api/announcements'],
