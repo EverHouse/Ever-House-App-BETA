@@ -3696,19 +3696,24 @@ const BlocksAdmin: React.FC = () => {
         return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
     };
 
+    const bays = resources.filter(r => r.type === 'simulator');
+
     const formatAffectedAreas = (areas: string | null) => {
         if (!areas) return 'Unknown';
         if (areas === 'entire_facility') return 'Entire Facility';
         if (areas === 'all_bays') return 'All Bays';
         if (areas === 'conference_room') return 'Conference Room';
+        if (areas.startsWith('bay_')) {
+            const bayId = parseInt(areas.replace('bay_', ''));
+            const bay = bays.find(b => b.id === bayId);
+            return bay ? bay.name : areas;
+        }
         return areas;
     };
 
     const filteredBlocks = filterDate 
         ? blocks.filter(b => b.block_date === filterDate)
         : blocks;
-
-    const bays = resources.filter(r => r.type === 'simulator');
     const conferenceRoom = resources.find(r => r.type === 'conference_room');
 
     if (isLoading && closuresLoading) {
@@ -3983,7 +3988,7 @@ const BlocksAdmin: React.FC = () => {
                                         <option value="all_bays">All Bays</option>
                                         <option value="conference_room">Conference Room</option>
                                         {bays.map(bay => (
-                                            <option key={bay.id} value={bay.name}>{bay.name}</option>
+                                            <option key={bay.id} value={`bay_${bay.id}`}>{bay.name}</option>
                                         ))}
                                     </select>
                                 </div>

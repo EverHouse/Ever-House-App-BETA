@@ -116,6 +116,22 @@ function getDatesBetween(startDate: string, endDate: string): string[] {
   return dates;
 }
 
+async function formatAffectedAreasForDisplay(affectedAreas: string): Promise<string> {
+  if (affectedAreas === 'entire_facility') return 'Entire Facility';
+  if (affectedAreas === 'all_bays') return 'All Simulator Bays';
+  if (affectedAreas === 'conference_room') return 'Conference Room';
+  
+  if (affectedAreas.startsWith('bay_')) {
+    const bayId = parseInt(affectedAreas.replace('bay_', ''));
+    if (!isNaN(bayId)) {
+      const [bay] = await db.select({ name: bays.name }).from(bays).where(eq(bays.id, bayId));
+      return bay ? bay.name : affectedAreas;
+    }
+  }
+  
+  return affectedAreas;
+}
+
 async function createAvailabilityBlocksForClosure(
   closureId: number,
   bayIds: number[],
@@ -310,11 +326,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
     
     try {
       const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-      const affectedText = affected_areas === 'entire_facility' 
-        ? 'Entire Facility' 
-        : affected_areas === 'all_bays' 
-          ? 'All Simulator Bays' 
-          : affected_areas;
+      const affectedText = await formatAffectedAreasForDisplay(affected_areas);
           
       const eventTitle = `CLOSURE: ${title || 'Facility Closure'}`;
       const eventDescription = `${reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
@@ -377,11 +389,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
     
     let announcementId: number | null = null;
     try {
-      const affectedText = affected_areas === 'entire_facility' 
-        ? 'Entire Facility' 
-        : affected_areas === 'all_bays' 
-          ? 'All Simulator Bays' 
-          : affected_areas;
+      const affectedText = await formatAffectedAreasForDisplay(affected_areas);
       
       const startDateFormatted = new Date(start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const endDateFormatted = end_date && end_date !== start_date 
@@ -585,12 +593,8 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
     const hasCalendarEvents = existing.googleCalendarId || existing.conferenceCalendarId;
     if (hasCalendarEvents && (datesChanged || timesChanged || title !== existing.title || reason !== existing.reason || areasChanged)) {
       try {
-        const newAffectedAreas = affected_areas || existing.affectedAreas;
-        const affectedText = newAffectedAreas === 'entire_facility' 
-          ? 'Entire Facility' 
-          : newAffectedAreas === 'all_bays' 
-            ? 'All Simulator Bays' 
-            : newAffectedAreas;
+        const newAffectedAreas = affected_areas || existing.affectedAreas || 'entire_facility';
+        const affectedText = await formatAffectedAreasForDisplay(newAffectedAreas);
             
         const eventTitle = `CLOSURE: ${title || existing.title}`;
         const eventDescription = `${reason !== undefined ? reason : existing.reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
