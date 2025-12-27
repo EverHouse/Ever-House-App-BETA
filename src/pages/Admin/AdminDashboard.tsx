@@ -2031,7 +2031,22 @@ const SimulatorAdmin: React.FC = () => {
     }, [selectedBayId, selectedRequest, actionModal]);
 
     const pendingRequests = requests.filter(r => r.status === 'pending' || r.status === 'pending_approval');
-    const processedRequests = requests.filter(r => r.status !== 'pending' && r.status !== 'pending_approval');
+    
+    // Recent Processed: show declined/cancelled member requests only
+    // Exclude future approved/confirmed (they're in Upcoming Bookings) and manual bookings
+    const today = new Date().toISOString().split('T')[0];
+    const processedRequests = requests.filter(r => {
+      // Only include non-pending requests
+      if (r.status === 'pending' || r.status === 'pending_approval') return false;
+      // Exclude manual bookings (source === 'booking' means it came from approved bookings, not member requests)
+      if (r.source === 'booking') return false;
+      // For approved/confirmed, only show past ones (future ones are in Upcoming Bookings)
+      if (r.status === 'approved' || r.status === 'confirmed') {
+        return r.request_date < today;
+      }
+      // Show declined and cancelled
+      return true;
+    });
 
     const upcomingBookings = useMemo(() => {
         const today = new Date().toISOString().split('T')[0];

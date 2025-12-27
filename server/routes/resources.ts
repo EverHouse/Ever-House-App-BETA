@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { eq, and, or, sql, desc, asc } from 'drizzle-orm';
 import { db } from '../db';
-import { bookings, resources, users, facilityClosures, bays } from '../../shared/schema';
+import { bookings, resources, users, facilityClosures, bays, notifications } from '../../shared/schema';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
 import { isStaffOrAdmin } from '../core/middleware';
 import { createCalendarEventOnCalendar, getCalendarIdByName, CALENDAR_CONFIG } from '../core/calendar';
 import { logAndRespond, logger } from '../core/logger';
+import { sendPushNotification } from './push';
 
 const router = Router();
 
@@ -527,6 +528,38 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
         lifetimeVisits: sql`COALESCE(${users.lifetimeVisits}, 0) + 1`
       })
       .where(eq(users.email, member_email));
+
+    // Notify member about their new booking
+    try {
+      const formattedDate = new Date(booking_date + 'T00:00:00').toLocaleDateString('en-US', { 
+        weekday: 'short', month: 'short', day: 'numeric' 
+      });
+      const formatTime = (t: string) => {
+        const [h, m] = t.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hour12 = h % 12 || 12;
+        return `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+      };
+      const notifTitle = 'Booking Confirmed';
+      const notifMessage = `Your ${resource.type === 'simulator' ? 'golf simulator' : 'conference room'} booking for ${formattedDate} at ${formatTime(start_time)} has been confirmed.`;
+      
+      await db.insert(notifications).values({
+        userEmail: member_email,
+        title: notifTitle,
+        message: notifMessage,
+        type: 'booking_approved',
+        relatedId: newBooking.id,
+        relatedType: 'booking'
+      });
+      
+      await sendPushNotification(member_email, {
+        title: notifTitle,
+        body: notifMessage,
+        url: '/dashboard'
+      });
+    } catch (notifErr) {
+      logger.error('Failed to send manual booking notification', { error: notifErr as Error, requestId: req.requestId });
+    }
 
     res.status(201).json({
       success: true,

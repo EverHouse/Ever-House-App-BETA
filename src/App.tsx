@@ -361,7 +361,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       };
       fetchUnreadCount();
       const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
+      
+      // Listen for notifications-read event to refresh badge
+      const handleNotificationsRead = () => fetchUnreadCount();
+      window.addEventListener('notifications-read', handleNotificationsRead);
+      
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('notifications-read', handleNotificationsRead);
+      };
     }
   }, [user?.email]);
   

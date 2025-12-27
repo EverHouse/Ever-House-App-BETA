@@ -244,5 +244,16 @@ export const changelog: ChangelogEntry[] = [
       "Enhanced React StrictMode compatibility for loading animations",
       "Public pages now properly signal ready state after data loads"
     ]
+  },
+  {
+    version: "3.4",
+    date: "2025-12-27",
+    title: "Booking Notifications & Queue Improvements",
+    changes: [
+      "Members now receive notifications when staff manually books them a bay/conference room",
+      "Fixed notification badge not clearing after marking notifications as read",
+      "Recent Processed section now hides manual bookings and future approved bookings (no duplicates with Upcoming Bookings)",
+      "Member Dashboard shows all upcoming bookings including staff-created manual bookings"
+    ]
   }
 ];

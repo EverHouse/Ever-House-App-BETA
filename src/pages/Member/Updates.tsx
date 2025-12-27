@@ -117,6 +117,8 @@ const MemberUpdates: React.FC = () => {
         await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
         setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
+        // Dispatch event to sync header badge
+        window.dispatchEvent(new CustomEvent('notifications-read'));
       } catch (err) {
         console.error('Failed to mark notification as read:', err);
       }
@@ -138,6 +140,8 @@ const MemberUpdates: React.FC = () => {
       });
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
+      // Dispatch event to sync header badge
+      window.dispatchEvent(new CustomEvent('notifications-read'));
     } catch (err) {
       console.error('Failed to mark all as read:', err);
     }
