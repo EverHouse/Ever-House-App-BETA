@@ -2,33 +2,32 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNavigationLoading } from '../contexts/NavigationLoadingContext';
 
+const SAFETY_TIMEOUT_MS = 500;
+
 const NavigationLoader: React.FC = () => {
   const { isNavigating, endNavigation } = useNavigationLoading();
   const location = useLocation();
-  const [visible, setVisible] = React.useState(false);
-  const [fadeOut, setFadeOut] = React.useState(false);
+  const prevPathRef = React.useRef(location.pathname);
+
+  React.useEffect(() => {
+    if (location.pathname !== prevPathRef.current) {
+      prevPathRef.current = location.pathname;
+      if (isNavigating) {
+        endNavigation();
+      }
+    }
+  }, [location.pathname, isNavigating, endNavigation]);
 
   React.useEffect(() => {
     if (isNavigating) {
-      endNavigation();
+      const safetyTimer = setTimeout(() => {
+        endNavigation();
+      }, SAFETY_TIMEOUT_MS);
+      return () => clearTimeout(safetyTimer);
     }
-  }, [location.pathname]);
+  }, [isNavigating, endNavigation]);
 
-  React.useEffect(() => {
-    if (isNavigating) {
-      setVisible(true);
-      setFadeOut(false);
-    } else if (visible) {
-      setFadeOut(true);
-      const timer = setTimeout(() => {
-        setVisible(false);
-        setFadeOut(false);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [isNavigating, visible]);
-
-  if (!visible) return null;
+  if (!isNavigating) return null;
 
   return (
     <div 
@@ -41,8 +40,6 @@ const NavigationLoader: React.FC = () => {
         alignItems: 'center',
         backgroundColor: 'rgba(41, 53, 21, 0.92)',
         backdropFilter: 'blur(4px)',
-        transition: 'opacity 0.2s ease-out',
-        opacity: fadeOut ? 0 : 1,
       }}
     >
       <div className="navigation-loader-mascot">
