@@ -1810,6 +1810,7 @@ const SimulatorAdmin: React.FC = () => {
     const [availabilityStatus, setAvailabilityStatus] = useState<'checking' | 'available' | 'conflict' | null>(null);
     const [conflictDetails, setConflictDetails] = useState<string | null>(null);
     const [showTrackmanConfirm, setShowTrackmanConfirm] = useState(false);
+    const [showManualBooking, setShowManualBooking] = useState(false);
     
     const [calendarDate, setCalendarDate] = useState(() => new Date().toISOString().split('T')[0]);
 
@@ -2200,32 +2201,41 @@ const SimulatorAdmin: React.FC = () => {
         <div className="flex justify-center animate-pop-in">
             <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
             {/* Tab Bar */}
-            <div className="flex justify-center border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in" style={{animationDelay: '0.05s'}}>
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in px-4" style={{animationDelay: '0.05s'}}>
+                <div className="flex">
+                    <button
+                        onClick={() => setActiveView('requests')}
+                        className={`py-3 px-6 font-medium text-sm transition-all relative ${
+                            activeView === 'requests'
+                                ? 'text-primary dark:text-white'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                        {activeView === 'requests' && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveView('calendar')}
+                        className={`py-3 px-6 font-medium text-sm transition-all relative ${
+                            activeView === 'calendar'
+                                ? 'text-primary dark:text-white'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Calendar
+                        {activeView === 'calendar' && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
+                        )}
+                    </button>
+                </div>
                 <button
-                    onClick={() => setActiveView('requests')}
-                    className={`py-3 px-6 font-medium text-sm transition-all relative ${
-                        activeView === 'requests'
-                            ? 'text-primary dark:text-white'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
+                    onClick={() => setShowManualBooking(true)}
+                    className="py-2 px-3 bg-primary text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/90 transition-colors"
                 >
-                    Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
-                    {activeView === 'requests' && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
-                    )}
-                </button>
-                <button
-                    onClick={() => setActiveView('calendar')}
-                    className={`py-3 px-6 font-medium text-sm transition-all relative ${
-                        activeView === 'calendar'
-                            ? 'text-primary dark:text-white'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                >
-                    Calendar
-                    {activeView === 'calendar' && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
-                    )}
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    Manual Booking
                 </button>
             </div>
 
@@ -2617,6 +2627,351 @@ const SimulatorAdmin: React.FC = () => {
                 </div>,
                 document.body
             )}
+
+            {showManualBooking && createPortal(
+                <ManualBookingModal 
+                    resources={resources}
+                    staffEmail={actualUser?.email || user?.email || ''}
+                    onClose={() => setShowManualBooking(false)}
+                    onSuccess={() => {
+                        setShowManualBooking(false);
+                        const fetchUpdatedData = async () => {
+                            try {
+                                const [requestsRes, pendingRes] = await Promise.all([
+                                    fetch('/api/booking-requests?include_all=true'),
+                                    fetch('/api/pending-bookings')
+                                ]);
+                                let allRequests: BookingRequest[] = [];
+                                if (requestsRes.ok) {
+                                    const data = await requestsRes.json();
+                                    allRequests = data.map((r: any) => ({ ...r, source: 'booking_request' as const }));
+                                }
+                                if (pendingRes.ok) {
+                                    const pendingBookings = await pendingRes.json();
+                                    const mappedBookings = pendingBookings.map((b: any) => ({
+                                        id: b.id,
+                                        user_email: b.user_email,
+                                        user_name: b.first_name && b.last_name ? `${b.first_name} ${b.last_name}` : b.user_email,
+                                        bay_id: null,
+                                        bay_name: null,
+                                        bay_preference: b.resource_name || null,
+                                        request_date: b.booking_date,
+                                        start_time: b.start_time,
+                                        end_time: b.end_time,
+                                        duration_minutes: 60,
+                                        notes: b.notes,
+                                        status: b.status,
+                                        staff_notes: null,
+                                        suggested_time: null,
+                                        created_at: b.created_at,
+                                        source: 'booking' as const,
+                                        resource_name: b.resource_name
+                                    }));
+                                    allRequests = [...allRequests, ...mappedBookings];
+                                }
+                                setRequests(allRequests);
+                            } catch (err) {
+                                console.error('Failed to refresh data:', err);
+                            }
+                        };
+                        fetchUpdatedData();
+                    }}
+                />,
+                document.body
+            )}
+            </div>
+        </div>
+    );
+};
+
+const ManualBookingModal: React.FC<{
+    resources: Resource[];
+    staffEmail: string;
+    onClose: () => void;
+    onSuccess: () => void;
+}> = ({ resources, staffEmail, onClose, onSuccess }) => {
+    const { showToast } = useToast();
+    const [memberEmail, setMemberEmail] = useState('');
+    const [memberLookupStatus, setMemberLookupStatus] = useState<'idle' | 'checking' | 'found' | 'not_found'>('idle');
+    const [memberName, setMemberName] = useState<string | null>(null);
+    const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [startTime, setStartTime] = useState('10:00');
+    const [durationMinutes, setDurationMinutes] = useState(60);
+    const [resourceId, setResourceId] = useState<number | ''>('');
+    const [guestCount, setGuestCount] = useState(0);
+    const [bookingSource, setBookingSource] = useState<string>('Trackman');
+    const [notes, setNotes] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        if (!memberEmail || !memberEmail.includes('@')) {
+            setMemberLookupStatus('idle');
+            setMemberName(null);
+            return;
+        }
+
+        if (lookupTimeoutRef.current) {
+            clearTimeout(lookupTimeoutRef.current);
+        }
+
+        setMemberLookupStatus('checking');
+        lookupTimeoutRef.current = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/members?email=${encodeURIComponent(memberEmail)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const member = data.find((m: any) => m.email?.toLowerCase() === memberEmail.toLowerCase());
+                    if (member) {
+                        setMemberLookupStatus('found');
+                        setMemberName(member.first_name && member.last_name ? `${member.first_name} ${member.last_name}` : null);
+                    } else {
+                        setMemberLookupStatus('not_found');
+                        setMemberName(null);
+                    }
+                } else {
+                    setMemberLookupStatus('not_found');
+                    setMemberName(null);
+                }
+            } catch (err) {
+                setMemberLookupStatus('not_found');
+                setMemberName(null);
+            }
+        }, 500);
+
+        return () => {
+            if (lookupTimeoutRef.current) {
+                clearTimeout(lookupTimeoutRef.current);
+            }
+        };
+    }, [memberEmail]);
+
+    const handleSubmit = async () => {
+        if (!memberEmail || memberLookupStatus !== 'found') {
+            setError('Please enter a valid member email');
+            return;
+        }
+        if (!resourceId) {
+            setError('Please select a resource');
+            return;
+        }
+        if (!bookingDate || !startTime) {
+            setError('Please select date and time');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            const res = await fetch('/api/staff/bookings/manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    member_email: memberEmail,
+                    resource_id: resourceId,
+                    booking_date: bookingDate,
+                    start_time: startTime,
+                    duration_minutes: durationMinutes,
+                    guest_count: guestCount,
+                    booking_source: bookingSource,
+                    notes: notes || undefined,
+                    staff_email: staffEmail
+                })
+            });
+
+            if (res.ok) {
+                showToast('Booking created successfully!', 'success');
+                onSuccess();
+            } else {
+                const data = await res.json();
+                setError(data.message || data.error || 'Failed to create booking');
+            }
+        } catch (err) {
+            setError('Network error. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const timeSlots = useMemo(() => {
+        const slots: string[] = [];
+        for (let hour = 8; hour <= 21; hour++) {
+            slots.push(`${hour.toString().padStart(2, '0')}:00`);
+            slots.push(`${hour.toString().padStart(2, '0')}:30`);
+        }
+        return slots;
+    }, []);
+
+    const bookingSources = ['Trackman', 'YGB', 'Mindbody', 'Texted Concierge', 'Called', 'Other'];
+
+    return (
+        <div className="fixed inset-0 z-[10001] overflow-y-auto">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto max-h-[90vh] overflow-y-auto">
+                    <div className="flex items-center justify-between mb-5">
+                        <h3 className="text-xl font-bold text-primary dark:text-white">Manual Booking</h3>
+                        <button 
+                            onClick={onClose}
+                            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-gray-500 dark:text-gray-400">close</span>
+                        </button>
+                    </div>
+
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
+                            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Member Email *</label>
+                            <input
+                                type="email"
+                                value={memberEmail}
+                                onChange={(e) => setMemberEmail(e.target.value)}
+                                placeholder="member@example.com"
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                            />
+                            {memberLookupStatus === 'checking' && (
+                                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                                    Looking up member...
+                                </p>
+                            )}
+                            {memberLookupStatus === 'found' && (
+                                <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-xs">check_circle</span>
+                                    {memberName || 'Member found'}
+                                </p>
+                            )}
+                            {memberLookupStatus === 'not_found' && (
+                                <p className="text-xs text-red-600 dark:text-red-400 mt-1 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-xs">error</span>
+                                    Member not found
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resource *</label>
+                            <select
+                                value={resourceId}
+                                onChange={(e) => setResourceId(e.target.value ? Number(e.target.value) : '')}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                            >
+                                <option value="">Select a bay or room...</option>
+                                {resources.map(r => (
+                                    <option key={r.id} value={r.id}>
+                                        {r.type === 'conference_room' ? 'Conference Room' : r.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date *</label>
+                                <input
+                                    type="date"
+                                    value={bookingDate}
+                                    onChange={(e) => setBookingDate(e.target.value)}
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Time *</label>
+                                <select
+                                    value={startTime}
+                                    onChange={(e) => setStartTime(e.target.value)}
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                                >
+                                    {timeSlots.map(slot => (
+                                        <option key={slot} value={slot}>{formatTime12(slot)}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration *</label>
+                                <select
+                                    value={durationMinutes}
+                                    onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                                >
+                                    <option value={30}>30 minutes</option>
+                                    <option value={60}>60 minutes</option>
+                                    <option value={90}>90 minutes</option>
+                                    <option value={120}>120 minutes</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Guests</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="10"
+                                    value={guestCount}
+                                    onChange={(e) => setGuestCount(Math.max(0, parseInt(e.target.value) || 0))}
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Booking Source *</label>
+                            <select
+                                value={bookingSource}
+                                onChange={(e) => setBookingSource(e.target.value)}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                            >
+                                {bookingSources.map(source => (
+                                    <option key={source} value={source}>{source}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes (optional)</label>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Any additional notes..."
+                                rows={2}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white resize-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3 mt-6">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || memberLookupStatus !== 'found' || !resourceId}
+                            className="flex-1 py-3 px-4 rounded-lg bg-primary text-white font-medium flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isSubmitting ? (
+                                <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                            ) : (
+                                <span className="material-symbols-outlined text-sm">add</span>
+                            )}
+                            Create Booking
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -157,6 +157,10 @@ export const bookings = pgTable("bookings", {
   endTime: time("end_time").notNull(),
   status: varchar("status").default("confirmed"),
   notes: text("notes"),
+  bookingSource: varchar("booking_source"),
+  guestCount: integer("guest_count").default(0),
+  createdByStaffId: varchar("created_by_staff_id"),
+  calendarEventId: varchar("calendar_event_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

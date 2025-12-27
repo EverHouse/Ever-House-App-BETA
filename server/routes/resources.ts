@@ -5,6 +5,7 @@ import { bookings, resources, users, facilityClosures, bays } from '../../shared
 import { isProduction } from '../core/db';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
 import { isStaffOrAdmin } from '../core/middleware';
+import { createCalendarEventOnCalendar, getCalendarIdByName, CALENDAR_CONFIG } from '../core/calendar';
 
 const router = Router();
 
@@ -399,6 +400,152 @@ router.post('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Check-in error:', error);
     res.status(500).json({ error: 'Failed to check in' });
+  }
+});
+
+router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
+  try {
+    const { 
+      member_email, 
+      resource_id, 
+      booking_date, 
+      start_time, 
+      duration_minutes, 
+      guest_count = 0, 
+      booking_source, 
+      notes, 
+      staff_email 
+    } = req.body;
+
+    if (!member_email || !resource_id || !booking_date || !start_time || !duration_minutes || !booking_source || !staff_email) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const validSources = ['Trackman', 'YGB', 'Mindbody', 'Texted Concierge', 'Called', 'Other'];
+    if (!validSources.includes(booking_source)) {
+      return res.status(400).json({ error: 'Invalid booking source' });
+    }
+
+    const validDurations = [30, 60, 90, 120];
+    if (!validDurations.includes(duration_minutes)) {
+      return res.status(400).json({ error: 'Invalid duration. Must be 30, 60, 90, or 120 minutes' });
+    }
+
+    const [member] = await db.select()
+      .from(users)
+      .where(eq(users.email, member_email));
+
+    if (!member) {
+      return res.status(404).json({ error: 'Member not found with that email' });
+    }
+
+    const [resource] = await db.select()
+      .from(resources)
+      .where(eq(resources.id, resource_id));
+
+    if (!resource) {
+      return res.status(404).json({ error: 'Resource not found' });
+    }
+
+    const startParts = start_time.split(':').map(Number);
+    const startMinutes = startParts[0] * 60 + (startParts[1] || 0);
+    const endMinutes = startMinutes + duration_minutes;
+    const endHour = Math.floor(endMinutes / 60);
+    const endMin = endMinutes % 60;
+    const end_time = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+
+    const closureCheck = await checkClosureConflict(resource_id, booking_date, start_time, end_time);
+    if (closureCheck.hasConflict) {
+      return res.status(409).json({ 
+        error: 'Time slot conflicts with a facility closure',
+        message: `This time slot conflicts with "${closureCheck.closureTitle}".`
+      });
+    }
+
+    const bookingCheck = await checkBookingConflict(resource_id, booking_date, start_time, end_time);
+    if (bookingCheck.hasConflict) {
+      return res.status(409).json({ 
+        error: 'Time slot already booked',
+        message: 'Another booking already exists for this time slot.'
+      });
+    }
+
+    let calendarEventId: string | null = null;
+    try {
+      const calendarName = resource.type === 'simulator' 
+        ? CALENDAR_CONFIG.golf.name 
+        : CALENDAR_CONFIG.conference.name;
+      
+      const calendarId = await getCalendarIdByName(calendarName);
+      
+      if (calendarId) {
+        const memberName = member.firstName && member.lastName 
+          ? `${member.firstName} ${member.lastName}` 
+          : member_email;
+        
+        const summary = `Simulator: ${memberName}`;
+        const descriptionLines = [
+          `Bay: ${resource.name}`,
+          `Member: ${member_email}`,
+          `Guests: ${guest_count}`,
+          `Source: ${booking_source}`,
+          `Created by: ${staff_email}`
+        ];
+        if (notes) {
+          descriptionLines.push(`Notes: ${notes}`);
+        }
+        const description = descriptionLines.join('\n');
+        
+        calendarEventId = await createCalendarEventOnCalendar(
+          calendarId,
+          summary,
+          description,
+          booking_date,
+          start_time,
+          end_time
+        );
+      }
+    } catch (calErr) {
+      if (!isProduction) console.error('Calendar event creation error:', calErr);
+    }
+
+    const [newBooking] = await db.insert(bookings)
+      .values({
+        resourceId: resource_id,
+        userEmail: member_email,
+        bookingDate: booking_date,
+        startTime: start_time,
+        endTime: end_time,
+        status: 'confirmed',
+        notes: notes || null,
+        bookingSource: booking_source,
+        guestCount: guest_count,
+        createdByStaffId: staff_email,
+        calendarEventId: calendarEventId
+      })
+      .returning();
+
+    await db.update(users)
+      .set({ 
+        lifetimeVisits: sql`COALESCE(${users.lifetimeVisits}, 0) + 1`
+      })
+      .where(eq(users.email, member_email));
+
+    res.status(201).json({
+      success: true,
+      booking: {
+        ...newBooking,
+        resource_name: resource.name,
+        resource_type: resource.type,
+        member_name: member.firstName && member.lastName 
+          ? `${member.firstName} ${member.lastName}` 
+          : null
+      },
+      message: 'Booking created successfully'
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Manual booking error:', error);
+    res.status(500).json({ error: 'Failed to create manual booking' });
   }
 });
 
