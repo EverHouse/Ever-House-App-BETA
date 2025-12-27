@@ -73,10 +73,6 @@ const MemberUpdates: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    setPageReady(false);
-  }, []);
-
-  useEffect(() => {
     if (!isLoading && !notificationsLoading) {
       setPageReady(true);
     }

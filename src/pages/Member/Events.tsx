@@ -46,10 +46,6 @@ const MemberEvents: React.FC = () => {
   const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
 
   useEffect(() => {
-    setPageReady(false);
-  }, []);
-
-  useEffect(() => {
     if (!isLoading) {
       setPageReady(true);
     }

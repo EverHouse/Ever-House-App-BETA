@@ -147,10 +147,6 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
   const [categories, setCategories] = useState<string[]>(['All', 'Classes', 'MedSpa', 'Recovery', 'Therapy', 'Nutrition', 'Personal Training', 'Mindfulness', 'Outdoors', 'General']);
 
   useEffect(() => {
-    setPageReady(false);
-  }, []);
-
-  useEffect(() => {
     const fetchClasses = async () => {
       const { ok, data } = await apiRequest<any[]>('/api/wellness-classes?active_only=true');
       

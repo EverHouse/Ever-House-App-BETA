@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Toggle from '../../components/Toggle';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 interface GalleryImage {
     id: number;
@@ -12,6 +13,7 @@ interface GalleryImage {
 }
 
 const GalleryAdmin: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -23,6 +25,12 @@ const GalleryAdmin: React.FC = () => {
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!isLoading) {
+            setPageReady(true);
+        }
+    }, [isLoading, setPageReady]);
 
     const fetchImages = async () => {
         try {

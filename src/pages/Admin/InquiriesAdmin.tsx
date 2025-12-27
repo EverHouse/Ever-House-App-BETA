@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 interface Inquiry {
     id: number;
@@ -34,6 +35,7 @@ const FORM_TYPE_CHIPS = [
 ];
 
 const InquiriesAdmin: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeStatus, setActiveStatus] = useState('all');
@@ -42,6 +44,12 @@ const InquiriesAdmin: React.FC = () => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (!isLoading) {
+            setPageReady(true);
+        }
+    }, [isLoading, setPageReady]);
 
     const fetchInquiries = async () => {
         try {

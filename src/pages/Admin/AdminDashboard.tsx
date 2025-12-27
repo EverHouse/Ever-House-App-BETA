@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import { NotificationContext } from '../../contexts/NotificationContext';
+import { usePageReady } from '../../contexts/PageReadyContext';
 import MenuOverlay from '../../components/MenuOverlay';
 import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
@@ -395,6 +396,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
 // --- CAFE ADMIN ---
 
 const CafeAdmin: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const { cafeMenu, addCafeItem, updateCafeItem, deleteCafeItem, refreshCafeMenu } = useData();
     const categories = useMemo(() => ['All', ...Array.from(new Set(cafeMenu.map(item => item.category)))], [cafeMenu]);
     const [activeCategory, setActiveCategory] = useState('All');
@@ -406,6 +408,10 @@ const CafeAdmin: React.FC = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadResult, setUploadResult] = useState<{ originalSize: number; optimizedSize: number } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setPageReady(true);
+    }, [setPageReady]);
 
     const filteredMenu = activeCategory === 'All' ? cafeMenu : cafeMenu.filter(item => item.category === activeCategory);
 
@@ -668,6 +674,7 @@ const CATEGORY_TABS = [
 ];
 
 const EventsAdminContent: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const [events, setEvents] = useState<DBEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState('all');
@@ -680,6 +687,12 @@ const EventsAdminContent: React.FC = () => {
     const [selectedEvent, setSelectedEvent] = useState<DBEvent | null>(null);
     const [rsvps, setRsvps] = useState<Participant[]>([]);
     const [isLoadingRsvps, setIsLoadingRsvps] = useState(false);
+
+    useEffect(() => {
+        if (!isLoading) {
+            setPageReady(true);
+        }
+    }, [isLoading, setPageReady]);
 
     const fetchEvents = async () => {
         try {
@@ -1207,11 +1220,18 @@ interface StaffNotification {
 }
 
 const StaffUpdatesAdmin: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const { actualUser } = useData();
     const [activeSubTab, setActiveSubTab] = useState<'activity' | 'announcements'>('activity');
     const [notifications, setNotifications] = useState<StaffNotification[]>([]);
     const [notificationsLoading, setNotificationsLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        if (!notificationsLoading) {
+            setPageReady(true);
+        }
+    }, [notificationsLoading, setPageReady]);
 
     useEffect(() => {
         if (actualUser?.email) {
@@ -1383,10 +1403,15 @@ const StaffUpdatesAdmin: React.FC = () => {
 // --- ANNOUNCEMENTS ADMIN ---
 
 const AnnouncementsAdmin: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useData();
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [newItem, setNewItem] = useState<Partial<Announcement>>({ type: 'announcement' });
+
+    useEffect(() => {
+        setPageReady(true);
+    }, [setPageReady]);
 
     const openCreate = () => {
         setNewItem({ type: 'announcement' });
@@ -1536,12 +1561,17 @@ const AnnouncementsAdmin: React.FC = () => {
 const TIER_OPTIONS = ['All', 'Social', 'Core', 'Premium', 'Corporate', 'VIP'] as const;
 
 const MembersAdmin: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const { members, setViewAsUser, actualUser } = useData();
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<string>('All');
     
     const isAdmin = actualUser?.role === 'admin';
+
+    useEffect(() => {
+        setPageReady(true);
+    }, [setPageReady]);
 
     // Filter to regular members only
     const regularMembers = useMemo(() => 
@@ -1799,6 +1829,7 @@ interface CalendarClosure {
 }
 
 const SimulatorAdmin: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const { user, actualUser } = useData();
     const [activeView, setActiveView] = useState<'requests' | 'calendar'>('requests');
     const [requests, setRequests] = useState<BookingRequest[]>([]);
@@ -1823,6 +1854,12 @@ const SimulatorAdmin: React.FC = () => {
     const [isCancellingFromModal, setIsCancellingFromModal] = useState(false);
     
     const [calendarDate, setCalendarDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+    useEffect(() => {
+        if (!isLoading) {
+            setPageReady(true);
+        }
+    }, [isLoading, setPageReady]);
 
     useEffect(() => {
         const fetchData = async () => {

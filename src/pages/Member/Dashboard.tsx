@@ -178,7 +178,6 @@ const Dashboard: React.FC = () => {
   }, [user?.email]);
 
   useEffect(() => {
-    setPageReady(false);
     fetchUserData();
   }, [fetchUserData]);
 

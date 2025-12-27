@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Toggle from '../../components/Toggle';
+import { usePageReady } from '../../contexts/PageReadyContext';
 
 interface FAQ {
     id: number;
@@ -14,6 +15,7 @@ interface FAQ {
 }
 
 const FaqsAdmin: React.FC = () => {
+    const { setPageReady } = usePageReady();
     const [faqs, setFaqs] = useState<FAQ[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -23,6 +25,12 @@ const FaqsAdmin: React.FC = () => {
     const [isSeeding, setIsSeeding] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (!isLoading) {
+            setPageReady(true);
+        }
+    }, [isLoading, setPageReady]);
 
     const fetchFaqs = async () => {
         try {

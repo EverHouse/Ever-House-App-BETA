@@ -47,6 +47,7 @@ const Profile: React.FC = () => {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [showPasswordSetupBanner, setShowPasswordSetupBanner] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
   // Check if viewing a staff/admin profile (either directly or via view-as)
   const isStaffOrAdminProfile = user?.role === 'admin' || user?.role === 'staff';
@@ -56,8 +57,10 @@ const Profile: React.FC = () => {
   const { permissions: tierPermissions } = useTierPermissions(user?.tier);
 
   useEffect(() => {
-    setPageReady(true);
-  }, [setPageReady]);
+    if (!isProfileLoading) {
+      setPageReady(true);
+    }
+  }, [isProfileLoading, setPageReady]);
 
   useEffect(() => {
     if (user?.email) {
@@ -67,7 +70,10 @@ const Profile: React.FC = () => {
           return res.json();
         })
         .then(data => setGuestPasses(data))
-        .catch(err => console.error('Error fetching guest passes:', err));
+        .catch(err => console.error('Error fetching guest passes:', err))
+        .finally(() => setIsProfileLoading(false));
+    } else {
+      setIsProfileLoading(false);
     }
   }, [user?.email, user?.tier]);
 

@@ -121,7 +121,7 @@ const BookGolf: React.FC = () => {
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [showViewAsConfirm, setShowViewAsConfirm] = useState(false);
@@ -132,10 +132,6 @@ const BookGolf: React.FC = () => {
   
   // Check if admin is viewing as a member
   const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
-
-  useEffect(() => {
-    setPageReady(false);
-  }, []);
 
   useEffect(() => {
     if (!isLoading) {
