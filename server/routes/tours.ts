@@ -2,11 +2,28 @@ import { Router } from 'express';
 import { isProduction } from '../core/db';
 import { db } from '../db';
 import { tours } from '../../shared/schema';
-import { eq, gte, asc, desc, and, sql } from 'drizzle-orm';
+import { eq, gte, asc, desc, and, sql, or, ilike } from 'drizzle-orm';
 import { isStaffOrAdmin } from '../core/middleware';
 import { getGoogleCalendarClient } from '../core/integrations';
 import { CALENDAR_CONFIG, getCalendarIdByName, discoverCalendarIds } from '../core/calendar';
 import { notifyAllStaff } from '../core/staffNotifications';
+
+function parseTimeToMinutes(timeStr: string): number {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function extractContactFromAttendees(attendees: any[]): { email: string | null; name: string | null } {
+  if (!attendees || attendees.length === 0) return { email: null, name: null };
+  
+  const guest = attendees.find((a: any) => !a.organizer && !a.self) || attendees[0];
+  if (!guest) return { email: null, name: null };
+  
+  return {
+    email: guest.email || null,
+    name: guest.displayName || null
+  };
+}
 
 const router = Router();
 
@@ -209,15 +226,19 @@ export async function syncToursFromCalendar(): Promise<{ synced: number; created
       let guestEmail: string | null = null;
       let guestPhone: string | null = null;
       
+      const attendeeInfo = extractContactFromAttendees(event.attendees || []);
+      if (attendeeInfo.email) guestEmail = attendeeInfo.email;
+      if (attendeeInfo.name) guestName = attendeeInfo.name;
+      
       if (description) {
         const emailMatch = description.match(/email[:\s]+([^\s\n,]+@[^\s\n,]+)/i);
-        if (emailMatch) guestEmail = emailMatch[1].trim();
+        if (emailMatch && !guestEmail) guestEmail = emailMatch[1].trim();
         
         const phoneMatch = description.match(/phone[:\s]+([^\n]+)/i) || description.match(/(\(\d{3}\)\s*\d{3}[-.\s]?\d{4}|\d{3}[-.\s]?\d{3}[-.\s]?\d{4})/);
         if (phoneMatch) guestPhone = phoneMatch[1].trim();
         
         const nameMatch = description.match(/name[:\s]+([^\n]+)/i);
-        if (nameMatch) guestName = nameMatch[1].trim();
+        if (nameMatch && !attendeeInfo.name) guestName = nameMatch[1].trim();
       }
       
       const existing = await db.select().from(tours).where(eq(tours.googleCalendarId, googleEventId));
@@ -238,29 +259,67 @@ export async function syncToursFromCalendar(): Promise<{ synced: number; created
           .where(eq(tours.googleCalendarId, googleEventId));
         updated++;
       } else {
-        await db.insert(tours).values({
-          googleCalendarId: googleEventId,
-          title,
-          guestName,
-          guestEmail,
-          guestPhone,
-          tourDate,
-          startTime,
-          endTime,
-          notes: description || null,
-          status: 'scheduled',
-        });
-        created++;
+        let matchedPendingTour = null;
+        if (guestEmail) {
+          const eventTimeMinutes = parseTimeToMinutes(startTime);
+          const pendingTours = await db.select().from(tours).where(
+            and(
+              ilike(tours.guestEmail, guestEmail),
+              eq(tours.tourDate, tourDate),
+              or(eq(tours.status, 'pending'), eq(tours.status, 'scheduled')),
+              sql`${tours.googleCalendarId} IS NULL`
+            )
+          );
+          
+          matchedPendingTour = pendingTours.find(t => {
+            if (t.startTime === '00:00:00') return true;
+            const pendingTimeMinutes = parseTimeToMinutes(t.startTime);
+            return Math.abs(eventTimeMinutes - pendingTimeMinutes) <= 15;
+          });
+        }
         
-        const tourDateObj = new Date(tourDate);
-        const formattedDate = tourDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
-        await notifyAllStaff(
-          'New Tour Scheduled',
-          `${guestName} scheduled a tour for ${formattedDate}`,
-          'tour_scheduled',
-          undefined,
-          'tour'
-        );
+        if (matchedPendingTour) {
+          await db.update(tours)
+            .set({
+              googleCalendarId: googleEventId,
+              title,
+              guestName: matchedPendingTour.guestName || guestName,
+              guestEmail: matchedPendingTour.guestEmail || guestEmail,
+              guestPhone: matchedPendingTour.guestPhone || guestPhone,
+              tourDate,
+              startTime,
+              endTime,
+              notes: description || null,
+              status: 'scheduled',
+              updatedAt: new Date(),
+            })
+            .where(eq(tours.id, matchedPendingTour.id));
+          updated++;
+        } else {
+          await db.insert(tours).values({
+            googleCalendarId: googleEventId,
+            title,
+            guestName,
+            guestEmail,
+            guestPhone,
+            tourDate,
+            startTime,
+            endTime,
+            notes: description || null,
+            status: 'scheduled',
+          });
+          created++;
+          
+          const tourDateObj = new Date(tourDate);
+          const formattedDate = tourDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+          await notifyAllStaff(
+            'New Tour Scheduled',
+            `${guestName} scheduled a tour for ${formattedDate}`,
+            'tour_scheduled',
+            undefined,
+            'tour'
+          );
+        }
       }
     }
     
