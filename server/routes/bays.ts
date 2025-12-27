@@ -11,6 +11,21 @@ import { notifyAllStaff } from '../core/staffNotifications';
 
 const router = Router();
 
+// Helper to dismiss all staff notifications for a booking request when it's processed
+async function dismissStaffNotificationsForBooking(bookingId: number): Promise<void> {
+  try {
+    await db.update(notifications)
+      .set({ isRead: true })
+      .where(and(
+        eq(notifications.relatedId, bookingId),
+        eq(notifications.relatedType, 'booking_request'),
+        eq(notifications.type, 'booking')
+      ));
+  } catch (error) {
+    console.error('Failed to dismiss staff notifications:', error);
+  }
+}
+
 router.get('/api/bays', async (req, res) => {
   try {
     const result = await db.select().from(bays).where(eq(bays.isActive, true)).orderBy(asc(bays.name));
@@ -348,6 +363,9 @@ router.put('/api/booking-requests/:id', async (req, res) => {
         url: '/#/sims'
       });
       
+      // Dismiss all staff notifications for this booking request
+      await dismissStaffNotificationsForBooking(updated.id);
+      
       return res.json(formatRow(result[0]));
     }
     
@@ -387,6 +405,9 @@ router.put('/api/booking-requests/:id', async (req, res) => {
         body: declineMessage,
         url: '/#/sims'
       });
+      
+      // Dismiss all staff notifications for this booking request
+      await dismissStaffNotificationsForBooking(updated.id);
       
       return res.json(formatRow(result[0]));
     }
@@ -468,6 +489,9 @@ router.put('/api/booking-requests/:id', async (req, res) => {
           });
         }
       }
+      
+      // Always dismiss staff notifications for cancelled bookings
+      await dismissStaffNotificationsForBooking(parseInt(id));
     }
     
     const result = await db.update(bookingRequests)
