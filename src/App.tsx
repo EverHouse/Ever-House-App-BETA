@@ -19,6 +19,7 @@ import { AnnouncementBadgeProvider } from './contexts/AnnouncementBadgeContext';
 import { BottomSentinel } from './components/layout/BottomSentinel';
 import MemberBottomNav from './components/MemberBottomNav';
 import { NavigationLoadingProvider, useNavigationLoading } from './contexts/NavigationLoadingContext';
+import { PageReadyProvider } from './contexts/PageReadyContext';
 import WalkingGolferLoader from './components/WalkingGolferLoader';
 import NavigationLoader from './components/NavigationLoader';
 
@@ -608,6 +609,7 @@ const App: React.FC = () => {
           <BottomNavProvider>
           <AnnouncementBadgeProvider>
           <NavigationLoadingProvider>
+          <PageReadyProvider>
           <InitialLoadingScreen>
             <OfflineBanner />
             <HashRouter>
@@ -620,6 +622,7 @@ const App: React.FC = () => {
               </SmoothScrollProvider>
             </HashRouter>
           </InitialLoadingScreen>
+          </PageReadyProvider>
           </NavigationLoadingProvider>
           </AnnouncementBadgeProvider>
           </BottomNavProvider>
