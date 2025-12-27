@@ -346,25 +346,25 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
     <div className="animate-pop-in">
       <div>
         <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Employee Resources</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {employeeResourcesLinks.map((link) => (
             <CardButton key={link.id} link={link} />
           ))}
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6 sm:mt-8">
         <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Operations</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {operationsLinks.map((link) => (
             <CardButton key={link.id} link={link} />
           ))}
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6 sm:mt-8">
         <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Public Content</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {publicContentLinks.map((link) => (
             <CardButton key={link.id} link={link} />
           ))}
@@ -372,9 +372,9 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
       </div>
 
       {isAdmin && (
-        <div className="mt-8">
+        <div className="mt-6 sm:mt-8">
           <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Admin Settings</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {adminLinks.map((link) => (
               <CardButton key={link.id} link={link} />
             ))}
@@ -1620,6 +1620,8 @@ const SimulatorAdmin: React.FC = () => {
     const [suggestedTime, setSuggestedTime] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [availabilityStatus, setAvailabilityStatus] = useState<'checking' | 'available' | 'conflict' | null>(null);
+    const [conflictDetails, setConflictDetails] = useState<string | null>(null);
     
     const [calendarDate, setCalendarDate] = useState(() => new Date().toISOString().split('T')[0]);
 
@@ -1715,6 +1717,83 @@ const SimulatorAdmin: React.FC = () => {
             fetchCalendarData();
         }
     }, [activeView, calendarDate]);
+
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (!selectedBayId || !selectedRequest || actionModal !== 'approve') {
+                setAvailabilityStatus(null);
+                setConflictDetails(null);
+                return;
+            }
+            
+            setAvailabilityStatus('checking');
+            setConflictDetails(null);
+            
+            try {
+                const [bookingsRes, closuresRes] = await Promise.all([
+                    fetch(`/api/approved-bookings?start_date=${selectedRequest.request_date}&end_date=${selectedRequest.request_date}`),
+                    fetch('/api/closures')
+                ]);
+                
+                let hasConflict = false;
+                let details = '';
+                
+                if (bookingsRes.ok) {
+                    const bookings = await bookingsRes.json();
+                    const reqStart = selectedRequest.start_time;
+                    const reqEnd = selectedRequest.end_time;
+                    
+                    const conflict = bookings.find((b: any) => 
+                        b.bay_id === selectedBayId && 
+                        b.request_date === selectedRequest.request_date &&
+                        b.start_time < reqEnd && b.end_time > reqStart
+                    );
+                    
+                    if (conflict) {
+                        hasConflict = true;
+                        details = `Conflicts with existing booking: ${formatTime12(conflict.start_time)} - ${formatTime12(conflict.end_time)}`;
+                    }
+                }
+                
+                if (!hasConflict && closuresRes.ok) {
+                    const allClosures = await closuresRes.json();
+                    const reqDate = selectedRequest.request_date;
+                    const reqStartMins = parseInt(selectedRequest.start_time.split(':')[0]) * 60 + parseInt(selectedRequest.start_time.split(':')[1]);
+                    const reqEndMins = parseInt(selectedRequest.end_time.split(':')[0]) * 60 + parseInt(selectedRequest.end_time.split(':')[1]);
+                    
+                    const closure = allClosures.find((c: any) => {
+                        if (c.startDate > reqDate || c.endDate < reqDate) return false;
+                        
+                        const areas = c.affectedAreas;
+                        const affectsResource = areas === 'entire_facility' || 
+                            areas === 'all_bays' || 
+                            areas.includes(String(selectedBayId));
+                        
+                        if (!affectsResource) return false;
+                        
+                        if (c.startTime && c.endTime) {
+                            const closureStartMins = parseInt(c.startTime.split(':')[0]) * 60 + parseInt(c.startTime.split(':')[1]);
+                            const closureEndMins = parseInt(c.endTime.split(':')[0]) * 60 + parseInt(c.endTime.split(':')[1]);
+                            return reqStartMins < closureEndMins && reqEndMins > closureStartMins;
+                        }
+                        return true;
+                    });
+                    
+                    if (closure) {
+                        hasConflict = true;
+                        details = `Conflicts with closure: ${closure.title}`;
+                    }
+                }
+                
+                setAvailabilityStatus(hasConflict ? 'conflict' : 'available');
+                setConflictDetails(hasConflict ? details : null);
+            } catch (err) {
+                setAvailabilityStatus(null);
+            }
+        };
+        
+        checkAvailability();
+    }, [selectedBayId, selectedRequest, actionModal]);
 
     const pendingRequests = requests.filter(r => r.status === 'pending' || r.status === 'pending_approval');
     const processedRequests = requests.filter(r => r.status !== 'pending' && r.status !== 'pending_approval');
@@ -2095,7 +2174,7 @@ const SimulatorAdmin: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="overflow-x-auto px-2 pb-4">
+                    <div className="overflow-x-auto px-2 pb-4 scroll-fade-right">
                         <div className="inline-block min-w-full">
                             <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, minmax(60px, 1fr))` }}>
                                 <div className="h-10 sticky left-0 z-10 bg-white dark:bg-surface-dark"></div>
@@ -2205,6 +2284,25 @@ const SimulatorAdmin: React.FC = () => {
                                             </option>
                                         ))}
                                     </select>
+                                    
+                                    {selectedBayId && availabilityStatus && (
+                                        <div className={`mt-2 p-2 rounded-lg flex items-center gap-2 text-sm ${
+                                            availabilityStatus === 'checking' 
+                                                ? 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400'
+                                                : availabilityStatus === 'available'
+                                                    ? 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
+                                                    : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400'
+                                        }`}>
+                                            <span className={`material-symbols-outlined text-base ${availabilityStatus === 'checking' ? 'animate-spin' : ''}`}>
+                                                {availabilityStatus === 'checking' ? 'progress_activity' : availabilityStatus === 'available' ? 'check_circle' : 'warning'}
+                                            </span>
+                                            <span>
+                                                {availabilityStatus === 'checking' && 'Checking availability...'}
+                                                {availabilityStatus === 'available' && 'This time slot is available'}
+                                                {availabilityStatus === 'conflict' && (conflictDetails || 'Conflict detected')}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             

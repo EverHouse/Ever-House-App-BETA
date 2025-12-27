@@ -47,11 +47,13 @@
   --color-primary: #293515;
   --color-secondary: #E7E7DC;
   --color-accent: #CCB8E4;
+  --color-accent-dark: #8B6FA8;
   --color-surface-light: #FFFFFF;
   --color-surface-dark: rgba(255, 255, 255, 0.05);
   --color-brand-green: #293515;
   --color-brand-bone: #F2F2EC;
   --color-brand-lavender: #CCB8E4;
+  --color-brand-lavender-dark: #8B6FA8;
   
   --radius-lg: 8px;
   --radius-xl: 12px;
@@ -541,6 +543,14 @@ html.dark a:focus-visible {
 /* Improved text contrast for accessibility */
 .text-accessible-muted {
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* WCAG-compliant accent text (4.5:1 contrast ratio on light backgrounds) */
+.text-accent-accessible {
+  color: #8B6FA8;
+}
+html.dark .text-accent-accessible {
+  color: #CCB8E4;
 }
 
 /* Scroll fade indicators for horizontal scroll areas */

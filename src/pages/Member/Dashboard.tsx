@@ -12,6 +12,7 @@ import { getBaseTier } from '../../utils/permissions';
 import PullToRefresh from '../../components/PullToRefresh';
 import AnnouncementAlert from '../../components/AnnouncementAlert';
 import ClosureAlert from '../../components/ClosureAlert';
+import ErrorState from '../../components/ErrorState';
 
 
 interface DBBooking {
@@ -375,6 +376,18 @@ const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return <DashboardSkeleton isDark={isDark} />;
+  }
+
+  if (error) {
+    return (
+      <div className="px-6 pt-4 min-h-full">
+        <ErrorState
+          title="Unable to load dashboard"
+          message={error}
+          onRetry={() => fetchUserData()}
+        />
+      </div>
+    );
   }
 
   return (
