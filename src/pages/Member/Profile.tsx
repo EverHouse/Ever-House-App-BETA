@@ -423,7 +423,7 @@ const Profile: React.FC = () => {
                     onClick={() => setThemeMode(mode)}
                     className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
                       themeMode === mode 
-                        ? 'bg-[#E7E7DC] text-[#293515] shadow-glow' 
+                        ? 'bg-accent text-[#293515] shadow-glow' 
                         : (isDark ? 'bg-white/10 text-white/60 hover:bg-white/15' : 'bg-black/5 text-primary/60 hover:bg-black/10')
                     }`}
                   >

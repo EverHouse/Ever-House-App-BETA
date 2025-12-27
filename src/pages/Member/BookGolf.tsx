@@ -544,7 +544,7 @@ const BookGolf: React.FC = () => {
               <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Date & Duration</span>
             </div>
             <div className="space-y-4">
-              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+              <div className="flex gap-3 overflow-x-auto py-2 px-1 -mx-1 scrollbar-hide">
                 {dates.map((d) => (
                   <DateButton 
                     key={d.date}
@@ -562,9 +562,9 @@ const BookGolf: React.FC = () => {
                     key={mins}
                     onClick={() => { haptic.selection(); setDuration(mins); }}
                     aria-pressed={duration === mins}
-                    className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-[#E7E7DC] focus:outline-none ${
+                    className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-accent focus:outline-none ${
                       duration === mins 
-                      ? 'bg-[#E7E7DC] text-[#293515] shadow-glow'
+                      ? 'bg-accent text-[#293515] shadow-glow'
                       : (isDark ? 'text-white/60 hover:bg-white/5 hover:text-white' : 'text-primary/60 hover:bg-black/5 hover:text-primary')
                     }`}
                   >
@@ -603,9 +603,9 @@ const BookGolf: React.FC = () => {
                       setSelectedResource(null);
                     }}
                     aria-pressed={selectedSlot?.id === slot.id}
-                    className={`p-4 rounded-xl border text-left transition-all active:scale-[0.98] relative overflow-hidden flex flex-col justify-center animate-pop-in focus:ring-2 focus:ring-[#E7E7DC] focus:outline-none ${
+                    className={`p-4 rounded-xl border text-left transition-all active:scale-[0.98] relative overflow-hidden flex flex-col justify-center animate-pop-in focus:ring-2 focus:ring-accent focus:outline-none ${
                       selectedSlot?.id === slot.id
-                      ? 'bg-[#E7E7DC] text-[#293515] border-[#E7E7DC] shadow-glow'
+                      ? 'bg-accent text-[#293515] border-accent shadow-glow'
                       : (isDark ? 'glass-card text-white hover:bg-white/10 border-white/10' : 'bg-white text-primary hover:bg-black/5 border-black/10 shadow-sm')
                     }`}
                     style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
@@ -652,7 +652,7 @@ const BookGolf: React.FC = () => {
           <button 
             onClick={() => { haptic.heavy(); handleConfirm(); }}
             disabled={isBooking}
-            className="w-full py-4 rounded-xl font-bold text-lg shadow-glow transition-all flex items-center justify-center gap-2 bg-[#E7E7DC] text-[#293515] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 focus:ring-2 focus:ring-white focus:outline-none"
+            className="w-full py-4 rounded-xl font-bold text-lg shadow-glow transition-all flex items-center justify-center gap-2 bg-accent text-[#293515] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 focus:ring-2 focus:ring-white focus:outline-none"
           >
             {isBooking ? (
               <>
@@ -732,7 +732,7 @@ const ResourceCard: React.FC<{resource: Resource; selected: boolean; onClick: ()
       : (isDark ? 'glass-card hover:bg-white/5 border-white/10' : 'bg-white hover:bg-black/5 border-black/10 shadow-sm')
     }`}
   >
-    <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center mr-4 overflow-hidden ${selected ? 'bg-[#E7E7DC] text-[#293515]' : (isDark ? 'bg-white/5 text-white/40' : 'bg-black/5 text-primary/40')}`}>
+    <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center mr-4 overflow-hidden ${selected ? 'bg-accent text-[#293515]' : (isDark ? 'bg-white/5 text-white/40' : 'bg-black/5 text-primary/40')}`}>
       <span className="material-symbols-outlined text-2xl">{resource.icon || 'meeting_room'}</span>
     </div>
     
@@ -740,7 +740,7 @@ const ResourceCard: React.FC<{resource: Resource; selected: boolean; onClick: ()
       <div className="flex justify-between items-center mb-0.5">
         <span className={`font-bold text-base ${isDark ? 'text-white' : 'text-primary'}`}>{resource.name}</span>
         {resource.badge && (
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${selected ? 'bg-[#E7E7DC] text-[#293515]' : (isDark ? 'bg-white/10 text-white/70' : 'bg-black/10 text-primary/70')}`}>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${selected ? 'bg-accent text-[#293515]' : (isDark ? 'bg-white/10 text-white/70' : 'bg-black/10 text-primary/70')}`}>
             {resource.badge}
           </span>
         )}
