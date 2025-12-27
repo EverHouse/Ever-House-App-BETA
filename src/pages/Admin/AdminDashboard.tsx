@@ -317,7 +317,7 @@ const StaffDashboardHome: React.FC<{ setActiveTab: (tab: TabType) => void; isAdm
   );
 
   return (
-    <div className="animate-pop-in">
+    <div className="animate-pop-in pb-32">
       <div>
         <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Employee Resources</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

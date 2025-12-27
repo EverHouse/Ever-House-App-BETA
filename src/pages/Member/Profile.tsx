@@ -11,6 +11,9 @@ import TagBadge from '../../components/TagBadge';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import { isPushSupported, isSubscribedToPush, subscribeToPush, unsubscribeFromPush } from '../../services/pushNotifications';
 import Toggle from '../../components/Toggle';
+import MemberBottomNav from '../../components/MemberBottomNav';
+import StaffBottomNavSimple from '../../components/StaffBottomNavSimple';
+import { BottomSentinel } from '../../components/layout/BottomSentinel';
 
 
 const GUEST_CHECKIN_FIELDS = [
@@ -460,6 +463,15 @@ const Profile: React.FC = () => {
           }
         }}
       />
+
+      <BottomSentinel />
+
+      {/* Bottom Navigation */}
+      {isStaffOrAdminProfile ? (
+        <StaffBottomNavSimple />
+      ) : (
+        <MemberBottomNav currentPath="/profile" isDarkTheme={isDark} />
+      )}
 
       {/* Full Screen Card Modal */}
       {isCardOpen && createPortal((() => {

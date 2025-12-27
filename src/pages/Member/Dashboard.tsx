@@ -393,7 +393,7 @@ const Dashboard: React.FC = () => {
   return (
     <>
     <PullToRefresh onRefresh={handleRefresh} className="h-full overflow-y-auto">
-      <div className="px-6 pt-4 font-sans relative min-h-full">
+      <div className="px-6 pt-4 pb-32 font-sans relative min-h-full">
         <WelcomeBanner />
         <ClosureAlert />
         <AnnouncementAlert />
