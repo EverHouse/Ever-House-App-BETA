@@ -90,9 +90,9 @@ const AnnouncementAlert: React.FC = () => {
               <h3 className={`font-bold text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {latestAnnouncement.title}
               </h3>
-              {latestAnnouncement.content && (
+              {latestAnnouncement.desc && (
                 <p className={`text-xs mt-0.5 line-clamp-2 ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
-                  {latestAnnouncement.content}
+                  {latestAnnouncement.desc}
                 </p>
               )}
             </div>

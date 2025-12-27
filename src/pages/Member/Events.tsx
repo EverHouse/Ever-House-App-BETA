@@ -17,7 +17,7 @@ interface UserRsvp {
 }
 
 const MemberEvents: React.FC = () => {
-  const { events, isLoading, user, actualUser, isViewingAs, viewAsUser, refreshEvents } = useData();
+  const { events, isLoading, user, actualUser, isViewingAs, viewAsUser } = useData();
   const { effectiveTheme } = useTheme();
   const { setPageReady } = usePageReady();
   const { showToast } = useToast();
@@ -61,8 +61,8 @@ const MemberEvents: React.FC = () => {
     }
     
     return [...result].sort((a, b) => {
-      const dateA = new Date(a.rawDate || a.date);
-      const dateB = new Date(b.rawDate || b.date);
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
       return dateA.getTime() - dateB.getTime();
     });
   }, [events, filter]);
@@ -145,7 +145,7 @@ const MemberEvents: React.FC = () => {
       title: event.title,
       description: event.description,
       location: event.location,
-      startDate: event.rawDate || new Date().toISOString().split('T')[0],
+      startDate: event.date || new Date().toISOString().split('T')[0],
       startTime: startTime,
       durationMinutes: 120
     });
