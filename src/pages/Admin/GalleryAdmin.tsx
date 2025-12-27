@@ -163,8 +163,8 @@ const GalleryAdmin: React.FC = () => {
     const categories = ['venue', 'events', 'food', 'golf', 'wellness', 'outdoor'];
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-4">
+        <div className="animate-pop-in">
+            <div className="flex justify-between items-center mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <h2 className="text-xl font-bold text-primary dark:text-white">Gallery Images</h2>
                 <button onClick={openCreate} className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap">
                     <span className="material-symbols-outlined text-sm">add</span> Add Image
@@ -304,15 +304,16 @@ const GalleryAdmin: React.FC = () => {
                     <p className="text-gray-500 dark:text-gray-400">Add images to the gallery to get started.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {images.map(image => (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                    {images.map((image, index) => (
                         <div 
                             key={image.id} 
-                            className={`relative group bg-white dark:bg-surface-dark rounded-xl shadow-sm border overflow-hidden transition-all ${
+                            className={`relative group bg-white dark:bg-surface-dark rounded-xl shadow-sm border overflow-hidden transition-all animate-pop-in ${
                                 image.isActive 
                                     ? 'border-gray-100 dark:border-white/5' 
                                     : 'border-orange-200 dark:border-orange-800/30 opacity-60'
                             }`}
+                            style={{animationDelay: `${0.15 + index * 0.03}s`}}
                         >
                             <div className="aspect-square bg-gray-100 dark:bg-white/5 overflow-hidden cursor-pointer" onClick={() => openEdit(image)}>
                                 <img 

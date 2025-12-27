@@ -457,8 +457,8 @@ const CafeAdmin: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-4">
+        <div className="animate-pop-in">
+            <div className="flex justify-between items-center mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <h2 className="text-xl font-bold text-primary dark:text-white">Menu Items</h2>
                 <div className="flex gap-2">
                     {cafeMenu.length === 0 && (
@@ -481,7 +481,7 @@ const CafeAdmin: React.FC = () => {
                     {seedMessage}
                 </div>
             )}
-            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-1 px-1 mb-4">
+            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-1 px-1 mb-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
                 {categories.map(cat => (
                     <button
                         key={cat}
@@ -572,9 +572,9 @@ const CafeAdmin: React.FC = () => {
                 document.body
             )}
 
-            <div className="space-y-3">
-                {filteredMenu.map(item => (
-                    <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex items-center gap-4 cursor-pointer hover:border-primary/30 transition-all">
+            <div className="space-y-3 animate-pop-in" style={{animationDelay: '0.15s'}}>
+                {filteredMenu.map((item, index) => (
+                    <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex items-center gap-4 cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.2 + index * 0.03}s`}}>
                         <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-white/5 flex-shrink-0 overflow-hidden">
                              {item.image ? <img src={item.image} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center"><span className="material-symbols-outlined text-gray-400">restaurant</span></div>}
                         </div>
@@ -789,8 +789,8 @@ const EventsAdminContent: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4">
+        <div className="animate-pop-in">
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 {CATEGORY_TABS.map(tab => (
                     <button
                         key={tab.id}
@@ -866,9 +866,9 @@ const EventsAdminContent: React.FC = () => {
                     <p>No {activeCategory === 'all' ? 'events' : activeCategory.toLowerCase()} found</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredEvents.map(event => (
-                        <div key={event.id} onClick={() => openEdit(event)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                    {filteredEvents.map((event, index) => (
+                        <div key={event.id} onClick={() => openEdit(event)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.15 + index * 0.03}s`}}>
                             {event.eventbrite_id && (
                                 <div className="absolute top-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase px-2 py-1 rounded-bl-lg z-10">
                                     Eventbrite
@@ -979,7 +979,7 @@ const EventsWellnessAdmin: React.FC = () => {
     };
 
     return (
-        <div>
+        <div className="animate-pop-in">
             {syncMessage && (
                 <div className={`mb-4 px-4 py-2 rounded-lg text-sm font-medium ${
                     syncMessage.startsWith('Error') 
@@ -990,7 +990,7 @@ const EventsWellnessAdmin: React.FC = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <button 
                     onClick={handleSyncCalendars} 
                     disabled={isSyncing}
@@ -1031,7 +1031,7 @@ const EventsWellnessAdmin: React.FC = () => {
                 </button>
             </div>
 
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
                 <button
                     onClick={() => setActiveSubTab('events')}
                     className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
@@ -1367,9 +1367,9 @@ const MembersAdmin: React.FC = () => {
     };
 
     return (
-        <div>
+        <div className="animate-pop-in">
             {/* Search and filters */}
-            <div className="mb-6 space-y-3">
+            <div className="mb-6 space-y-3 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <div className="relative">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">search</span>
                     <input
@@ -1429,9 +1429,9 @@ const MembersAdmin: React.FC = () => {
 
             {/* Mobile View: Cards */}
             {filteredList.length > 0 && (
-            <div className="md:hidden space-y-3">
-                {filteredList.map(m => (
-                    <div key={m.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
+            <div className="md:hidden space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                {filteredList.map((m, index) => (
+                    <div key={m.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm animate-pop-in" style={{animationDelay: `${0.15 + Math.min(index, 10) * 0.03}s`}}>
                         <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
                                 <h4 className="font-bold text-lg text-primary dark:text-white">{m.name}</h4>
@@ -1462,7 +1462,7 @@ const MembersAdmin: React.FC = () => {
 
             {/* Desktop View: Table */}
             {filteredList.length > 0 && (
-            <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden overflow-x-auto">
+            <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden overflow-x-auto animate-pop-in" style={{animationDelay: '0.1s'}}>
                 <table className="w-full text-left min-w-[500px]">
                     <thead className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/5">
                         <tr>
@@ -1473,8 +1473,8 @@ const MembersAdmin: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredList.map(m => (
-                            <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
+                        {filteredList.map((m, index) => (
+                            <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 animate-pop-in" style={{animationDelay: `${0.15 + Math.min(index, 10) * 0.03}s`}}>
                                 <td className="p-4 font-medium text-primary dark:text-white">{m.name}</td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-1 flex-wrap">
@@ -2588,8 +2588,8 @@ const WellnessAdminContent: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4">
+        <div className="space-y-6 animate-pop-in">
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 {WELLNESS_CATEGORY_TABS.map(tab => (
                     <button
                         key={tab.id}
@@ -2606,7 +2606,7 @@ const WellnessAdminContent: React.FC = () => {
                 ))}
             </div>
 
-            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10 animate-pop-in" style={{animationDelay: '0.1s'}}>
                 {success && (
                     <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
                         {success}
@@ -2627,14 +2627,15 @@ const WellnessAdminContent: React.FC = () => {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {filteredClasses.map(cls => (
+                        {filteredClasses.map((cls, index) => (
                             <div 
                                 key={cls.id}
-                                className={`flex items-center justify-between p-4 rounded-xl border ${
+                                className={`flex items-center justify-between p-4 rounded-xl border animate-pop-in ${
                                     cls.is_active 
                                         ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
                                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
                                 }`}
+                                style={{animationDelay: `${0.15 + index * 0.03}s`}}
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-brand-green">
@@ -2825,9 +2826,9 @@ const TeamAdmin: React.FC = () => {
     const [subTab, setSubTab] = useState<'staff' | 'admins'>('staff');
 
     return (
-        <div>
+        <div className="animate-pop-in">
             {/* Sub-tab navigation */}
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <button
                     onClick={() => setSubTab('staff')}
                     className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
@@ -3026,8 +3027,8 @@ const StaffAdmin: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
+        <div className="space-y-6 animate-pop-in">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h3 className="text-lg font-bold text-primary dark:text-white">Staff Access List</h3>
@@ -3063,16 +3064,17 @@ const StaffAdmin: React.FC = () => {
                         No staff members added yet. Add an email to grant staff access.
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {staffUsers.map(staff => (
+                    <div className="space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                        {staffUsers.map((staff, index) => (
                             <div 
                                 key={staff.id}
                                 onClick={() => openEditModal(staff)}
-                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors hover:border-primary/50 ${
+                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors hover:border-primary/50 animate-pop-in ${
                                     staff.is_active 
                                         ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-surface-dark' 
                                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
                                 }`}
+                                style={{animationDelay: `${0.15 + index * 0.03}s`}}
                             >
                                 <div className="flex items-center gap-3 flex-1">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -3451,8 +3453,8 @@ const AdminsAdmin: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10">
+        <div className="space-y-6 animate-pop-in">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h3 className="text-lg font-bold text-primary dark:text-white">Admin Access List</h3>
@@ -3488,16 +3490,17 @@ const AdminsAdmin: React.FC = () => {
                         No admins configured. Add an email to grant admin access.
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {adminUsers.map(admin => (
+                    <div className="space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                        {adminUsers.map((admin, index) => (
                             <div 
                                 key={admin.id}
                                 onClick={() => openEditModal(admin)}
-                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors hover:border-primary/50 ${
+                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors hover:border-primary/50 animate-pop-in ${
                                     admin.is_active 
                                         ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-surface-dark' 
                                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
                                 }`}
+                                style={{animationDelay: `${0.15 + index * 0.03}s`}}
                             >
                                 <div className="flex items-center gap-3 flex-1">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -4640,8 +4643,8 @@ const TiersAdmin: React.FC = () => {
     }
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
+        <div className="animate-pop-in">
+            <div className="flex justify-between items-center mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                     {tiers.length} membership tier{tiers.length !== 1 ? 's' : ''}
                 </p>
@@ -4979,12 +4982,13 @@ const TiersAdmin: React.FC = () => {
                     </p>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {tiers.map(tier => (
+                <div className="space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                    {tiers.map((tier, index) => (
                         <div 
                             key={tier.id} 
                             onClick={() => openEdit(tier)}
-                            className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 cursor-pointer hover:border-primary/30 transition-all"
+                            className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 cursor-pointer hover:border-primary/30 transition-all animate-pop-in"
+                            style={{animationDelay: `${0.15 + index * 0.03}s`}}
                         >
                             <div className="flex items-start justify-between mb-3">
                                 <div>

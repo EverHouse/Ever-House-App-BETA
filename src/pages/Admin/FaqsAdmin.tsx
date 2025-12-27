@@ -188,8 +188,8 @@ const FaqsAdmin: React.FC = () => {
     }
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-4">
+        <div className="animate-pop-in">
+            <div className="flex justify-between items-center mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <h2 className="text-xl font-bold text-primary dark:text-white">FAQs ({faqs.length})</h2>
                 <div className="flex gap-2">
                     {faqs.length === 0 && (
@@ -349,15 +349,16 @@ const FaqsAdmin: React.FC = () => {
                     </button>
                 </div>
             ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
                     {faqs.map((faq, index) => (
                         <div
                             key={faq.id}
-                            className={`bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border ${
+                            className={`bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border animate-pop-in ${
                                 faq.isActive 
                                     ? 'border-gray-100 dark:border-white/5' 
                                     : 'border-amber-200 dark:border-amber-800/30 opacity-60'
                             } transition-all`}
+                            style={{animationDelay: `${0.15 + index * 0.03}s`}}
                         >
                             <div className="flex items-start gap-3">
                                 <div className="flex flex-col gap-1">

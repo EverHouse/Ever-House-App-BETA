@@ -170,8 +170,8 @@ const InquiriesAdmin: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide -mx-4 px-4">
+        <div className="animate-pop-in">
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide -mx-4 px-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 {STATUS_TABS.map(tab => (
                     <button
                         key={tab.id}
@@ -188,7 +188,7 @@ const InquiriesAdmin: React.FC = () => {
                 ))}
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4">
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
                 {FORM_TYPE_CHIPS.map(chip => (
                     <button
                         key={chip.id}
@@ -338,18 +338,19 @@ const InquiriesAdmin: React.FC = () => {
                     <p className="text-gray-500 dark:text-gray-400">No form submissions match your current filters.</p>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {inquiries.map(inquiry => (
+                <div className="space-y-3 animate-pop-in" style={{animationDelay: '0.15s'}}>
+                    {inquiries.map((inquiry, index) => (
                         <div
                             key={inquiry.id}
                             onClick={() => openDetail(inquiry)}
-                            className={`bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border cursor-pointer hover:border-primary/30 transition-all ${
+                            className={`bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border cursor-pointer hover:border-primary/30 transition-all animate-pop-in ${
                                 inquiry.status === 'new' 
                                     ? 'border-blue-200 dark:border-blue-800/30' 
                                     : inquiry.status === 'archived'
                                         ? 'border-gray-100 dark:border-white/5 opacity-60'
                                         : 'border-gray-100 dark:border-white/5'
                             }`}
+                            style={{animationDelay: `${0.2 + index * 0.03}s`}}
                         >
                             <div className="flex items-start gap-3">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
