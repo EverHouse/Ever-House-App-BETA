@@ -453,5 +453,16 @@ export const changelog: ChangelogEntry[] = [
       "Fixed Dashboard data not loading (bookings, RSVPs, wellness enrollments)",
       "Fixed various API calls across the app that could fail silently"
     ]
+  },
+  {
+    version: "5.4",
+    date: "2025-12-28",
+    title: "Reschedule & 5-Min Booking Slots",
+    changes: [
+      "Reschedule bookings directly from calendar - old booking is automatically cancelled",
+      "Time slots now increment by 5 minutes for more flexible scheduling",
+      "Added 120-minute booking option for Premium, Corporate, and VIP members",
+      "Manual bookings now appear on both member dashboard and admin calendar"
+    ]
   }
 ];

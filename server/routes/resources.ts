@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { eq, and, or, sql, desc, asc } from 'drizzle-orm';
 import { db } from '../db';
-import { bookings, resources, users, facilityClosures, bays, notifications } from '../../shared/schema';
+import { bookings, resources, users, facilityClosures, bays, notifications, bookingRequests } from '../../shared/schema';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
 import { isStaffOrAdmin } from '../core/middleware';
 import { createCalendarEventOnCalendar, getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
@@ -473,7 +473,8 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       duration_minutes, 
       guest_count = 0, 
       booking_source, 
-      notes 
+      notes,
+      reschedule_from_id
     } = req.body;
 
     // Get staff email from authenticated session (more secure than trusting client input)
@@ -524,6 +525,53 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
         error: 'Duration not allowed for membership tier',
         message: `${tierName} members can only book up to ${maxDuration} minutes. Please select ${allowedDurations.join(' or ')} minutes.`
       });
+    }
+
+    // If rescheduling, cancel the old booking first
+    if (reschedule_from_id) {
+      const [oldBookingRequest] = await db.select()
+        .from(bookingRequests)
+        .where(eq(bookingRequests.id, reschedule_from_id));
+      
+      if (oldBookingRequest) {
+        // Delete calendar event if exists
+        if (oldBookingRequest.calendarEventId) {
+          try {
+            const calendarName = CALENDAR_CONFIG.golf.name;
+            const calendarId = await getCalendarIdByName(calendarName);
+            if (calendarId) {
+              await deleteCalendarEvent(calendarId, oldBookingRequest.calendarEventId);
+            }
+          } catch (calErr) {
+            logger.warn('Failed to delete calendar event during reschedule', { error: calErr as Error, requestId: req.requestId });
+          }
+        }
+        
+        // Cancel the old booking request
+        await db.update(bookingRequests)
+          .set({ status: 'cancelled', updatedAt: new Date() })
+          .where(eq(bookingRequests.id, reschedule_from_id));
+        
+        // Also cancel the corresponding booking in bookings table (same user, date, and time)
+        await db.update(bookings)
+          .set({ status: 'cancelled' })
+          .where(and(
+            eq(bookings.userEmail, oldBookingRequest.userEmail),
+            sql`${bookings.bookingDate} = ${oldBookingRequest.requestDate}`,
+            eq(bookings.startTime, oldBookingRequest.startTime),
+            or(
+              eq(bookings.status, 'confirmed'),
+              eq(bookings.status, 'pending'),
+              eq(bookings.status, 'approved')
+            )
+          ));
+        
+        logger.info('Cancelled old booking for reschedule', { 
+          oldBookingId: reschedule_from_id, 
+          memberEmail: member_email,
+          requestId: req.requestId 
+        });
+      }
     }
 
     // Check for existing booking of same resource type on same day
@@ -630,6 +678,28 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
         calendarEventId: calendarEventId
       })
       .returning();
+
+    // Also insert into booking_requests for admin calendar visibility
+    const memberName = member.firstName && member.lastName 
+      ? `${member.firstName} ${member.lastName}` 
+      : member_email;
+    
+    await db.insert(bookingRequests)
+      .values({
+        userEmail: member_email,
+        userName: memberName,
+        bayId: resource_id,
+        bayPreference: resource.name,
+        requestDate: booking_date,
+        startTime: start_time,
+        durationMinutes: duration_minutes,
+        endTime: end_time,
+        notes: notes || null,
+        status: 'approved',
+        reviewedBy: staffEmail,
+        reviewedAt: new Date(),
+        calendarEventId: calendarEventId
+      });
 
     await db.update(users)
       .set({ 

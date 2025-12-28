@@ -1900,6 +1900,7 @@ const SimulatorAdmin: React.FC = () => {
     const [showTrackmanConfirm, setShowTrackmanConfirm] = useState(false);
     const [showManualBooking, setShowManualBooking] = useState(false);
     const [rescheduleEmail, setRescheduleEmail] = useState<string | null>(null);
+    const [rescheduleBookingId, setRescheduleBookingId] = useState<number | null>(null);
     const [selectedCalendarBooking, setSelectedCalendarBooking] = useState<BookingRequest | null>(null);
     const [isCancellingFromModal, setIsCancellingFromModal] = useState(false);
     
@@ -2806,10 +2807,12 @@ const SimulatorAdmin: React.FC = () => {
                 <ManualBookingModal 
                     resources={resources}
                     defaultMemberEmail={rescheduleEmail || undefined}
-                    onClose={() => { setShowManualBooking(false); setRescheduleEmail(null); }}
+                    rescheduleFromId={rescheduleBookingId || undefined}
+                    onClose={() => { setShowManualBooking(false); setRescheduleEmail(null); setRescheduleBookingId(null); }}
                     onSuccess={() => {
                         setShowManualBooking(false);
                         setRescheduleEmail(null);
+                        setRescheduleBookingId(null);
                         const fetchUpdatedData = async () => {
                             try {
                                 const [requestsRes, pendingRes] = await Promise.all([
@@ -2944,6 +2947,7 @@ const SimulatorAdmin: React.FC = () => {
                                     <button
                                         onClick={() => {
                                             setRescheduleEmail(selectedCalendarBooking.user_email);
+                                            setRescheduleBookingId(selectedCalendarBooking.id);
                                             setSelectedCalendarBooking(null);
                                             setShowManualBooking(true);
                                         }}
@@ -3042,7 +3046,8 @@ const ManualBookingModal: React.FC<{
     onClose: () => void;
     onSuccess: () => void;
     defaultMemberEmail?: string;
-}> = ({ resources, onClose, onSuccess, defaultMemberEmail }) => {
+    rescheduleFromId?: number;
+}> = ({ resources, onClose, onSuccess, defaultMemberEmail, rescheduleFromId }) => {
     const { showToast } = useToast();
     const [memberEmail, setMemberEmail] = useState(defaultMemberEmail || '');
     const [searchQuery, setSearchQuery] = useState('');
@@ -3261,12 +3266,13 @@ const ManualBookingModal: React.FC<{
                     duration_minutes: durationMinutes,
                     guest_count: guestCount,
                     booking_source: bookingSource,
-                    notes: notes || undefined
+                    notes: notes || undefined,
+                    reschedule_from_id: rescheduleFromId
                 })
             });
 
             if (res.ok) {
-                showToast('Booking created successfully!', 'success');
+                showToast(rescheduleFromId ? 'Booking rescheduled successfully!' : 'Booking created successfully!', 'success');
                 onSuccess();
             } else {
                 const data = await res.json();
@@ -3298,7 +3304,7 @@ const ManualBookingModal: React.FC<{
             <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
                 <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto max-h-[90vh] overflow-y-auto">
                     <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-xl font-bold text-primary dark:text-white">Manual Booking</h3>
+                        <h3 className="text-xl font-bold text-primary dark:text-white">{rescheduleFromId ? 'Reschedule Booking' : 'Manual Booking'}</h3>
                         <button 
                             onClick={onClose}
                             className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
