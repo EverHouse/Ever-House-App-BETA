@@ -571,46 +571,46 @@ router.put('/api/booking-requests/:id', async (req, res) => {
         // Determine if member cancelled (cancelled_by matches member email) or staff cancelled
         const memberCancelled = cancelled_by === memberEmail;
         
-        try {
-          if (memberCancelled) {
-            // Member cancelled - notify all staff
-            const staffMessage = `${memberName} has cancelled their booking for ${bookingDate} at ${bookingTime}.`;
-            
-            await db.insert(notifications).values({
-              userEmail: 'staff@evenhouse.app', // Generic staff notification marker
-              title: 'Booking Cancelled by Member',
-              message: staffMessage,
-              type: 'booking_cancelled',
-              relatedId: parseInt(id),
-              relatedType: 'booking_request'
-            });
-            
-            await sendPushNotificationToStaff({
-              title: 'Booking Cancelled',
-              body: staffMessage,
-              url: '/#/staff'
-            }).catch(err => console.error('Staff push notification failed:', err));
-          } else {
-            // Staff cancelled - notify the member
-            const memberMessage = `Your booking for ${bookingDate} at ${bookingTime} has been cancelled by staff.${staff_notes ? ' Note: ' + staff_notes : ''}`;
-            
-            await db.insert(notifications).values({
-              userEmail: memberEmail,
-              title: 'Booking Cancelled',
-              message: memberMessage,
-              type: 'booking_cancelled',
-              relatedId: parseInt(id),
-              relatedType: 'booking_request'
-            });
-            
-            await sendPushNotification(memberEmail, {
-              title: 'Booking Cancelled',
-              body: memberMessage,
-              url: '/#/sims'
-            }).catch(err => console.error('Member push notification failed:', err));
-          }
-        } catch (notifErr) {
-          console.error('Cancellation notification failed (non-blocking):', notifErr);
+        if (memberCancelled) {
+          // Member cancelled - notify all staff
+          const staffMessage = `${memberName} has cancelled their booking for ${bookingDate} at ${bookingTime}.`;
+          
+          // In-app notification is REQUIRED - if this fails, cancellation fails
+          await db.insert(notifications).values({
+            userEmail: 'staff@evenhouse.app', // Generic staff notification marker
+            title: 'Booking Cancelled by Member',
+            message: staffMessage,
+            type: 'booking_cancelled',
+            relatedId: parseInt(id),
+            relatedType: 'booking_request'
+          });
+          
+          // Push notification is optional (user may not have enabled it)
+          await sendPushNotificationToStaff({
+            title: 'Booking Cancelled',
+            body: staffMessage,
+            url: '/#/staff'
+          }).catch(err => console.error('Staff push notification failed:', err));
+        } else {
+          // Staff cancelled - notify the member
+          const memberMessage = `Your booking for ${bookingDate} at ${bookingTime} has been cancelled by staff.${staff_notes ? ' Note: ' + staff_notes : ''}`;
+          
+          // In-app notification is REQUIRED - if this fails, cancellation fails
+          await db.insert(notifications).values({
+            userEmail: memberEmail,
+            title: 'Booking Cancelled',
+            message: memberMessage,
+            type: 'booking_cancelled',
+            relatedId: parseInt(id),
+            relatedType: 'booking_request'
+          });
+          
+          // Push notification is optional (user may not have enabled it)
+          await sendPushNotification(memberEmail, {
+            title: 'Booking Cancelled',
+            body: memberMessage,
+            url: '/#/sims'
+          }).catch(err => console.error('Member push notification failed:', err));
         }
       }
       

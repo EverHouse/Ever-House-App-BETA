@@ -472,7 +472,7 @@ export const changelog: ChangelogEntry[] = [
     changes: [
       "Fixed booking cancellation errors in calendar view and decline modal",
       "Improved loading screen exit animation - now fluidly minimizes into status bar",
-      "Notification delivery is now non-blocking so cancellations always succeed"
+      "In-app notifications are now required for booking cancellations to succeed"
     ]
   }
 ];
