@@ -737,6 +737,10 @@ const EventsAdminContent: React.FC = () => {
         ? events 
         : events.filter(e => e.category === activeCategory);
 
+    const today = new Date().toISOString().split('T')[0];
+    const upcomingEvents = filteredEvents.filter(e => e.event_date >= today).sort((a, b) => a.event_date.localeCompare(b.event_date));
+    const pastEvents = filteredEvents.filter(e => e.event_date < today).sort((a, b) => b.event_date.localeCompare(a.event_date));
+
     const openEdit = (event: DBEvent) => {
         setNewItem(event);
         setEditId(event.id);
@@ -925,55 +929,124 @@ const EventsAdminContent: React.FC = () => {
                     <p>No {activeCategory === 'all' ? 'events' : activeCategory.toLowerCase()} found</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
-                    {filteredEvents.map((event, index) => (
-                        <div key={event.id} onClick={() => openEdit(event)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.15 + index * 0.03}s`}}>
-                            {event.eventbrite_id && (
-                                <div className="absolute top-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase px-2 py-1 rounded-bl-lg z-10">
-                                    Eventbrite
-                                </div>
-                            )}
-                            <div className="flex gap-4">
-                                <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-white/5 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                                    {event.image_url ? (
-                                        <img src={event.image_url} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-white/20">
-                                            {event.category === 'Golf' ? 'golf_course' : event.category === 'Tournaments' ? 'emoji_events' : event.category === 'Dining' ? 'restaurant' : event.category === 'Networking' ? 'handshake' : event.category === 'Workshops' ? 'school' : event.category === 'Family' ? 'family_restroom' : event.category === 'Entertainment' ? 'music_note' : event.category === 'Charity' ? 'volunteer_activism' : 'celebration'}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-lg text-primary dark:text-white leading-tight mb-1 truncate">{event.title}</h4>
-                                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-primary/10 dark:bg-white/10 text-primary/80 dark:text-white/80 px-1.5 py-0.5 rounded mb-2">{event.category}</span>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.event_date)} • {formatTime(event.start_time)}</p>
-                                </div>
+                <div className="space-y-6">
+                    {upcomingEvents.length > 0 && (
+                        <div className="animate-pop-in" style={{animationDelay: '0.1s'}}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-green-500">schedule</span>
+                                <h3 className="font-bold text-primary dark:text-white">Upcoming ({upcomingEvents.length})</h3>
                             </div>
-                            <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
-                                <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
-                                <div className="flex items-center gap-2">
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); handleViewRsvps(event); }} 
-                                        className="text-primary/70 dark:text-white/70 text-xs font-bold uppercase tracking-wider hover:bg-primary/5 dark:hover:bg-white/10 px-2 py-1 rounded flex items-center gap-1"
-                                    >
-                                        <span className="material-symbols-outlined text-[14px]">group</span> RSVPs
-                                    </button>
-                                    {event.eventbrite_url && (
-                                        <a 
-                                            href={event.eventbrite_url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="text-[#F05537] text-xs font-bold uppercase tracking-wider hover:bg-orange-50 px-2 py-1 rounded flex items-center gap-1"
-                                        >
-                                            <span className="material-symbols-outlined text-[14px]">open_in_new</span> View
-                                        </a>
-                                    )}
-                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="text-primary/50 dark:text-white/50 text-xs font-bold uppercase tracking-wider hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors">Delete</button>
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {upcomingEvents.map((event, index) => (
+                                    <div key={event.id} onClick={() => openEdit(event)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.15 + index * 0.03}s`}}>
+                                        {event.eventbrite_id && (
+                                            <div className="absolute top-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase px-2 py-1 rounded-bl-lg z-10">
+                                                Eventbrite
+                                            </div>
+                                        )}
+                                        <div className="flex gap-4">
+                                            <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-white/5 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                                {event.image_url ? (
+                                                    <img src={event.image_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-white/20">
+                                                        {event.category === 'Golf' ? 'golf_course' : event.category === 'Tournaments' ? 'emoji_events' : event.category === 'Dining' ? 'restaurant' : event.category === 'Networking' ? 'handshake' : event.category === 'Workshops' ? 'school' : event.category === 'Family' ? 'family_restroom' : event.category === 'Entertainment' ? 'music_note' : event.category === 'Charity' ? 'volunteer_activism' : 'celebration'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-lg text-primary dark:text-white leading-tight mb-1 truncate">{event.title}</h4>
+                                                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-primary/10 dark:bg-white/10 text-primary/80 dark:text-white/80 px-1.5 py-0.5 rounded mb-2">{event.category}</span>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.event_date)} • {formatTime(event.start_time)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
+                                            <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
+                                            <div className="flex items-center gap-2">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleViewRsvps(event); }} 
+                                                    className="text-primary/70 dark:text-white/70 text-xs font-bold uppercase tracking-wider hover:bg-primary/5 dark:hover:bg-white/10 px-2 py-1 rounded flex items-center gap-1"
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">group</span> RSVPs
+                                                </button>
+                                                {event.eventbrite_url && (
+                                                    <a 
+                                                        href={event.eventbrite_url} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="text-[#F05537] text-xs font-bold uppercase tracking-wider hover:bg-orange-50 px-2 py-1 rounded flex items-center gap-1"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px]">open_in_new</span> View
+                                                    </a>
+                                                )}
+                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="text-primary/50 dark:text-white/50 text-xs font-bold uppercase tracking-wider hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors">Delete</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    ))}
+                    )}
+                    
+                    {pastEvents.length > 0 && (
+                        <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-gray-400">history</span>
+                                <h3 className="font-bold text-gray-500 dark:text-gray-400">Past ({pastEvents.length})</h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-70">
+                                {pastEvents.map((event, index) => (
+                                    <div key={event.id} onClick={() => openEdit(event)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.25 + index * 0.03}s`}}>
+                                        {event.eventbrite_id && (
+                                            <div className="absolute top-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase px-2 py-1 rounded-bl-lg z-10">
+                                                Eventbrite
+                                            </div>
+                                        )}
+                                        <div className="flex gap-4">
+                                            <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-white/5 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                                {event.image_url ? (
+                                                    <img src={event.image_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-white/20">
+                                                        {event.category === 'Golf' ? 'golf_course' : event.category === 'Tournaments' ? 'emoji_events' : event.category === 'Dining' ? 'restaurant' : event.category === 'Networking' ? 'handshake' : event.category === 'Workshops' ? 'school' : event.category === 'Family' ? 'family_restroom' : event.category === 'Entertainment' ? 'music_note' : event.category === 'Charity' ? 'volunteer_activism' : 'celebration'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-lg text-primary dark:text-white leading-tight mb-1 truncate">{event.title}</h4>
+                                                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-primary/10 dark:bg-white/10 text-primary/80 dark:text-white/80 px-1.5 py-0.5 rounded mb-2">{event.category}</span>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.event_date)} • {formatTime(event.start_time)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
+                                            <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
+                                            <div className="flex items-center gap-2">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleViewRsvps(event); }} 
+                                                    className="text-primary/70 dark:text-white/70 text-xs font-bold uppercase tracking-wider hover:bg-primary/5 dark:hover:bg-white/10 px-2 py-1 rounded flex items-center gap-1"
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">group</span> RSVPs
+                                                </button>
+                                                {event.eventbrite_url && (
+                                                    <a 
+                                                        href={event.eventbrite_url} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="text-[#F05537] text-xs font-bold uppercase tracking-wider hover:bg-orange-50 px-2 py-1 rounded flex items-center gap-1"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px]">open_in_new</span> View
+                                                    </a>
+                                                )}
+                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="text-primary/50 dark:text-white/50 text-xs font-bold uppercase tracking-wider hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors">Delete</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -3644,6 +3717,16 @@ const WellnessAdminContent: React.FC = () => {
         ? classes 
         : classes.filter(c => c.category === activeCategory);
 
+    const today = new Date().toISOString().split('T')[0];
+    const upcomingClasses = filteredClasses.filter(c => {
+        const classDate = c.date.includes('T') ? c.date.split('T')[0] : c.date;
+        return classDate >= today;
+    }).sort((a, b) => a.date.localeCompare(b.date));
+    const pastClasses = filteredClasses.filter(c => {
+        const classDate = c.date.includes('T') ? c.date.split('T')[0] : c.date;
+        return classDate < today;
+    }).sort((a, b) => b.date.localeCompare(a.date));
+
     const handleSave = async () => {
         if (!formData.title || !formData.time || !formData.instructor || !formData.date || !formData.spots) {
             setError('Please fill in all required fields');
@@ -3755,57 +3838,128 @@ const WellnessAdminContent: React.FC = () => {
                         No {activeCategory === 'all' ? 'wellness classes' : activeCategory.toLowerCase()} scheduled. Add your first!
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {filteredClasses.map((cls, index) => (
-                            <div 
-                                key={cls.id}
-                                className={`flex items-center justify-between p-4 rounded-xl border animate-pop-in ${
-                                    cls.is_active 
-                                        ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
-                                        : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
-                                }`}
-                                style={{animationDelay: `${0.15 + index * 0.03}s`}}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-brand-green">
-                                        <span className="material-symbols-outlined">spa</span>
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-primary dark:text-white">{cls.title}</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(cls.date)} at {cls.time} • {cls.instructor}
-                                        </p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-xs px-2 py-0.5 rounded bg-primary/10 dark:bg-white/10 text-primary dark:text-white">{cls.category}</span>
-                                            <span className="text-xs text-gray-400">{cls.duration} • {cls.spots}</span>
-                                        </div>
-                                    </div>
+                    <div className="space-y-6">
+                        {upcomingClasses.length > 0 && (
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-green-500">schedule</span>
+                                    <h3 className="font-bold text-primary dark:text-white">Upcoming ({upcomingClasses.length})</h3>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleViewEnrollments(cls)}
-                                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                        title="View Enrollments"
-                                    >
-                                        <span className="material-symbols-outlined text-xl">group</span>
-                                    </button>
-                                    <button
-                                        onClick={() => openEdit(cls)}
-                                        className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                                        title="Edit"
-                                    >
-                                        <span className="material-symbols-outlined text-xl">edit</span>
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(cls)}
-                                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                        title="Delete"
-                                    >
-                                        <span className="material-symbols-outlined text-xl">delete</span>
-                                    </button>
+                                <div className="space-y-3">
+                                    {upcomingClasses.map((cls, index) => (
+                                        <div 
+                                            key={cls.id}
+                                            className={`flex items-center justify-between p-4 rounded-xl border animate-pop-in ${
+                                                cls.is_active 
+                                                    ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
+                                                    : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
+                                            }`}
+                                            style={{animationDelay: `${0.15 + index * 0.03}s`}}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-brand-green">
+                                                    <span className="material-symbols-outlined">spa</span>
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-primary dark:text-white">{cls.title}</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {formatDate(cls.date)} at {cls.time} • {cls.instructor}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 dark:bg-white/10 text-primary dark:text-white">{cls.category}</span>
+                                                        <span className="text-xs text-gray-400">{cls.duration} • {cls.spots}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleViewEnrollments(cls)}
+                                                    className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                                    title="View Enrollments"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">group</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => openEdit(cls)}
+                                                    className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(cls)}
+                                                    className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
+                        )}
+                        
+                        {pastClasses.length > 0 && (
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-gray-400">history</span>
+                                    <h3 className="font-bold text-gray-500 dark:text-gray-400">Past ({pastClasses.length})</h3>
+                                </div>
+                                <div className="space-y-3 opacity-70">
+                                    {pastClasses.map((cls, index) => (
+                                        <div 
+                                            key={cls.id}
+                                            className={`flex items-center justify-between p-4 rounded-xl border animate-pop-in ${
+                                                cls.is_active 
+                                                    ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
+                                                    : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
+                                            }`}
+                                            style={{animationDelay: `${0.25 + index * 0.03}s`}}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-brand-green">
+                                                    <span className="material-symbols-outlined">spa</span>
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-primary dark:text-white">{cls.title}</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {formatDate(cls.date)} at {cls.time} • {cls.instructor}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 dark:bg-white/10 text-primary dark:text-white">{cls.category}</span>
+                                                        <span className="text-xs text-gray-400">{cls.duration} • {cls.spots}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleViewEnrollments(cls)}
+                                                    className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                                    title="View Enrollments"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">group</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => openEdit(cls)}
+                                                    className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(cls)}
+                                                    className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
