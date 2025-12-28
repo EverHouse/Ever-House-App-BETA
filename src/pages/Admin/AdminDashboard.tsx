@@ -6754,9 +6754,9 @@ const ToursAdmin: React.FC = () => {
 
   const fetchTours = useCallback(async () => {
     try {
-      const [todayRes, upcomingRes] = await Promise.all([
+      const [todayRes, allToursRes] = await Promise.all([
         fetch('/api/tours/today', { credentials: 'include' }),
-        fetch('/api/tours?upcoming=true', { credentials: 'include' })
+        fetch('/api/tours', { credentials: 'include' })
       ]);
       
       if (todayRes.ok) {
@@ -6764,9 +6764,10 @@ const ToursAdmin: React.FC = () => {
         setTodayTours(data);
       }
       
-      if (upcomingRes.ok) {
-        const data = await upcomingRes.json();
-        setTours(data.filter((t: Tour) => t.tourDate !== new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })));
+      if (allToursRes.ok) {
+        const data = await allToursRes.json();
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+        setTours(data.filter((t: Tour) => t.tourDate !== todayStr));
       }
     } catch (err) {
       console.error('Failed to fetch tours:', err);

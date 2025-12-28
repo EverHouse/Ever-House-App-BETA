@@ -320,13 +320,14 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
       return { synced: 0, created: 0, updated: 0, error: `Calendar "${CALENDAR_CONFIG.events.name}" not found` };
     }
     
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    oneYearAgo.setHours(0, 0, 0, 0);
     
     const response = await calendar.events.list({
       calendarId,
-      timeMin: now.toISOString(),
-      maxResults: 100,
+      timeMin: oneYearAgo.toISOString(),
+      maxResults: 250,
       singleEvents: true,
       orderBy: 'startTime',
     });
@@ -405,13 +406,14 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
       return { synced: 0, created: 0, updated: 0, error: `Calendar "${CALENDAR_CONFIG.wellness.name}" not found` };
     }
     
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    oneYearAgo.setHours(0, 0, 0, 0);
     
     const response = await calendar.events.list({
       calendarId,
-      timeMin: now.toISOString(),
-      maxResults: 100,
+      timeMin: oneYearAgo.toISOString(),
+      maxResults: 250,
       singleEvents: true,
       orderBy: 'startTime',
     });

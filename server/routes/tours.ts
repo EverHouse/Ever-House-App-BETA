@@ -179,13 +179,14 @@ export async function syncToursFromCalendar(): Promise<{ synced: number; created
       return { synced: 0, created: 0, updated: 0, error: `Calendar "${CALENDAR_CONFIG.tours.name}" not found` };
     }
     
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    oneYearAgo.setHours(0, 0, 0, 0);
     
     const response = await calendar.events.list({
       calendarId,
-      timeMin: now.toISOString(),
-      maxResults: 100,
+      timeMin: oneYearAgo.toISOString(),
+      maxResults: 250,
       singleEvents: true,
       orderBy: 'startTime',
     });
