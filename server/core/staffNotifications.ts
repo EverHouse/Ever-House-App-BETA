@@ -1,15 +1,24 @@
-import { pool } from './db';
+import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { notifications } from '../../shared/schema';
+import { notifications, staffUsers, adminUsers } from '../../shared/schema';
 
 export async function getStaffAndAdminEmails(): Promise<string[]> {
   try {
-    const result = await pool.query(`
-      SELECT email FROM staff_users WHERE is_active = true
-      UNION
-      SELECT email FROM admin_users WHERE is_active = true
-    `);
-    return result.rows.map(row => row.email);
+    const [staffEmails, adminEmails] = await Promise.all([
+      db.select({ email: staffUsers.email })
+        .from(staffUsers)
+        .where(eq(staffUsers.isActive, true)),
+      db.select({ email: adminUsers.email })
+        .from(adminUsers)
+        .where(eq(adminUsers.isActive, true)),
+    ]);
+    
+    const allEmails = new Set([
+      ...staffEmails.map(row => row.email),
+      ...adminEmails.map(row => row.email),
+    ]);
+    
+    return Array.from(allEmails);
   } catch (error) {
     console.error('Failed to get staff/admin emails:', error);
     return [];
