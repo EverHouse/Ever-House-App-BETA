@@ -143,15 +143,18 @@ const MemberEvents: React.FC = () => {
     const [hours, minutes] = (event.time || '12:00').split(':').map(s => parseInt(s) || 0);
     const startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     
-    downloadICalFile({
-      title: event.title,
-      description: event.description,
-      location: event.location,
-      startDate: event.date || getTodayPacific(),
-      startTime: startTime,
-      durationMinutes: 120
-    });
-    showToast('Event added to calendar', 'success');
+    try {
+      downloadICalFile({
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        startDate: event.date || getTodayPacific(),
+        startTime: startTime,
+        durationMinutes: 120
+      });
+    } catch (err) {
+      console.error('Failed to add to calendar:', err);
+    }
   };
 
   const confirmViewAsAction = async () => {

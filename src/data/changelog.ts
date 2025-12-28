@@ -440,5 +440,15 @@ export const changelog: ChangelogEntry[] = [
       "Fixed request cancellation from My Requests tab",
       "Improved error messages when bookings fail to process"
     ]
+  },
+  {
+    version: "5.3",
+    date: "2025-12-28",
+    title: "UI Polish & Bug Fixes",
+    changes: [
+      "Fixed RSVP showing error message even when successful",
+      "Fixed Add to Calendar showing false success on iOS Safari",
+      "Improved event card text readability in light mode"
+    ]
   }
 ];

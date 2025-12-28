@@ -477,36 +477,40 @@ router.post('/api/rsvps', async (req, res) => {
       location: events.location
     }).from(events).where(eq(events.id, event_id));
     
-    if (eventData.length > 0) {
-      const evt = eventData[0];
-      const formattedDate = formatDateDisplayWithDay(evt.eventDate);
-      const formattedTime = evt.startTime?.substring(0, 5) || '';
-      const message = `You're confirmed for ${evt.title} on ${formattedDate}${formattedTime ? ` at ${formattedTime}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`;
-      
-      await db.insert(notifications).values({
-        userEmail: user_email,
-        title: 'Event RSVP Confirmed',
-        message: message,
-        type: 'event_rsvp',
-        relatedId: event_id,
-        relatedType: 'event'
-      });
-      
-      sendPushNotification(user_email, {
-        title: 'RSVP Confirmed!',
-        body: message,
-        url: '/#/member-events'
-      }).catch(err => console.error('Push notification failed:', err));
-      
-      const memberName = user_email.split('@')[0];
-      const staffMessage = `${memberName} RSVP'd for ${evt.title} on ${formattedDate}`;
-      notifyAllStaff(
-        'New Event RSVP',
-        staffMessage,
-        'event_rsvp',
-        event_id,
-        'event'
-      ).catch(err => console.error('Staff RSVP notification failed:', err));
+    try {
+      if (eventData.length > 0) {
+        const evt = eventData[0];
+        const formattedDate = formatDateDisplayWithDay(evt.eventDate);
+        const formattedTime = evt.startTime?.substring(0, 5) || '';
+        const message = `You're confirmed for ${evt.title} on ${formattedDate}${formattedTime ? ` at ${formattedTime}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`;
+        
+        await db.insert(notifications).values({
+          userEmail: user_email,
+          title: 'Event RSVP Confirmed',
+          message: message,
+          type: 'event_rsvp',
+          relatedId: event_id,
+          relatedType: 'event'
+        });
+        
+        sendPushNotification(user_email, {
+          title: 'RSVP Confirmed!',
+          body: message,
+          url: '/#/member-events'
+        }).catch(err => console.error('Push notification failed:', err));
+        
+        const memberName = user_email.split('@')[0];
+        const staffMessage = `${memberName} RSVP'd for ${evt.title} on ${formattedDate}`;
+        notifyAllStaff(
+          'New Event RSVP',
+          staffMessage,
+          'event_rsvp',
+          event_id,
+          'event'
+        ).catch(err => console.error('Staff RSVP notification failed:', err));
+      }
+    } catch (notifyErr) {
+      console.error('Non-blocking notification error:', notifyErr);
     }
     
     res.status(201).json(result[0]);
