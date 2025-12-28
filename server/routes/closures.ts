@@ -327,6 +327,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
     
     let golfEventIds: string | null = null;
     let conferenceEventIds: string | null = null;
+    let internalEventIds: string | null = null;
     
     try {
       const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
@@ -377,13 +378,32 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         }
       }
       
+      // Always create event in Internal Calendar for all closures
+      const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
+      if (internalCalendarId) {
+        internalEventIds = await createClosureCalendarEvents(
+          internalCalendarId,
+          eventTitle,
+          eventDescription,
+          start_date,
+          end_date || start_date,
+          start_time,
+          end_time
+        );
+        
+        if (internalEventIds) {
+          console.log(`[Closures] Created Internal Calendar event(s) for closure #${closureId}`);
+        }
+      }
+      
       // Store event IDs in separate columns
-      if (golfEventIds || conferenceEventIds) {
+      if (golfEventIds || conferenceEventIds || internalEventIds) {
         await db
           .update(facilityClosures)
           .set({ 
             googleCalendarId: golfEventIds,
-            conferenceCalendarId: conferenceEventIds
+            conferenceCalendarId: conferenceEventIds,
+            internalCalendarId: internalEventIds
           })
           .where(eq(facilityClosures.id, closureId));
       }
@@ -434,7 +454,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       });
     }
     
-    res.json({ ...result, googleCalendarId: golfEventIds, conferenceCalendarId: conferenceEventIds });
+    res.json({ ...result, googleCalendarId: golfEventIds, conferenceCalendarId: conferenceEventIds, internalCalendarId: internalEventIds });
   } catch (error: any) {
     if (!isProduction) console.error('Closure create error:', error);
     res.status(500).json({ error: 'Failed to create closure' });
@@ -451,7 +471,7 @@ router.delete('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
       .from(facilityClosures)
       .where(eq(facilityClosures.id, closureId));
     
-    // Delete calendar events from both calendars
+    // Delete calendar events from all calendars
     try {
       // Delete from Booked Golf calendar
       if (closure?.googleCalendarId) {
@@ -468,6 +488,15 @@ router.delete('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
         if (conferenceCalendarId) {
           await deleteClosureCalendarEvents(conferenceCalendarId, closure.conferenceCalendarId);
           console.log(`[Closures] Deleted MBO_Conference_Room calendar event(s) for closure #${closureId}`);
+        }
+      }
+      
+      // Delete from Internal Calendar
+      if (closure?.internalCalendarId) {
+        const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
+        if (internalCalendarId) {
+          await deleteClosureCalendarEvents(internalCalendarId, closure.internalCalendarId);
+          console.log(`[Closures] Deleted Internal Calendar event(s) for closure #${closureId}`);
         }
       }
     } catch (calError) {
@@ -567,7 +596,7 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
     }
     
     // Update calendar events if dates/times/title changed
-    const hasCalendarEvents = existing.googleCalendarId || existing.conferenceCalendarId;
+    const hasCalendarEvents = existing.googleCalendarId || existing.conferenceCalendarId || existing.internalCalendarId;
     if (hasCalendarEvents && (datesChanged || timesChanged || title !== existing.title || reason !== existing.reason || areasChanged)) {
       try {
         const newAffectedAreas = affected_areas || existing.affectedAreas || 'entire_facility';
@@ -582,18 +611,23 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
         
         const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
         const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
+        const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
         
-        // Delete old events from both calendars
+        // Delete old events from all calendars
         if (existing.googleCalendarId && golfCalendarId) {
           await deleteClosureCalendarEvents(golfCalendarId, existing.googleCalendarId);
         }
         if (existing.conferenceCalendarId && conferenceCalendarId) {
           await deleteClosureCalendarEvents(conferenceCalendarId, existing.conferenceCalendarId);
         }
+        if (existing.internalCalendarId && internalCalendarId) {
+          await deleteClosureCalendarEvents(internalCalendarId, existing.internalCalendarId);
+        }
         
         // Create new events
         let newGolfEventIds: string | null = null;
         let newConferenceEventIds: string | null = null;
+        let newInternalEventIds: string | null = null;
         
         // Determine what resources are affected
         const affectsConferenceRoom = newAffectedAreas === 'entire_facility' || newAffectedAreas === 'conference_room';
@@ -627,12 +661,26 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
           );
         }
         
+        // Always create Internal Calendar event for all closures
+        if (internalCalendarId) {
+          newInternalEventIds = await createClosureCalendarEvents(
+            internalCalendarId,
+            eventTitle,
+            eventDescription,
+            newStartDate,
+            newEndDate || newStartDate,
+            newStartTime,
+            newEndTime
+          );
+        }
+        
         // Update stored calendar IDs in separate columns
         await db
           .update(facilityClosures)
           .set({ 
             googleCalendarId: newGolfEventIds,
-            conferenceCalendarId: newConferenceEventIds
+            conferenceCalendarId: newConferenceEventIds,
+            internalCalendarId: newInternalEventIds
           })
           .where(eq(facilityClosures.id, closureId));
         

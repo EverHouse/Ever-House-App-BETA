@@ -27,6 +27,9 @@ export const CALENDAR_CONFIG = {
   },
   tours: {
     name: 'Tours Scheduled',
+  },
+  internal: {
+    name: 'Internal Calendar',
   }
 };
 
