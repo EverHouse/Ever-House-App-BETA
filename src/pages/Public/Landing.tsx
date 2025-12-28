@@ -268,37 +268,43 @@ const Landing: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-0 overflow-x-hidden relative bg-[#F2F2EC]">
-      {/* Fixed Hero Background - extends edge-to-edge including behind status bar */}
+      {/* Hero Section - extends behind status bar */}
       <div 
         ref={heroRef as React.RefObject<HTMLDivElement>}
-        className="fixed inset-0 z-0 pointer-events-none"
-        style={{ height: '100vh' }}
-        aria-hidden="true"
+        className="relative flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))] overflow-visible"
+        style={{ 
+          height: '100vh', 
+          minHeight: '700px'
+        }}
       >
-        <img 
-          src="/images/hero-lounge-optimized.webp" 
-          alt="" 
-          className="absolute inset-0 w-full h-full object-cover will-change-transform"
-          loading="eager"
-          style={{ 
-            transform: `translateY(${parallaxOffset}px) scale(1.05)`,
-            opacity: parallaxOpacity
-          }}
-        />
+        {/* Background container that extends into safe area */}
         <div 
-          className="absolute inset-0 transition-opacity duration-300"
+          className="absolute inset-0 overflow-hidden rounded-b-[2.5rem]"
           style={{
-            background: `linear-gradient(to top, rgba(0,0,0,${0.9 + gradientShift * 0.005}) 0%, rgba(0,0,0,${0.4 + gradientShift * 0.02}) ${40 + gradientShift}%, transparent 100%)`
+            top: 'calc(-1 * env(safe-area-inset-top, 0px))',
+            height: 'calc(100% + env(safe-area-inset-top, 0px))'
           }}
-        />
-      </div>
-      
-      {/* Hero Content Section - positioned over the fixed background */}
-      <div 
-        className="relative z-10 flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))]"
-        style={{ height: '100vh', minHeight: '700px' }}
-      >
-        <div className="relative animate-pop-in flex flex-col items-center text-center">
+        >
+          <img 
+            src="/images/hero-lounge-optimized.webp" 
+            alt="Even House Lounge" 
+            className="absolute inset-0 w-full h-[120%] object-cover will-change-transform"
+            loading="eager"
+            style={{ 
+              transform: `translateY(${parallaxOffset}px) scale(1.05)`,
+              opacity: parallaxOpacity
+            }}
+          />
+          <div 
+            className="absolute inset-0 transition-opacity duration-300"
+            style={{
+              background: `linear-gradient(to top, rgba(0,0,0,${0.9 + gradientShift * 0.005}) 0%, rgba(0,0,0,${0.4 + gradientShift * 0.02}) ${40 + gradientShift}%, transparent 100%)`
+            }}
+          />
+        </div>
+        
+        {/* Hero content */}
+        <div className="relative z-10 animate-pop-in flex flex-col items-center text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05] mb-8 sm:mb-10 text-white text-shadow-sm font-serif">
             A new kind of <br/> members club — <br/> rooted in golf, built <br/> for community.
           </h1>
@@ -313,13 +319,6 @@ const Landing: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* Rounded bottom overlay to create the curved edge effect */}
-      <div 
-        className="absolute left-0 right-0 h-12 bg-[#F2F2EC] rounded-t-[2.5rem] z-10 pointer-events-none"
-        style={{ top: 'calc(100vh - 1.5rem)' }}
-        aria-hidden="true"
-      />
 
       {/* Content wrapper with cream background */}
       <div className="bg-[#F2F2EC]">

@@ -348,5 +348,15 @@ export const changelog: ChangelogEntry[] = [
       "Fixed-position hero background for true full-bleed display",
       "Seamless edge-to-edge display for a more immersive experience"
     ]
+  },
+  {
+    version: "4.4",
+    date: "2025-12-28",
+    title: "Parallax Preserved",
+    changes: [
+      "Refined hero background to maintain smooth parallax scrolling",
+      "Background extends into safe area without breaking scroll effects",
+      "Better structured layout for hero content and background layers"
+    ]
   }
 ];
