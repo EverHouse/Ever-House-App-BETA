@@ -65,8 +65,8 @@ const AdminDashboard: React.FC = () => {
     const fetchPendingCount = async () => {
       try {
         const [requestsRes, bookingsRes] = await Promise.all([
-          fetch('/api/booking-requests?include_all=true'),
-          fetch('/api/pending-bookings')
+          fetch('/api/booking-requests?include_all=true', { credentials: 'include' }),
+          fetch('/api/pending-bookings', { credentials: 'include' })
         ]);
         let count = 0;
         if (requestsRes.ok) {
@@ -92,7 +92,7 @@ const AdminDashboard: React.FC = () => {
     if (!actualUser?.email) return;
     const fetchUnread = async () => {
       try {
-        const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}&unread_only=true`);
+        const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}&unread_only=true`, { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setUnreadNotifCount(data.length);
@@ -806,7 +806,7 @@ const EventsAdminContent: React.FC = () => {
 
     const handleDelete = async (id: number) => {
         try {
-            await fetch(`/api/events/${id}`, { method: 'DELETE' });
+            await fetch(`/api/events/${id}`, { method: 'DELETE', credentials: 'include' });
             fetchEvents();
         } catch (err) {
             console.error('Failed to delete event:', err);
@@ -818,7 +818,7 @@ const EventsAdminContent: React.FC = () => {
         setIsViewingRsvps(true);
         setIsLoadingRsvps(true);
         try {
-            const res = await fetch(`/api/events/${event.id}/rsvps`);
+            const res = await fetch(`/api/events/${event.id}/rsvps`, { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
                 setRsvps(data);
@@ -1252,7 +1252,7 @@ const StaffUpdatesAdmin: React.FC = () => {
     const fetchNotifications = useCallback(async () => {
         if (!actualUser?.email) return;
         try {
-            const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}`);
+            const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}`, { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
                 setNotifications(data);
@@ -1280,7 +1280,7 @@ const StaffUpdatesAdmin: React.FC = () => {
     const handleNotificationClick = async (notif: StaffNotification) => {
         if (!notif.is_read) {
             try {
-                await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+                await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT', credentials: 'include' });
                 setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
                 setUnreadCount(prev => Math.max(0, prev - 1));
             } catch (err) {
@@ -3426,7 +3426,7 @@ const WellnessAdminContent: React.FC = () => {
         if (!window.confirm(`Delete "${cls.title}"?`)) return;
 
         try {
-            const res = await fetch(`/api/wellness-classes/${cls.id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/wellness-classes/${cls.id}`, { method: 'DELETE', credentials: 'include' });
             if (res.ok) {
                 setClasses(prev => prev.filter(c => c.id !== cls.id));
                 setSuccess('Class deleted');
@@ -3450,7 +3450,7 @@ const WellnessAdminContent: React.FC = () => {
         setIsViewingEnrollments(true);
         setIsLoadingEnrollments(true);
         try {
-            const res = await fetch(`/api/wellness-classes/${cls.id}/enrollments`);
+            const res = await fetch(`/api/wellness-classes/${cls.id}/enrollments`, { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
                 setEnrollments(data);

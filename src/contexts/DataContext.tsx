@@ -412,7 +412,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const setViewAsUser = async (member: MemberProfile) => {
     if (actualUser?.role === 'admin') {
       try {
-        const res = await fetch(`/api/members/${encodeURIComponent(member.email)}/details`);
+        const res = await fetch(`/api/members/${encodeURIComponent(member.email)}/details`, { credentials: 'include' });
         if (res.ok) {
           const details = await res.json();
           const fullMember: MemberProfile = {

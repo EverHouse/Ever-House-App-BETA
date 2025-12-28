@@ -89,7 +89,7 @@ const MemberUpdates: React.FC = () => {
   const fetchNotifications = useCallback(async () => {
     if (!user?.email) return;
     try {
-      const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}`);
+      const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setNotifications(data);
@@ -117,7 +117,7 @@ const MemberUpdates: React.FC = () => {
   const handleNotificationClick = async (notif: UserNotification) => {
     if (!notif.is_read) {
       try {
-        await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+        await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT', credentials: 'include' });
         setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
         // Dispatch event to sync header badge

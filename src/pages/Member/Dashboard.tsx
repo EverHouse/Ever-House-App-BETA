@@ -145,10 +145,10 @@ const Dashboard: React.FC = () => {
     
     try {
       const results = await Promise.allSettled([
-        fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`),
-        fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`),
-        fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`),
-        fetch(`/api/booking-requests?user_email=${encodeURIComponent(user.email)}`)
+        fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
+        fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
+        fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
+        fetch(`/api/booking-requests?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' })
       ]);
 
       if (results[0].status === 'fulfilled' && results[0].value.ok) {
@@ -189,7 +189,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (user?.email && !isStaffOrAdminProfile) {
-      fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`)
+      fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`, { credentials: 'include' })
         .then(res => {
           if (!res.ok) throw new Error('Failed to fetch guest passes');
           return res.json();
@@ -350,7 +350,8 @@ const Dashboard: React.FC = () => {
         setConfirmModal(null);
         try {
           const res = await fetch(`/api/rsvps/${eventId}/${encodeURIComponent(user.email)}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
           });
           if (res.ok) {
             setDbRSVPs(prev => prev.filter(r => r.event_id !== eventId));
@@ -376,7 +377,8 @@ const Dashboard: React.FC = () => {
         setConfirmModal(null);
         try {
           const res = await fetch(`/api/wellness-enrollments/${classId}/${encodeURIComponent(user.email)}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
           });
           if (res.ok) {
             setDbWellnessEnrollments(prev => prev.filter(w => w.class_id !== classId));
@@ -696,7 +698,7 @@ const Dashboard: React.FC = () => {
       }}
       onSuccess={async () => {
         try {
-          const res = await fetch(`/api/guest-passes/${encodeURIComponent(user?.email || '')}?tier=${encodeURIComponent(user?.tier || 'Social')}`);
+          const res = await fetch(`/api/guest-passes/${encodeURIComponent(user?.email || '')}?tier=${encodeURIComponent(user?.tier || 'Social')}`, { credentials: 'include' });
           if (!res.ok) throw new Error('Failed to refresh guest passes');
           const data = await res.json();
           setGuestPasses(data);

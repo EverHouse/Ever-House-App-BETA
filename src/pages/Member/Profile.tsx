@@ -66,7 +66,7 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     if (user?.email) {
-      fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`)
+      fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`, { credentials: 'include' })
         .then(res => {
           if (!res.ok) throw new Error('Failed to fetch guest passes');
           return res.json();
@@ -81,7 +81,7 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     if (isStaffOrAdminProfile && user?.email) {
-      fetch(`/api/auth/check-staff-admin?email=${encodeURIComponent(user.email)}`)
+      fetch(`/api/auth/check-staff-admin?email=${encodeURIComponent(user.email)}`, { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
           setHasPassword(data.hasPassword || false);
@@ -403,7 +403,7 @@ const Profile: React.FC = () => {
         }}
         onSuccess={async () => {
           try {
-            const res = await fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`);
+            const res = await fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`, { credentials: 'include' });
             if (!res.ok) throw new Error('Failed to refresh guest passes');
             const data = await res.json();
             setGuestPasses(data);

@@ -449,7 +449,9 @@ export const changelog: ChangelogEntry[] = [
       "Fixed RSVP showing error message even when successful",
       "Fixed Add to Calendar showing false success on iOS Safari",
       "Improved event card text readability in light mode",
-      "Fixed staff members unable to log in when added via Teams page"
+      "Fixed staff members unable to log in when added via Teams page",
+      "Fixed Dashboard data not loading (bookings, RSVPs, wellness enrollments)",
+      "Fixed various API calls across the app that could fail silently"
     ]
   }
 ];
