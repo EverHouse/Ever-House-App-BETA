@@ -655,7 +655,7 @@ const BookGolf: React.FC = () => {
           </section>
 
           {selectedSlot && (
-            <section className="animate-pop-in pb-24">
+            <section className="animate-pop-in pb-48">
               <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
                 Select {activeTab === 'simulator' ? 'Bay' : 'Room'}
               </h3>
