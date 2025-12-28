@@ -59,7 +59,18 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 
         <div className={`relative z-10 flex flex-col h-full py-8 safe-area-inset-menu ${isDark ? 'text-[#F2F2EC]' : 'text-[#293515]'}`}>
             
-            <div className="flex items-center justify-end mb-8">
+            <div className="flex items-center justify-between mb-8">
+                <button 
+                  onClick={() => handleNav('/')}
+                  aria-label="Go to home"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center transition-transform duration-300 rounded-full active:scale-90 hover:scale-105"
+                >
+                  <img 
+                    src={isDark ? "/assets/logos/mascot-white.webp" : "/assets/logos/mascot-dark.webp"}
+                    alt="Even House"
+                    className="h-8 w-auto"
+                  />
+                </button>
                 <button 
                   onClick={handleClose}
                   aria-label="Close menu"
@@ -70,13 +81,12 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
             </div>
             
             <nav className="flex flex-col gap-4 flex-1 overflow-y-auto scrollbar-hide py-2">
-                <MenuLink label="Home" onClick={() => handleNav('/')} delay="0.05s" isDark={isDark} />
-                <MenuLink label="Membership" onClick={() => handleNav('/membership')} delay="0.1s" isDark={isDark} />
-                <MenuLink label="Cafe" onClick={() => handleNav('/menu')} delay="0.15s" isDark={isDark} />
-                <MenuLink label="Host Events" onClick={() => handleNav('/private-hire')} delay="0.2s" isDark={isDark} />
-                <MenuLink label="What's On" onClick={() => handleNav('/whats-on')} delay="0.25s" isDark={isDark} />
-                <MenuLink label="Gallery" onClick={() => handleNav('/gallery')} delay="0.3s" isDark={isDark} />
-                <MenuLink label="FAQ" onClick={() => handleNav('/faq')} delay="0.35s" isDark={isDark} />
+                <MenuLink label="Membership" onClick={() => handleNav('/membership')} delay="0.05s" isDark={isDark} />
+                <MenuLink label="Cafe" onClick={() => handleNav('/menu')} delay="0.1s" isDark={isDark} />
+                <MenuLink label="Host Events" onClick={() => handleNav('/private-hire')} delay="0.15s" isDark={isDark} />
+                <MenuLink label="What's On" onClick={() => handleNav('/whats-on')} delay="0.2s" isDark={isDark} />
+                <MenuLink label="Gallery" onClick={() => handleNav('/gallery')} delay="0.25s" isDark={isDark} />
+                <MenuLink label="FAQ" onClick={() => handleNav('/faq')} delay="0.3s" isDark={isDark} />
             </nav>
             
             <div className={`mt-4 pt-6 border-t animate-pop-in ${isDark ? 'border-[#F2F2EC]/10' : 'border-[#293515]/10'}`} style={{ animationDelay: '0.4s' }}>

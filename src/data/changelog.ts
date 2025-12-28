@@ -358,5 +358,16 @@ export const changelog: ChangelogEntry[] = [
       "Background extends into safe area without breaking scroll effects",
       "Better structured layout for hero content and background layers"
     ]
+  },
+  {
+    version: "4.5",
+    date: "2025-12-28",
+    title: "Menu Mascot",
+    changes: [
+      "Mascot icon added to top left of side menu for quick home navigation",
+      "Tap the mascot to return to the landing page instantly",
+      "Mascot automatically switches between light and dark versions based on theme",
+      "Cleaner menu layout with Home link replaced by mascot button"
+    ]
   }
 ];
