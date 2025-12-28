@@ -28,7 +28,7 @@ const PrivateHire: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
-       <div className="relative w-full h-[420px] bg-primary flex flex-col justify-end overflow-hidden group rounded-b-[2rem]">
+       <div className="relative w-full h-[420px] bg-primary flex flex-col justify-end overflow-hidden group rounded-b-[2rem] -mt-4">
          <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" 
               style={{backgroundImage: 'url("/images/venue-wide-optimized.webp")'}}></div>
          <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent"></div>
@@ -72,7 +72,7 @@ const PrivateHire: React.FC = () => {
           />
        </div>
 
-       <div className="mt-4 bg-white rounded-t-[2.5rem] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+       <div className="mt-4 bg-white rounded-[2.5rem] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] overflow-hidden mx-4 mb-6">
           <div className="px-6 py-8 flex flex-col items-center text-center">
              <div className="p-3 bg-[#F2F2EC] rounded-xl mb-4">
                 <span className="material-symbols-outlined text-primary text-3xl">calendar_today</span>
