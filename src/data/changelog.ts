@@ -448,7 +448,8 @@ export const changelog: ChangelogEntry[] = [
     changes: [
       "Fixed RSVP showing error message even when successful",
       "Fixed Add to Calendar showing false success on iOS Safari",
-      "Improved event card text readability in light mode"
+      "Improved event card text readability in light mode",
+      "Fixed staff members unable to log in when added via Teams page"
     ]
   }
 ];

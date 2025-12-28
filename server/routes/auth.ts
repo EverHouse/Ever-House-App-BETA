@@ -379,6 +379,8 @@ router.post('/api/auth/request-otp', async (req, res) => {
     }
     
     const isAdmin = await isAdminEmail(normalizedEmail);
+    const isStaff = await isStaffEmail(normalizedEmail);
+    const isStaffOrAdmin = isAdmin || isStaff;
     
     const hubspot = await getHubSpotClient();
     
@@ -395,17 +397,17 @@ router.post('/api/auth/request-otp', async (req, res) => {
     });
     
     let contact = searchResponse.results[0];
-    let firstName = 'Admin';
+    let firstName = isStaffOrAdmin ? 'Team Member' : 'Member';
     
-    if (!contact && !isAdmin) {
+    if (!contact && !isStaffOrAdmin) {
       return res.status(404).json({ error: 'No member found with this email address' });
     }
     
     if (contact) {
       const status = (contact.properties.membership_status || '').toLowerCase();
-      firstName = contact.properties.firstname || 'Member';
+      firstName = contact.properties.firstname || firstName;
       
-      if (status !== 'active' && !isAdmin) {
+      if (status !== 'active' && !isStaffOrAdmin) {
         return res.status(403).json({ error: 'Your membership is not active. Please contact us for assistance.' });
       }
     }
