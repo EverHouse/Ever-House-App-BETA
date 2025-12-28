@@ -389,5 +389,14 @@ export const changelog: ChangelogEntry[] = [
       "Content fades and shrinks smoothly during the transition",
       "Creates seamless visual connection between loading and status bar"
     ]
+  },
+  {
+    version: "4.8",
+    date: "2025-12-28",
+    title: "Gallery Loader Update",
+    changes: [
+      "Gallery page now uses the same fluid minimize-to-status-bar animation",
+      "Consistent loading experience across all pages"
+    ]
   }
 ];

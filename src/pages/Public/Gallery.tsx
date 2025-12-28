@@ -33,39 +33,26 @@ const taglines = [
 ];
 
 const MascotLoader: React.FC<{ isVisible: boolean; onFadeComplete?: () => void }> = ({ isVisible, onFadeComplete }) => {
-  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
   const [shouldRender, setShouldRender] = useState(true);
   const [tagline] = useState(() => taglines[Math.floor(Math.random() * taglines.length)]);
 
   useEffect(() => {
-    if (!isVisible && !isFadingOut) {
-      setIsFadingOut(true);
+    if (!isVisible && !isExiting) {
+      setIsExiting(true);
       const timer = setTimeout(() => {
         setShouldRender(false);
         onFadeComplete?.();
-      }, 500);
+      }, 700);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, isFadingOut, onFadeComplete]);
+  }, [isVisible, isExiting, onFadeComplete]);
 
   if (!shouldRender) return null;
 
   return createPortal(
-    <div 
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 99999,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#293515',
-        transition: 'opacity 0.5s ease-out',
-        opacity: isFadingOut ? 0 : 1,
-        pointerEvents: isFadingOut ? 'none' : 'auto',
-      }}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+    <div className={`gallery-loader-overlay ${isExiting ? 'gallery-loader-exit' : ''}`}>
+      <div className={`gallery-loader-content ${isExiting ? 'gallery-content-exit' : ''}`}>
         <div className="gallery-mascot-walk">
           <img 
             src="/assets/logos/mascot-white.webp" 
@@ -77,6 +64,64 @@ const MascotLoader: React.FC<{ isVisible: boolean; onFadeComplete?: () => void }
       </div>
 
       <style>{`
+        .gallery-loader-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background-color: #293515;
+          will-change: clip-path;
+        }
+
+        .gallery-loader-exit {
+          animation: galleryMinimizeToStatusBar 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          pointer-events: none;
+        }
+
+        @keyframes galleryMinimizeToStatusBar {
+          0% {
+            clip-path: inset(0 0 0 0);
+          }
+          30% {
+            clip-path: inset(0 0 40% 0);
+          }
+          60% {
+            clip-path: inset(0 0 75% 0);
+          }
+          100% {
+            clip-path: inset(0 0 calc(100% - env(safe-area-inset-top, 44px)) 0);
+          }
+        }
+
+        .gallery-loader-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.5rem;
+          will-change: opacity, transform;
+        }
+
+        .gallery-content-exit {
+          animation: galleryContentFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes galleryContentFadeOut {
+          0% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+          50% {
+            opacity: 0.3;
+            transform: scale(0.9) translateY(-20px);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(0.7) translateY(-50px);
+          }
+        }
+
         .gallery-mascot-walk {
           animation: galleryWalk 0.6s ease-in-out infinite;
         }
