@@ -2233,8 +2233,16 @@ const SimulatorAdmin: React.FC = () => {
     }, []);
 
     const parseAffectedBayIds = (affectedAreas: string): number[] => {
-        if (affectedAreas === 'entire_facility' || affectedAreas === 'all_bays') {
+        if (affectedAreas === 'entire_facility') {
+            return resources.map(r => r.id);
+        }
+        
+        if (affectedAreas === 'all_bays') {
             return resources.filter(r => r.type === 'simulator').map(r => r.id);
+        }
+        
+        if (affectedAreas === 'conference_room') {
+            return [11];
         }
         
         if (affectedAreas.startsWith('bay_') && !affectedAreas.includes(',') && !affectedAreas.includes('[')) {
