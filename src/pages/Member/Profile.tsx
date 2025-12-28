@@ -186,7 +186,7 @@ const Profile: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className="px-6 pt-6 pb-32">
+    <div className={`px-6 pt-6 pb-32 min-h-screen ${isDark ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]'}`}>
       <div className="space-y-6">
          <Section title="Account" isDark={isDark} delay="0.05s">
             <Row icon="person" label="Name" value={user.name} isDark={isDark} />
