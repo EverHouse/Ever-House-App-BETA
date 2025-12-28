@@ -221,47 +221,12 @@ const MembershipOverview: React.FC = () => {
         </p>
       </div>
 
-      <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-5 border border-white/60 shadow-sm animate-pop-in" style={{animationDelay: '0.1s'}}>
-        <div className="flex items-center gap-3 mb-4">
-           <div className="p-2 bg-primary/5 rounded-xl text-primary">
-              <span className="material-symbols-outlined font-light">id_card</span>
-           </div>
-           <div>
-              <h3 className="font-semibold text-lg text-primary">Day Passes</h3>
-              <p className="text-xs text-primary/60 font-medium">Experience the club for a day.</p>
-           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-           <button 
-             onClick={() => setSelectedPass('workspace')}
-             className={`flex flex-col gap-2 p-3 rounded-2xl border transition-all text-left group ${selectedPass === 'workspace' ? 'bg-primary text-white border-primary shadow-md' : 'bg-white/40 border-white/50 hover:bg-white/60 text-primary'}`}
-           >
-              <span className={`material-symbols-outlined font-light group-hover:scale-110 transition-transform ${selectedPass === 'workspace' ? 'text-white' : 'text-primary'}`}>work</span>
-              <div>
-                 <p className="font-semibold text-sm">Workspace</p>
-                 <p className={`text-xs font-medium ${selectedPass === 'workspace' ? 'text-white/80' : 'text-primary/60'}`}>$25 / day</p>
-              </div>
-           </button>
-           <button 
-             onClick={() => setSelectedPass('sim')}
-             className={`flex flex-col gap-2 p-3 rounded-2xl border transition-all text-left group ${selectedPass === 'sim' ? 'bg-primary text-white border-primary shadow-md' : 'bg-white/40 border-white/50 hover:bg-white/60 text-primary'}`}
-           >
-              <span className={`material-symbols-outlined font-light group-hover:scale-110 transition-transform ${selectedPass === 'sim' ? 'text-white' : 'text-primary'}`}>sports_golf</span>
-              <div>
-                 <p className="font-semibold text-sm">Golf Sim</p>
-                 <p className={`text-xs font-medium ${selectedPass === 'sim' ? 'text-white/80' : 'text-primary/60'}`}>$50 / 60min</p>
-              </div>
-           </button>
-        </div>
-        <Link 
-            to="/contact"
-            className="w-full mt-4 py-3 text-sm font-semibold text-primary border-t border-primary/5 hover:bg-primary/5 transition-colors rounded-b-xl -mb-2 tracking-wide uppercase block text-center"
-        >
-           Request a Pass
-        </Link>
-      </div>
+      <Link to="compare" className="w-full flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-primary transition-colors py-2 animate-pop-in" style={{animationDelay: '0.05s'}}>
+        Compare full feature table
+        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+      </Link>
 
-      <div className="flex flex-col gap-5 animate-pop-in" style={{animationDelay: '0.15s'}}>
+      <div className="flex flex-col gap-5 animate-pop-in" style={{animationDelay: '0.1s'}}>
         {socialTier && (
           <MembershipCard 
             title={`${socialTier.name} Membership`}
@@ -334,10 +299,45 @@ const MembershipOverview: React.FC = () => {
         )}
       </div>
       
-      <Link to="compare" className="w-full mt-4 flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-primary transition-colors py-2">
-        Compare full feature table
-        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-      </Link>
+      <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-5 border border-white/60 shadow-sm animate-pop-in" style={{animationDelay: '0.2s'}}>
+        <div className="flex items-center gap-3 mb-4">
+           <div className="p-2 bg-primary/5 rounded-xl text-primary">
+              <span className="material-symbols-outlined font-light">id_card</span>
+           </div>
+           <div>
+              <h3 className="font-semibold text-lg text-primary">Day Passes</h3>
+              <p className="text-xs text-primary/60 font-medium">Experience the club for a day.</p>
+           </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+           <button 
+             onClick={() => setSelectedPass('workspace')}
+             className={`flex flex-col gap-2 p-3 rounded-2xl border transition-all text-left group ${selectedPass === 'workspace' ? 'bg-primary text-white border-primary shadow-md' : 'bg-white/40 border-white/50 hover:bg-white/60 text-primary'}`}
+           >
+              <span className={`material-symbols-outlined font-light group-hover:scale-110 transition-transform ${selectedPass === 'workspace' ? 'text-white' : 'text-primary'}`}>work</span>
+              <div>
+                 <p className="font-semibold text-sm">Workspace</p>
+                 <p className={`text-xs font-medium ${selectedPass === 'workspace' ? 'text-white/80' : 'text-primary/60'}`}>$25 / day</p>
+              </div>
+           </button>
+           <button 
+             onClick={() => setSelectedPass('sim')}
+             className={`flex flex-col gap-2 p-3 rounded-2xl border transition-all text-left group ${selectedPass === 'sim' ? 'bg-primary text-white border-primary shadow-md' : 'bg-white/40 border-white/50 hover:bg-white/60 text-primary'}`}
+           >
+              <span className={`material-symbols-outlined font-light group-hover:scale-110 transition-transform ${selectedPass === 'sim' ? 'text-white' : 'text-primary'}`}>sports_golf</span>
+              <div>
+                 <p className="font-semibold text-sm">Golf Sim</p>
+                 <p className={`text-xs font-medium ${selectedPass === 'sim' ? 'text-white/80' : 'text-primary/60'}`}>$50 / 60min</p>
+              </div>
+           </button>
+        </div>
+        <Link 
+            to="/contact"
+            className="w-full mt-4 py-3 text-sm font-semibold text-primary border-t border-primary/5 hover:bg-primary/5 transition-colors rounded-b-xl -mb-2 tracking-wide uppercase block text-center"
+        >
+           Request a Pass
+        </Link>
+      </div>
 
       <Footer />
 
