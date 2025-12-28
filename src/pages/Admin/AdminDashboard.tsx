@@ -209,7 +209,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'gallery' && <GalleryAdmin />}
         {activeTab === 'tiers' && actualUser?.role === 'admin' && <TiersAdmin />}
         {activeTab === 'blocks' && <BlocksAdmin />}
-        {activeTab === 'changelog' && actualUser?.role === 'admin' && <ChangelogAdmin />}
+        {activeTab === 'changelog' && <ChangelogAdmin />}
         {activeTab === 'bugs' && actualUser?.role === 'admin' && <BugReportsAdmin />}
         {activeTab === 'training' && <StaffTrainingGuide />}
         {activeTab === 'updates' && <StaffUpdatesAdmin />}
@@ -323,6 +323,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
   const employeeResourcesLinks = [
     { id: 'directory' as TabType, icon: 'groups', label: 'Directory', description: 'Search and manage members' },
     { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
+    { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes' },
   ];
 
   const operationsLinks = [
@@ -344,7 +345,6 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
     { id: 'team' as TabType, icon: 'shield_person', label: 'Team Access', description: 'Manage staff and admins' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings' },
     { id: 'bugs' as TabType, icon: 'bug_report', label: 'Bug Reports', description: 'Review user-reported issues' },
-    { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes' },
   ];
 
   const CardButton = ({ link }: { link: { id: TabType; icon: string; label: string; description: string } }) => (
@@ -1051,24 +1051,24 @@ const EventsWellnessAdmin: React.FC = () => {
                 <button 
                     onClick={handleSyncCalendars} 
                     disabled={isSyncing}
-                    className="bg-blue-600 text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md disabled:opacity-50 text-xs sm:text-sm"
+                    className="bg-[#4A5A2C] text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50 text-xs sm:text-sm"
                 >
                     {isSyncing ? (
                         <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
                     ) : (
-                        <img src="/images/google-calendar-icon.png" alt="" className="w-5 h-5 object-contain" />
+                        <img src="/images/google-calendar-icon.png" alt="" className="w-6 h-6 object-contain" />
                     )}
                     <span className="hidden sm:inline">Calendar</span> Sync
                 </button>
                 <button 
                     onClick={handleSyncEventbrite} 
                     disabled={isSyncing}
-                    className="bg-[#F05537] text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md disabled:opacity-50 text-xs sm:text-sm"
+                    className="bg-[#8B5A3C] text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50 text-xs sm:text-sm"
                 >
                     {isSyncing ? (
                         <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
                     ) : (
-                        <img src="/images/eventbrite-icon.png" alt="" className="w-5 h-5 object-contain rounded" />
+                        <img src="/images/eventbrite-icon.png" alt="" className="w-6 h-6 object-contain rounded" />
                     )}
                     <span className="hidden sm:inline">Eventbrite</span> Sync
                 </button>
