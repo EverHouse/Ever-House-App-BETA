@@ -1,0 +1,277 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { triggerHaptic } from '../utils/haptics';
+import WalkingGolferSpinner from './WalkingGolferSpinner';
+import { useTheme } from '../contexts/ThemeContext';
+
+interface BugReportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+const BugReportModal: React.FC<BugReportModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess
+}) => {
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+  const [description, setDescription] = useState('');
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image must be less than 5MB');
+        return;
+      }
+      setScreenshot(file);
+      setError('');
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshotPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeScreenshot = () => {
+    setScreenshot(null);
+    setScreenshotPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!description.trim()) {
+      setError('Please describe the issue you encountered');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    triggerHaptic('medium');
+
+    try {
+      let screenshotUrl = null;
+
+      if (screenshot) {
+        const formData = new FormData();
+        formData.append('file', screenshot);
+        formData.append('folder', 'bug-reports');
+
+        const uploadRes = await fetch('/api/object-storage/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          screenshotUrl = uploadData.url;
+        }
+      }
+
+      const response = await fetch('/api/bug-reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: description.trim(),
+          screenshotUrl,
+          pageUrl: window.location.pathname
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to submit bug report');
+      }
+
+      triggerHaptic('success');
+      setSuccess(true);
+      onSuccess?.();
+    } catch (err: any) {
+      triggerHaptic('error');
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setDescription('');
+    setScreenshot(null);
+    setScreenshotPreview(null);
+    setSuccess(false);
+    setError('');
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  const modalContent = (
+    <div className="fixed inset-0 z-[15000] flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+      
+      <div className={`relative w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-pop-in ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'}`}>
+        <div className={`p-6 border-b ${isDark ? 'border-white/10' : 'border-black/5'}`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>
+                Report a Bug
+              </h2>
+              <p className={`text-sm mt-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+                Help us improve by reporting issues
+              </p>
+            </div>
+            <button
+              onClick={handleClose}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isDark ? 'hover:bg-white/10 text-white/60' : 'hover:bg-black/5 text-primary/60'}`}
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 max-h-[60vh] overflow-y-auto">
+          {success ? (
+            <div className="py-8 flex flex-col items-center text-center animate-pop-in">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
+                <span className="material-symbols-outlined text-3xl">check</span>
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>
+                Report Submitted
+              </h3>
+              <p className={`${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+                Thank you for helping us improve. Our team will review your report.
+              </p>
+              <button
+                onClick={handleClose}
+                className={`mt-6 px-6 py-3 rounded-xl font-bold text-sm ${isDark ? 'bg-white text-black' : 'bg-primary text-white'}`}
+              >
+                Done
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+                  What went wrong? <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe what you were trying to do and what happened instead..."
+                  rows={4}
+                  className={`w-full rounded-xl px-4 py-3 text-sm resize-none transition-colors ${
+                    isDark 
+                      ? 'bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:border-accent focus:ring-1 focus:ring-accent' 
+                      : 'bg-[#F9F9F7] border border-black/10 text-primary placeholder:text-primary/40 focus:border-primary focus:ring-1 focus:ring-primary'
+                  }`}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+                  Screenshot (optional)
+                </label>
+                
+                {screenshotPreview ? (
+                  <div className="relative">
+                    <img 
+                      src={screenshotPreview} 
+                      alt="Screenshot preview" 
+                      className="w-full h-40 object-cover rounded-xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeScreenshot}
+                      className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`w-full py-8 rounded-xl border-2 border-dashed transition-colors flex flex-col items-center gap-2 ${
+                      isDark 
+                        ? 'border-white/20 hover:border-white/40 text-white/60' 
+                        : 'border-black/20 hover:border-black/40 text-primary/60'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-2xl">add_photo_alternate</span>
+                    <span className="text-sm">Tap to add screenshot</span>
+                  </button>
+                )}
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !description.trim()}
+                className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark 
+                    ? 'bg-accent text-primary hover:opacity-90' 
+                    : 'bg-primary text-white hover:bg-primary/90'
+                }`}
+              >
+                {loading ? (
+                  <WalkingGolferSpinner size="sm" variant={isDark ? 'dark' : 'light'} />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-lg">send</span>
+                    Submit Report
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(modalContent, document.body);
+};
+
+export default BugReportModal;
