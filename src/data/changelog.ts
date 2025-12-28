@@ -464,5 +464,15 @@ export const changelog: ChangelogEntry[] = [
       "Added 120-minute booking option for Premium, Corporate, and VIP members",
       "Manual bookings now appear on both member dashboard and admin calendar"
     ]
+  },
+  {
+    version: "5.5",
+    date: "2025-12-28",
+    title: "Booking Reliability & Animations",
+    changes: [
+      "Fixed booking cancellation errors in calendar view and decline modal",
+      "Improved loading screen exit animation - now fluidly minimizes into status bar",
+      "Notification delivery is now non-blocking so cancellations always succeed"
+    ]
   }
 ];

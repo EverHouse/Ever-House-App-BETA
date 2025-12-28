@@ -38,7 +38,7 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
       const timer = setTimeout(() => {
         setShouldRender(false);
         onFadeComplete?.();
-      }, 700);
+      }, 750);
       return () => clearTimeout(timer);
     }
   }, [isVisible, isExiting, onFadeComplete]);
@@ -73,18 +73,34 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         }
 
         .loader-exit {
-          animation: minimizeToStatusBar 0.6s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+          animation: minimizeToStatusBar 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           pointer-events: none;
         }
 
         @keyframes minimizeToStatusBar {
           0% {
-            clip-path: inset(0 0 0 0);
+            transform: translateY(0) scaleY(1);
+            transform-origin: top center;
             opacity: 1;
+            border-radius: 0;
+          }
+          40% {
+            transform: translateY(0) scaleY(0.4);
+            transform-origin: top center;
+            opacity: 1;
+            border-radius: 0 0 24px 24px;
+          }
+          70% {
+            transform: translateY(0) scaleY(0.08);
+            transform-origin: top center;
+            opacity: 0.9;
+            border-radius: 0 0 16px 16px;
           }
           100% {
-            clip-path: inset(0 0 100% 0);
-            opacity: 0.95;
+            transform: translateY(0) scaleY(0);
+            transform-origin: top center;
+            opacity: 0;
+            border-radius: 0;
           }
         }
 
@@ -97,7 +113,7 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         }
 
         .content-exit {
-          animation: contentFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          animation: contentFadeOut 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         @keyframes contentFadeOut {
@@ -105,13 +121,13 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
             opacity: 1;
             transform: scale(1) translateY(0);
           }
-          50% {
-            opacity: 0.3;
-            transform: scale(0.9) translateY(-20px);
+          60% {
+            opacity: 0;
+            transform: scale(0.85) translateY(-40px);
           }
           100% {
             opacity: 0;
-            transform: scale(0.7) translateY(-50px);
+            transform: scale(0.6) translateY(-80px);
           }
         }
 
