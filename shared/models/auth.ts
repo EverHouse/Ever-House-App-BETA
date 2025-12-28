@@ -467,3 +467,24 @@ export const tours = pgTable("tours", {
 
 export type Tour = typeof tours.$inferSelect;
 export type InsertTour = typeof tours.$inferInsert;
+
+// Bug reports table - user-submitted bug reports
+export const bugReports = pgTable("bug_reports", {
+  id: serial("id").primaryKey(),
+  userEmail: varchar("user_email").notNull(),
+  userName: varchar("user_name"),
+  userRole: varchar("user_role"),
+  description: text("description").notNull(),
+  screenshotUrl: text("screenshot_url"),
+  pageUrl: varchar("page_url"),
+  userAgent: text("user_agent"),
+  status: varchar("status").default("open"),
+  resolvedBy: varchar("resolved_by"),
+  resolvedAt: timestamp("resolved_at"),
+  staffNotes: text("staff_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type BugReport = typeof bugReports.$inferSelect;
+export type InsertBugReport = typeof bugReports.$inferInsert;
