@@ -15,6 +15,7 @@ import Toggle from '../../components/Toggle';
 import MemberBottomNav from '../../components/MemberBottomNav';
 import StaffBottomNavSimple from '../../components/StaffBottomNavSimple';
 import { BottomSentinel } from '../../components/layout/BottomSentinel';
+import BugReportModal from '../../components/BugReportModal';
 
 
 const GUEST_CHECKIN_FIELDS = [
@@ -48,6 +49,7 @@ const Profile: React.FC = () => {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [showPasswordSetupBanner, setShowPasswordSetupBanner] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [showBugReport, setShowBugReport] = useState(false);
 
   // Check if viewing a staff/admin profile (either directly or via view-as)
   const isStaffOrAdminProfile = user?.role === 'admin' || user?.role === 'staff';
@@ -370,7 +372,21 @@ const Profile: React.FC = () => {
          <button onClick={() => { logout(); navigate('/login'); }} className={`w-full py-4 rounded-xl text-red-400 font-bold text-sm transition-colors animate-pop-in ${isDark ? 'glass-button hover:bg-red-500/10' : 'bg-white border border-black/5 hover:bg-red-50'}`} style={{animationDelay: '0.2s'}}>
             Sign Out
          </button>
+
+         <button 
+           onClick={() => setShowBugReport(true)} 
+           className={`w-full py-4 rounded-xl font-bold text-sm transition-colors animate-pop-in flex items-center justify-center gap-2 ${isDark ? 'glass-button text-white/60 hover:text-white hover:bg-white/5' : 'bg-white border border-black/5 text-primary/60 hover:text-primary hover:bg-black/5'}`} 
+           style={{animationDelay: '0.25s'}}
+         >
+            <span className="material-symbols-outlined text-lg">bug_report</span>
+            Report a Bug
+         </button>
       </div>
+
+      <BugReportModal
+        isOpen={showBugReport}
+        onClose={() => setShowBugReport(false)}
+      />
 
       {/* Guest Check-In Modal */}
       <HubSpotFormModal
