@@ -328,5 +328,15 @@ export const changelog: ChangelogEntry[] = [
       "Improved dark mode visibility for badge icons",
       "Admin-only features for adding, editing, and removing team members"
     ]
+  },
+  {
+    version: "4.2",
+    date: "2025-12-28",
+    title: "Loading Animation",
+    changes: [
+      "Loading screen now slides up elegantly into the header bar",
+      "Mascot and tagline gracefully fade up as the screen transitions",
+      "Smoother, more polished app launch experience"
+    ]
   }
 ];

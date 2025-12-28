@@ -28,59 +28,96 @@ const taglines = [
 ];
 
 const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = true, onFadeComplete }) => {
-  const [isFadingOut, setIsFadingOut] = React.useState(false);
+  const [isExiting, setIsExiting] = React.useState(false);
   const [shouldRender, setShouldRender] = React.useState(true);
   const [tagline] = React.useState(() => taglines[Math.floor(Math.random() * taglines.length)]);
 
   React.useEffect(() => {
-    if (!isVisible && !isFadingOut) {
-      setIsFadingOut(true);
+    if (!isVisible && !isExiting) {
+      setIsExiting(true);
       const timer = setTimeout(() => {
         setShouldRender(false);
         onFadeComplete?.();
-      }, 500);
+      }, 700);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, isFadingOut, onFadeComplete]);
+  }, [isVisible, isExiting, onFadeComplete]);
 
   if (!shouldRender) return null;
 
   return (
     <div 
-      className="loader-container"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 99999,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#293515',
-        transition: 'opacity 0.5s ease-out',
-        opacity: isFadingOut ? 0 : 1,
-        pointerEvents: isFadingOut ? 'none' : 'auto',
-      }}
+      className={`loader-overlay ${isExiting ? 'loader-exit' : ''}`}
     >
-      <div className="loader-content">
+      <div className={`loader-content ${isExiting ? 'content-exit' : ''}`}>
         <div className="walking-mascot">
           <img 
             src="/assets/logos/mascot-white.webp" 
             alt="Loading..." 
-            style={{
-              width: '120px',
-              height: 'auto',
-            }}
+            className="mascot-image"
           />
         </div>
         <p className="tagline-text">{tagline}</p>
       </div>
 
       <style>{`
+        .loader-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background-color: #293515;
+          will-change: transform, height, clip-path;
+        }
+
+        .loader-exit {
+          animation: slideUpMorph 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          pointer-events: none;
+        }
+
+        @keyframes slideUpMorph {
+          0% {
+            transform: translateY(0);
+            clip-path: inset(0 0 0 0);
+          }
+          60% {
+            transform: translateY(-85vh);
+            clip-path: inset(0 0 0 0);
+          }
+          100% {
+            transform: translateY(-100vh);
+            clip-path: inset(0 0 calc(100vh - 72px) 0);
+          }
+        }
+
         .loader-content {
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 1.5rem;
+          will-change: opacity, transform;
+        }
+
+        .content-exit {
+          animation: contentFadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes contentFadeUp {
+          0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-60px) scale(0.9);
+          }
+        }
+
+        .mascot-image {
+          width: 120px;
+          height: auto;
         }
 
         .tagline-text {
@@ -104,6 +141,7 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
             transform: translateY(0);
           }
         }
+
         .walking-mascot {
           animation: walk 0.6s ease-in-out infinite;
         }
