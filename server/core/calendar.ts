@@ -598,3 +598,125 @@ export async function backfillWellnessToCalendar(): Promise<{ created: number; t
     return { created: 0, total: 0, errors: [`Backfill failed: ${error.message}`] };
   }
 }
+
+export async function syncInternalCalendarToClosures(): Promise<{ synced: number; created: number; updated: number; deleted: number; error?: string }> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
+    
+    if (!calendarId) {
+      return { synced: 0, created: 0, updated: 0, deleted: 0, error: `Calendar "${CALENDAR_CONFIG.internal.name}" not found` };
+    }
+    
+    // Fetch events from now onwards (closures are for future blocking)
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const response = await calendar.events.list({
+      calendarId,
+      timeMin: now.toISOString(),
+      maxResults: 100,
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+    
+    const events = response.data.items || [];
+    const fetchedEventIds = new Set<string>();
+    let created = 0;
+    let updated = 0;
+    
+    for (const event of events) {
+      if (!event.id || !event.summary) continue;
+      
+      fetchedEventIds.add(event.id);
+      const internalCalendarId = event.id;
+      const title = event.summary;
+      const reason = event.description || 'Internal calendar event';
+      
+      let startDate: string;
+      let startTime: string | null = null;
+      let endDate: string;
+      let endTime: string | null = null;
+      
+      if (event.start?.dateTime) {
+        // Timed event
+        const startDt = new Date(event.start.dateTime);
+        startDate = startDt.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+        startTime = startDt.toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour12: false });
+        
+        if (event.end?.dateTime) {
+          const endDt = new Date(event.end.dateTime);
+          endDate = endDt.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+          endTime = endDt.toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour12: false });
+        } else {
+          endDate = startDate;
+          endTime = '23:59:00';
+        }
+      } else if (event.start?.date) {
+        // All-day event
+        startDate = event.start.date;
+        startTime = null;
+        // For all-day events, end date is exclusive in Google Calendar, so subtract 1 day
+        if (event.end?.date) {
+          const endDt = new Date(event.end.date);
+          endDt.setDate(endDt.getDate() - 1);
+          endDate = endDt.toISOString().split('T')[0];
+        } else {
+          endDate = startDate;
+        }
+        endTime = null;
+      } else {
+        continue;
+      }
+      
+      // All resources (facility-wide closure)
+      const affectedAreas = 'Bay 1,Bay 2,Bay 3,Bay 4,Conference Room';
+      
+      // Check if this closure already exists
+      const existing = await pool.query(
+        'SELECT id FROM facility_closures WHERE internal_calendar_id = $1',
+        [internalCalendarId]
+      );
+      
+      if (existing.rows.length > 0) {
+        // Update existing closure
+        await pool.query(
+          `UPDATE facility_closures SET 
+           title = $1, reason = $2, start_date = $3, start_time = $4,
+           end_date = $5, end_time = $6, affected_areas = $7, is_active = true
+           WHERE internal_calendar_id = $8`,
+          [title, reason, startDate, startTime, endDate, endTime, affectedAreas, internalCalendarId]
+        );
+        updated++;
+      } else {
+        // Create new closure
+        await pool.query(
+          `INSERT INTO facility_closures 
+           (title, reason, start_date, start_time, end_date, end_time, affected_areas, is_active, created_by, internal_calendar_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'system', $8)`,
+          [title, reason, startDate, startTime, endDate, endTime, affectedAreas, internalCalendarId]
+        );
+        created++;
+      }
+    }
+    
+    // Delete closures for events that no longer exist in the calendar
+    const existingClosures = await pool.query(
+      'SELECT id, internal_calendar_id FROM facility_closures WHERE internal_calendar_id IS NOT NULL'
+    );
+    
+    let deleted = 0;
+    for (const closure of existingClosures.rows) {
+      if (!fetchedEventIds.has(closure.internal_calendar_id)) {
+        // This closure's source event no longer exists, deactivate it
+        await pool.query('UPDATE facility_closures SET is_active = false WHERE id = $1', [closure.id]);
+        deleted++;
+      }
+    }
+    
+    return { synced: events.length, created, updated, deleted };
+  } catch (error) {
+    console.error('Error syncing Internal Calendar to closures:', error);
+    return { synced: 0, created: 0, updated: 0, deleted: 0, error: 'Failed to sync closures' };
+  }
+}

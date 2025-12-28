@@ -10,7 +10,7 @@ import { requestIdMiddleware, logRequest } from './core/logger';
 import { db } from './db';
 import { systemSettings } from '../shared/schema';
 import { eq, sql } from 'drizzle-orm';
-import { syncGoogleCalendarEvents, syncWellnessCalendarEvents } from './core/calendar';
+import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, syncInternalCalendarToClosures } from './core/calendar';
 
 import resourcesRouter from './routes/resources';
 import calendarRouter from './routes/calendar';
@@ -361,6 +361,17 @@ async function startServer() {
       }
 
       try {
+        const closuresResult = await syncInternalCalendarToClosures();
+        if (closuresResult.error) {
+          console.log(`[Startup] Internal Calendar closures sync skipped: ${closuresResult.error}`);
+        } else {
+          console.log(`[Startup] Internal Calendar closures sync: ${closuresResult.synced} events (${closuresResult.created} created, ${closuresResult.updated} updated, ${closuresResult.deleted} removed)`);
+        }
+      } catch (err) {
+        console.log('[Startup] Internal Calendar closures sync failed:', err);
+      }
+
+      try {
         const toursResult = await syncToursFromCalendar();
         if (toursResult.error) {
           console.log(`[Startup] Tours sync skipped: ${toursResult.error}`);
@@ -377,10 +388,12 @@ async function startServer() {
           const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' }));
           const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }));
           const toursResult = await syncToursFromCalendar().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Tours sync failed' }));
+          const closuresResult = await syncInternalCalendarToClosures().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Closures sync failed' }));
           const eventsMsg = eventsResult.error ? eventsResult.error : `${eventsResult.synced} synced`;
           const wellnessMsg = wellnessResult.error ? wellnessResult.error : `${wellnessResult.synced} synced`;
           const toursMsg = toursResult.error ? toursResult.error : `${toursResult.synced} synced`;
-          console.log(`[Auto-sync] Events: ${eventsMsg}, Wellness: ${wellnessMsg}, Tours: ${toursMsg}`);
+          const closuresMsg = closuresResult.error ? closuresResult.error : `${closuresResult.synced} synced`;
+          console.log(`[Auto-sync] Events: ${eventsMsg}, Wellness: ${wellnessMsg}, Tours: ${toursMsg}, Closures: ${closuresMsg}`);
         } catch (err) {
           console.error('[Auto-sync] Calendar sync failed:', err);
         }
