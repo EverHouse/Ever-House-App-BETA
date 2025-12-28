@@ -527,78 +527,42 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       });
     }
 
-    // If rescheduling, cancel the old booking first
+    // If rescheduling, fetch old booking info but don't cancel yet (cancel only after new booking succeeds)
+    let oldBookingRequest: typeof bookingRequests.$inferSelect | null = null;
     if (reschedule_from_id) {
-      const [oldBookingRequest] = await db.select()
+      const [found] = await db.select()
         .from(bookingRequests)
         .where(eq(bookingRequests.id, reschedule_from_id));
-      
-      if (oldBookingRequest) {
-        // Delete calendar event if exists
-        if (oldBookingRequest.calendarEventId) {
-          try {
-            const calendarName = CALENDAR_CONFIG.golf.name;
-            const calendarId = await getCalendarIdByName(calendarName);
-            if (calendarId) {
-              await deleteCalendarEvent(calendarId, oldBookingRequest.calendarEventId);
-            }
-          } catch (calErr) {
-            logger.warn('Failed to delete calendar event during reschedule', { error: calErr as Error, requestId: req.requestId });
-          }
-        }
-        
-        // Cancel the old booking request
-        await db.update(bookingRequests)
-          .set({ status: 'cancelled', updatedAt: new Date() })
-          .where(eq(bookingRequests.id, reschedule_from_id));
-        
-        // Also cancel the corresponding booking in bookings table (same user, date, and time)
-        await db.update(bookings)
-          .set({ status: 'cancelled' })
-          .where(and(
-            eq(bookings.userEmail, oldBookingRequest.userEmail),
-            sql`${bookings.bookingDate} = ${oldBookingRequest.requestDate}`,
-            eq(bookings.startTime, oldBookingRequest.startTime),
-            or(
-              eq(bookings.status, 'confirmed'),
-              eq(bookings.status, 'pending'),
-              eq(bookings.status, 'approved')
-            )
-          ));
-        
-        logger.info('Cancelled old booking for reschedule', { 
-          oldBookingId: reschedule_from_id, 
-          memberEmail: member_email,
-          requestId: req.requestId 
-        });
-      }
+      oldBookingRequest = found || null;
     }
 
-    // Check for existing booking of same resource type on same day
-    const existingBookings = await db.select({
-      id: bookings.id,
-      resourceType: resources.type
-    })
-      .from(bookings)
-      .innerJoin(resources, eq(bookings.resourceId, resources.id))
-      .where(and(
-        eq(bookings.userEmail, member_email.toLowerCase()),
-        sql`${bookings.bookingDate} = ${booking_date}`,
-        eq(resources.type, resource.type),
-        or(
-          eq(bookings.status, 'confirmed'),
-          eq(bookings.status, 'pending'),
-          eq(bookings.status, 'pending_approval'),
-          eq(bookings.status, 'approved')
-        )
-      ));
-    
-    if (existingBookings.length > 0) {
-      const resourceTypeLabel = resource.type === 'conference_room' ? 'conference room' : 'bay';
-      return res.status(409).json({ 
-        error: 'Member already has a booking',
-        message: `This member already has a ${resourceTypeLabel} booking on ${booking_date}. Only one ${resourceTypeLabel} booking per day is allowed.`
-      });
+    // Check for existing booking of same resource type on same day (skip if rescheduling)
+    if (!reschedule_from_id) {
+      const existingBookings = await db.select({
+        id: bookings.id,
+        resourceType: resources.type
+      })
+        .from(bookings)
+        .innerJoin(resources, eq(bookings.resourceId, resources.id))
+        .where(and(
+          eq(bookings.userEmail, member_email.toLowerCase()),
+          sql`${bookings.bookingDate} = ${booking_date}`,
+          eq(resources.type, resource.type),
+          or(
+            eq(bookings.status, 'confirmed'),
+            eq(bookings.status, 'pending'),
+            eq(bookings.status, 'pending_approval'),
+            eq(bookings.status, 'approved')
+          )
+        ));
+      
+      if (existingBookings.length > 0) {
+        const resourceTypeLabel = resource.type === 'conference_room' ? 'conference room' : 'bay';
+        return res.status(409).json({ 
+          error: 'Member already has a booking',
+          message: `This member already has a ${resourceTypeLabel} booking on ${booking_date}. Only one ${resourceTypeLabel} booking per day is allowed.`
+        });
+      }
     }
 
     const startParts = start_time.split(':').map(Number);
@@ -700,6 +664,48 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
         reviewedAt: new Date(),
         calendarEventId: calendarEventId
       });
+
+    // Now that new booking is created, cancel the old one if rescheduling
+    if (oldBookingRequest) {
+      // Cancel the old booking request
+      await db.update(bookingRequests)
+        .set({ status: 'cancelled', updatedAt: new Date() })
+        .where(eq(bookingRequests.id, reschedule_from_id as number));
+      
+      // Also cancel the corresponding booking in bookings table
+      await db.update(bookings)
+        .set({ status: 'cancelled' })
+        .where(and(
+          eq(bookings.userEmail, oldBookingRequest.userEmail),
+          sql`${bookings.bookingDate} = ${oldBookingRequest.requestDate}`,
+          eq(bookings.startTime, oldBookingRequest.startTime),
+          or(
+            eq(bookings.status, 'confirmed'),
+            eq(bookings.status, 'pending'),
+            eq(bookings.status, 'approved')
+          )
+        ));
+      
+      // Delete old calendar event
+      if (oldBookingRequest.calendarEventId) {
+        try {
+          const calendarName = CALENDAR_CONFIG.golf.name;
+          const oldCalendarId = await getCalendarIdByName(calendarName);
+          if (oldCalendarId) {
+            await deleteCalendarEvent(oldCalendarId, oldBookingRequest.calendarEventId);
+          }
+        } catch (calErr) {
+          logger.warn('Failed to delete old calendar event during reschedule', { error: calErr as Error, requestId: req.requestId });
+        }
+      }
+      
+      logger.info('Rescheduled booking - cancelled old, created new', { 
+        oldBookingId: reschedule_from_id, 
+        newBookingId: newBooking.id,
+        memberEmail: member_email,
+        requestId: req.requestId 
+      });
+    }
 
     await db.update(users)
       .set({ 
