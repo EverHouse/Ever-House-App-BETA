@@ -391,40 +391,6 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       console.error('[Closures] Failed to create calendar event:', calError);
     }
     
-    let announcementId: number | null = null;
-    try {
-      const affectedText = await formatAffectedAreasForDisplay(affected_areas);
-      
-      const [sy, sm, sd] = start_date.split('-').map(Number);
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const startDateFormatted = `${months[sm - 1]} ${sd}`;
-      const endDateFormatted = end_date && end_date !== start_date 
-        ? (() => { const [ey, em, ed] = end_date.split('-').map(Number); return `${months[em - 1]} ${ed}`; })()
-        : null;
-      
-      const dateRange = endDateFormatted ? `${startDateFormatted} - ${endDateFormatted}` : startDateFormatted;
-      const timeRange = start_time && end_time ? ` (${start_time} - ${end_time})` : start_time ? ` from ${start_time}` : '';
-      
-      const announcementTitle = title || 'Facility Closure';
-      const announcementMessage = `${reason || 'Scheduled maintenance'}\n\nAffected: ${affectedText}\nWhen: ${dateRange}${timeRange}`;
-      
-      const [announcement] = await db.insert(announcements).values({
-        title: announcementTitle,
-        message: announcementMessage,
-        priority: 'high',
-        isActive: true,
-        closureId: closureId,
-        startsAt: null,
-        endsAt: end_date ? createPacificDate(end_date, '23:59:59') : createPacificDate(start_date, '23:59:59'),
-        createdBy: created_by
-      }).returning();
-      
-      announcementId = announcement.id;
-      console.log(`[Closures] Created announcement #${announcementId} for closure #${closureId}`);
-    } catch (announcementError) {
-      console.error('[Closures] Failed to create announcement:', announcementError);
-    }
-    
     if (notify_members) {
       const notificationTitle = title || 'Facility Closure';
       const affectedText = affected_areas === 'entire_facility' 
@@ -468,7 +434,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       });
     }
     
-    res.json({ ...result, googleCalendarId: golfEventIds, conferenceCalendarId: conferenceEventIds, announcementId });
+    res.json({ ...result, googleCalendarId: golfEventIds, conferenceCalendarId: conferenceEventIds });
   } catch (error: any) {
     if (!isProduction) console.error('Closure create error:', error);
     res.status(500).json({ error: 'Failed to create closure' });
