@@ -25,6 +25,9 @@ import NavigationLoader from './components/NavigationLoader';
 
 const INITIAL_LOAD_SAFETY_TIMEOUT_MS = 2000;
 
+const LoaderCompletionContext = React.createContext<{ loaderComplete: boolean }>({ loaderComplete: false });
+export const useLoaderCompletion = () => useContext(LoaderCompletionContext);
+
 const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isDataReady } = useData();
   const [showLoader, setShowLoader] = React.useState(true);
@@ -56,7 +59,7 @@ const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <>
+    <LoaderCompletionContext.Provider value={{ loaderComplete: hasHiddenLoader }}>
       {!hasHiddenLoader && (
         <WalkingGolferLoader 
           isVisible={showLoader} 
@@ -64,7 +67,7 @@ const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ childre
         />
       )}
       {children}
-    </>
+    </LoaderCompletionContext.Provider>
   );
 };
 
@@ -334,6 +337,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { announcements, user, actualUser, isViewingAs } = useData();
   const { effectiveTheme } = useTheme();
   const { endNavigation } = useNavigationLoading();
+  const { loaderComplete } = useLoaderCompletion();
   
   // End navigation loading when route changes
   useEffect(() => {
@@ -487,8 +491,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20";
   const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
 
+  const headerFadeInClass = isLandingPage && loaderComplete ? 'animate-header-fade-in' : (isLandingPage && !loaderComplete ? 'opacity-0' : '');
+  
   const headerContent = showHeader ? (
-    <header className={`fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 z-[9998] pointer-events-auto transition-all duration-300 ${headerClasses}`} role="banner">
+    <header className={`fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 z-[9998] pointer-events-auto transition-all duration-300 ${headerClasses} ${headerFadeInClass}`} role="banner">
       {isMemberRoute ? (
         <button 
           onClick={() => navigate('/')}
