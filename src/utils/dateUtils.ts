@@ -1,3 +1,5 @@
+export const CLUB_TIMEZONE = 'America/Los_Angeles';
+
 export function parseLocalDate(dateStr: string): Date {
   if (!dateStr) return new Date();
   const cleanDate = dateStr.split('T')[0];
@@ -25,8 +27,21 @@ export function getDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getTodayPacific(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: CLUB_TIMEZONE });
+}
+
 export function getTodayString(): string {
-  return getDateString(new Date());
+  return getTodayPacific();
+}
+
+export function getNowPacific(): Date {
+  const pacificDateStr = new Date().toLocaleString('en-US', { timeZone: CLUB_TIMEZONE });
+  return new Date(pacificDateStr);
+}
+
+export function getPacificHour(): number {
+  return getNowPacific().getHours();
 }
 
 export function compareDates(dateStr1: string, dateStr2: string): number {
