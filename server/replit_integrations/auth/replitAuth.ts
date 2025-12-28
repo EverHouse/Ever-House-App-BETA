@@ -33,6 +33,14 @@ function getAuthPool(): Pool | null {
 export function getSession() {
   const sessionSecret = process.env.SESSION_SECRET;
   const databaseUrl = process.env.DATABASE_URL;
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1';
+  
+  const cookieConfig = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' as const : 'lax' as const,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  };
   
   if (!sessionSecret) {
     console.warn('[Session] SESSION_SECRET is missing');
@@ -41,7 +49,7 @@ export function getSession() {
       secret: 'temporary-fallback-secret-' + Date.now(),
       resave: false,
       saveUninitialized: false,
-      cookie: { httpOnly: true, secure: true, maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
+      cookie: cookieConfig,
     });
   }
   
@@ -51,7 +59,7 @@ export function getSession() {
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
-      cookie: { httpOnly: true, secure: true, maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
+      cookie: cookieConfig,
     });
   }
   
@@ -74,11 +82,7 @@ export function getSession() {
       store: sessionStore,
       resave: false,
       saveUninitialized: false,
-      cookie: {
-        httpOnly: true,
-        secure: true,
-        maxAge: sessionTtl,
-      },
+      cookie: cookieConfig,
     });
   } catch (err: any) {
     console.warn('[Session] Postgres store failed, using MemoryStore:', err.message);
@@ -87,7 +91,7 @@ export function getSession() {
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
-      cookie: { httpOnly: true, secure: true, maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
+      cookie: cookieConfig,
     });
   }
 }

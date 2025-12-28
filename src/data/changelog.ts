@@ -288,5 +288,17 @@ export const changelog: ChangelogEntry[] = [
       "Admin bug reports dashboard to track and resolve issues",
       "Status tracking: open, in progress, and resolved"
     ]
+  },
+  {
+    version: "3.8",
+    date: "2025-12-28",
+    title: "Session & Authentication Fixes",
+    changes: [
+      "Fixed API server crash caused by missing middleware export",
+      "Added cross-site cookie support (sameSite: none) for iframe compatibility",
+      "Training guide now shows 'Session Expired' message instead of empty page on auth errors",
+      "API requests now properly include credentials for session persistence",
+      "Fixed dev login to maintain session across page refreshes"
+    ]
   }
 ];

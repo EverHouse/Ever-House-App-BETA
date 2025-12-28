@@ -11,7 +11,10 @@ export async function apiRequest<T = any>(
   options?: RequestInit
 ): Promise<ApiResult<T>> {
   try {
-    const res = await fetch(url, options);
+    const res = await fetch(url, {
+      ...options,
+      credentials: 'include',
+    });
     
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));

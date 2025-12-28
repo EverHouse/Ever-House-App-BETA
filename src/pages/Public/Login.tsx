@@ -79,7 +79,8 @@ const Login: React.FC = () => {
     try {
       const res = await fetch('/api/auth/dev-login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
       });
       
       if (!res.ok) {
