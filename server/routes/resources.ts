@@ -485,9 +485,9 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
           ? `${member.firstName} ${member.lastName}` 
           : member_email;
         
-        const summary = `Simulator: ${memberName}`;
+        const summary = `Booking: ${memberName}`;
         const descriptionLines = [
-          `Bay: ${resource.name}`,
+          `Area: ${resource.name}`,
           `Member: ${member_email}`,
           `Guests: ${guest_count}`,
           `Source: ${booking_source}`,

@@ -434,8 +434,8 @@ router.put('/api/booking-requests/:id', async (req, res) => {
       try {
         const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
         if (golfCalendarId) {
-          const summary = `Simulator: ${req_data.userName || req_data.userEmail}`;
-          const description = `Bay: ${bayName}\nMember: ${req_data.userEmail}\nDuration: ${req_data.durationMinutes} minutes${req_data.notes ? '\nNotes: ' + req_data.notes : ''}`;
+          const summary = `Booking: ${req_data.userName || req_data.userEmail}`;
+          const description = `Area: ${bayName}\nMember: ${req_data.userEmail}\nDuration: ${req_data.durationMinutes} minutes${req_data.notes ? '\nNotes: ' + req_data.notes : ''}`;
           calendarEventId = await createCalendarEventOnCalendar(
             golfCalendarId,
             summary,

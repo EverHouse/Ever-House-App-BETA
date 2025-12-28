@@ -175,8 +175,8 @@ export async function createCalendarEvent(booking: any, bayName: string): Promis
     const endDateTime = createPacificDate(booking.request_date, booking.end_time);
     
     const event = {
-      summary: `Simulator: ${booking.user_name || booking.user_email}`,
-      description: `Bay: ${bayName}\nMember: ${booking.user_email}\nDuration: ${booking.duration_minutes} minutes${booking.notes ? '\nNotes: ' + booking.notes : ''}`,
+      summary: `Booking: ${booking.user_name || booking.user_email}`,
+      description: `Area: ${bayName}\nMember: ${booking.user_email}\nDuration: ${booking.duration_minutes} minutes${booking.notes ? '\nNotes: ' + booking.notes : ''}`,
       start: {
         dateTime: startDateTime.toISOString(),
         timeZone: 'America/Los_Angeles',
