@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import BackToTop from '../../components/BackToTop';
 import { usePageReady } from '../../contexts/PageReadyContext';
+import { useParallax } from '../../hooks/useParallax';
+import { playSound } from '../../utils/sounds';
 
 interface MembershipTier {
   id: number;
@@ -70,6 +72,7 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
       if (event.data?.meetingBookSucceeded && tourId) {
         try {
           await fetch(`/api/tours/${tourId}/confirm`, { method: 'PATCH' });
+          playSound('bookingConfirmed');
           setBookingConfirmed(true);
         } catch (err) {
           console.error('Failed to confirm tour:', err);
@@ -224,6 +227,7 @@ const Landing: React.FC = () => {
   const [showTourModal, setShowTourModal] = useState(false);
   const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { offset: parallaxOffset, opacity: parallaxOpacity, gradientShift, ref: heroRef } = useParallax({ speed: 0.25, maxOffset: 120 });
 
   useEffect(() => {
     if (!isLoading) {
@@ -265,15 +269,27 @@ const Landing: React.FC = () => {
   return (
     <div className="bg-[#F2F2EC] min-h-screen pb-0 overflow-x-hidden">
       {/* Hero Section */}
-      <div className="relative h-[100vh] min-h-[700px] flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))] overflow-hidden rounded-b-[2.5rem] shadow-sm">
+      <div 
+        ref={heroRef as React.RefObject<HTMLDivElement>}
+        className="relative h-[100vh] min-h-[700px] flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))] overflow-hidden rounded-b-[2.5rem] shadow-sm"
+      >
         {/* Hero Background Image - Even House interior lounge (optimized WebP) */}
         <img 
           src="/images/hero-lounge-optimized.webp" 
           alt="Even House Lounge" 
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-[120%] object-cover will-change-transform"
           loading="eager"
+          style={{ 
+            transform: `translateY(${parallaxOffset}px) scale(1.05)`,
+            opacity: parallaxOpacity
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+        <div 
+          className="absolute inset-0 transition-opacity duration-300"
+          style={{
+            background: `linear-gradient(to top, rgba(0,0,0,${0.9 + gradientShift * 0.005}) 0%, rgba(0,0,0,${0.4 + gradientShift * 0.02}) ${40 + gradientShift}%, transparent 100%)`
+          }}
+        ></div>
         
         <div className="relative z-10 animate-pop-in flex flex-col items-center text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05] mb-8 sm:mb-10 text-white text-shadow-sm font-serif">

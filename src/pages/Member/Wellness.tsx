@@ -9,6 +9,7 @@ import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { MotionList, MotionListItem } from '../../components/motion';
 import { EmptyEvents } from '../../components/EmptyState';
+import { playSound } from '../../utils/sounds';
 
 interface WellnessEnrollment {
   class_id: number;
@@ -96,6 +97,7 @@ const Wellness: React.FC = () => {
     });
     
     if (ok) {
+      playSound('bookingConfirmed');
       showToast(`RSVP confirmed for ${classData.title}!`, 'success');
       setConfirmationMessage(`RSVP confirmed for ${classData.title}!`);
       setShowConfirmation(true);

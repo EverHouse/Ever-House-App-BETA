@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Footer } from '../../components/Footer';
 import HubSpotFormModal from '../../components/HubSpotFormModal';
 import { triggerHaptic } from '../../utils/haptics';
 import { usePageReady } from '../../contexts/PageReadyContext';
+import { useParallax } from '../../hooks/useParallax';
 
 const PRIVATE_HIRE_FIELDS = [
   { name: 'firstname', label: 'First Name', type: 'text' as const, required: true, placeholder: 'Jane' },
@@ -16,6 +17,7 @@ const PRIVATE_HIRE_FIELDS = [
 const PrivateHire: React.FC = () => {
   const { setPageReady } = usePageReady();
   const [showInquiryForm, setShowInquiryForm] = useState(false);
+  const { offset: parallaxOffset, opacity: parallaxOpacity, gradientShift, ref: heroRef } = useParallax({ speed: 0.2, maxOffset: 80 });
 
   useEffect(() => {
     setPageReady(true);
@@ -28,10 +30,24 @@ const PrivateHire: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
-       <div className="relative w-full h-[420px] bg-primary flex flex-col justify-end overflow-hidden group rounded-b-[2rem] -mt-4">
-         <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" 
-              style={{backgroundImage: 'url("/images/venue-wide-optimized.webp")'}}></div>
-         <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent"></div>
+       <div 
+         ref={heroRef as React.RefObject<HTMLDivElement>}
+         className="relative w-full h-[420px] bg-primary flex flex-col justify-end overflow-hidden group rounded-b-[2rem] -mt-4"
+       >
+         <div 
+           className="absolute inset-0 h-[120%] bg-cover bg-center will-change-transform" 
+           style={{
+             backgroundImage: 'url("/images/venue-wide-optimized.webp")',
+             transform: `translateY(${parallaxOffset}px) scale(1.05)`,
+             opacity: parallaxOpacity
+           }}
+         ></div>
+         <div 
+           className="absolute inset-0 transition-opacity duration-300"
+           style={{
+             background: `linear-gradient(to top, rgba(41,53,21,${0.9 + gradientShift * 0.005}) 0%, rgba(41,53,21,${0.3 + gradientShift * 0.02}) ${35 + gradientShift}%, transparent 100%)`
+           }}
+         ></div>
          <div className="relative z-10 p-6 pb-12">
             <span className="inline-block px-3 py-1 mb-3 text-[10px] font-bold tracking-widest text-white uppercase bg-white/20 backdrop-blur-sm rounded-full border border-white/10">Events</span>
             <h2 className="text-white text-5xl font-bold leading-tight tracking-tight">Host at <br/>Even House</h2>

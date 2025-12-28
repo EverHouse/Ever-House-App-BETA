@@ -9,6 +9,7 @@ import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
 import { haptic } from '../../utils/haptics';
+import { playSound } from '../../utils/sounds';
 import { useTierPermissions } from '../../hooks/useTierPermissions';
 import { canAccessResource } from '../../services/tierService';
 import { getDateString, formatDateShort, getPacificDateParts } from '../../utils/dateUtils';
@@ -355,6 +356,7 @@ const BookGolf: React.FC = () => {
       });
       
       haptic.success();
+      playSound('bookingConfirmed');
       showToast('Booking request sent! We\'ll confirm shortly.', 'success');
       setShowConfirmation(true);
       setTimeout(() => {
