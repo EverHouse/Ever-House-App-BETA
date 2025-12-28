@@ -491,9 +491,9 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid booking source' });
     }
 
-    const validDurations = [30, 60, 90];
+    const validDurations = [30, 60, 90, 120];
     if (!validDurations.includes(duration_minutes)) {
-      return res.status(400).json({ error: 'Invalid duration. Must be 30, 60, or 90 minutes' });
+      return res.status(400).json({ error: 'Invalid duration. Must be 30, 60, 90, or 120 minutes' });
     }
 
     const [member] = await db.select()
@@ -515,7 +515,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
     // Tier-based duration validation
     const memberTier = (member.tier || '').toLowerCase();
     const isPremiumTier = ['premium', 'corporate', 'vip'].some(t => memberTier.includes(t));
-    const allowedDurations = isPremiumTier ? [30, 60, 90] : [30, 60];
+    const allowedDurations = isPremiumTier ? [30, 60, 90, 120] : [30, 60];
     
     if (!allowedDurations.includes(duration_minutes)) {
       const tierName = member.tier || 'Core';

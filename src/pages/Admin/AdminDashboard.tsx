@@ -3069,7 +3069,7 @@ const ManualBookingModal: React.FC<{
     const getDurationOptionsForTier = (tier: string | null): number[] => {
         const normalizedTier = tier?.toLowerCase() || '';
         if (['premium', 'corporate', 'vip'].some(t => normalizedTier.includes(t))) {
-            return [30, 60, 90];
+            return [30, 60, 90, 120];
         }
         return [30, 60];
     };
