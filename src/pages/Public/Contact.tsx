@@ -151,7 +151,7 @@ const Contact: React.FC = () => {
                         <select 
                           value={formData.topic}
                           onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
-                          className="w-full bg-[#F9F9F7] border-0 rounded-lg py-3 pl-4 pr-10 text-primary ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6 appearance-none"
+                          className="w-full bg-white border border-gray-200 rounded-lg py-3 pl-4 pr-10 text-primary focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm sm:leading-6 appearance-none"
                         >
                             <option>Membership Inquiry</option>
                             <option>Private Events</option>
@@ -167,6 +167,7 @@ const Contact: React.FC = () => {
                   placeholder="Jane Doe" 
                   value={formData.fullName}
                   onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                  variant="solid"
                   required 
                 />
                 <Input 
@@ -175,6 +176,7 @@ const Contact: React.FC = () => {
                   placeholder="jane@example.com" 
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  variant="solid"
                   required 
                 />
                 <div>
@@ -183,7 +185,7 @@ const Contact: React.FC = () => {
                       rows={4} 
                       value={formData.message}
                       onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                      className="w-full bg-[#F9F9F7] border-0 rounded-lg py-3 px-4 text-primary ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6 resize-none" 
+                      className="w-full bg-white border border-gray-200 rounded-lg py-3 px-4 text-primary placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm sm:leading-6 resize-none" 
                       placeholder="How can we help you?" 
                       required
                     ></textarea>

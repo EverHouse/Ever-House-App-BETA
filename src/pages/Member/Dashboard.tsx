@@ -584,7 +584,7 @@ const Dashboard: React.FC = () => {
               <div className={`relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`}>
                 <div className="flex items-center gap-4">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm ${isDark ? 'bg-white/20' : 'bg-white/30'}`}>
-                    <span className="material-symbols-outlined text-brand-green text-3xl drop-shadow-sm">sports_golf</span>
+                    <span className="material-symbols-outlined text-brand-green dark:text-white text-3xl drop-shadow-sm">sports_golf</span>
                   </div>
                   <div>
                     <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Bookings</h2>
@@ -632,7 +632,7 @@ const Dashboard: React.FC = () => {
                     <div className="relative mb-6">
                       <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-bone to-secondary flex items-center justify-center relative">
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/5 to-accent/10 animate-pulse" style={{ animationDuration: '3s' }} />
-                        <span className="material-symbols-outlined text-5xl text-primary/40 dark:text-white/40">self_improvement</span>
+                        <span className="material-symbols-outlined text-5xl text-primary/60 dark:text-white/60">self_improvement</span>
                       </div>
                     </div>
                     <h3 className="text-xl font-semibold text-primary dark:text-white mb-2">No upcoming events</h3>
