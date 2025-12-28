@@ -56,8 +56,8 @@ const MemberAnnouncements: React.FC = () => {
 
   const sortedAnnouncements = useMemo(() => {
     return [...activeAnnouncements].sort((a, b) => {
-      const dateA = a.startDate ? new Date(a.startDate).getTime() : new Date(a.date).getTime() || 0;
-      const dateB = b.startDate ? new Date(b.startDate).getTime() : new Date(b.date).getTime() || 0;
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
   }, [activeAnnouncements]);

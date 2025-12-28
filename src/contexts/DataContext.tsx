@@ -40,6 +40,7 @@ export interface Announcement {
   desc: string;
   type: 'update' | 'announcement';
   date: string;
+  createdAt?: string;
   priority?: 'normal' | 'high' | 'urgent';
   startDate?: string;
   endDate?: string;
