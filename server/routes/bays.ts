@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { bays, availabilityBlocks, bookingRequests, notifications } from '../../shared/schema';
-import { eq, and, or, gte, lte, gt, lt, desc, asc, ne } from 'drizzle-orm';
+import { bays, availabilityBlocks, bookingRequests, notifications, facilityClosures } from '../../shared/schema';
+import { eq, and, or, gte, lte, gt, lt, desc, asc, ne, sql } from 'drizzle-orm';
 import { isProduction } from '../core/db';
 import { getGoogleCalendarClient } from '../core/integrations';
 import { CALENDAR_CONFIG, getCalendarIdByName, createCalendarEvent, createCalendarEventOnCalendar, deleteCalendarEvent } from '../core/calendar';
@@ -24,6 +24,111 @@ async function dismissStaffNotificationsForBooking(bookingId: number): Promise<v
   } catch (error) {
     console.error('Failed to dismiss staff notifications:', error);
   }
+}
+
+// Helper to parse time string to minutes
+function parseTimeToMinutes(time: string | null | undefined): number {
+  if (!time) return 0;
+  const parts = time.split(':').map(Number);
+  return (parts[0] || 0) * 60 + (parts[1] || 0);
+}
+
+// Helper to get affected bay IDs from closure affected areas
+async function getAffectedBayIdsFromClosure(affectedAreas: string): Promise<number[]> {
+  if (affectedAreas === 'entire_facility' || affectedAreas === 'all_bays') {
+    const activeBays = await db
+      .select({ id: bays.id })
+      .from(bays)
+      .where(eq(bays.isActive, true));
+    return activeBays.map(bay => bay.id);
+  }
+  
+  if (affectedAreas === 'conference_room') {
+    return [11]; // Conference room bay ID
+  }
+  
+  if (affectedAreas.startsWith('bay_') && !affectedAreas.includes(',') && !affectedAreas.includes('[')) {
+    const bayId = parseInt(affectedAreas.replace('bay_', ''));
+    if (!isNaN(bayId)) return [bayId];
+  }
+  
+  if (affectedAreas.includes(',') && !affectedAreas.startsWith('[')) {
+    const ids: number[] = [];
+    for (const item of affectedAreas.split(',')) {
+      const trimmed = item.trim();
+      if (trimmed.startsWith('bay_')) {
+        const bayId = parseInt(trimmed.replace('bay_', ''));
+        if (!isNaN(bayId)) ids.push(bayId);
+      } else if (trimmed === 'conference_room') {
+        ids.push(11);
+      } else {
+        const bayId = parseInt(trimmed);
+        if (!isNaN(bayId)) ids.push(bayId);
+      }
+    }
+    return ids;
+  }
+  
+  try {
+    const parsed = JSON.parse(affectedAreas);
+    if (Array.isArray(parsed)) {
+      const ids: number[] = [];
+      for (const item of parsed) {
+        if (typeof item === 'number') {
+          ids.push(item);
+        } else if (typeof item === 'string') {
+          if (item.startsWith('bay_')) {
+            const bayId = parseInt(item.replace('bay_', ''));
+            if (!isNaN(bayId)) ids.push(bayId);
+          } else if (item === 'conference_room') {
+            ids.push(11);
+          } else {
+            const bayId = parseInt(item);
+            if (!isNaN(bayId)) ids.push(bayId);
+          }
+        }
+      }
+      return ids;
+    }
+  } catch {}
+  
+  return [];
+}
+
+// Helper to check for closure conflicts
+async function checkClosureConflict(bayId: number, bookingDate: string, startTime: string, endTime: string): Promise<{ hasConflict: boolean; closureTitle?: string }> {
+  const activeClosures = await db
+    .select()
+    .from(facilityClosures)
+    .where(and(
+      eq(facilityClosures.isActive, true),
+      sql`${facilityClosures.startDate} <= ${bookingDate}`,
+      sql`${facilityClosures.endDate} >= ${bookingDate}`
+    ));
+  
+  const bookingStartMinutes = parseTimeToMinutes(startTime);
+  const bookingEndMinutes = parseTimeToMinutes(endTime);
+  
+  for (const closure of activeClosures) {
+    const affectedBayIds = await getAffectedBayIdsFromClosure(closure.affectedAreas);
+    
+    if (!affectedBayIds.includes(bayId)) continue;
+    
+    // Full-day closure (no specific times)
+    if (!closure.startTime && !closure.endTime) {
+      return { hasConflict: true, closureTitle: closure.title || 'Facility Closure' };
+    }
+    
+    const closureStartMinutes = closure.startTime ? parseTimeToMinutes(closure.startTime) : 0;
+    const closureEndMinutes = closure.endTime ? parseTimeToMinutes(closure.endTime) : 24 * 60;
+    
+    // Check for time overlap
+    if (bookingStartMinutes < closureEndMinutes && bookingEndMinutes > closureStartMinutes) {
+      return { hasConflict: true, closureTitle: closure.title || 'Facility Closure' };
+    }
+  }
+  
+  return { hasConflict: false };
 }
 
 router.get('/api/bays', async (req, res) => {
@@ -305,6 +410,21 @@ router.put('/api/booking-requests/:id', async (req, res) => {
       
       if (conflicts.length > 0) {
         return res.status(409).json({ error: 'Time slot conflicts with existing booking' });
+      }
+      
+      // Check for facility closure conflicts
+      const closureCheck = await checkClosureConflict(
+        assignedBayId,
+        req_data.requestDate,
+        req_data.startTime,
+        req_data.endTime
+      );
+      
+      if (closureCheck.hasConflict) {
+        return res.status(409).json({ 
+          error: 'Cannot approve booking during closure',
+          message: `This time slot conflicts with "${closureCheck.closureTitle}". Please decline this request or wait until the closure ends.`
+        });
       }
       
       const bayResult = await db.select({ name: bays.name }).from(bays).where(eq(bays.id, assignedBayId));

@@ -341,6 +341,15 @@ router.post('/api/bookings', async (req, res) => {
       return res.status(409).json({ error: 'This time slot is already requested or booked' });
     }
     
+    // Check for facility closure conflicts
+    const closureCheck = await checkClosureConflict(resource_id, booking_date, start_time, end_time);
+    if (closureCheck.hasConflict) {
+      return res.status(409).json({ 
+        error: 'Time slot conflicts with a facility closure',
+        message: `This time slot conflicts with "${closureCheck.closureTitle}".`
+      });
+    }
+    
     const result = await db.insert(bookings)
       .values({
         resourceId: resource_id,
