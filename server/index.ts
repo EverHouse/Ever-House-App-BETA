@@ -36,6 +36,7 @@ import closuresRouter from './routes/closures';
 import membershipTiersRouter from './routes/membershipTiers';
 import trainingRouter, { seedTrainingSections } from './routes/training';
 import toursRouter, { syncToursFromCalendar, sendTodayTourReminders } from './routes/tours';
+import bugReportsRouter from './routes/bugReports';
 import { registerObjectStorageRoutes } from './replit_integrations/object_storage';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -171,6 +172,7 @@ app.use(closuresRouter);
 app.use(membershipTiersRouter);
 app.use(trainingRouter);
 app.use(toursRouter);
+app.use(bugReportsRouter);
 registerObjectStorageRoutes(app);
 
 // SPA catch-all using middleware (avoids Express 5 path-to-regexp issues)
