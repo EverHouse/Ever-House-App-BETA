@@ -277,5 +277,16 @@ export const changelog: ChangelogEntry[] = [
       "Members access portal via header button instead of side menu",
       "Updated Contact page with correct Google Maps and Apple Maps links"
     ]
+  },
+  {
+    version: "3.7",
+    date: "2025-12-28",
+    title: "Bug Reporting System",
+    changes: [
+      "New bug report submission form accessible from Profile page",
+      "Optional screenshot upload for bug reports",
+      "Admin bug reports dashboard to track and resolve issues",
+      "Status tracking: open, in progress, and resolved"
+    ]
   }
 ];
