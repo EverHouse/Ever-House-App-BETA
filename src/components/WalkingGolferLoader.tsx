@@ -73,22 +73,22 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         }
 
         .loader-exit {
-          animation: slideUpMorph 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: minimizeToStatusBar 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
           pointer-events: none;
         }
 
-        @keyframes slideUpMorph {
+        @keyframes minimizeToStatusBar {
           0% {
-            transform: translateY(0);
             clip-path: inset(0 0 0 0);
+          }
+          30% {
+            clip-path: inset(0 0 40% 0);
           }
           60% {
-            transform: translateY(-85vh);
-            clip-path: inset(0 0 0 0);
+            clip-path: inset(0 0 75% 0);
           }
           100% {
-            transform: translateY(-100vh);
-            clip-path: inset(0 0 calc(100vh - 72px) 0);
+            clip-path: inset(0 0 calc(100% - env(safe-area-inset-top, 44px)) 0);
           }
         }
 
@@ -101,17 +101,21 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         }
 
         .content-exit {
-          animation: contentFadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: contentFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        @keyframes contentFadeUp {
+        @keyframes contentFadeOut {
           0% {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: scale(1) translateY(0);
+          }
+          50% {
+            opacity: 0.3;
+            transform: scale(0.9) translateY(-20px);
           }
           100% {
             opacity: 0;
-            transform: translateY(-60px) scale(0.9);
+            transform: scale(0.7) translateY(-50px);
           }
         }
 

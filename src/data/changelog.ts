@@ -379,5 +379,15 @@ export const changelog: ChangelogEntry[] = [
       "Consistent branding on iOS PWA regardless of system light or dark mode",
       "Fixed Profile page animation flash during page transitions"
     ]
+  },
+  {
+    version: "4.7",
+    date: "2025-12-28",
+    title: "Fluid Loading Exit",
+    changes: [
+      "Loading screen now fluidly minimizes into the status bar",
+      "Content fades and shrinks smoothly during the transition",
+      "Creates seamless visual connection between loading and status bar"
+    ]
   }
 ];
