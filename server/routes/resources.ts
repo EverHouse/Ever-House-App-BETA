@@ -4,7 +4,7 @@ import { db } from '../db';
 import { bookings, resources, users, facilityClosures, bays, notifications } from '../../shared/schema';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
 import { isStaffOrAdmin } from '../core/middleware';
-import { createCalendarEventOnCalendar, getCalendarIdByName, CALENDAR_CONFIG } from '../core/calendar';
+import { createCalendarEventOnCalendar, getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { logAndRespond, logger } from '../core/logger';
 import { sendPushNotification } from './push';
 
@@ -374,9 +374,37 @@ router.post('/api/bookings', async (req, res) => {
 router.delete('/api/bookings/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    
+    const [booking] = await db.select({
+      calendarEventId: bookings.calendarEventId,
+      resourceId: bookings.resourceId
+    })
+    .from(bookings)
+    .where(eq(bookings.id, parseInt(id)));
+    
     await db.update(bookings)
       .set({ status: 'cancelled' })
       .where(eq(bookings.id, parseInt(id)));
+    
+    if (booking?.calendarEventId) {
+      try {
+        const resource = await db.select({ type: resources.type })
+          .from(resources)
+          .where(eq(resources.id, booking.resourceId));
+        
+        const calendarName = resource[0]?.type === 'conference_room' 
+          ? CALENDAR_CONFIG.conference.name 
+          : CALENDAR_CONFIG.golf.name;
+        
+        const calendarId = await getCalendarIdByName(calendarName);
+        if (calendarId) {
+          await deleteCalendarEvent(booking.calendarEventId, calendarId);
+        }
+      } catch (calError) {
+        console.error('Failed to delete calendar event (non-blocking):', calError);
+      }
+    }
+    
     res.json({ success: true });
   } catch (error: any) {
     logAndRespond(req, res, 500, 'Failed to cancel booking', error, 'BOOKING_CANCEL_ERROR');
