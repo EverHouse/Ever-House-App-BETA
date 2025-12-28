@@ -6,7 +6,7 @@ import { usePageReady } from '../../contexts/PageReadyContext';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 
 const Spinner = () => (
-  <WalkingGolferSpinner size="sm" className="text-white" />
+  <WalkingGolferSpinner size="sm" variant="light" />
 );
 
 const Login: React.FC = () => {

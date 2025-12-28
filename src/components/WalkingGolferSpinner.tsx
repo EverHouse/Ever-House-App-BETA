@@ -2,11 +2,13 @@ import React from 'react';
 
 interface WalkingGolferSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
+  variant?: 'dark' | 'light';
   className?: string;
 }
 
 const WalkingGolferSpinner: React.FC<WalkingGolferSpinnerProps> = ({ 
   size = 'md',
+  variant = 'dark',
   className = '' 
 }) => {
   const sizeStyles = {
@@ -15,11 +17,15 @@ const WalkingGolferSpinner: React.FC<WalkingGolferSpinnerProps> = ({
     lg: { width: '80px' }
   };
 
+  const imageSrc = variant === 'light' 
+    ? '/assets/logos/mascot-white.webp'
+    : '/assets/logos/mascot-dark.webp';
+
   return (
     <div className={`inline-flex items-center justify-center ${className}`}>
       <div className="walking-mascot-spinner">
         <img 
-          src="/assets/logos/mascot-dark.webp" 
+          src={imageSrc}
           alt="Loading..." 
           style={sizeStyles[size]}
           className="h-auto"

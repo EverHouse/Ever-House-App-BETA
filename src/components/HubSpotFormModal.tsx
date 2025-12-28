@@ -230,7 +230,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
                 >
                   {loading ? (
                     <>
-                      <WalkingGolferSpinner size="sm" className="text-white dark:text-brand-green" />
+                      <WalkingGolferSpinner size="sm" variant="light" />
                       Submitting...
                     </>
                   ) : (

@@ -4,16 +4,18 @@ import WalkingGolferSpinner from './WalkingGolferSpinner';
 interface LoadingStateProps {
   message?: string;
   variant?: 'default' | 'compact' | 'inline';
+  spinnerVariant?: 'dark' | 'light';
 }
 
 const LoadingState: React.FC<LoadingStateProps> = ({
   message = 'Loading...',
-  variant = 'default'
+  variant = 'default',
+  spinnerVariant = 'dark'
 }) => {
   if (variant === 'inline') {
     return (
       <div className="flex items-center gap-2 text-primary/60 dark:text-white/60">
-        <WalkingGolferSpinner size="sm" />
+        <WalkingGolferSpinner size="sm" variant={spinnerVariant} />
         <span className="text-sm">{message}</span>
       </div>
     );
@@ -24,7 +26,7 @@ const LoadingState: React.FC<LoadingStateProps> = ({
   return (
     <div className={`flex flex-col items-center justify-center text-center ${isCompact ? 'py-8 px-4' : 'py-16 px-6'} animate-pop-in`}>
       <div className={`relative ${isCompact ? 'mb-3' : 'mb-6'}`}>
-        <WalkingGolferSpinner size={isCompact ? 'md' : 'lg'} />
+        <WalkingGolferSpinner size={isCompact ? 'md' : 'lg'} variant={spinnerVariant} />
       </div>
 
       <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-primary/60 dark:text-white/60`}>
