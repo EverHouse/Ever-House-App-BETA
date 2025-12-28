@@ -1557,11 +1557,18 @@ const AnnouncementsAdmin: React.FC = () => {
                         Announcements ({announcements.length})
                     </h3>
                 )}
-                {announcements.map((item, index) => (
+                {announcements.map((item, index) => {
+                    const priorityDotClass = item.priority === 'urgent'
+                        ? 'bg-red-500'
+                        : item.priority === 'high'
+                            ? 'bg-amber-400'
+                            : 'bg-accent';
+                    
+                    return (
                     <div key={item.id} onClick={() => openEdit(item)} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm flex justify-between items-start cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.15 + index * 0.05}s`}}>
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
-                                <span className="w-2 h-2 rounded-full bg-accent"></span>
+                                <span className={`w-2 h-2 rounded-full ${priorityDotClass}`}></span>
                                 <span className="text-[10px] text-gray-300 dark:text-gray-600">{item.date}</span>
                             </div>
                             <h4 className="font-bold text-gray-900 dark:text-white mb-1">{item.title}</h4>
@@ -1577,7 +1584,8 @@ const AnnouncementsAdmin: React.FC = () => {
                             <span className="material-symbols-outlined">delete</span>
                         </button>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

@@ -100,10 +100,22 @@ const MemberAnnouncements: React.FC = () => {
                 : item.linkType === 'golf' ? 'Book Now' 
                 : item.linkType === 'external' ? 'Learn More' : '';
               
+              const priorityCardClass = item.priority === 'urgent' 
+                ? (isDark ? 'bg-red-500/10 shadow-layered-dark' : 'bg-red-50 shadow-layered')
+                : item.priority === 'high'
+                  ? (isDark ? 'bg-amber-500/10 shadow-layered-dark' : 'bg-amber-50 shadow-layered')
+                  : (isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered');
+              
+              const priorityDotClass = item.priority === 'urgent'
+                ? 'bg-red-500'
+                : item.priority === 'high'
+                  ? 'bg-amber-400'
+                  : 'bg-accent';
+              
               return (
                 <MotionListItem 
                   key={item.id}
-                  className={`rounded-2xl transition-all overflow-hidden ${isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered'}`}
+                  className={`rounded-2xl transition-all overflow-hidden ${priorityCardClass}`}
                 >
                   <div 
                     className={`p-5 ${hasLongDesc || hasLink ? 'cursor-pointer' : ''}`}
@@ -116,7 +128,7 @@ const MemberAnnouncements: React.FC = () => {
                     }}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${item.type === 'update' ? 'bg-amber-400' : 'bg-accent'}`} />
+                      <span className={`w-2.5 h-2.5 rounded-full ${priorityDotClass}`} />
                       <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
                         {item.type}
                       </span>

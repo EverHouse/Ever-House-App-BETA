@@ -549,7 +549,7 @@ router.get('/api/approved-bookings', async (req, res) => {
       bay_name: bays.name
     })
     .from(bookingRequests)
-    .innerJoin(bays, eq(bookingRequests.bayId, bays.id))
+    .leftJoin(bays, eq(bookingRequests.bayId, bays.id))
     .where(and(...conditions))
     .orderBy(asc(bookingRequests.requestDate), asc(bookingRequests.startTime));
     
