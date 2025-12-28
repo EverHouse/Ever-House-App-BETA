@@ -398,14 +398,5 @@ export const changelog: ChangelogEntry[] = [
       "Gallery page now uses the same fluid minimize-to-status-bar animation",
       "Consistent loading experience across all pages"
     ]
-  },
-  {
-    version: "4.9",
-    date: "2025-12-28",
-    title: "Header Fade-In",
-    changes: [
-      "Header elements now fade in smoothly after loading screen exits",
-      "Creates seamless transition from loader to main content"
-    ]
   }
 ];
