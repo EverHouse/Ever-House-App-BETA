@@ -19,7 +19,7 @@ export const CALENDAR_CONFIG = {
     slotDuration: 30,
   },
   events: {
-    name: 'Public/Member Events',
+    name: 'Events',
   },
   wellness: {
     name: 'Wellness & Classes',
