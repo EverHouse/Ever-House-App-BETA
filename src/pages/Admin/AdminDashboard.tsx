@@ -332,9 +332,9 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
   const operationsLinks = [
     { id: 'simulator' as TabType, icon: 'event_note', label: 'Bookings', description: 'Manage booking requests and approvals' },
     { id: 'events' as TabType, icon: 'calendar_month', label: 'Calendar', description: 'View and manage events and wellness' },
-    { id: 'tours' as TabType, icon: 'directions_walk', label: 'Tours', description: 'View scheduled tours and check-ins' },
-    { id: 'updates' as TabType, icon: 'campaign', label: 'Updates', description: 'Activity and announcements for members' },
     { id: 'blocks' as TabType, icon: 'event_busy', label: 'Closures', description: 'Manage closures and availability blocks' },
+    { id: 'updates' as TabType, icon: 'campaign', label: 'Updates', description: 'Activity and announcements for members' },
+    { id: 'tours' as TabType, icon: 'directions_walk', label: 'Tours', description: 'View scheduled tours and check-ins' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
   ];
 
