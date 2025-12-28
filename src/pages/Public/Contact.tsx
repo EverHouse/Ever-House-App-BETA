@@ -217,7 +217,7 @@ const Contact: React.FC = () => {
             ></iframe>
             <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
                  <a 
-                   href="https://www.google.com/maps/search/?api=1&query=15771+Red+Hill+Ave+Suite+500+Tustin+CA+92780" 
+                   href="https://maps.app.goo.gl/Zp93EMzyp9EA3vqA6" 
                    target="_blank" 
                    rel="noreferrer" 
                    className="bg-white text-primary px-4 py-2 rounded-lg shadow-md font-bold text-xs flex items-center gap-2 hover:shadow-lg transition-shadow"
@@ -226,7 +226,7 @@ const Contact: React.FC = () => {
                     Open in Google Maps
                  </a>
                  <a 
-                   href="https://maps.apple.com/?address=15771%20Red%20Hill%20Ave%20Ste%20500,%20Tustin,%20CA%2092780&ll=33.7090,-117.8272&q=Even%20House" 
+                   href="https://maps.apple.com/?address=15771%20Red%20Hill%20Ave,%20Ste%20500,%20Tustin,%20CA%20%2092780,%20United%20States&auid=9660897230606498227&ll=33.709036,-117.826817&lsp=9902&q=Even%20House" 
                    target="_blank" 
                    rel="noreferrer" 
                    className="bg-zinc-700 text-white px-4 py-2 rounded-lg shadow-md font-bold text-xs flex items-center gap-2 hover:shadow-lg transition-shadow"

@@ -49,9 +49,6 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   if (!isVisible) return null;
 
   const getActionButtonConfig = () => {
-    if (actualUser?.role === 'admin' || actualUser?.role === 'staff') {
-        return { label: "STAFF PORTAL", icon: "admin_panel_settings", action: () => handleNav('/admin') };
-    }
     if (user) {
         return { label: "MEMBER PORTAL", icon: "dashboard", action: () => handleNav('/dashboard') };
     }
