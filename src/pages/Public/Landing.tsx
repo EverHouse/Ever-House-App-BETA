@@ -268,18 +268,26 @@ const Landing: React.FC = () => {
 
   return (
     <div className="bg-[#F2F2EC] min-h-screen pb-0 overflow-x-hidden">
-      {/* Hero Section */}
+      {/* Hero Section - extends behind status bar with negative margin */}
       <div 
         ref={heroRef as React.RefObject<HTMLDivElement>}
-        className="relative h-[100vh] min-h-[700px] flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))] overflow-hidden rounded-b-[2.5rem] shadow-sm"
+        className="relative flex flex-col justify-end p-6 pb-[max(4rem,env(safe-area-inset-bottom))] overflow-hidden rounded-b-[2.5rem] shadow-sm"
+        style={{
+          marginTop: 'calc(-1 * env(safe-area-inset-top, 0px))',
+          height: 'calc(100vh + env(safe-area-inset-top, 0px))',
+          minHeight: 'calc(700px + env(safe-area-inset-top, 0px))'
+        }}
       >
         {/* Hero Background Image - Even House interior lounge (optimized WebP) */}
         <img 
           src="/images/hero-lounge-optimized.webp" 
           alt="Even House Lounge" 
-          className="absolute inset-0 w-full h-[120%] object-cover will-change-transform"
+          className="absolute w-full h-[120%] object-cover will-change-transform"
           loading="eager"
           style={{ 
+            top: 0,
+            left: 0,
+            right: 0,
             transform: `translateY(${parallaxOffset}px) scale(1.05)`,
             opacity: parallaxOpacity
           }}

@@ -338,5 +338,14 @@ export const changelog: ChangelogEntry[] = [
       "Mascot and tagline gracefully fade up as the screen transitions",
       "Smoother, more polished app launch experience"
     ]
+  },
+  {
+    version: "4.3",
+    date: "2025-12-28",
+    title: "Full-Bleed Hero",
+    changes: [
+      "Hero image now extends behind the status bar on iPhone",
+      "Seamless edge-to-edge display for a more immersive experience"
+    ]
   }
 ];
