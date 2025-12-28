@@ -1,5 +1,5 @@
-export const APP_VERSION = '3.4';
-export const LAST_UPDATED = '2025-12-27';
+export const APP_VERSION = '3.6';
+export const LAST_UPDATED = '2025-12-28';
 
 export function formatLastUpdated(): string {
   const date = new Date(LAST_UPDATED + 'T00:00:00');
