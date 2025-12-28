@@ -152,11 +152,6 @@ function parseTimeToMinutes(time: string | null | undefined): number {
 }
 
 async function checkClosureConflict(resourceId: number, bookingDate: string, startTime: string, endTime: string): Promise<{ hasConflict: boolean; closureTitle?: string }> {
-  const resource = await db.select({ type: resources.type }).from(resources).where(eq(resources.id, resourceId));
-  if (!resource[0] || resource[0].type !== 'simulator') {
-    return { hasConflict: false };
-  }
-  
   const activeClosures = await db
     .select()
     .from(facilityClosures)
