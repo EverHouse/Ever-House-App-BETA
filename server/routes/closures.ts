@@ -439,9 +439,12 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         .from(users)
         .where(or(eq(users.role, 'member'), isNull(users.role)));
       
-      if (memberUsers.length > 0) {
-        const notificationValues = memberUsers.map(m => ({
-          userEmail: m.email,
+      // Filter out users with null/empty emails
+      const membersWithEmails = memberUsers.filter(m => m.email && m.email.trim());
+      
+      if (membersWithEmails.length > 0) {
+        const notificationValues = membersWithEmails.map(m => ({
+          userEmail: m.email!,
           title: notificationTitle,
           message: notificationBody,
           type: 'closure',
@@ -450,7 +453,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         }));
         
         await db.insert(notifications).values(notificationValues);
-        console.log(`[Closures] Created in-app notifications for ${memberUsers.length} members`);
+        console.log(`[Closures] Created in-app notifications for ${membersWithEmails.length} members`);
       }
       
       await sendPushNotificationToAllMembers({
