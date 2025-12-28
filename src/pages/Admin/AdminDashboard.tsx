@@ -6741,6 +6741,7 @@ const ToursAdmin: React.FC = () => {
   const { setPageReady } = usePageReady();
   const [tours, setTours] = useState<Tour[]>([]);
   const [todayTours, setTodayTours] = useState<Tour[]>([]);
+  const [pastTours, setPastTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -6767,7 +6768,24 @@ const ToursAdmin: React.FC = () => {
       if (allToursRes.ok) {
         const data = await allToursRes.json();
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-        setTours(data.filter((t: Tour) => t.tourDate !== todayStr));
+        
+        const upcoming: Tour[] = [];
+        const past: Tour[] = [];
+        
+        data.forEach((t: Tour) => {
+          if (t.tourDate === todayStr) return;
+          if (t.tourDate > todayStr) {
+            upcoming.push(t);
+          } else {
+            past.push(t);
+          }
+        });
+        
+        upcoming.sort((a, b) => a.tourDate.localeCompare(b.tourDate));
+        past.sort((a, b) => b.tourDate.localeCompare(a.tourDate));
+        
+        setTours(upcoming);
+        setPastTours(past);
       }
     } catch (err) {
       console.error('Failed to fetch tours:', err);
@@ -6863,15 +6881,17 @@ const ToursAdmin: React.FC = () => {
     );
   }
 
-  const TourCard = ({ tour, isToday = false }: { tour: Tour; isToday?: boolean }) => (
+  const TourCard = ({ tour, isToday = false, isPast = false }: { tour: Tour; isToday?: boolean; isPast?: boolean }) => (
     <div className={`p-4 rounded-2xl border ${tour.status === 'checked_in' 
       ? 'bg-green-500/10 border-green-500/30' 
-      : 'bg-white/60 dark:bg-white/5 border-primary/10 dark:border-white/10'
+      : isPast
+        ? 'bg-primary/5 dark:bg-white/3 border-primary/5 dark:border-white/5'
+        : 'bg-white/60 dark:bg-white/5 border-primary/10 dark:border-white/10'
     }`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-bold text-primary dark:text-white">
+            <span className={`text-sm font-bold ${isPast ? 'text-primary/50 dark:text-white/50' : 'text-primary dark:text-white'}`}>
               {formatTime(tour.startTime)}
             </span>
             {tour.endTime && (
@@ -6880,7 +6900,7 @@ const ToursAdmin: React.FC = () => {
               </span>
             )}
           </div>
-          <h4 className="font-semibold text-primary dark:text-white truncate">
+          <h4 className={`font-semibold truncate ${isPast ? 'text-primary/60 dark:text-white/60' : 'text-primary dark:text-white'}`}>
             {tour.guestName || tour.title}
           </h4>
           {tour.guestEmail && (
@@ -6907,6 +6927,11 @@ const ToursAdmin: React.FC = () => {
               <span className="material-symbols-outlined text-sm">how_to_reg</span>
               Check In
             </button>
+          ) : isPast ? (
+            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/5 dark:bg-white/5 text-primary/40 dark:text-white/40 text-xs font-medium">
+              <span className="material-symbols-outlined text-sm">event_busy</span>
+              Completed
+            </span>
           ) : (
             <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 dark:bg-white/10 text-primary/70 dark:text-white/70 text-xs font-medium">
               <span className="material-symbols-outlined text-sm">schedule</span>
@@ -6978,13 +7003,27 @@ const ToursAdmin: React.FC = () => {
         </div>
       )}
 
-      {todayTours.length === 0 && tours.length === 0 && (
+      {todayTours.length === 0 && tours.length === 0 && pastTours.length === 0 && (
         <div className="text-center py-12">
           <span className="material-symbols-outlined text-5xl text-primary/20 dark:text-white/20 mb-3">directions_walk</span>
-          <p className="text-primary/50 dark:text-white/50">No upcoming tours</p>
+          <p className="text-primary/50 dark:text-white/50">No tours found</p>
           <p className="text-sm text-primary/40 dark:text-white/40 mt-1">
             Tours will appear here after syncing from Google Calendar
           </p>
+        </div>
+      )}
+
+      {pastTours.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-3 flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg">history</span>
+            Past Tours ({pastTours.length})
+          </h3>
+          <div className="space-y-3">
+            {pastTours.map((tour) => (
+              <TourCard key={tour.id} tour={tour} isPast />
+            ))}
+          </div>
         </div>
       )}
 
