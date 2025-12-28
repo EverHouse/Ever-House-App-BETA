@@ -548,7 +548,7 @@ const CafeAdmin: React.FC = () => {
             {isEditing && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
                             <h3 className="font-bold text-lg mb-5 text-primary dark:text-white">{editId ? 'Edit Item' : 'Add Item'}</h3>
                             <div className="space-y-4 mb-6">
@@ -873,7 +873,7 @@ const EventsAdminContent: React.FC = () => {
             {isEditing && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setError(null); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto">
                             <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">{editId ? 'Edit Event' : 'Create Event'}</h3>
                             {error && (
@@ -1225,7 +1225,7 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
     return createPortal(
         <div className="fixed inset-0 z-[10001] overflow-y-auto">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+            <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                 <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto">
                     <div className="flex items-center justify-between mb-4">
                         <div>
@@ -1574,7 +1574,7 @@ const AnnouncementsAdmin: React.FC<{ triggerCreate?: number }> = ({ triggerCreat
             {isEditing && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
                             <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-accent" />
@@ -1805,6 +1805,7 @@ const MembersAdmin: React.FC = () => {
                             <div className="flex-1">
                                 <h4 className="font-bold text-lg text-primary dark:text-white">{m.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
+                                {m.phone && <p className="text-xs text-gray-500 dark:text-gray-400">{m.phone}</p>}
                             </div>
                         </div>
                         <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
@@ -2704,7 +2705,7 @@ const SimulatorAdmin: React.FC = () => {
             {actionModal && selectedRequest && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
                                 {actionModal === 'approve' ? 'Approve Request' : 'Decline Request'}
@@ -2819,7 +2820,7 @@ const SimulatorAdmin: React.FC = () => {
             {showTrackmanConfirm && selectedRequest && createPortal(
                 <div className="fixed inset-0 z-[10002] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => setShowTrackmanConfirm(false)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-sm w-full shadow-xl pointer-events-auto">
                             <div className="text-center mb-4">
                                 <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mx-auto mb-3">
@@ -2934,7 +2935,7 @@ const SimulatorAdmin: React.FC = () => {
             {selectedCalendarBooking && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => setSelectedCalendarBooking(null)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-xl font-bold text-primary dark:text-white">
@@ -3374,7 +3375,7 @@ const ManualBookingModal: React.FC<{
     return (
         <div className="fixed inset-0 z-[10001] overflow-y-auto">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+            <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                 <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto max-h-[90vh] overflow-y-auto">
                     <div className="flex items-center justify-between mb-5">
                         <h3 className="text-xl font-bold text-primary dark:text-white">{rescheduleFromId ? 'Reschedule Booking' : 'Manual Booking'}</h3>
@@ -3977,7 +3978,7 @@ const WellnessAdminContent: React.FC = () => {
             {isEditing && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setError(null); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md modal-safe-height overflow-y-auto pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
                                 {editId ? 'Edit Class' : 'Add Class'}
@@ -4367,30 +4368,10 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
                                 }`}
                                 style={{animationDelay: `${0.15 + index * 0.03}s`}}
                             >
-                                <div className="flex items-center gap-3 flex-1">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                        staff.is_active ? 'bg-brand-green/10 text-brand-green dark:text-green-400' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                                    }`}>
-                                        <span className="material-symbols-outlined">badge</span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-primary dark:text-white">{staff.name || staff.email}</p>
-                                        {staff.name && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.email}</p>}
-                                        {staff.phone && (
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="material-symbols-outlined text-sm align-middle mr-1">phone</span>
-                                                {staff.phone}
-                                            </p>
-                                        )}
-                                        {staff.job_title && (
-                                            <p className="text-xs text-gray-400 dark:text-gray-500">{staff.job_title}</p>
-                                        )}
-                                        {isAdmin && (
-                                            <p className="text-xs text-gray-400 dark:text-gray-500">
-                                                {staff.is_active ? 'Active' : 'Inactive'}
-                                            </p>
-                                        )}
-                                    </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-primary dark:text-white">{staff.name || staff.email}</p>
+                                    {staff.name && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.email}</p>}
+                                    {staff.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.phone}</p>}
                                 </div>
                                 {isAdmin && (
                                     <div className="flex items-center gap-2">
@@ -4419,7 +4400,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
             {isAdmin && isAdding && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Staff Member</h3>
                             
@@ -4478,7 +4459,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
             {isAdmin && isEditing && selectedStaff && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Staff Member</h3>
                             
@@ -4806,19 +4787,10 @@ const AdminsAdmin: React.FC = () => {
                                 }`}
                                 style={{animationDelay: `${0.15 + index * 0.03}s`}}
                             >
-                                <div className="flex items-center gap-3 flex-1">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                        admin.is_active ? 'bg-amber-500/10 text-amber-600' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
-                                    }`}>
-                                        <span className="material-symbols-outlined">shield_person</span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-primary dark:text-white">{admin.name || admin.email}</p>
-                                        {admin.name && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.email}</p>}
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">
-                                            {admin.is_active ? 'Active' : 'Inactive'}
-                                        </p>
-                                    </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-primary dark:text-white">{admin.name || admin.email}</p>
+                                    {admin.name && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.email}</p>}
+                                    {admin.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.phone}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -4845,7 +4817,7 @@ const AdminsAdmin: React.FC = () => {
             {isAdding && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Admin</h3>
                             
@@ -4904,7 +4876,7 @@ const AdminsAdmin: React.FC = () => {
             {isEditing && selectedAdmin && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Admin</h3>
                             
@@ -5532,7 +5504,7 @@ const BlocksAdmin: React.FC = () => {
             {isClosureModalOpen && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
                             <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
                                 <span className="material-symbols-outlined text-red-500">block</span>

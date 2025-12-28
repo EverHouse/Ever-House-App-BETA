@@ -50,6 +50,7 @@ const Profile: React.FC = () => {
   const [showPasswordSetupBanner, setShowPasswordSetupBanner] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [showBugReport, setShowBugReport] = useState(false);
+  const [staffDetails, setStaffDetails] = useState<{phone?: string; job_title?: string} | null>(null);
 
   // Check if viewing a staff/admin profile (either directly or via view-as)
   const isStaffOrAdminProfile = user?.role === 'admin' || user?.role === 'staff';
@@ -97,6 +98,15 @@ const Profile: React.FC = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location.state, isStaffOrAdminProfile]);
+
+  useEffect(() => {
+    if (isStaffOrAdminProfile && user?.email) {
+      fetch(`/api/staff-users/by-email/${encodeURIComponent(user.email)}`, { credentials: 'include' })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => setStaffDetails(data))
+        .catch(() => {});
+    }
+  }, [user?.email, isStaffOrAdminProfile]);
 
   const handlePasswordSubmit = async () => {
     setPasswordError('');
@@ -191,7 +201,7 @@ const Profile: React.FC = () => {
          <Section title="Account" isDark={isDark} delay="0.05s">
             <Row icon="person" label="Name" value={user.name} isDark={isDark} />
             <Row icon="mail" label="Email" value={user.email} isDark={isDark} />
-            <Row icon="call" label="Phone" value={user.phone} isDark={isDark} />
+            <Row icon="call" label="Phone" value={staffDetails?.phone || user.phone} isDark={isDark} />
          </Section>
 
          <Section title="Settings" isDark={isDark} delay="0.1s">
@@ -257,8 +267,7 @@ const Profile: React.FC = () => {
          {isStaffOrAdminProfile && (
            <Section title="Staff Information" isDark={isDark} delay="0.15s">
               <Row icon="shield_person" label="Role" value={user?.role === 'admin' ? 'Administrator' : 'Staff'} isDark={isDark} />
-              {user?.jobTitle && <Row icon="badge" label="Job Title" value={user.jobTitle} isDark={isDark} />}
-              <Row icon="verified" label="Portal Access" value="Staff Portal" isDark={isDark} />
+              {staffDetails?.job_title && <Row icon="work" label="Job Title" value={staffDetails.job_title} isDark={isDark} />}
            </Section>
          )}
 
