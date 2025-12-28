@@ -6448,6 +6448,7 @@ const StaffTrainingGuide: React.FC = () => {
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
     const [sections, setSections] = useState<TrainingSectionDB[]>([]);
     const [loading, setLoading] = useState(true);
+    const [authError, setAuthError] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingSection, setEditingSection] = useState<TrainingSectionDB | null>(null);
     const { actualUser } = useData();
@@ -6464,6 +6465,9 @@ const StaffTrainingGuide: React.FC = () => {
             if (response.ok) {
                 const data = await response.json();
                 setSections(data);
+                setAuthError(false);
+            } else if (response.status === 401) {
+                setAuthError(true);
             }
         } catch (error) {
             console.error('Failed to fetch training sections:', error);
@@ -6527,6 +6531,24 @@ const StaffTrainingGuide: React.FC = () => {
         return (
             <div className="flex items-center justify-center py-20">
                 <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (authError) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <span className="material-symbols-outlined text-5xl text-primary/40 dark:text-white/40 mb-4">lock</span>
+                <h3 className="text-lg font-bold text-primary dark:text-white mb-2">Session Expired</h3>
+                <p className="text-sm text-primary/60 dark:text-white/60 mb-6 max-w-sm">
+                    Your session has expired. Please refresh the page or log in again to view the training guide.
+                </p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-5 py-2.5 bg-primary dark:bg-accent text-white dark:text-primary rounded-full font-medium"
+                >
+                    Refresh Page
+                </button>
             </div>
         );
     }
