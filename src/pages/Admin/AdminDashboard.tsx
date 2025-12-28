@@ -943,7 +943,7 @@ const EventsAdminContent: React.FC = () => {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h4 className="font-bold text-lg text-primary dark:text-white leading-tight mb-1 truncate">{event.title}</h4>
-                                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-accent/20 text-primary px-1.5 py-0.5 rounded mb-2">{event.category}</span>
+                                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-white/20 dark:bg-white/10 text-primary dark:text-white/80 px-1.5 py-0.5 rounded mb-2">{event.category}</span>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.event_date)} • {formatTime(event.start_time)}</p>
                                 </div>
                             </div>
@@ -952,7 +952,7 @@ const EventsAdminContent: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); handleViewRsvps(event); }} 
-                                        className="text-blue-600 text-xs font-bold uppercase tracking-wider hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded flex items-center gap-1"
+                                        className="text-primary/70 dark:text-white/70 text-xs font-bold uppercase tracking-wider hover:bg-primary/5 dark:hover:bg-white/10 px-2 py-1 rounded flex items-center gap-1"
                                     >
                                         <span className="material-symbols-outlined text-[14px]">group</span> RSVPs
                                     </button>
@@ -967,7 +967,7 @@ const EventsAdminContent: React.FC = () => {
                                             <span className="material-symbols-outlined text-[14px]">open_in_new</span> View
                                         </a>
                                     )}
-                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="text-red-500 text-xs font-bold uppercase tracking-wider hover:bg-red-50 px-2 py-1 rounded">Delete</button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="text-primary/50 dark:text-white/50 text-xs font-bold uppercase tracking-wider hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors">Delete</button>
                                 </div>
                             </div>
                         </div>
@@ -1051,7 +1051,7 @@ const EventsWellnessAdmin: React.FC = () => {
                 <button 
                     onClick={handleSyncCalendars} 
                     disabled={isSyncing}
-                    className="bg-[#4A5A2C] text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50 text-xs sm:text-sm"
+                    className="bg-[#6B8BA4] text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50 text-xs sm:text-sm"
                 >
                     {isSyncing ? (
                         <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
