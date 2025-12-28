@@ -267,5 +267,15 @@ export const changelog: ChangelogEntry[] = [
       "Custom training guides added by admins are now preserved during updates",
       "Fixed production auto-seed to populate guideIds correctly"
     ]
+  },
+  {
+    version: "3.6",
+    date: "2025-12-28",
+    title: "Navigation & Contact Updates",
+    changes: [
+      "Simplified side menu: removed Staff Portal and Member Portal buttons",
+      "Members access portal via header button instead of side menu",
+      "Updated Contact page with correct Google Maps and Apple Maps links"
+    ]
   }
 ];
