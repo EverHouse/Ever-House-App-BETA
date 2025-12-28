@@ -369,5 +369,15 @@ export const changelog: ChangelogEntry[] = [
       "Mascot automatically switches between light and dark versions based on theme",
       "Cleaner menu layout with Home link replaced by mascot button"
     ]
+  },
+  {
+    version: "4.6",
+    date: "2025-12-28",
+    title: "Brand Green Status Bar",
+    changes: [
+      "Landing page now displays the signature Even House green behind the status bar",
+      "Consistent branding on iOS PWA regardless of system light or dark mode",
+      "Fixed Profile page animation flash during page transitions"
+    ]
   }
 ];

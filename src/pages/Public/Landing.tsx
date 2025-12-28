@@ -268,6 +268,13 @@ const Landing: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-0 overflow-x-hidden relative bg-[#F2F2EC]">
+      {/* Fixed brand green status bar fill for iOS PWA */}
+      <div 
+        className="fixed top-0 left-0 right-0 z-[9999] bg-[#293515]"
+        style={{ height: 'env(safe-area-inset-top, 0px)' }}
+        aria-hidden="true"
+      />
+      
       {/* Hero Section - extends behind status bar */}
       <div 
         ref={heroRef as React.RefObject<HTMLDivElement>}
