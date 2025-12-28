@@ -5,6 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import SwipeablePage from '../../components/SwipeablePage';
 import { MotionList, MotionListItem } from '../../components/motion';
+import { getTodayPacific } from '../../utils/dateUtils';
 
 interface UserNotification {
   id: number;
@@ -25,19 +26,10 @@ const formatDate = (dateStr: string): string => {
 };
 
 const isActiveAnnouncement = (item: Announcement): boolean => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayStr = getTodayPacific();
   
-  if (item.startDate) {
-    const start = new Date(item.startDate);
-    if (start > today) return false;
-  }
-  
-  if (item.endDate) {
-    const end = new Date(item.endDate);
-    end.setHours(23, 59, 59, 999);
-    if (end < today) return false;
-  }
+  if (item.startDate && item.startDate > todayStr) return false;
+  if (item.endDate && item.endDate < todayStr) return false;
   
   return true;
 };

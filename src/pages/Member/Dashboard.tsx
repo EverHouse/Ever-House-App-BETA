@@ -8,7 +8,7 @@ import { useToast } from '../../components/Toast';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
-import { formatDateShort, getTodayString } from '../../utils/dateUtils';
+import { formatDateShort, getTodayString, getPacificHour, CLUB_TIMEZONE } from '../../utils/dateUtils';
 import { DashboardSkeleton } from '../../components/skeletons';
 import { getBaseTier, isFoundingMember } from '../../utils/permissions';
 import { getTierColor } from '../../utils/tierUtils';
@@ -391,7 +391,7 @@ const Dashboard: React.FC = () => {
   };
 
   const getGreeting = () => {
-    const hour = new Date().getHours();
+    const hour = getPacificHour();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
@@ -449,7 +449,7 @@ const Dashboard: React.FC = () => {
             )}
           </div>
           <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/60' : 'text-primary/60'}`} style={{animationDelay: '0.1s'}}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString('en-US', { timeZone: CLUB_TIMEZONE, weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
 

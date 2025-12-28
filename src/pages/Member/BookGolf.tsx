@@ -11,7 +11,7 @@ import SwipeablePage from '../../components/SwipeablePage';
 import { haptic } from '../../utils/haptics';
 import { useTierPermissions } from '../../hooks/useTierPermissions';
 import { canAccessResource } from '../../services/tierService';
-import { getDateString, formatDateShort } from '../../utils/dateUtils';
+import { getDateString, formatDateShort, getPacificDateParts } from '../../utils/dateUtils';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 
 
@@ -87,13 +87,12 @@ const formatTime12 = (time24: string): string => {
 
 const generateDates = (advanceDays: number = 7): { label: string; date: string; day: string; dateNum: string }[] => {
   const dates = [];
-  const today = new Date();
+  const { year, month, day } = getPacificDateParts();
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   // Show today + advanceDays (today doesn't count toward the advance booking window)
   for (let i = 0; i <= advanceDays; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
+    const d = new Date(year, month - 1, day + i);
     const dayName = days[d.getDay()];
     const dateNum = d.getDate().toString();
     dates.push({

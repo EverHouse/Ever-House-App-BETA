@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useData } from '../contexts/DataContext';
+import { getTodayPacific, parseLocalDate } from '../utils/dateUtils';
 
 interface Closure {
   id: number;
@@ -21,8 +22,8 @@ const formatAffectedAreas = (areas: string): string => {
 };
 
 const formatDateRange = (startDate: string, endDate: string, startTime: string | null, endTime: string | null): string => {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
   const startFormatted = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   const endFormatted = end.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
@@ -81,16 +82,11 @@ const ClosureAlert: React.FC = () => {
   }, []);
 
   const activeClosures = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayStr = getTodayPacific();
     
     return closures.filter(closure => {
       if (dismissedIds.has(closure.id)) return false;
-      
-      const endDate = new Date(closure.endDate);
-      endDate.setHours(23, 59, 59, 999);
-      
-      return endDate >= today;
+      return closure.endDate >= todayStr;
     });
   }, [closures, dismissedIds]);
 

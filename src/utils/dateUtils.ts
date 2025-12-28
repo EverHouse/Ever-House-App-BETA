@@ -35,13 +35,40 @@ export function getTodayString(): string {
   return getTodayPacific();
 }
 
-export function getNowPacific(): Date {
-  const pacificDateStr = new Date().toLocaleString('en-US', { timeZone: CLUB_TIMEZONE });
-  return new Date(pacificDateStr);
+export function getPacificHour(): number {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: CLUB_TIMEZONE,
+    hour: 'numeric',
+    hour12: false
+  });
+  return parseInt(formatter.format(new Date()), 10);
 }
 
-export function getPacificHour(): number {
-  return getNowPacific().getHours();
+export function getPacificDateParts(): { year: number; month: number; day: number; hour: number; minute: number } {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: CLUB_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  const parts = formatter.formatToParts(new Date());
+  const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value || '0', 10);
+  return {
+    year: get('year'),
+    month: get('month'),
+    day: get('day'),
+    hour: get('hour'),
+    minute: get('minute')
+  };
+}
+
+export function addDaysToPacificDate(dateStr: string, days: number): string {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return date.toISOString().split('T')[0];
 }
 
 export function compareDates(dateStr1: string, dateStr2: string): number {

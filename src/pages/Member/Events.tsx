@@ -10,6 +10,7 @@ import SwipeablePage from '../../components/SwipeablePage';
 import { MotionList, MotionListItem } from '../../components/motion';
 import { EmptyEvents } from '../../components/EmptyState';
 import { downloadICalFile } from '../../utils/icalUtils';
+import { getTodayPacific } from '../../utils/dateUtils';
 
 interface UserRsvp {
   event_id: number;
@@ -145,7 +146,7 @@ const MemberEvents: React.FC = () => {
       title: event.title,
       description: event.description,
       location: event.location,
-      startDate: event.date || new Date().toISOString().split('T')[0],
+      startDate: event.date || getTodayPacific(),
       startTime: startTime,
       durationMinutes: 120
     });

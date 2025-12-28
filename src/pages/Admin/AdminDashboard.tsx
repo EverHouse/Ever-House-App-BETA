@@ -4,6 +4,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import { usePageReady } from '../../contexts/PageReadyContext';
+import { getTodayPacific, addDaysToPacificDate } from '../../utils/dateUtils';
 import MenuOverlay from '../../components/MenuOverlay';
 import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
@@ -1868,7 +1869,7 @@ const SimulatorAdmin: React.FC = () => {
     const [selectedCalendarBooking, setSelectedCalendarBooking] = useState<BookingRequest | null>(null);
     const [isCancellingFromModal, setIsCancellingFromModal] = useState(false);
     
-    const [calendarDate, setCalendarDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [calendarDate, setCalendarDate] = useState(() => getTodayPacific());
 
     useEffect(() => {
         if (!isLoading) {
@@ -1940,9 +1941,9 @@ const SimulatorAdmin: React.FC = () => {
 
     useEffect(() => {
         const fetchCalendarData = async () => {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getTodayPacific();
             const startDate = activeView === 'calendar' ? calendarDate : today;
-            const endDate = new Date(new Date(startDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const endDate = addDaysToPacificDate(startDate, 30);
             try {
                 const [bookingsRes, closuresRes] = await Promise.all([
                     fetch(`/api/approved-bookings?start_date=${startDate}&end_date=${endDate}`),
@@ -2049,7 +2050,7 @@ const SimulatorAdmin: React.FC = () => {
     
     // Recent Processed: show declined/cancelled member requests only
     // Exclude future approved/confirmed (they're in Upcoming Bookings) and manual bookings
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayPacific();
     const processedRequests = requests.filter(r => {
       // Only include non-pending requests
       if (r.status === 'pending' || r.status === 'pending_approval') return false;
@@ -2064,7 +2065,7 @@ const SimulatorAdmin: React.FC = () => {
     });
 
     const upcomingBookings = useMemo(() => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayPacific();
         return approvedBookings
             .filter(b => (b.status === 'approved' || b.status === 'confirmed') && b.request_date >= today)
             .sort((a, b) => {
@@ -2483,7 +2484,7 @@ const SimulatorAdmin: React.FC = () => {
                                 <span className="material-symbols-outlined text-xl">chevron_left</span>
                             </button>
                             <button
-                                onClick={() => setCalendarDate(new Date().toISOString().split('T')[0])}
+                                onClick={() => setCalendarDate(getTodayPacific())}
                                 className="font-semibold text-primary dark:text-white min-w-[120px] text-center text-sm py-1 px-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
                             >
                                 {formatDateShort(calendarDate)}
@@ -2987,7 +2988,7 @@ const ManualBookingModal: React.FC<{
     const [memberEmail, setMemberEmail] = useState(defaultMemberEmail || '');
     const [memberLookupStatus, setMemberLookupStatus] = useState<'idle' | 'checking' | 'found' | 'not_found'>('idle');
     const [memberName, setMemberName] = useState<string | null>(null);
-    const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [bookingDate, setBookingDate] = useState(() => getTodayPacific());
     const [startTime, setStartTime] = useState('10:00');
     const [durationMinutes, setDurationMinutes] = useState(60);
     const [resourceId, setResourceId] = useState<number | ''>('');
@@ -4686,7 +4687,7 @@ const BlocksAdmin: React.FC = () => {
     const fetchBlocks = async () => {
         setIsLoading(true);
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getTodayPacific();
             const params = new URLSearchParams();
             if (!showPast) {
                 params.append('start_date', today);

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useData, Announcement } from './DataContext';
+import { getTodayPacific } from '../utils/dateUtils';
 
 interface AnnouncementBadgeContextType {
   unseenHighPriority: Announcement[];
@@ -20,19 +21,10 @@ export const useAnnouncementBadge = () => useContext(AnnouncementBadgeContext);
 const getStorageKey = (email: string) => `eh_seen_announcements_${email}`;
 
 const isActiveAnnouncement = (item: Announcement): boolean => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayStr = getTodayPacific();
   
-  if (item.startDate) {
-    const start = new Date(item.startDate);
-    if (start > today) return false;
-  }
-  
-  if (item.endDate) {
-    const end = new Date(item.endDate);
-    end.setHours(23, 59, 59, 999);
-    if (end < today) return false;
-  }
+  if (item.startDate && item.startDate > todayStr) return false;
+  if (item.endDate && item.endDate < todayStr) return false;
   
   return true;
 };
