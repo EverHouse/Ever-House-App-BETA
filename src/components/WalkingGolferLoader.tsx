@@ -73,22 +73,18 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         }
 
         .loader-exit {
-          animation: minimizeToStatusBar 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          animation: minimizeToStatusBar 0.6s cubic-bezier(0.33, 1, 0.68, 1) forwards;
           pointer-events: none;
         }
 
         @keyframes minimizeToStatusBar {
           0% {
             clip-path: inset(0 0 0 0);
-          }
-          30% {
-            clip-path: inset(0 0 40% 0);
-          }
-          60% {
-            clip-path: inset(0 0 75% 0);
+            opacity: 1;
           }
           100% {
-            clip-path: inset(0 0 calc(100% - env(safe-area-inset-top, 44px)) 0);
+            clip-path: inset(0 0 100% 0);
+            opacity: 0.95;
           }
         }
 
