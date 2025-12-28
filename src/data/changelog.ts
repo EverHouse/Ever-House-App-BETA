@@ -317,5 +317,16 @@ export const changelog: ChangelogEntry[] = [
       "Glassmorphism styling refined for a cohesive, premium look",
       "Smoother animations throughout the app"
     ]
+  },
+  {
+    version: "4.1",
+    date: "2025-12-28",
+    title: "Team Directory",
+    changes: [
+      "New Team section in Employee Resources for staff to view colleague contact info",
+      "Staff can see phone numbers, emails, and job titles of team members",
+      "Improved dark mode visibility for badge icons",
+      "Admin-only features for adding, editing, and removing team members"
+    ]
   }
 ];

@@ -130,7 +130,7 @@ const AdminDashboard: React.FC = () => {
       case 'announcements': return 'News';
       case 'directory': return 'Directory';
       case 'simulator': return 'Bookings';
-      case 'team': return 'Team Access';
+      case 'team': return 'Team';
       case 'faqs': return 'FAQs';
       case 'inquiries': return 'Inquiries';
       case 'gallery': return 'Gallery';
@@ -203,7 +203,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'announcements' && <AnnouncementsAdmin />}
         {activeTab === 'directory' && <MembersAdmin />}
         {activeTab === 'simulator' && <SimulatorAdmin />}
-        {activeTab === 'team' && actualUser?.role === 'admin' && <TeamAdmin />}
+        {activeTab === 'team' && <TeamAdmin />}
         {activeTab === 'faqs' && <FaqsAdmin />}
         {activeTab === 'inquiries' && <InquiriesAdmin />}
         {activeTab === 'gallery' && <GalleryAdmin />}
@@ -322,6 +322,7 @@ const StaffBottomNav: React.FC<{
 const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmin?: boolean }> = ({ onTabChange, isAdmin }) => {
   const employeeResourcesLinks = [
     { id: 'directory' as TabType, icon: 'groups', label: 'Directory', description: 'Search and manage members' },
+    { id: 'team' as TabType, icon: 'badge', label: 'Team', description: 'View staff contact info' },
     { id: 'training' as TabType, icon: 'school', label: 'Training Guide', description: 'How to use the staff portal' },
     { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes' },
   ];
@@ -342,7 +343,6 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
   ];
 
   const adminLinks = [
-    { id: 'team' as TabType, icon: 'shield_person', label: 'Team Access', description: 'Manage staff and admins' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings' },
     { id: 'bugs' as TabType, icon: 'bug_report', label: 'Bug Reports', description: 'Review user-reported issues' },
   ];
@@ -3678,42 +3678,46 @@ const WellnessAdminContent: React.FC = () => {
     );
 };
 
-// --- TEAM ADMIN (Admin only) - Wrapper for Staff and Admins ---
+// --- TEAM - Staff directory for all staff, admin management for admins only ---
 
 const TeamAdmin: React.FC = () => {
+    const { actualUser } = useData();
+    const isAdmin = actualUser?.role === 'admin';
     const [subTab, setSubTab] = useState<'staff' | 'admins'>('staff');
 
     return (
         <div className="animate-pop-in">
-            {/* Sub-tab navigation */}
-            <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
-                <button
-                    onClick={() => setSubTab('staff')}
-                    className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
-                        subTab === 'staff' 
-                            ? 'bg-primary text-white' 
-                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
-                    }`}
-                >
-                    <span className="material-symbols-outlined text-[18px]">badge</span>
-                    Staff
-                </button>
-                <button
-                    onClick={() => setSubTab('admins')}
-                    className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
-                        subTab === 'admins' 
-                            ? 'bg-primary text-white' 
-                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
-                    }`}
-                >
-                    <span className="material-symbols-outlined text-[18px]">shield_person</span>
-                    Admins
-                </button>
-            </div>
+            {/* Sub-tab navigation - only show Admins tab to admins */}
+            {isAdmin && (
+                <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
+                    <button
+                        onClick={() => setSubTab('staff')}
+                        className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
+                            subTab === 'staff' 
+                                ? 'bg-primary text-white' 
+                                : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-[18px]">badge</span>
+                        Staff
+                    </button>
+                    <button
+                        onClick={() => setSubTab('admins')}
+                        className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
+                            subTab === 'admins' 
+                                ? 'bg-primary text-white' 
+                                : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-[18px]">shield_person</span>
+                        Admins
+                    </button>
+                </div>
+            )}
 
             {/* Content */}
-            {subTab === 'staff' && <StaffAdmin />}
-            {subTab === 'admins' && <AdminsAdmin />}
+            {subTab === 'staff' && <StaffAdmin isAdmin={isAdmin} />}
+            {subTab === 'admins' && isAdmin && <AdminsAdmin />}
         </div>
     );
 };
@@ -3733,7 +3737,7 @@ interface StaffUser {
   created_by: string | null;
 }
 
-const StaffAdmin: React.FC = () => {
+const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
     const { actualUser } = useData();
     const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -3889,18 +3893,20 @@ const StaffAdmin: React.FC = () => {
             <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h3 className="text-lg font-bold text-primary dark:text-white">Staff Access List</h3>
+                        <h3 className="text-lg font-bold text-primary dark:text-white">Staff Directory</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Add email addresses to grant staff portal access
+                            {isAdmin ? 'Add email addresses to grant staff portal access' : 'View team contact information'}
                         </p>
                     </div>
-                    <button
-                        onClick={() => setIsAdding(true)}
-                        className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity"
-                    >
-                        <span className="material-symbols-outlined text-lg">person_add</span>
-                        Staff
-                    </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => setIsAdding(true)}
+                            className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity"
+                        >
+                            <span className="material-symbols-outlined text-lg">person_add</span>
+                            Staff
+                        </button>
+                    )}
                 </div>
 
                 {success && (
@@ -3919,15 +3925,17 @@ const StaffAdmin: React.FC = () => {
                     <div className="py-8 text-center text-gray-500">Loading...</div>
                 ) : staffUsers.length === 0 ? (
                     <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No staff members added yet. Add an email to grant staff access.
+                        {isAdmin ? 'No staff members added yet. Add an email to grant staff access.' : 'No team members to display.'}
                     </div>
                 ) : (
                     <div className="space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
                         {staffUsers.map((staff, index) => (
                             <div 
                                 key={staff.id}
-                                onClick={() => openEditModal(staff)}
-                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors hover:border-primary/50 animate-pop-in ${
+                                onClick={() => isAdmin && openEditModal(staff)}
+                                className={`flex items-center justify-between p-4 rounded-xl border transition-colors animate-pop-in ${
+                                    isAdmin ? 'cursor-pointer hover:border-primary/50' : ''
+                                } ${
                                     staff.is_active 
                                         ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-surface-dark' 
                                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
@@ -3936,41 +3944,54 @@ const StaffAdmin: React.FC = () => {
                             >
                                 <div className="flex items-center gap-3 flex-1">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                        staff.is_active ? 'bg-brand-green/10 text-brand-green' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                                        staff.is_active ? 'bg-brand-green/10 text-brand-green dark:text-green-400' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                                     }`}>
                                         <span className="material-symbols-outlined">badge</span>
                                     </div>
                                     <div className="flex-1">
                                         <p className="font-medium text-primary dark:text-white">{staff.name || staff.email}</p>
                                         {staff.name && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.email}</p>}
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">
-                                            {staff.is_active ? 'Active' : 'Inactive'}
-                                        </p>
+                                        {staff.phone && (
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                <span className="material-symbols-outlined text-sm align-middle mr-1">phone</span>
+                                                {staff.phone}
+                                            </p>
+                                        )}
+                                        {staff.job_title && (
+                                            <p className="text-xs text-gray-400 dark:text-gray-500">{staff.job_title}</p>
+                                        )}
+                                        {isAdmin && (
+                                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                                                {staff.is_active ? 'Active' : 'Inactive'}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); openEditModal(staff); }}
-                                        className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                        title="Edit"
-                                    >
-                                        <span className="material-symbols-outlined text-xl">edit</span>
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleRemoveStaff(staff); }}
-                                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                        title="Remove"
-                                    >
-                                        <span className="material-symbols-outlined text-xl">delete</span>
-                                    </button>
-                                </div>
+                                {isAdmin && (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); openEditModal(staff); }}
+                                            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            title="Edit"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">edit</span>
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleRemoveStaff(staff); }}
+                                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                            title="Remove"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">delete</span>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
                 )}
             </div>
 
-            {isAdding && createPortal(
+            {isAdmin && isAdding && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
@@ -4029,7 +4050,7 @@ const StaffAdmin: React.FC = () => {
                 document.body
             )}
 
-            {isEditing && selectedStaff && createPortal(
+            {isAdmin && isEditing && selectedStaff && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }} />
                     <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
