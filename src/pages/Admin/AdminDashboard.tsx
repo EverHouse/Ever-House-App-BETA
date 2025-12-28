@@ -3015,6 +3015,13 @@ const SimulatorAdmin: React.FC = () => {
     );
 };
 
+interface MemberSearchResult {
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    tier: string | null;
+}
+
 const ManualBookingModal: React.FC<{
     resources: Resource[];
     onClose: () => void;
@@ -3023,6 +3030,11 @@ const ManualBookingModal: React.FC<{
 }> = ({ resources, onClose, onSuccess, defaultMemberEmail }) => {
     const { showToast } = useToast();
     const [memberEmail, setMemberEmail] = useState(defaultMemberEmail || '');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<MemberSearchResult[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const [allMembers, setAllMembers] = useState<MemberSearchResult[]>([]);
     const [memberLookupStatus, setMemberLookupStatus] = useState<'idle' | 'checking' | 'found' | 'not_found'>('idle');
     const [memberName, setMemberName] = useState<string | null>(null);
     const [bookingDate, setBookingDate] = useState(() => getTodayPacific());
@@ -3034,8 +3046,81 @@ const ManualBookingModal: React.FC<{
     const [notes, setNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                const res = await fetch('/api/hubspot/contacts', { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    const members: MemberSearchResult[] = data.map((m: { email: string; firstName?: string; lastName?: string; tier?: string }) => ({
+                        email: m.email,
+                        firstName: m.firstName || null,
+                        lastName: m.lastName || null,
+                        tier: m.tier || null
+                    }));
+                    setAllMembers(members);
+                }
+            } catch (err) {
+                console.error('Failed to fetch members:', err);
+            }
+        };
+        fetchMembers();
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+                inputRef.current && !inputRef.current.contains(e.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        if (!searchQuery || searchQuery.length < 2) {
+            setSearchResults([]);
+            setShowDropdown(false);
+            return;
+        }
+
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        setIsSearching(true);
+        searchTimeoutRef.current = setTimeout(() => {
+            const query = searchQuery.toLowerCase();
+            const filtered = allMembers.filter(m => {
+                const fullName = `${m.firstName || ''} ${m.lastName || ''}`.toLowerCase();
+                return m.email.toLowerCase().includes(query) || fullName.includes(query);
+            }).slice(0, 10);
+            setSearchResults(filtered);
+            setShowDropdown(filtered.length > 0);
+            setIsSearching(false);
+        }, 200);
+
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchQuery, allMembers]);
+
+    const handleSelectMember = (member: MemberSearchResult) => {
+        setMemberEmail(member.email);
+        setSearchQuery('');
+        setShowDropdown(false);
+        setMemberLookupStatus('found');
+        setMemberName(member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : null);
+    };
 
     useEffect(() => {
         if (!memberEmail || !memberEmail.includes('@')) {
@@ -3159,25 +3244,82 @@ const ManualBookingModal: React.FC<{
                     )}
 
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Member Email *</label>
-                            <input
-                                type="email"
-                                value={memberEmail}
-                                onChange={(e) => setMemberEmail(e.target.value)}
-                                placeholder="member@example.com"
-                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
-                            />
+                        <div className="relative">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Member *</label>
+                            {memberEmail && memberLookupStatus === 'found' ? (
+                                <div className="w-full p-3 rounded-lg border border-green-300 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-primary dark:text-white">{memberName || memberEmail}</p>
+                                        {memberName && <p className="text-xs text-gray-500 dark:text-gray-400">{memberEmail}</p>}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMemberEmail('');
+                                            setMemberName(null);
+                                            setMemberLookupStatus('idle');
+                                            setSearchQuery('');
+                                        }}
+                                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-gray-500 text-sm">close</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="relative">
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+                                        <input
+                                            ref={inputRef}
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onFocus={() => searchQuery.length >= 2 && searchResults.length > 0 && setShowDropdown(true)}
+                                            placeholder="Search by name or email..."
+                                            className="w-full p-3 pl-10 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
+                                        />
+                                        {isSearching && (
+                                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg animate-spin">progress_activity</span>
+                                        )}
+                                    </div>
+                                    {showDropdown && searchResults.length > 0 && (
+                                        <div 
+                                            ref={dropdownRef}
+                                            className="absolute z-50 w-full mt-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                                        >
+                                            {searchResults.map((member, idx) => (
+                                                <button
+                                                    key={member.email}
+                                                    type="button"
+                                                    onClick={() => handleSelectMember(member)}
+                                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/5 flex items-center justify-between ${idx !== searchResults.length - 1 ? 'border-b border-gray-100 dark:border-white/5' : ''}`}
+                                                >
+                                                    <div>
+                                                        <p className="text-sm font-medium text-primary dark:text-white">
+                                                            {member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : member.email}
+                                                        </p>
+                                                        {member.firstName && member.lastName && (
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">{member.email}</p>
+                                                        )}
+                                                    </div>
+                                                    {member.tier && (
+                                                        <span className="text-xs px-2 py-0.5 rounded-full bg-accent/20 text-primary dark:text-accent font-medium">
+                                                            {member.tier}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {searchQuery.length >= 2 && !isSearching && searchResults.length === 0 && (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">No members found matching "{searchQuery}"</p>
+                                    )}
+                                </>
+                            )}
                             {memberLookupStatus === 'checking' && (
                                 <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                                     <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
                                     Looking up member...
-                                </p>
-                            )}
-                            {memberLookupStatus === 'found' && (
-                                <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-xs">check_circle</span>
-                                    {memberName || 'Member found'}
                                 </p>
                             )}
                             {memberLookupStatus === 'not_found' && (
