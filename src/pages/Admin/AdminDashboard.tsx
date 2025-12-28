@@ -1243,6 +1243,7 @@ const StaffUpdatesAdmin: React.FC = () => {
     const [notifications, setNotifications] = useState<StaffNotification[]>([]);
     const [notificationsLoading, setNotificationsLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [triggerCreateAnnouncement, setTriggerCreateAnnouncement] = useState(0);
     const { processNotifications } = useNotificationSounds(true, actualUser?.email);
 
     useEffect(() => {
@@ -1390,9 +1391,23 @@ const StaffUpdatesAdmin: React.FC = () => {
         </div>
     );
 
+    const handleCreateAnnouncement = () => {
+        setActiveSubTab('announcements');
+        setTriggerCreateAnnouncement(prev => prev + 1);
+    };
+
     return (
         <PullToRefresh onRefresh={handleRefresh}>
             <div className="animate-pop-in pb-32">
+                <div className="flex justify-end mb-4 animate-pop-in">
+                    <button 
+                        onClick={handleCreateAnnouncement}
+                        className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 px-4 py-2.5 rounded-xl font-bold flex items-center gap-1.5 shadow-sm text-sm hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors border border-amber-200 dark:border-amber-500/30"
+                    >
+                        <span className="material-symbols-outlined text-lg">add</span> Announcement
+                    </button>
+                </div>
+
                 <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
                     <button
                         onClick={() => setActiveSubTab('activity')}
@@ -1421,7 +1436,7 @@ const StaffUpdatesAdmin: React.FC = () => {
                     </button>
                 </div>
 
-                {activeSubTab === 'activity' ? renderActivityTab() : <AnnouncementsAdmin />}
+                {activeSubTab === 'activity' ? renderActivityTab() : <AnnouncementsAdmin triggerCreate={triggerCreateAnnouncement} />}
             </div>
         </PullToRefresh>
     );
@@ -1429,7 +1444,7 @@ const StaffUpdatesAdmin: React.FC = () => {
 
 // --- ANNOUNCEMENTS ADMIN ---
 
-const AnnouncementsAdmin: React.FC = () => {
+const AnnouncementsAdmin: React.FC<{ triggerCreate?: number }> = ({ triggerCreate }) => {
     const { setPageReady } = usePageReady();
     const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useData();
     const [isEditing, setIsEditing] = useState(false);
@@ -1445,6 +1460,12 @@ const AnnouncementsAdmin: React.FC = () => {
         setEditId(null);
         setIsEditing(true);
     };
+
+    useEffect(() => {
+        if (triggerCreate && triggerCreate > 0) {
+            openCreate();
+        }
+    }, [triggerCreate]);
 
     const openEdit = (item: Announcement) => {
         setNewItem(item);
@@ -1477,12 +1498,6 @@ const AnnouncementsAdmin: React.FC = () => {
 
     return (
         <div className="animate-pop-in">
-            <div className="flex justify-end gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
-                <button onClick={openCreate} className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-accent/90 transition-colors">
-                    <span className="material-symbols-outlined text-lg">add</span> Announcement
-                </button>
-            </div>
-            
             {isEditing && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
