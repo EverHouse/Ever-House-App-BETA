@@ -7,6 +7,7 @@ import { eq, and, sql, gte, desc } from 'drizzle-orm';
 import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, backfillWellnessToCalendar, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { sendPushNotification } from './push';
 import { notifyAllStaff } from '../core/staffNotifications';
+import { createPacificDate, parseLocalDate, formatDateDisplayWithDay } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -163,7 +164,7 @@ router.post('/api/events', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid end_time format. Use HH:MM or HH:MM:SS' });
     }
     
-    const testDate = new Date(`${trimmedEventDate}T${trimmedStartTime}`);
+    const testDate = createPacificDate(trimmedEventDate, trimmedStartTime);
     if (isNaN(testDate.getTime())) {
       return res.status(400).json({ error: 'Invalid date/time combination' });
     }
@@ -238,7 +239,7 @@ router.put('/api/events/:id', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid end_time format. Use HH:MM or HH:MM:SS' });
     }
     
-    const testDate = new Date(`${trimmedEventDate}T${trimmedStartTime}`);
+    const testDate = createPacificDate(trimmedEventDate, trimmedStartTime);
     if (isNaN(testDate.getTime())) {
       return res.status(400).json({ error: 'Invalid date/time combination' });
     }
@@ -478,11 +479,7 @@ router.post('/api/rsvps', async (req, res) => {
     
     if (eventData.length > 0) {
       const evt = eventData[0];
-      const formattedDate = new Date(evt.eventDate).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
+      const formattedDate = formatDateDisplayWithDay(evt.eventDate);
       const formattedTime = evt.startTime?.substring(0, 5) || '';
       const message = `You're confirmed for ${evt.title} on ${formattedDate}${formattedTime ? ` at ${formattedTime}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`;
       
@@ -537,11 +534,7 @@ router.delete('/api/rsvps/:event_id/:user_email', async (req, res) => {
     
     if (eventData.length > 0) {
       const evt = eventData[0];
-      const formattedDate = new Date(evt.eventDate).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
+      const formattedDate = formatDateDisplayWithDay(evt.eventDate);
       const memberName = user_email.split('@')[0];
       const staffMessage = `${memberName} cancelled their RSVP for ${evt.title} on ${formattedDate}`;
       

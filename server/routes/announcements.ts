@@ -4,6 +4,7 @@ import { isStaffOrAdmin } from '../core/middleware';
 import { db } from '../db';
 import { announcements } from '../../shared/schema';
 import { eq, desc, sql, or, and, gte, lte, isNull } from 'drizzle-orm';
+import { formatDatePacific, createPacificDate, CLUB_TIMEZONE } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -38,9 +39,9 @@ router.get('/api/announcements', async (req, res) => {
       desc: a.message || '',
       type: 'announcement' as const,
       priority: (a.priority || 'normal') as 'normal' | 'high' | 'urgent',
-      date: a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now',
-      startDate: a.startsAt ? new Date(a.startsAt).toISOString().split('T')[0] : undefined,
-      endDate: a.endsAt ? new Date(a.endsAt).toISOString().split('T')[0] : undefined,
+      date: a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: CLUB_TIMEZONE }) : 'Just now',
+      startDate: a.startsAt ? formatDatePacific(new Date(a.startsAt)) : undefined,
+      endDate: a.endsAt ? formatDatePacific(new Date(a.endsAt)) : undefined,
       linkType: a.linkType || undefined,
       linkTarget: a.linkTarget || undefined
     }));
@@ -67,8 +68,8 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
       title,
       message: description || '',
       priority: finalPriority,
-      startsAt: startDate ? new Date(startDate) : null,
-      endsAt: endDate ? new Date(endDate) : null,
+      startsAt: startDate ? createPacificDate(startDate, '00:00:00') : null,
+      endsAt: endDate ? createPacificDate(endDate, '23:59:59') : null,
       linkType: linkType || null,
       linkTarget: linkTarget || null,
       createdBy: userEmail
@@ -81,8 +82,8 @@ router.post('/api/announcements', isStaffOrAdmin, async (req, res) => {
       type: 'announcement' as const,
       priority: (newAnnouncement.priority || 'normal') as 'normal' | 'high' | 'urgent',
       date: 'Just now',
-      startDate: newAnnouncement.startsAt ? new Date(newAnnouncement.startsAt).toISOString().split('T')[0] : undefined,
-      endDate: newAnnouncement.endsAt ? new Date(newAnnouncement.endsAt).toISOString().split('T')[0] : undefined,
+      startDate: newAnnouncement.startsAt ? formatDatePacific(new Date(newAnnouncement.startsAt)) : undefined,
+      endDate: newAnnouncement.endsAt ? formatDatePacific(new Date(newAnnouncement.endsAt)) : undefined,
       linkType: newAnnouncement.linkType || undefined,
       linkTarget: newAnnouncement.linkTarget || undefined
     });
@@ -108,8 +109,8 @@ router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
         title,
         message: description || '',
         priority: finalPriority,
-        startsAt: startDate ? new Date(startDate) : null,
-        endsAt: endDate ? new Date(endDate) : null,
+        startsAt: startDate ? createPacificDate(startDate, '00:00:00') : null,
+        endsAt: endDate ? createPacificDate(endDate, '23:59:59') : null,
         linkType: linkType || null,
         linkTarget: linkTarget || null
       })
@@ -126,9 +127,9 @@ router.put('/api/announcements/:id', isStaffOrAdmin, async (req, res) => {
       desc: updated.message || '',
       type: 'announcement' as const,
       priority: (updated.priority || 'normal') as 'normal' | 'high' | 'urgent',
-      date: updated.createdAt ? new Date(updated.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now',
-      startDate: updated.startsAt ? new Date(updated.startsAt).toISOString().split('T')[0] : undefined,
-      endDate: updated.endsAt ? new Date(updated.endsAt).toISOString().split('T')[0] : undefined,
+      date: updated.createdAt ? new Date(updated.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: CLUB_TIMEZONE }) : 'Just now',
+      startDate: updated.startsAt ? formatDatePacific(new Date(updated.startsAt)) : undefined,
+      endDate: updated.endsAt ? formatDatePacific(new Date(updated.endsAt)) : undefined,
       linkType: updated.linkType || undefined,
       linkTarget: updated.linkTarget || undefined
     });

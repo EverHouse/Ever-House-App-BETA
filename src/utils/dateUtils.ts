@@ -7,9 +7,39 @@ export function parseLocalDate(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
+/**
+ * Get day of week (0-6) for a YYYY-MM-DD date using Zeller's algorithm (timezone-agnostic)
+ */
+function getDayOfWeek(year: number, month: number, day: number): number {
+  let m = month;
+  let y = year;
+  if (m < 3) {
+    m += 12;
+    y -= 1;
+  }
+  const k = y % 100;
+  const j = Math.floor(y / 100);
+  const h = (day + Math.floor(13 * (m + 1) / 5) + k + Math.floor(k / 4) + Math.floor(j / 4) - 2 * j) % 7;
+  return ((h + 6) % 7);
+}
+
+const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const LONG_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const LONG_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 export function formatDateLocal(dateStr: string, options?: Intl.DateTimeFormatOptions): string {
-  const date = parseLocalDate(dateStr);
-  return date.toLocaleDateString('en-US', options || { weekday: 'short', month: 'short', day: 'numeric' });
+  const cleanDate = dateStr.split('T')[0];
+  const [year, month, day] = cleanDate.split('-').map(Number);
+  const dayOfWeek = getDayOfWeek(year, month, day);
+  
+  const useShortWeekday = !options?.weekday || options.weekday === 'short';
+  const useShortMonth = !options?.month || options.month === 'short';
+  
+  const weekdayStr = useShortWeekday ? SHORT_DAYS[dayOfWeek] : LONG_DAYS[dayOfWeek];
+  const monthStr = useShortMonth ? SHORT_MONTHS[month - 1] : LONG_MONTHS[month - 1];
+  
+  return `${weekdayStr}, ${monthStr} ${day}`;
 }
 
 export function formatDateShort(dateStr: string): string {
@@ -18,6 +48,12 @@ export function formatDateShort(dateStr: string): string {
 
 export function formatDateFull(dateStr: string): string {
   return formatDateLocal(dateStr, { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+export function formatDateDisplay(dateStr: string): string {
+  const cleanDate = dateStr.split('T')[0];
+  const [, month, day] = cleanDate.split('-').map(Number);
+  return `${SHORT_MONTHS[month - 1]} ${day}`;
 }
 
 export function getDateString(date: Date): string {

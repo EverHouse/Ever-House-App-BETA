@@ -85,16 +85,23 @@ export function formatTimePacific(date: Date): string {
 /**
  * Get ISO string for a Pacific date and time
  * This creates a proper ISO timestamp from a date (YYYY-MM-DD) and time (HH:MM or HH:MM:SS)
- * interpreted as Pacific timezone
+ * interpreted as Pacific timezone. Handles DST correctly by computing offset for the target date.
  */
 export function getPacificISOString(dateStr: string, timeStr: string): string {
-  // Get current Pacific offset
-  const now = new Date();
+  // Ensure time has seconds
+  const normalizedTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+  
+  // Create a reference date for the target date to get the correct DST offset
+  // Use noon to avoid edge cases around midnight DST transitions
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const targetDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  
+  // Get Pacific offset for the target date
   const pacificFormatter = new Intl.DateTimeFormat('en-US', {
     timeZone: CLUB_TIMEZONE,
     timeZoneName: 'shortOffset'
   });
-  const parts = pacificFormatter.formatToParts(now);
+  const parts = pacificFormatter.formatToParts(targetDate);
   const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value || '-08:00';
   
   // Parse offset like "GMT-8" or "GMT-7" to "-08:00" or "-07:00"
@@ -105,9 +112,6 @@ export function getPacificISOString(dateStr: string, timeStr: string): string {
     const hours = parseInt(offsetMatch[2], 10);
     offset = `${sign}${hours.toString().padStart(2, '0')}:00`;
   }
-  
-  // Ensure time has seconds
-  const normalizedTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
   
   return `${dateStr}T${normalizedTime}${offset}`;
 }
@@ -121,11 +125,41 @@ export function createPacificDate(dateStr: string, timeStr: string): Date {
 }
 
 /**
- * Format a date for display (e.g., "Jan 15")
+ * Format a YYYY-MM-DD date string for display (e.g., "Jan 15")
+ * This parses the string directly and formats without timezone issues
  */
 export function formatDateDisplay(dateStr: string): string {
-  const date = parseLocalDate(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[month - 1]} ${day}`;
+}
+
+/**
+ * Get day of week (0-6) for a YYYY-MM-DD date using Zeller's algorithm (timezone-agnostic)
+ */
+function getDayOfWeek(year: number, month: number, day: number): number {
+  // Adjust for Zeller's algorithm (January = 13, February = 14 of previous year)
+  if (month < 3) {
+    month += 12;
+    year -= 1;
+  }
+  const k = year % 100;
+  const j = Math.floor(year / 100);
+  const h = (day + Math.floor(13 * (month + 1) / 5) + k + Math.floor(k / 4) + Math.floor(j / 4) - 2 * j) % 7;
+  // Convert from Zeller (0=Saturday) to JS convention (0=Sunday)
+  return ((h + 6) % 7);
+}
+
+/**
+ * Format a YYYY-MM-DD date string for display with weekday (e.g., "Wed, Jan 15")
+ * Uses pure calculation, no timezone dependencies
+ */
+export function formatDateDisplayWithDay(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dayOfWeek = getDayOfWeek(year, month, day);
+  return `${days[dayOfWeek]}, ${months[month - 1]} ${day}`;
 }
 
 /**

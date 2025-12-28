@@ -7,6 +7,7 @@ import { wellnessEnrollments, wellnessClasses, users, notifications } from '../.
 import { notifyAllStaff } from '../core/staffNotifications';
 import { eq, and, gte, sql, isNull, asc, desc } from 'drizzle-orm';
 import { sendPushNotification } from './push';
+import { formatDateDisplayWithDay } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -394,11 +395,7 @@ router.post('/api/wellness-enrollments', async (req, res) => {
     
     if (classData.length > 0) {
       const cls = classData[0];
-      const formattedDate = new Date(cls.date).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
+      const formattedDate = formatDateDisplayWithDay(cls.date);
       const message = `You're enrolled in ${cls.title} with ${cls.instructor} on ${formattedDate} at ${cls.time}.`;
       
       await db.insert(notifications).values({
@@ -452,11 +449,7 @@ router.delete('/api/wellness-enrollments/:class_id/:user_email', async (req, res
     
     if (classData.length > 0) {
       const cls = classData[0];
-      const formattedDate = new Date(cls.date).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
+      const formattedDate = formatDateDisplayWithDay(cls.date);
       const memberName = user_email.split('@')[0];
       const staffMessage = `${memberName} cancelled their enrollment for ${cls.title} on ${formattedDate}`;
       

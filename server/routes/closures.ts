@@ -7,6 +7,7 @@ import webpush from 'web-push';
 import { isStaffOrAdmin } from '../core/middleware';
 import { getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { getGoogleCalendarClient } from '../core/integrations';
+import { createPacificDate, parseLocalDate, addDaysToPacificDate } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -105,12 +106,11 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
 
 function getDatesBetween(startDate: string, endDate: string): string[] {
   const dates: string[] = [];
-  const current = new Date(startDate);
-  const end = new Date(endDate);
+  let current = startDate;
   
-  while (current <= end) {
-    dates.push(current.toISOString().split('T')[0]);
-    current.setDate(current.getDate() + 1);
+  while (current <= endDate) {
+    dates.push(current);
+    current = addDaysToPacificDate(current, 1);
   }
   
   return dates;
@@ -194,8 +194,8 @@ async function createClosureCalendarEvents(
       const eventIds: string[] = [];
       
       for (const date of dates) {
-        const startDateTime = new Date(`${date}T${startTime}`);
-        const endDateTime = new Date(`${date}T${endTime}`);
+        const startDateTime = createPacificDate(date, startTime);
+        const endDateTime = createPacificDate(date, endTime);
         
         const event = {
           summary: title,
@@ -222,8 +222,7 @@ async function createClosureCalendarEvents(
       
       return eventIds.join(',');
     } else {
-      const endDatePlusOne = new Date(endDate);
-      endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+      const endDatePlusOne = addDaysToPacificDate(endDate, 1);
       
       const event = {
         summary: title,
@@ -232,7 +231,7 @@ async function createClosureCalendarEvents(
           date: startDate,
         },
         end: {
-          date: endDatePlusOne.toISOString().split('T')[0],
+          date: endDatePlusOne,
         },
       };
       
@@ -391,9 +390,11 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
     try {
       const affectedText = await formatAffectedAreasForDisplay(affected_areas);
       
-      const startDateFormatted = new Date(start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const [sy, sm, sd] = start_date.split('-').map(Number);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const startDateFormatted = `${months[sm - 1]} ${sd}`;
       const endDateFormatted = end_date && end_date !== start_date 
-        ? new Date(end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        ? (() => { const [ey, em, ed] = end_date.split('-').map(Number); return `${months[em - 1]} ${ed}`; })()
         : null;
       
       const dateRange = endDateFormatted ? `${startDateFormatted} - ${endDateFormatted}` : startDateFormatted;
@@ -409,7 +410,7 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         isActive: true,
         closureId: closureId,
         startsAt: null,
-        endsAt: end_date ? new Date(end_date) : new Date(start_date),
+        endsAt: end_date ? createPacificDate(end_date, '23:59:59') : createPacificDate(start_date, '23:59:59'),
         createdBy: created_by
       }).returning();
       
@@ -426,10 +427,12 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         : affected_areas === 'all_bays' 
           ? 'All Simulator Bays' 
           : affected_areas;
-      const startDateFormatted = new Date(start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const [sny, snm, snd] = start_date.split('-').map(Number);
+      const monthsNotif = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const startDateFormattedNotif = `${monthsNotif[snm - 1]} ${snd}`;
       const notificationBody = reason 
-        ? `${reason} - ${affectedText} on ${startDateFormatted}`
-        : `${affectedText} will be closed on ${startDateFormatted}`;
+        ? `${reason} - ${affectedText} on ${startDateFormattedNotif}`
+        : `${affectedText} will be closed on ${startDateFormattedNotif}`;
       
       const memberUsers = await db
         .select({ email: users.email })
@@ -676,9 +679,11 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
       
       const newStartDate = start_date || existing.startDate;
       const newEndDate = end_date || existing.endDate;
-      const startDateFormatted = new Date(newStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const [usy, usm, usd] = newStartDate.split('-').map(Number);
+      const monthsUpdate = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const startDateFormatted = `${monthsUpdate[usm - 1]} ${usd}`;
       const endDateFormatted = newEndDate && newEndDate !== newStartDate 
-        ? new Date(newEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        ? (() => { const [uey, uem, ued] = newEndDate.split('-').map(Number); return `${monthsUpdate[uem - 1]} ${ued}`; })()
         : null;
       
       const newStartTime = start_time !== undefined ? start_time : existing.startTime;
@@ -694,8 +699,8 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
         .set({
           title: announcementTitle,
           message: announcementMessage,
-          startsAt: new Date(newStartDate),
-          endsAt: newEndDate ? new Date(newEndDate) : new Date(newStartDate)
+          startsAt: createPacificDate(newStartDate, '00:00:00'),
+          endsAt: newEndDate ? createPacificDate(newEndDate, '23:59:59') : createPacificDate(newStartDate, '23:59:59')
         })
         .where(eq(announcements.closureId, closureId));
       
