@@ -139,7 +139,6 @@ const AdminDashboard: React.FC = () => {
       case 'changelog': return 'Changelog';
       case 'bugs': return 'Bug Reports';
       case 'training': return 'Training';
-      case 'conflicts': return 'Conflicts';
       case 'updates': return 'Updates';
       case 'tours': return 'Tours';
       default: return 'Dashboard';
@@ -5787,9 +5786,10 @@ const TiersAdmin: React.FC = () => {
                                         <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2">Quick add from features:</p>
                                         <div className="flex flex-wrap gap-1.5">
                                             {Object.entries(selectedTier.all_features || {}).map(([key, featureData]) => {
-                                                const label = typeof featureData === 'object' && featureData !== null && 'label' in featureData 
-                                                    ? (featureData as any).label 
-                                                    : key;
+                                                let label = key;
+                                                if (typeof featureData === 'object' && featureData !== null && 'label' in (featureData as object)) {
+                                                    label = String((featureData as Record<string, unknown>).label);
+                                                }
                                                 const isAlreadyHighlighted = selectedTier.highlighted_features?.includes(label);
                                                 if (isAlreadyHighlighted) return null;
                                                 return (

@@ -375,12 +375,12 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
               
               if (res.ok) {
                 const { member: freshMember } = await res.json();
-                const updatedProfile = {
+                const updatedProfile: MemberProfile = {
                   id: freshMember.id,
                   name: [freshMember.firstName, freshMember.lastName].filter(Boolean).join(' ') || freshMember.email || 'Member',
                   tier: freshMember.tier || 'Core',
                   tags: freshMember.tags || [],
-                  status: 'Active',
+                  status: 'Active' as const,
                   email: freshMember.email,
                   phone: freshMember.phone || '',
                   jobTitle: freshMember.jobTitle || '',

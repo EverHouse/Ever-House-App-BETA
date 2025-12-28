@@ -679,7 +679,7 @@ router.post('/api/auth/password-login', async (req, res) => {
     const normalizedEmail = email.toLowerCase();
     
     let userRecord: { id: number; email: string; name: string | null; passwordHash: string | null } | null = null;
-    let userRole = 'member';
+    let userRole: 'admin' | 'staff' | 'member' = 'member';
     
     const adminResult = await db.select({
       id: adminUsers.id,

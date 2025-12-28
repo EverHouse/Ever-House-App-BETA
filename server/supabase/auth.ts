@@ -65,7 +65,6 @@ export function setupSupabaseAuthRoutes(app: Express) {
           email: data.user.email || email,
           firstName: firstName || '',
           lastName: lastName || '',
-          profileImageUrl: null,
         });
       }
       
@@ -98,7 +97,6 @@ export function setupSupabaseAuthRoutes(app: Express) {
           email: data.user.email || email,
           firstName: data.user.user_metadata?.first_name || '',
           lastName: data.user.user_metadata?.last_name || '',
-          profileImageUrl: data.user.user_metadata?.avatar_url || null,
         });
       }
 
@@ -167,7 +165,6 @@ export function setupSupabaseAuthRoutes(app: Express) {
         email: user.email,
         firstName: dbUser?.firstName || user.user_metadata?.first_name || '',
         lastName: dbUser?.lastName || user.user_metadata?.last_name || '',
-        profileImageUrl: dbUser?.profileImageUrl || user.user_metadata?.avatar_url || null,
         role: dbUser?.role || 'member',
       });
     } catch (error: any) {
