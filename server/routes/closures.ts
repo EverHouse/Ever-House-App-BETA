@@ -57,6 +57,11 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
     return activeBays.map(bay => bay.id);
   }
   
+  // Handle conference room closure - bay_id 11 is the Conference Room
+  if (affectedAreas === 'conference_room') {
+    return [11];
+  }
+  
   if (affectedAreas.startsWith('bay_') && !affectedAreas.includes(',') && !affectedAreas.includes('[')) {
     const bayId = parseInt(affectedAreas.replace('bay_', ''));
     if (!isNaN(bayId)) {
