@@ -1689,8 +1689,15 @@ const MembersAdmin: React.FC = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<string>('All');
+    const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
+    const [isViewingDetails, setIsViewingDetails] = useState(false);
     
     const isAdmin = actualUser?.role === 'admin';
+
+    const openDetailsModal = (member: MemberProfile) => {
+        setSelectedMember(member);
+        setIsViewingDetails(true);
+    };
 
     useEffect(() => {
         setPageReady(true);
@@ -1800,7 +1807,12 @@ const MembersAdmin: React.FC = () => {
             {filteredList.length > 0 && (
             <div className="md:hidden space-y-3 animate-pop-in" style={{animationDelay: '0.1s'}}>
                 {filteredList.map((m, index) => (
-                    <div key={m.id} className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm animate-pop-in" style={{animationDelay: `${0.15 + Math.min(index, 10) * 0.03}s`}}>
+                    <div 
+                        key={m.id} 
+                        onClick={() => openDetailsModal(m)}
+                        className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm animate-pop-in cursor-pointer hover:border-primary/50 transition-colors" 
+                        style={{animationDelay: `${0.15 + Math.min(index, 10) * 0.03}s`}}
+                    >
                         <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
                                 <h4 className="font-bold text-lg text-primary dark:text-white">{m.name}</h4>
@@ -1817,7 +1829,7 @@ const MembersAdmin: React.FC = () => {
                             </div>
                             {isAdmin && (
                                 <button 
-                                    onClick={() => handleViewAs(m)} 
+                                    onClick={(e) => { e.stopPropagation(); handleViewAs(m); }} 
                                     className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
                                 >
                                     <span className="material-symbols-outlined text-[14px]">visibility</span>
@@ -1844,7 +1856,12 @@ const MembersAdmin: React.FC = () => {
                     </thead>
                     <tbody>
                         {filteredList.map((m, index) => (
-                            <tr key={m.id} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 animate-pop-in" style={{animationDelay: `${0.15 + Math.min(index, 10) * 0.03}s`}}>
+                            <tr 
+                                key={m.id} 
+                                onClick={() => openDetailsModal(m)}
+                                className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 animate-pop-in cursor-pointer" 
+                                style={{animationDelay: `${0.15 + Math.min(index, 10) * 0.03}s`}}
+                            >
                                 <td className="p-4 font-medium text-primary dark:text-white">{m.name}</td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-1 flex-wrap">
@@ -1858,7 +1875,7 @@ const MembersAdmin: React.FC = () => {
                                 <td className="p-4">
                                     {isAdmin && (
                                         <button 
-                                            onClick={() => handleViewAs(m)} 
+                                            onClick={(e) => { e.stopPropagation(); handleViewAs(m); }} 
                                             className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/20 text-brand-green dark:bg-accent/30 dark:text-accent text-xs font-bold hover:bg-accent/30 transition-colors"
                                         >
                                             <span className="material-symbols-outlined text-[14px]">visibility</span>
@@ -1871,6 +1888,66 @@ const MembersAdmin: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+            )}
+
+            {isViewingDetails && selectedMember && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }} />
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                            <button
+                                onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}
+                                className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                            
+                            <h3 className="text-2xl font-bold text-primary dark:text-white mb-4">{selectedMember.name}</h3>
+                            
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-gray-400">email</span>
+                                    <span className="text-gray-700 dark:text-gray-300">{selectedMember.email}</span>
+                                </div>
+                                {selectedMember.phone && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-gray-400">phone</span>
+                                        <span className="text-gray-700 dark:text-gray-300">{selectedMember.phone}</span>
+                                    </div>
+                                )}
+                                {selectedMember.tier && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-gray-400">card_membership</span>
+                                        <TierBadge tier={selectedMember.tier} size="md" />
+                                    </div>
+                                )}
+                                {selectedMember.tags && selectedMember.tags.length > 0 && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-gray-400">label</span>
+                                        <div className="flex flex-wrap gap-1">
+                                            {selectedMember.tags.map(tag => (
+                                                <TagBadge key={tag} tag={tag} size="sm" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {isAdmin && (
+                                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setIsViewingDetails(false); setSelectedMember(null); handleViewAs(selectedMember); }}
+                                        className="w-full py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">visibility</span>
+                                        View As This Member
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>,
+                document.body
             )}
         </div>
     );
@@ -4110,40 +4187,209 @@ const TeamAdmin: React.FC = () => {
     const { actualUser } = useData();
     const isAdmin = actualUser?.role === 'admin';
     const [subTab, setSubTab] = useState<'staff' | 'admins'>('staff');
+    const [isAddingPerson, setIsAddingPerson] = useState(false);
+    const [newPerson, setNewPerson] = useState({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' as 'staff' | 'admin' });
+    const [addError, setAddError] = useState<string | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    const handleAddPerson = async () => {
+        if (!newPerson.email.trim()) {
+            setAddError('Email is required');
+            return;
+        }
+
+        try {
+            setAddError(null);
+            const fullName = `${newPerson.firstName.trim()} ${newPerson.lastName.trim()}`.trim();
+            
+            if (newPerson.role === 'staff') {
+                const res = await fetch('/api/staff-users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: newPerson.email.trim(),
+                        name: fullName || null,
+                        first_name: newPerson.firstName.trim() || null,
+                        last_name: newPerson.lastName.trim() || null,
+                        phone: newPerson.phone.trim() || null,
+                        created_by: actualUser?.email
+                    })
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    setAddError(data.error || 'Failed to add staff member');
+                    return;
+                }
+            } else {
+                const res = await fetch('/api/admin-users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: newPerson.email.trim(),
+                        name: fullName || null,
+                        created_by: actualUser?.email
+                    })
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    setAddError(data.error || 'Failed to add admin');
+                    return;
+                }
+            }
+
+            setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' });
+            setIsAddingPerson(false);
+            setRefreshKey(prev => prev + 1);
+        } catch (err) {
+            setAddError('Failed to add person');
+        }
+    };
 
     return (
         <div className="animate-pop-in">
             {/* Sub-tab navigation - only show Admins tab to admins */}
             {isAdmin && (
-                <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
+                <div className="flex items-center justify-between gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setSubTab('staff')}
+                            className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
+                                subTab === 'staff' 
+                                    ? 'bg-primary text-white' 
+                                    : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-[18px]">badge</span>
+                            Staff
+                        </button>
+                        <button
+                            onClick={() => setSubTab('admins')}
+                            className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
+                                subTab === 'admins' 
+                                    ? 'bg-primary text-white' 
+                                    : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-[18px]">shield_person</span>
+                            Admins
+                        </button>
+                    </div>
                     <button
-                        onClick={() => setSubTab('staff')}
-                        className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
-                            subTab === 'staff' 
-                                ? 'bg-primary text-white' 
-                                : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
-                        }`}
+                        onClick={() => setIsAddingPerson(true)}
+                        className="w-10 h-10 min-h-[44px] min-w-[44px] flex items-center justify-center bg-brand-green text-white rounded-lg hover:opacity-90 transition-opacity"
+                        title="Add Staff or Admin"
                     >
-                        <span className="material-symbols-outlined text-[18px]">badge</span>
-                        Staff
-                    </button>
-                    <button
-                        onClick={() => setSubTab('admins')}
-                        className={`px-4 py-2 min-h-[44px] rounded-lg font-bold text-sm flex items-center gap-1.5 transition-colors ${
-                            subTab === 'admins' 
-                                ? 'bg-primary text-white' 
-                                : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
-                        }`}
-                    >
-                        <span className="material-symbols-outlined text-[18px]">shield_person</span>
-                        Admins
+                        <span className="material-symbols-outlined text-xl">person_add</span>
                     </button>
                 </div>
             )}
 
             {/* Content */}
-            {subTab === 'staff' && <StaffAdmin isAdmin={isAdmin} />}
-            {subTab === 'admins' && isAdmin && <AdminsAdmin />}
+            {subTab === 'staff' && <StaffAdmin isAdmin={isAdmin} refreshKey={refreshKey} />}
+            {subTab === 'admins' && isAdmin && <AdminsAdmin refreshKey={refreshKey} />}
+
+            {/* Add Person Modal */}
+            {isAddingPerson && createPortal(
+                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsAddingPerson(false); setAddError(null); setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' }); }} />
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Team Member</h3>
+                            
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            First Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={newPerson.firstName}
+                                            onChange={(e) => setNewPerson({...newPerson, firstName: e.target.value})}
+                                            placeholder="Jane"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Last Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={newPerson.lastName}
+                                            onChange={(e) => setNewPerson({...newPerson, lastName: e.target.value})}
+                                            placeholder="Doe"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Email Address *
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={newPerson.email}
+                                        onChange={(e) => setNewPerson({...newPerson, email: e.target.value})}
+                                        placeholder="email@example.com"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Phone
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={newPerson.phone}
+                                        onChange={(e) => setNewPerson({...newPerson, phone: e.target.value})}
+                                        placeholder="+1 (555) 123-4567"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Role *
+                                    </label>
+                                    <select
+                                        value={newPerson.role}
+                                        onChange={(e) => setNewPerson({...newPerson, role: e.target.value as 'staff' | 'admin'})}
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                    >
+                                        <option value="staff">Staff</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+
+                                {addError && (
+                                    <p className="text-red-600 text-sm">{addError}</p>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => { setIsAddingPerson(false); setAddError(null); setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' }); }}
+                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAddPerson}
+                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                                >
+                                    Add {newPerson.role === 'staff' ? 'Staff' : 'Admin'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
@@ -4163,21 +4409,19 @@ interface StaffUser {
   created_by: string | null;
 }
 
-const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
+const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAdmin = false, refreshKey = 0 }) => {
     const { actualUser } = useData();
     const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isAdding, setIsAdding] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isViewingDetails, setIsViewingDetails] = useState(false);
     const [selectedStaff, setSelectedStaff] = useState<StaffUser | null>(null);
-    const [newEmail, setNewEmail] = useState('');
-    const [newName, setNewName] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
         fetchStaffUsers();
-    }, []);
+    }, [refreshKey]);
 
     const fetchStaffUsers = async () => {
         try {
@@ -4199,40 +4443,9 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
         }
     };
 
-    const handleAddStaff = async () => {
-        if (!newEmail.trim()) {
-            setError('Email is required');
-            return;
-        }
-
-        try {
-            setError(null);
-            const res = await fetch('/api/staff-users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    email: newEmail.trim(),
-                    name: newName.trim() || null,
-                    created_by: actualUser?.email
-                })
-            });
-
-            if (res.ok) {
-                const newStaff = await res.json();
-                setStaffUsers(prev => [newStaff, ...prev]);
-                setNewEmail('');
-                setNewName('');
-                setIsAdding(false);
-                setSuccess('Staff member added successfully');
-                setTimeout(() => setSuccess(null), 3000);
-            } else {
-                const data = await res.json();
-                setError(data.error || 'Failed to add staff member');
-            }
-        } catch (err) {
-            setError('Failed to add staff member');
-        }
+    const openDetailsModal = (staff: StaffUser) => {
+        setSelectedStaff({...staff});
+        setIsViewingDetails(true);
     };
 
     const handleToggleActive = async (staff: StaffUser) => {
@@ -4321,18 +4534,9 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
                     <div>
                         <h3 className="text-lg font-bold text-primary dark:text-white">Staff Directory</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {isAdmin ? 'Add email addresses to grant staff portal access' : 'View team contact information'}
+                            {isAdmin ? 'Manage staff portal access' : 'View team contact information'}
                         </p>
                     </div>
-                    {isAdmin && (
-                        <button
-                            onClick={() => setIsAdding(true)}
-                            className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 min-h-[44px] rounded-lg font-medium hover:opacity-90 transition-opacity"
-                        >
-                            <span className="material-symbols-outlined text-lg">person_add</span>
-                            Staff
-                        </button>
-                    )}
                 </div>
 
                 {success && (
@@ -4358,10 +4562,8 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
                         {staffUsers.map((staff, index) => (
                             <div 
                                 key={staff.id}
-                                onClick={() => isAdmin && openEditModal(staff)}
-                                className={`flex items-center justify-between p-4 rounded-xl border transition-colors animate-pop-in ${
-                                    isAdmin ? 'cursor-pointer hover:border-primary/50' : ''
-                                } ${
+                                onClick={() => openDetailsModal(staff)}
+                                className={`flex items-center justify-between p-4 rounded-xl border transition-colors animate-pop-in cursor-pointer hover:border-primary/50 ${
                                     staff.is_active 
                                         ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-surface-dark' 
                                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
@@ -4373,83 +4575,69 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
                                     {staff.name && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.email}</p>}
                                     {staff.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.phone}</p>}
                                 </div>
-                                {isAdmin && (
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); openEditModal(staff); }}
-                                            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                            title="Edit"
-                                        >
-                                            <span className="material-symbols-outlined text-xl">edit</span>
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleRemoveStaff(staff); }}
-                                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                            title="Remove"
-                                        >
-                                            <span className="material-symbols-outlined text-xl">delete</span>
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </div>
                 )}
             </div>
 
-            {isAdmin && isAdding && createPortal(
+            {isViewingDetails && selectedStaff && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }} />
+                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
-                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Staff Member</h3>
+                            <button
+                                onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}
+                                className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
                             
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Email Address *
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={newEmail}
-                                        onChange={(e) => setNewEmail(e.target.value)}
-                                        placeholder="staff@example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
-                                    />
+                            <h3 className="text-2xl font-bold text-primary dark:text-white mb-4">{selectedStaff.name || selectedStaff.email}</h3>
+                            
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-gray-400">email</span>
+                                    <span className="text-gray-700 dark:text-gray-300">{selectedStaff.email}</span>
                                 </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Name (optional)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newName}
-                                        onChange={(e) => setNewName(e.target.value)}
-                                        placeholder="Jane Doe"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                {error && (
-                                    <p className="text-red-600 text-sm">{error}</p>
+                                {selectedStaff.phone && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-gray-400">phone</span>
+                                        <span className="text-gray-700 dark:text-gray-300">{selectedStaff.phone}</span>
+                                    </div>
                                 )}
+                                {selectedStaff.job_title && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-gray-400">work</span>
+                                        <span className="text-gray-700 dark:text-gray-300">{selectedStaff.job_title}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-gray-400">toggle_on</span>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${selectedStaff.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+                                        {selectedStaff.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
                             </div>
 
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }}
-                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleAddStaff}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
-                                >
-                                    Add Staff
-                                </button>
-                            </div>
+                            {isAdmin && (
+                                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
+                                    <button
+                                        onClick={() => { setIsViewingDetails(false); openEditModal(selectedStaff); }}
+                                        className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">edit</span>
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => { setIsViewingDetails(false); handleRemoveStaff(selectedStaff); }}
+                                        className="flex-1 py-3 px-4 rounded-lg bg-red-500 text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>,
@@ -4573,21 +4761,19 @@ interface AdminUser {
   created_by: string | null;
 }
 
-const AdminsAdmin: React.FC = () => {
+const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
     const { actualUser } = useData();
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isAdding, setIsAdding] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isViewingDetails, setIsViewingDetails] = useState(false);
     const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
-    const [newEmail, setNewEmail] = useState('');
-    const [newName, setNewName] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
         fetchAdminUsers();
-    }, []);
+    }, [refreshKey]);
 
     const fetchAdminUsers = async () => {
         try {
@@ -4604,40 +4790,9 @@ const AdminsAdmin: React.FC = () => {
         }
     };
 
-    const handleAddAdmin = async () => {
-        if (!newEmail.trim()) {
-            setError('Email is required');
-            return;
-        }
-
-        try {
-            setError(null);
-            const res = await fetch('/api/admin-users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    email: newEmail.trim(),
-                    name: newName.trim() || null,
-                    created_by: actualUser?.email
-                })
-            });
-
-            if (res.ok) {
-                const newAdmin = await res.json();
-                setAdminUsers(prev => [newAdmin, ...prev]);
-                setNewEmail('');
-                setNewName('');
-                setIsAdding(false);
-                setSuccess('Admin added successfully');
-                setTimeout(() => setSuccess(null), 3000);
-            } else {
-                const data = await res.json();
-                setError(data.error || 'Failed to add admin');
-            }
-        } catch (err) {
-            setError('Failed to add admin');
-        }
+    const openDetailsModal = (admin: AdminUser) => {
+        setSelectedAdmin({...admin});
+        setIsViewingDetails(true);
     };
 
     const handleToggleActive = async (admin: AdminUser) => {
@@ -4744,16 +4899,9 @@ const AdminsAdmin: React.FC = () => {
                     <div>
                         <h3 className="text-lg font-bold text-primary dark:text-white">Admin Access List</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Add email addresses to grant admin portal access
+                            Manage admin portal access
                         </p>
                     </div>
-                    <button
-                        onClick={() => setIsAdding(true)}
-                        className="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                    >
-                        <span className="material-symbols-outlined text-lg">person_add</span>
-                        Admin
-                    </button>
                 </div>
 
                 {success && (
@@ -4779,7 +4927,7 @@ const AdminsAdmin: React.FC = () => {
                         {adminUsers.map((admin, index) => (
                             <div 
                                 key={admin.id}
-                                onClick={() => openEditModal(admin)}
+                                onClick={() => openDetailsModal(admin)}
                                 className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors hover:border-primary/50 animate-pop-in ${
                                     admin.is_active 
                                         ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-surface-dark' 
@@ -4792,79 +4940,65 @@ const AdminsAdmin: React.FC = () => {
                                     {admin.name && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.email}</p>}
                                     {admin.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.phone}</p>}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); openEditModal(admin); }}
-                                        className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                        title="Edit"
-                                    >
-                                        <span className="material-symbols-outlined text-xl">edit</span>
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleRemoveAdmin(admin); }}
-                                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                        title="Remove"
-                                    >
-                                        <span className="material-symbols-outlined text-xl">delete</span>
-                                    </button>
-                                </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
 
-            {isAdding && createPortal(
+            {isViewingDetails && selectedAdmin && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }} />
+                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
                         <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
-                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Admin</h3>
+                            <button
+                                onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }}
+                                className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
                             
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Email Address *
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={newEmail}
-                                        onChange={(e) => setNewEmail(e.target.value)}
-                                        placeholder="admin@example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
-                                    />
+                            <h3 className="text-2xl font-bold text-primary dark:text-white mb-4">{selectedAdmin.name || selectedAdmin.email}</h3>
+                            
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-gray-400">email</span>
+                                    <span className="text-gray-700 dark:text-gray-300">{selectedAdmin.email}</span>
                                 </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Name (optional)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newName}
-                                        onChange={(e) => setNewName(e.target.value)}
-                                        placeholder="John Doe"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                {error && (
-                                    <p className="text-red-600 text-sm">{error}</p>
+                                {selectedAdmin.phone && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-gray-400">phone</span>
+                                        <span className="text-gray-700 dark:text-gray-300">{selectedAdmin.phone}</span>
+                                    </div>
                                 )}
+                                {selectedAdmin.job_title && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-gray-400">work</span>
+                                        <span className="text-gray-700 dark:text-gray-300">{selectedAdmin.job_title}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-gray-400">toggle_on</span>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${selectedAdmin.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+                                        {selectedAdmin.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
                             </div>
 
-                            <div className="flex gap-3 mt-6">
+                            <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
                                 <button
-                                    onClick={() => { setIsAdding(false); setError(null); setNewEmail(''); setNewName(''); }}
-                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                                    onClick={() => { setIsViewingDetails(false); openEditModal(selectedAdmin); }}
+                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
                                 >
-                                    Cancel
+                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                    Edit
                                 </button>
                                 <button
-                                    onClick={handleAddAdmin}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                                    onClick={() => { setIsViewingDetails(false); handleRemoveAdmin(selectedAdmin); }}
+                                    className="flex-1 py-3 px-4 rounded-lg bg-red-500 text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
                                 >
-                                    Add Admin
+                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                    Delete
                                 </button>
                             </div>
                         </div>
