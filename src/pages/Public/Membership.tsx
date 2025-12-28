@@ -274,18 +274,6 @@ const MembershipOverview: React.FC = () => {
           </div>
         )}
         
-        {premiumTier && (
-          <MembershipCard 
-            title={`${premiumTier.name} Membership`}
-            price={extractPrice(premiumTier.price_string)}
-            suffix={extractSuffix(premiumTier.price_string)}
-            desc={premiumTier.description}
-            features={premiumTier.highlighted_features}
-            onClick={() => setShowApplicationForm(true)}
-            btnText={premiumTier.button_text}
-          />
-        )}
-
         {corporateTier && (
           <MembershipCard 
             title={`${corporateTier.name} Membership`}
@@ -295,6 +283,18 @@ const MembershipOverview: React.FC = () => {
             features={corporateTier.highlighted_features}
             onClick={() => navigate('corporate')}
             btnText="View Details"
+          />
+        )}
+
+        {premiumTier && (
+          <MembershipCard 
+            title={`${premiumTier.name} Membership`}
+            price={extractPrice(premiumTier.price_string)}
+            suffix={extractSuffix(premiumTier.price_string)}
+            desc={premiumTier.description}
+            features={premiumTier.highlighted_features}
+            onClick={() => setShowApplicationForm(true)}
+            btnText={premiumTier.button_text}
           />
         )}
       </div>
