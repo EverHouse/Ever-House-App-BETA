@@ -398,5 +398,14 @@ export const changelog: ChangelogEntry[] = [
       "Gallery page now uses the same fluid minimize-to-status-bar animation",
       "Consistent loading experience across all pages"
     ]
+  },
+  {
+    version: "4.9",
+    date: "2025-12-28",
+    title: "Modal Safe Area",
+    changes: [
+      "Book a Tour modal now opens within the safe viewing area on iOS",
+      "Modal respects status bar and home indicator spacing"
+    ]
   }
 ];
