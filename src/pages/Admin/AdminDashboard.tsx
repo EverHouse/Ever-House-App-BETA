@@ -365,7 +365,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
     <div className="animate-pop-in pb-32">
       <div>
         <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Employee Resources</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {employeeResourcesLinks.map((link) => (
             <CardButton key={link.id} link={link} />
           ))}
@@ -374,7 +374,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
 
       <div className="mt-6 sm:mt-8">
         <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Operations</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {operationsLinks.map((link) => (
             <CardButton key={link.id} link={link} />
           ))}
@@ -383,7 +383,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
 
       <div className="mt-6 sm:mt-8">
         <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Public Content</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {publicContentLinks.map((link) => (
             <CardButton key={link.id} link={link} />
           ))}
@@ -393,7 +393,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
       {isAdmin && (
         <div className="mt-6 sm:mt-8">
           <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Admin Settings</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {adminLinks.map((link) => (
               <CardButton key={link.id} link={link} />
             ))}
