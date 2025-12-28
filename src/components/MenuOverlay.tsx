@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../contexts/DataContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSmoothScroll } from './motion/SmoothScroll';
 
@@ -12,7 +11,6 @@ interface MenuOverlayProps {
 
 const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { user, actualUser } = useData();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const { stop, start } = useSmoothScroll();
@@ -48,15 +46,6 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
 
   if (!isVisible) return null;
 
-  const getActionButtonConfig = () => {
-    if (user) {
-        return { label: "MEMBER PORTAL", icon: "dashboard", action: () => handleNav('/dashboard') };
-    }
-    return { label: "MEMBER LOGIN", icon: "lock", action: () => handleNav('/login') };
-  };
-
-  const actionBtn = getActionButtonConfig();
-
   const menuContent = (
     <div className="fixed inset-0 z-[12000] flex justify-start overflow-hidden pointer-events-auto">
       <div 
@@ -90,7 +79,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                 <MenuLink label="FAQ" onClick={() => handleNav('/faq')} delay="0.35s" isDark={isDark} />
             </nav>
             
-            <div className={`mt-4 pt-6 border-t space-y-4 animate-pop-in ${isDark ? 'border-[#F2F2EC]/10' : 'border-[#293515]/10'}`} style={{ animationDelay: '0.4s' }}>
+            <div className={`mt-4 pt-6 border-t animate-pop-in ${isDark ? 'border-[#F2F2EC]/10' : 'border-[#293515]/10'}`} style={{ animationDelay: '0.4s' }}>
                 <button 
                     onClick={() => handleNav('/contact')}
                     className={`w-full group flex items-center justify-between px-4 py-3 min-h-[44px] rounded-[2rem] glass-button border ${isDark ? 'border-white/20' : 'border-black/20'}`}
@@ -99,14 +88,6 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                     <span className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full glass-button flex items-center justify-center group-hover:scale-110 transition-all duration-[400ms] ease-in-out">
                         <span className={`material-symbols-outlined ${isDark ? 'text-[#F2F2EC]' : 'text-[#293515]'}`}>arrow_forward</span>
                     </span>
-                </button>
-
-                <button 
-                    onClick={actionBtn.action}
-                    className={`w-full px-4 h-[60px] rounded-[2rem] font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-[400ms] ease-in-out ${isDark ? 'bg-accent text-[#293515]' : 'bg-[#293515] text-[#F2F2EC]'}`}
-                >
-                    <span className="material-symbols-outlined text-lg">{actionBtn.icon}</span>
-                    {actionBtn.label}
                 </button>
             </div>
         </div>
