@@ -304,5 +304,18 @@ export const changelog: ChangelogEntry[] = [
       "Confirmed error messages appear when they should",
       "No issues found — the app is running great"
     ]
+  },
+  {
+    version: "4.0",
+    date: "2025-12-28",
+    title: "Premium Feel",
+    isMajor: true,
+    changes: [
+      "Hero images now have a subtle parallax depth effect as you scroll",
+      "Scroll-reactive gradients shift gently to guide your eye",
+      "Booking confirmations play a satisfying notification sound",
+      "Glassmorphism styling refined for a cohesive, premium look",
+      "Smoother animations throughout the app"
+    ]
   }
 ];
