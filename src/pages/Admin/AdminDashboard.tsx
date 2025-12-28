@@ -15,6 +15,7 @@ import Toggle from '../../components/Toggle';
 import FaqsAdmin from './FaqsAdmin';
 import InquiriesAdmin from './InquiriesAdmin';
 import GalleryAdmin from './GalleryAdmin';
+import BugReportsAdmin from './BugReportsAdmin';
 import { changelog } from '../../data/changelog';
 import { useToast } from '../../components/Toast';
 import { APP_VERSION, formatLastUpdated } from '../../config/version';
@@ -135,6 +136,7 @@ const AdminDashboard: React.FC = () => {
       case 'tiers': return 'Tiers';
       case 'blocks': return 'Closures';
       case 'changelog': return 'Changelog';
+      case 'bugs': return 'Bug Reports';
       case 'training': return 'Training';
       case 'conflicts': return 'Conflicts';
       case 'updates': return 'Updates';
@@ -208,6 +210,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'tiers' && actualUser?.role === 'admin' && <TiersAdmin />}
         {activeTab === 'blocks' && <BlocksAdmin />}
         {activeTab === 'changelog' && actualUser?.role === 'admin' && <ChangelogAdmin />}
+        {activeTab === 'bugs' && actualUser?.role === 'admin' && <BugReportsAdmin />}
         {activeTab === 'training' && <StaffTrainingGuide />}
         {activeTab === 'updates' && <StaffUpdatesAdmin />}
         {activeTab === 'tours' && <ToursAdmin />}
@@ -231,7 +234,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training' | 'updates' | 'tours';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training' | 'updates' | 'tours' | 'bugs';
 
 interface NavItemData {
   id: TabType;
@@ -340,6 +343,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
   const adminLinks = [
     { id: 'team' as TabType, icon: 'shield_person', label: 'Team Access', description: 'Manage staff and admins' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings' },
+    { id: 'bugs' as TabType, icon: 'bug_report', label: 'Bug Reports', description: 'Review user-reported issues' },
     { id: 'changelog' as TabType, icon: 'history', label: 'Version History', description: 'View app updates and changes' },
   ];
 
