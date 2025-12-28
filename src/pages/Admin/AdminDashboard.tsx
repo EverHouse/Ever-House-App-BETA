@@ -2513,7 +2513,7 @@ const SimulatorAdmin: React.FC = () => {
                                 
                                 {timeSlots.map(slot => (
                                     <React.Fragment key={slot}>
-                                        <div className="h-8 flex items-center justify-end pr-1 text-[9px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap sticky left-0 z-10 bg-white dark:bg-surface-dark">
+                                        <div className="h-8 flex items-center justify-end pr-1 text-[9px] text-gray-600 dark:text-white/70 font-medium whitespace-nowrap sticky left-0 z-10 bg-white dark:bg-surface-dark">
                                             {formatTime12(slot)}
                                         </div>
                                         {resources.map(resource => {
@@ -2547,8 +2547,8 @@ const SimulatorAdmin: React.FC = () => {
                                                                     ? 'bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-500/30 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-500/30'
                                                                     : 'bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/30 cursor-pointer hover:bg-green-200 dark:hover:bg-green-500/30' 
                                                                 : isConference
-                                                                    ? 'bg-purple-50/50 dark:bg-purple-500/5 border-purple-100 dark:border-purple-500/10 hover:bg-purple-100/50 dark:hover:bg-purple-500/10'
-                                                                    : 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5'
+                                                                    ? 'bg-purple-50/50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20 hover:bg-purple-100/50 dark:hover:bg-purple-500/15'
+                                                                    : 'bg-white dark:bg-white/5 border-gray-100 dark:border-white/15 hover:bg-gray-50 dark:hover:bg-white/10'
                                                     } transition-colors`}
                                                 >
                                                     {closure ? (
