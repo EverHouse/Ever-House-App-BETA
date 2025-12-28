@@ -419,5 +419,26 @@ export const changelog: ChangelogEntry[] = [
       "Loading screen fluidly shrinks into status bar when complete",
       "Data refreshes without full page reload for smoother experience"
     ]
+  },
+  {
+    version: "5.1",
+    date: "2025-12-28",
+    title: "Staff Portal Refresh",
+    changes: [
+      "Pull to refresh now available on Staff portal pages",
+      "Bookings, Tours, and Updates pages all support the new refresh gesture",
+      "Same beautiful branded animation experience for staff members"
+    ]
+  },
+  {
+    version: "5.2",
+    date: "2025-12-28",
+    title: "Booking System Fixes",
+    changes: [
+      "Fixed booking cancellation for members from Dashboard",
+      "Fixed member lookup in Manual Booking modal for staff",
+      "Fixed request cancellation from My Requests tab",
+      "Improved error messages when bookings fail to process"
+    ]
   }
 ];

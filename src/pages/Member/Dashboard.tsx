@@ -308,7 +308,7 @@ const Dashboard: React.FC = () => {
           let res;
           if (bookingType === 'booking') {
             // Legacy booking table - use DELETE
-            res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE' });
+            res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE', credentials: 'include' });
             if (res.ok) {
               setDbBookings(prev => prev.filter(b => b.id !== bookingId));
             }
@@ -317,6 +317,7 @@ const Dashboard: React.FC = () => {
             res = await fetch(`/api/booking-requests/${bookingId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
               body: JSON.stringify({ status: 'cancelled', cancelled_by: user?.email })
             });
             if (res.ok) {

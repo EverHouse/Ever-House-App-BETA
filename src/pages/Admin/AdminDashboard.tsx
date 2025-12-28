@@ -6,6 +6,7 @@ import { NotificationContext } from '../../contexts/NotificationContext';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import { getTodayPacific, addDaysToPacificDate } from '../../utils/dateUtils';
 import MenuOverlay from '../../components/MenuOverlay';
+import PullToRefresh from '../../components/PullToRefresh';
 import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
 import { AVAILABLE_TAGS } from '../../utils/tierUtils';
@@ -1248,27 +1249,33 @@ const StaffUpdatesAdmin: React.FC = () => {
         }
     }, [notificationsLoading, setPageReady]);
 
+    const fetchNotifications = useCallback(async () => {
+        if (!actualUser?.email) return;
+        try {
+            const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}`);
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data);
+                setUnreadCount(data.filter((n: StaffNotification) => !n.is_read).length);
+            }
+        } catch (err) {
+            console.error('Failed to fetch notifications:', err);
+        } finally {
+            setNotificationsLoading(false);
+        }
+    }, [actualUser?.email]);
+
     useEffect(() => {
         if (actualUser?.email) {
-            const fetchNotifications = async () => {
-                try {
-                    const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(actualUser.email)}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        setNotifications(data);
-                        setUnreadCount(data.filter((n: StaffNotification) => !n.is_read).length);
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch notifications:', err);
-                } finally {
-                    setNotificationsLoading(false);
-                }
-            };
             fetchNotifications();
             const interval = setInterval(fetchNotifications, 30000);
             return () => clearInterval(interval);
         }
-    }, [actualUser?.email]);
+    }, [actualUser?.email, fetchNotifications]);
+
+    const handleRefresh = useCallback(async () => {
+        await fetchNotifications();
+    }, [fetchNotifications]);
 
     const handleNotificationClick = async (notif: StaffNotification) => {
         if (!notif.is_read) {
@@ -1381,37 +1388,39 @@ const StaffUpdatesAdmin: React.FC = () => {
     );
 
     return (
-        <div className="animate-pop-in pb-32">
-            <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
-                <button
-                    onClick={() => setActiveSubTab('activity')}
-                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all relative ${
-                        activeSubTab === 'activity'
-                            ? 'bg-accent text-primary'
-                            : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
-                    }`}
-                >
-                    Activity
-                    {unreadCount > 0 && activeSubTab !== 'activity' && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                    )}
-                </button>
-                <button
-                    onClick={() => setActiveSubTab('announcements')}
-                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
-                        activeSubTab === 'announcements'
-                            ? 'bg-accent text-primary'
-                            : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
-                    }`}
-                >
-                    Announcements
-                </button>
-            </div>
+        <PullToRefresh onRefresh={handleRefresh}>
+            <div className="animate-pop-in pb-32">
+                <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
+                    <button
+                        onClick={() => setActiveSubTab('activity')}
+                        className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all relative ${
+                            activeSubTab === 'activity'
+                                ? 'bg-accent text-primary'
+                                : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
+                        }`}
+                    >
+                        Activity
+                        {unreadCount > 0 && activeSubTab !== 'activity' && (
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveSubTab('announcements')}
+                        className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
+                            activeSubTab === 'announcements'
+                                ? 'bg-accent text-primary'
+                                : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
+                        }`}
+                    >
+                        Announcements
+                    </button>
+                </div>
 
-            {activeSubTab === 'activity' ? renderActivityTab() : <AnnouncementsAdmin />}
-        </div>
+                {activeSubTab === 'activity' ? renderActivityTab() : <AnnouncementsAdmin />}
+            </div>
+        </PullToRefresh>
     );
 };
 
@@ -1876,97 +1885,103 @@ const SimulatorAdmin: React.FC = () => {
         }
     }, [isLoading, setPageReady]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
-                const results = await Promise.allSettled([
-                    fetch('/api/booking-requests?include_all=true'),
-                    fetch('/api/pending-bookings'),
-                    fetch('/api/bays'),
-                    fetch('/api/resources')
-                ]);
-                
-                let allRequests: BookingRequest[] = [];
-                
-                if (results[0].status === 'fulfilled' && results[0].value.ok) {
-                    const data = await results[0].value.json();
-                    allRequests = data.map((r: any) => ({ ...r, source: 'booking_request' as const }));
-                }
-                
-                if (results[1].status === 'fulfilled' && results[1].value.ok) {
-                    const pendingBookings = await results[1].value.json();
-                    const mappedBookings = pendingBookings.map((b: any) => ({
-                        id: b.id,
-                        user_email: b.user_email,
-                        user_name: b.first_name && b.last_name ? `${b.first_name} ${b.last_name}` : b.user_email,
-                        bay_id: null,
-                        bay_name: null,
-                        bay_preference: b.resource_name || null,
-                        request_date: b.booking_date,
-                        start_time: b.start_time,
-                        end_time: b.end_time,
-                        duration_minutes: 60,
-                        notes: b.notes,
-                        status: b.status,
-                        staff_notes: null,
-                        suggested_time: null,
-                        created_at: b.created_at,
-                        source: 'booking' as const,
-                        resource_name: b.resource_name
-                    }));
-                    allRequests = [...allRequests, ...mappedBookings];
-                }
-                
-                setRequests(allRequests);
-                
-                if (results[2].status === 'fulfilled' && results[2].value.ok) {
-                    const data = await results[2].value.json();
-                    setBays(data);
-                }
-                
-                if (results[3].status === 'fulfilled' && results[3].value.ok) {
-                    const data = await results[3].value.json();
-                    setResources(data);
-                }
-            } catch (err) {
-                console.error('Failed to fetch data:', err);
-            } finally {
-                setIsLoading(false);
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const results = await Promise.allSettled([
+                fetch('/api/booking-requests?include_all=true'),
+                fetch('/api/pending-bookings'),
+                fetch('/api/bays'),
+                fetch('/api/resources')
+            ]);
+            
+            let allRequests: BookingRequest[] = [];
+            
+            if (results[0].status === 'fulfilled' && results[0].value.ok) {
+                const data = await results[0].value.json();
+                allRequests = data.map((r: any) => ({ ...r, source: 'booking_request' as const }));
             }
-        };
-        fetchData();
+            
+            if (results[1].status === 'fulfilled' && results[1].value.ok) {
+                const pendingBookings = await results[1].value.json();
+                const mappedBookings = pendingBookings.map((b: any) => ({
+                    id: b.id,
+                    user_email: b.user_email,
+                    user_name: b.first_name && b.last_name ? `${b.first_name} ${b.last_name}` : b.user_email,
+                    bay_id: null,
+                    bay_name: null,
+                    bay_preference: b.resource_name || null,
+                    request_date: b.booking_date,
+                    start_time: b.start_time,
+                    end_time: b.end_time,
+                    duration_minutes: 60,
+                    notes: b.notes,
+                    status: b.status,
+                    staff_notes: null,
+                    suggested_time: null,
+                    created_at: b.created_at,
+                    source: 'booking' as const,
+                    resource_name: b.resource_name
+                }));
+                allRequests = [...allRequests, ...mappedBookings];
+            }
+            
+            setRequests(allRequests);
+            
+            if (results[2].status === 'fulfilled' && results[2].value.ok) {
+                const data = await results[2].value.json();
+                setBays(data);
+            }
+            
+            if (results[3].status === 'fulfilled' && results[3].value.ok) {
+                const data = await results[3].value.json();
+                setResources(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch data:', err);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
 
-    useEffect(() => {
-        const fetchCalendarData = async () => {
-            const today = getTodayPacific();
-            const startDate = activeView === 'calendar' ? calendarDate : today;
-            const endDate = addDaysToPacificDate(startDate, 30);
-            try {
-                const [bookingsRes, closuresRes] = await Promise.all([
-                    fetch(`/api/approved-bookings?start_date=${startDate}&end_date=${endDate}`),
-                    fetch('/api/closures')
-                ]);
-                
-                if (bookingsRes.ok) {
-                    const data = await bookingsRes.json();
-                    setApprovedBookings(data);
-                }
-                
-                if (closuresRes.ok) {
-                    const closuresData = await closuresRes.json();
-                    const activeClosures = closuresData.filter((c: CalendarClosure) => 
-                        c.startDate <= endDate && c.endDate >= startDate
-                    );
-                    setClosures(activeClosures);
-                }
-            } catch (err) {
-                console.error('Failed to fetch calendar data:', err);
+    const fetchCalendarData = useCallback(async () => {
+        const today = getTodayPacific();
+        const startDate = activeView === 'calendar' ? calendarDate : today;
+        const endDate = addDaysToPacificDate(startDate, 30);
+        try {
+            const [bookingsRes, closuresRes] = await Promise.all([
+                fetch(`/api/approved-bookings?start_date=${startDate}&end_date=${endDate}`),
+                fetch('/api/closures')
+            ]);
+            
+            if (bookingsRes.ok) {
+                const data = await bookingsRes.json();
+                setApprovedBookings(data);
             }
-        };
-        fetchCalendarData();
+            
+            if (closuresRes.ok) {
+                const closuresData = await closuresRes.json();
+                const activeClosures = closuresData.filter((c: CalendarClosure) => 
+                    c.startDate <= endDate && c.endDate >= startDate
+                );
+                setClosures(activeClosures);
+            }
+        } catch (err) {
+            console.error('Failed to fetch calendar data:', err);
+        }
     }, [activeView, calendarDate]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    useEffect(() => {
+        fetchCalendarData();
+    }, [fetchCalendarData]);
+
+    const handleRefresh = useCallback(async () => {
+        await Promise.all([fetchData(), fetchCalendarData()]);
+    }, [fetchData, fetchCalendarData]);
 
     useEffect(() => {
         const checkAvailability = async () => {
@@ -2151,12 +2166,14 @@ const SimulatorAdmin: React.FC = () => {
             if (selectedRequest.source === 'booking') {
                 res = await fetch(`/api/bookings/${selectedRequest.id}/decline`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 });
             } else {
                 res = await fetch(`/api/booking-requests/${selectedRequest.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
                         status: newStatus,
                         staff_notes: staffNotes || null,
@@ -2287,10 +2304,11 @@ const SimulatorAdmin: React.FC = () => {
     };
 
     return (
-        <div className="flex justify-center animate-pop-in">
-            <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
-            {/* Tab Bar */}
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in px-4 py-3" style={{animationDelay: '0.05s'}}>
+        <PullToRefresh onRefresh={handleRefresh}>
+            <div className="flex justify-center animate-pop-in">
+                <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
+                {/* Tab Bar */}
+                <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in px-4 py-3" style={{animationDelay: '0.05s'}}>
                 <div className="flex">
                     <button
                         onClick={() => setActiveView('requests')}
@@ -2972,8 +2990,9 @@ const SimulatorAdmin: React.FC = () => {
                 </div>,
                 document.body
             )}
+                </div>
             </div>
-        </div>
+        </PullToRefresh>
     );
 };
 
@@ -3013,17 +3032,14 @@ const ManualBookingModal: React.FC<{
         setMemberLookupStatus('checking');
         lookupTimeoutRef.current = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/members?email=${encodeURIComponent(memberEmail)}`);
+                const normalizedEmail = memberEmail.toLowerCase().trim();
+                const res = await fetch(`/api/members/${encodeURIComponent(normalizedEmail)}/details`, {
+                    credentials: 'include'
+                });
                 if (res.ok) {
-                    const data = await res.json();
-                    const member = data.find((m: any) => m.email?.toLowerCase() === memberEmail.toLowerCase());
-                    if (member) {
-                        setMemberLookupStatus('found');
-                        setMemberName(member.first_name && member.last_name ? `${member.first_name} ${member.last_name}` : null);
-                    } else {
-                        setMemberLookupStatus('not_found');
-                        setMemberName(null);
-                    }
+                    const member = await res.json();
+                    setMemberLookupStatus('found');
+                    setMemberName(member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : null);
                 } else {
                     setMemberLookupStatus('not_found');
                     setMemberName(null);
@@ -3062,8 +3078,9 @@ const ManualBookingModal: React.FC<{
             const res = await fetch('/api/staff/bookings/manual', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
-                    member_email: memberEmail,
+                    member_email: memberEmail.toLowerCase().trim(),
                     resource_id: resourceId,
                     booking_date: bookingDate,
                     start_time: startTime,
@@ -6743,6 +6760,10 @@ const ToursAdmin: React.FC = () => {
     fetchTours();
   }, [fetchTours]);
 
+  const handleRefresh = useCallback(async () => {
+    await fetchTours();
+  }, [fetchTours]);
+
   const handleSync = async () => {
     setSyncing(true);
     setSyncMessage(null);
@@ -6878,22 +6899,23 @@ const ToursAdmin: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 animate-pop-in pb-32">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-primary/60 dark:text-white/60">
-          Tours synced from Google Calendar
-        </p>
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary dark:bg-white/10 text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          <span className={`material-symbols-outlined text-sm ${syncing ? 'animate-spin' : ''}`}>
-            {syncing ? 'sync' : 'sync'}
-          </span>
-          {syncing ? 'Syncing...' : 'Sync Calendar'}
-        </button>
-      </div>
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="space-y-6 animate-pop-in pb-32">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-primary/60 dark:text-white/60">
+            Tours synced from Google Calendar
+          </p>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary dark:bg-white/10 text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            <span className={`material-symbols-outlined text-sm ${syncing ? 'animate-spin' : ''}`}>
+              {syncing ? 'sync' : 'sync'}
+            </span>
+            {syncing ? 'Syncing...' : 'Sync Calendar'}
+          </button>
+        </div>
 
       {syncMessage && (
         <div className="p-3 rounded-xl bg-accent/20 text-primary dark:text-accent text-sm text-center">
@@ -6981,7 +7003,8 @@ const ToursAdmin: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PullToRefresh>
   );
 };
 
