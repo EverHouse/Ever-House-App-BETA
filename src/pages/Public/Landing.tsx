@@ -267,7 +267,15 @@ const Landing: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#F2F2EC] min-h-screen pb-0 overflow-x-hidden">
+    <div className="min-h-screen pb-0 overflow-x-hidden relative">
+      {/* Dark background for safe area behind status bar */}
+      <div 
+        className="absolute inset-x-0 top-0 bg-[#1a1610] pointer-events-none"
+        style={{ height: 'calc(100vh + env(safe-area-inset-top, 0px))' }}
+        aria-hidden="true"
+      />
+      {/* Cream background for content below hero */}
+      <div className="absolute inset-x-0 bg-[#F2F2EC]" style={{ top: '100vh' }} aria-hidden="true" />
       {/* Hero Section - extends behind status bar with negative margin */}
       <div 
         ref={heroRef as React.RefObject<HTMLDivElement>}

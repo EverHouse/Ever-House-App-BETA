@@ -345,6 +345,7 @@ export const changelog: ChangelogEntry[] = [
     title: "Full-Bleed Hero",
     changes: [
       "Hero image now extends behind the status bar on iPhone",
+      "Dark background in safe area prevents white bar from showing",
       "Seamless edge-to-edge display for a more immersive experience"
     ]
   }
