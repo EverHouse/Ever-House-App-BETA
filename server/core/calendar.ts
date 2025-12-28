@@ -3,6 +3,7 @@ import { getGoogleCalendarClient } from './integrations';
 import { db } from '../db';
 import { wellnessClasses } from '../../shared/models/auth';
 import { isNull, gte, asc, sql, and } from 'drizzle-orm';
+import { createPacificDate } from '../utils/dateUtils';
 
 const calendarIdCache: Record<string, string> = {};
 
@@ -70,8 +71,8 @@ export async function getCalendarBusyTimes(calendarId: string, date: string): Pr
   try {
     const calendar = await getGoogleCalendarClient();
     
-    const startOfDay = new Date(`${date}T00:00:00`);
-    const endOfDay = new Date(`${date}T23:59:59`);
+    const startOfDay = createPacificDate(date, '00:00:00');
+    const endOfDay = createPacificDate(date, '23:59:59');
     
     const response = await calendar.freebusy.query({
       requestBody: {
@@ -170,8 +171,8 @@ export async function createCalendarEvent(booking: any, bayName: string): Promis
   try {
     const calendar = await getGoogleCalendarClient();
     
-    const startDateTime = new Date(`${booking.request_date}T${booking.start_time}`);
-    const endDateTime = new Date(`${booking.request_date}T${booking.end_time}`);
+    const startDateTime = createPacificDate(booking.request_date, booking.start_time);
+    const endDateTime = createPacificDate(booking.request_date, booking.end_time);
     
     const event = {
       summary: `Simulator: ${booking.user_name || booking.user_email}`,
@@ -214,8 +215,8 @@ export async function createCalendarEventOnCalendar(
     
     const calendar = await getGoogleCalendarClient();
     
-    const startDateTime = new Date(`${date}T${startTime}`);
-    const endDateTime = new Date(`${date}T${endTime || startTime}`);
+    const startDateTime = createPacificDate(date, startTime);
+    const endDateTime = createPacificDate(date, endTime || startTime);
     
     if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       console.error('Error creating calendar event: Invalid date/time values');
@@ -278,8 +279,8 @@ export async function updateCalendarEvent(
     
     const calendar = await getGoogleCalendarClient();
     
-    const startDateTime = new Date(`${date}T${startTime}`);
-    const endDateTime = new Date(`${date}T${endTime || startTime}`);
+    const startDateTime = createPacificDate(date, startTime);
+    const endDateTime = createPacificDate(date, endTime || startTime);
     
     if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       console.error('Error updating calendar event: Invalid date/time values');
