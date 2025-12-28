@@ -183,13 +183,13 @@ const BugReportsAdmin: React.FC = () => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveStatus(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                                 activeStatus === tab.id
                                     ? isDark ? 'bg-accent text-primary' : 'bg-primary text-white'
                                     : isDark ? 'glass-button text-white/70' : 'bg-white border border-black/10 text-primary/70'
                             }`}
                         >
-                            <span className="material-symbols-outlined text-base">{tab.icon}</span>
+                            <span className="material-symbols-outlined text-sm">{tab.icon}</span>
                             {tab.label}
                         </button>
                     ))}
@@ -202,7 +202,7 @@ const BugReportsAdmin: React.FC = () => {
                         ))}
                     </div>
                 ) : reports.length === 0 ? (
-                    <div className={`text-center py-16 rounded-2xl ${isDark ? 'glass-card' : 'bg-white border border-black/5'}`}>
+                    <div className={`text-center py-16 rounded-3xl overflow-hidden ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-black/5'}`}>
                         <span className={`material-symbols-outlined text-4xl mb-3 ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
                         <p className={`font-medium ${isDark ? 'text-white/60' : 'text-primary/60'}`}>No bug reports found</p>
                     </div>
