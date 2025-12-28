@@ -3052,6 +3052,7 @@ const ManualBookingModal: React.FC<{
     const [allMembers, setAllMembers] = useState<MemberSearchResult[]>([]);
     const [memberLookupStatus, setMemberLookupStatus] = useState<'idle' | 'checking' | 'found' | 'not_found'>('idle');
     const [memberName, setMemberName] = useState<string | null>(null);
+    const [memberTier, setMemberTier] = useState<string | null>(null);
     const [bookingDate, setBookingDate] = useState(() => getTodayPacific());
     const [startTime, setStartTime] = useState('10:00');
     const [durationMinutes, setDurationMinutes] = useState(60);
@@ -3061,8 +3062,19 @@ const ManualBookingModal: React.FC<{
     const [notes, setNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [existingBookingWarning, setExistingBookingWarning] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    const getDurationOptionsForTier = (tier: string | null): number[] => {
+        const normalizedTier = tier?.toLowerCase() || '';
+        if (['premium', 'corporate', 'vip'].some(t => normalizedTier.includes(t))) {
+            return [30, 60, 90];
+        }
+        return [30, 60];
+    };
+
+    const availableDurations = useMemo(() => getDurationOptionsForTier(memberTier), [memberTier]);
 
     const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -3135,12 +3147,18 @@ const ManualBookingModal: React.FC<{
         setShowDropdown(false);
         setMemberLookupStatus('found');
         setMemberName(member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : null);
+        setMemberTier(member.tier);
+        const newDurations = getDurationOptionsForTier(member.tier);
+        if (!newDurations.includes(durationMinutes)) {
+            setDurationMinutes(newDurations[newDurations.length - 1]);
+        }
     };
 
     useEffect(() => {
         if (!memberEmail || !memberEmail.includes('@')) {
             setMemberLookupStatus('idle');
             setMemberName(null);
+            setMemberTier(null);
             return;
         }
 
@@ -3159,13 +3177,18 @@ const ManualBookingModal: React.FC<{
                     const member = await res.json();
                     setMemberLookupStatus('found');
                     setMemberName(member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : null);
+                    if (member.tier && !memberTier) {
+                        setMemberTier(member.tier);
+                    }
                 } else {
                     setMemberLookupStatus('not_found');
                     setMemberName(null);
+                    setMemberTier(null);
                 }
             } catch (err) {
                 setMemberLookupStatus('not_found');
                 setMemberName(null);
+                setMemberTier(null);
             }
         }, 500);
 
@@ -3175,6 +3198,38 @@ const ManualBookingModal: React.FC<{
             }
         };
     }, [memberEmail]);
+
+    useEffect(() => {
+        if (!memberEmail || memberLookupStatus !== 'found' || !bookingDate || !resourceId) {
+            setExistingBookingWarning(null);
+            return;
+        }
+
+        const checkExistingBookings = async () => {
+            try {
+                const selectedResource = resources.find(r => r.id === resourceId);
+                const resourceType = selectedResource?.type || 'simulator';
+                
+                const res = await fetch(`/api/bookings/check-existing?member_email=${encodeURIComponent(memberEmail)}&date=${bookingDate}&resource_type=${resourceType}`, {
+                    credentials: 'include'
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.hasExisting) {
+                        const typeLabel = resourceType === 'conference_room' ? 'conference room' : 'bay';
+                        setExistingBookingWarning(`This member already has a ${typeLabel} booking on ${bookingDate}`);
+                    } else {
+                        setExistingBookingWarning(null);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to check existing bookings:', err);
+            }
+        };
+
+        checkExistingBookings();
+    }, [memberEmail, memberLookupStatus, bookingDate, resourceId, resources]);
 
     const handleSubmit = async () => {
         if (!memberEmail || memberLookupStatus !== 'found') {
@@ -3272,8 +3327,10 @@ const ManualBookingModal: React.FC<{
                                         onClick={() => {
                                             setMemberEmail('');
                                             setMemberName(null);
+                                            setMemberTier(null);
                                             setMemberLookupStatus('idle');
                                             setSearchQuery('');
+                                            setExistingBookingWarning(null);
                                         }}
                                         className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
                                     >
@@ -3385,18 +3442,33 @@ const ManualBookingModal: React.FC<{
                             </div>
                         </div>
 
+                        {existingBookingWarning && (
+                            <div className="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg">
+                                <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-base">warning</span>
+                                    {existingBookingWarning}
+                                </p>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration *</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Duration *
+                                    {memberTier && (
+                                        <span className="ml-1 text-xs text-gray-400 dark:text-gray-500 font-normal">
+                                            ({memberTier})
+                                        </span>
+                                    )}
+                                </label>
                                 <select
                                     value={durationMinutes}
                                     onChange={(e) => setDurationMinutes(Number(e.target.value))}
                                     className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
                                 >
-                                    <option value={30}>30 minutes</option>
-                                    <option value={60}>60 minutes</option>
-                                    <option value={90}>90 minutes</option>
-                                    <option value={120}>120 minutes</option>
+                                    {availableDurations.map(d => (
+                                        <option key={d} value={d}>{d} minutes</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>

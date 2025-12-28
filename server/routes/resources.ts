@@ -21,6 +21,41 @@ router.get('/api/resources', async (req, res) => {
   }
 });
 
+router.get('/api/bookings/check-existing', isStaffOrAdmin, async (req, res) => {
+  try {
+    const { member_email, date, resource_type } = req.query;
+    
+    if (!member_email || !date || !resource_type) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    const existingBookings = await db.select({
+      id: bookings.id,
+      resourceType: resources.type
+    })
+      .from(bookings)
+      .innerJoin(resources, eq(bookings.resourceId, resources.id))
+      .where(and(
+        eq(bookings.userEmail, (member_email as string).toLowerCase()),
+        sql`${bookings.bookingDate} = ${date}`,
+        eq(resources.type, resource_type as string),
+        or(
+          eq(bookings.status, 'confirmed'),
+          eq(bookings.status, 'pending'),
+          eq(bookings.status, 'pending_approval'),
+          eq(bookings.status, 'approved')
+        )
+      ));
+    
+    res.json({ 
+      hasExisting: existingBookings.length > 0,
+      count: existingBookings.length
+    });
+  } catch (error: any) {
+    logAndRespond(req, res, 500, 'Failed to check existing bookings', error, 'CHECK_EXISTING_ERROR');
+  }
+});
+
 router.get('/api/bookings', async (req, res) => {
   try {
     const { user_email, date, resource_id, status } = req.query;
@@ -456,9 +491,9 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid booking source' });
     }
 
-    const validDurations = [30, 60, 90, 120];
+    const validDurations = [30, 60, 90];
     if (!validDurations.includes(duration_minutes)) {
-      return res.status(400).json({ error: 'Invalid duration. Must be 30, 60, 90, or 120 minutes' });
+      return res.status(400).json({ error: 'Invalid duration. Must be 30, 60, or 90 minutes' });
     }
 
     const [member] = await db.select()
@@ -475,6 +510,47 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
 
     if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
+    }
+
+    // Tier-based duration validation
+    const memberTier = (member.tier || '').toLowerCase();
+    const isPremiumTier = ['premium', 'corporate', 'vip'].some(t => memberTier.includes(t));
+    const allowedDurations = isPremiumTier ? [30, 60, 90] : [30, 60];
+    
+    if (!allowedDurations.includes(duration_minutes)) {
+      const tierName = member.tier || 'Core';
+      const maxDuration = allowedDurations[allowedDurations.length - 1];
+      return res.status(400).json({ 
+        error: 'Duration not allowed for membership tier',
+        message: `${tierName} members can only book up to ${maxDuration} minutes. Please select ${allowedDurations.join(' or ')} minutes.`
+      });
+    }
+
+    // Check for existing booking of same resource type on same day
+    const existingBookings = await db.select({
+      id: bookings.id,
+      resourceType: resources.type
+    })
+      .from(bookings)
+      .innerJoin(resources, eq(bookings.resourceId, resources.id))
+      .where(and(
+        eq(bookings.userEmail, member_email.toLowerCase()),
+        sql`${bookings.bookingDate} = ${booking_date}`,
+        eq(resources.type, resource.type),
+        or(
+          eq(bookings.status, 'confirmed'),
+          eq(bookings.status, 'pending'),
+          eq(bookings.status, 'pending_approval'),
+          eq(bookings.status, 'approved')
+        )
+      ));
+    
+    if (existingBookings.length > 0) {
+      const resourceTypeLabel = resource.type === 'conference_room' ? 'conference room' : 'bay';
+      return res.status(409).json({ 
+        error: 'Member already has a booking',
+        message: `This member already has a ${resourceTypeLabel} booking on ${booking_date}. Only one ${resourceTypeLabel} booking per day is allowed.`
+      });
     }
 
     const startParts = start_time.split(':').map(Number);
