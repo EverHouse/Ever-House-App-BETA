@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useData, Announcement } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import SwipeablePage from '../../components/SwipeablePage';
+import PullToRefresh from '../../components/PullToRefresh';
 import { MotionList, MotionListItem } from '../../components/motion';
 import { getTodayPacific } from '../../utils/dateUtils';
 
@@ -85,27 +86,33 @@ const MemberUpdates: React.FC = () => {
     setSearchParams({ tab });
   };
 
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.email) return;
+    try {
+      const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+        setUnreadCount(data.filter((n: UserNotification) => !n.is_read).length);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [user?.email]);
+
   useEffect(() => {
     if (user?.email) {
-      const fetchNotifications = async () => {
-        try {
-          const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}`);
-          if (res.ok) {
-            const data = await res.json();
-            setNotifications(data);
-            setUnreadCount(data.filter((n: UserNotification) => !n.is_read).length);
-          }
-        } catch (err) {
-          console.error('Failed to fetch notifications:', err);
-        } finally {
-          setNotificationsLoading(false);
-        }
-      };
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
     }
-  }, [user?.email]);
+  }, [user?.email, fetchNotifications]);
+
+  const handleRefresh = useCallback(async () => {
+    await fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleNotificationClick = async (notif: UserNotification) => {
     if (!notif.is_read) {
@@ -370,6 +377,7 @@ const MemberUpdates: React.FC = () => {
   );
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <SwipeablePage className="px-6 pt-2 relative min-h-screen overflow-hidden">
       <section className="mb-4 pt-2">
         <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Updates</h1>
@@ -406,6 +414,7 @@ const MemberUpdates: React.FC = () => {
 
       {activeTab === 'announcements' ? renderAnnouncementsTab() : renderActivityTab()}
     </SwipeablePage>
+    </PullToRefresh>
   );
 };
 

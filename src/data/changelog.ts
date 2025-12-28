@@ -407,5 +407,17 @@ export const changelog: ChangelogEntry[] = [
       "Book a Tour modal now opens within the safe viewing area on iOS",
       "Modal respects status bar and home indicator spacing"
     ]
+  },
+  {
+    version: "5.0",
+    date: "2025-12-28",
+    title: "Pull to Refresh",
+    isMajor: true,
+    changes: [
+      "Pull down on any member page to refresh your data",
+      "Beautiful branded green animation with animated mascot",
+      "Loading screen fluidly shrinks into status bar when complete",
+      "Data refreshes without full page reload for smoother experience"
+    ]
   }
 ];

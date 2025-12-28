@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -8,6 +8,7 @@ import { apiRequest } from '../../lib/apiRequest';
 import DateButton from '../../components/DateButton';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
+import PullToRefresh from '../../components/PullToRefresh';
 import { haptic } from '../../utils/haptics';
 import { playSound } from '../../utils/sounds';
 import { useTierPermissions } from '../../hooks/useTierPermissions';
@@ -167,124 +168,127 @@ const BookGolf: React.FC = () => {
     }
   }, [dates, selectedDateObj]);
 
-  useEffect(() => {
-    const fetchResources = async () => {
-      const { ok, data, error } = await apiRequest<APIResource[]>('/api/resources');
-      
-      if (!ok) {
-        showToast('Unable to load data. Please try again.', 'error');
-        setError(error || 'Unable to load resources');
-        return;
-      }
-      
-      const typeMap: Record<string, string> = {
-        simulator: 'simulator',
-        conference: 'conference_room'
-      };
-      
-      const filtered = data!
-        .filter(r => r.type === typeMap[activeTab])
-        .map(r => ({
-          id: `resource-${r.id}`,
-          dbId: r.id,
-          name: r.name,
-          meta: r.description || `Capacity: ${r.capacity}`,
-          badge: r.type === 'simulator' ? 'Indoor' : undefined,
-          icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
-        }));
-      
-      setResources(filtered);
+  const fetchResources = useCallback(async () => {
+    const { ok, data, error } = await apiRequest<APIResource[]>('/api/resources');
+    
+    if (!ok) {
+      showToast('Unable to load data. Please try again.', 'error');
+      setError(error || 'Unable to load resources');
+      return [];
+    }
+    
+    const typeMap: Record<string, string> = {
+      simulator: 'simulator',
+      conference: 'conference_room'
     };
     
+    const filtered = data!
+      .filter(r => r.type === typeMap[activeTab])
+      .map(r => ({
+        id: `resource-${r.id}`,
+        dbId: r.id,
+        name: r.name,
+        meta: r.description || `Capacity: ${r.capacity}`,
+        badge: r.type === 'simulator' ? 'Indoor' : undefined,
+        icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
+      }));
+    
+    setResources(filtered);
+    return filtered;
+  }, [activeTab, showToast]);
+
+  useEffect(() => {
     fetchResources();
-  }, [activeTab, effectiveUser?.email, effectiveUser?.tier, showToast]);
+  }, [fetchResources, effectiveUser?.email, effectiveUser?.tier]);
 
-  useEffect(() => {
-    const fetchAvailability = async () => {
-      if (!resources || resources.length === 0 || !selectedDateObj?.date) {
-        return;
-      }
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const allSlots: Map<string, { slot: TimeSlot; resourceIds: number[] }> = new Map();
-        
-        const results = await Promise.allSettled(resources.map(async (resource) => {
-          const { ok, data: slots } = await apiRequest<APISlot[]>(
-            `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
-          );
-          return { resource, ok, slots };
-        }));
-        
-        results.forEach((result) => {
-          if (result.status === 'fulfilled' && result.value.ok && result.value.slots) {
-            const { resource, slots } = result.value;
-            slots.forEach(slot => {
-              if (!slot.available) return;
-              
-              const key = slot.start_time;
-              
-              if (allSlots.has(key)) {
-                allSlots.get(key)!.resourceIds.push(resource.dbId);
-              } else {
-                allSlots.set(key, { 
-                  slot: {
-                    id: `slot-${slot.start_time}`,
-                    start: formatTime12(slot.start_time),
-                    end: formatTime12(slot.end_time),
-                    startTime24: slot.start_time,
-                    endTime24: slot.end_time,
-                    label: `${formatTime12(slot.start_time)} – ${formatTime12(slot.end_time)}`,
-                    available: true,
-                    availableResourceDbIds: []
-                  }, 
-                  resourceIds: [resource.dbId] 
-                });
-              }
-            });
-          } else if (result.status === 'rejected') {
-            console.error('[BookGolf] Availability API failed:', result.reason);
-          }
-        });
-        
-        const sortedSlots = Array.from(allSlots.values())
-          .map(({ slot, resourceIds }) => ({
-            ...slot,
-            availableResourceDbIds: resourceIds
-          }))
-          .sort((a, b) => a.startTime24.localeCompare(b.startTime24));
-        
-        setAvailableSlots(sortedSlots);
-      } catch (err) {
-        console.error('[BookGolf] Error fetching availability:', err);
-        showToast('Unable to load data. Please try again.', 'error');
-        setError('Unable to load availability');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchAvailability = useCallback(async (resourceList?: Resource[]) => {
+    const resourcesToUse = resourceList || resources;
+    if (!resourcesToUse || resourcesToUse.length === 0 || !selectedDateObj?.date) {
+      return;
+    }
     
-    fetchAvailability();
-  }, [resources, selectedDateObj, duration, effectiveUser?.email, effectiveUser?.tier]);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const allSlots: Map<string, { slot: TimeSlot; resourceIds: number[] }> = new Map();
+      
+      const results = await Promise.allSettled(resourcesToUse.map(async (resource) => {
+        const { ok, data: slots } = await apiRequest<APISlot[]>(
+          `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
+        );
+        return { resource, ok, slots };
+      }));
+      
+      results.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value.ok && result.value.slots) {
+          const { resource, slots } = result.value;
+          slots.forEach(slot => {
+            if (!slot.available) return;
+            
+            const key = slot.start_time;
+            
+            if (allSlots.has(key)) {
+              allSlots.get(key)!.resourceIds.push(resource.dbId);
+            } else {
+              allSlots.set(key, { 
+                slot: {
+                  id: `slot-${slot.start_time}`,
+                  start: formatTime12(slot.start_time),
+                  end: formatTime12(slot.end_time),
+                  startTime24: slot.start_time,
+                  endTime24: slot.end_time,
+                  label: `${formatTime12(slot.start_time)} – ${formatTime12(slot.end_time)}`,
+                  available: true,
+                  availableResourceDbIds: []
+                }, 
+                resourceIds: [resource.dbId] 
+              });
+            }
+          });
+        } else if (result.status === 'rejected') {
+          console.error('[BookGolf] Availability API failed:', result.reason);
+        }
+      });
+      
+      const sortedSlots = Array.from(allSlots.values())
+        .map(({ slot, resourceIds }) => ({
+          ...slot,
+          availableResourceDbIds: resourceIds
+        }))
+        .sort((a, b) => a.startTime24.localeCompare(b.startTime24));
+      
+      setAvailableSlots(sortedSlots);
+    } catch (err) {
+      console.error('[BookGolf] Error fetching availability:', err);
+      showToast('Unable to load data. Please try again.', 'error');
+      setError('Unable to load availability');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [resources, selectedDateObj, duration, showToast]);
 
   useEffect(() => {
-    const fetchMyRequests = async () => {
-      if (!effectiveUser?.email) return;
-      try {
-        const { ok, data } = await apiRequest<BookingRequest[]>(
-          `/api/booking-requests?user_email=${encodeURIComponent(effectiveUser.email)}`
-        );
-        if (ok && data) {
-          setMyRequests(data);
-        }
-      } catch (err) {
-        console.error('[BookGolf] Failed to fetch booking requests:', err);
+    fetchAvailability();
+  }, [fetchAvailability, effectiveUser?.email, effectiveUser?.tier]);
+
+  const fetchMyRequests = useCallback(async () => {
+    if (!effectiveUser?.email) return;
+    try {
+      const { ok, data } = await apiRequest<BookingRequest[]>(
+        `/api/booking-requests?user_email=${encodeURIComponent(effectiveUser.email)}`
+      );
+      if (ok && data) {
+        setMyRequests(data);
       }
-    };
+    } catch (err) {
+      console.error('[BookGolf] Failed to fetch booking requests:', err);
+    }
+  }, [effectiveUser?.email]);
+
+  useEffect(() => {
     fetchMyRequests();
-  }, [effectiveUser?.email, showConfirmation]);
+  }, [fetchMyRequests, showConfirmation]);
 
   const handleCancelRequest = async (id: number) => {
     haptic.light();
@@ -389,7 +393,18 @@ const BookGolf: React.FC = () => {
 
   const canBook = Boolean(selectedDateObj && duration && selectedSlot && selectedResource && !isBooking && activeTab !== 'my-requests');
 
+  const handleRefresh = useCallback(async () => {
+    setSelectedSlot(null);
+    setSelectedResource(null);
+    const newResources = await fetchResources();
+    await Promise.all([
+      fetchAvailability(newResources),
+      fetchMyRequests()
+    ]);
+  }, [fetchResources, fetchAvailability, fetchMyRequests]);
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <SwipeablePage className="px-6 pt-4 relative min-h-screen">
       <section className="mb-6 pt-2">
         <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Book</h1>
@@ -729,6 +744,7 @@ const BookGolf: React.FC = () => {
         </div>
       )}
     </SwipeablePage>
+    </PullToRefresh>
   );
 };
 

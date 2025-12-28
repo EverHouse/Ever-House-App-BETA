@@ -7,6 +7,7 @@ import { apiRequest } from '../../lib/apiRequest';
 import { EventCardSkeleton, SkeletonList } from '../../components/skeletons';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
+import PullToRefresh from '../../components/PullToRefresh';
 import { MotionList, MotionListItem } from '../../components/motion';
 import { EmptyEvents } from '../../components/EmptyState';
 import { downloadICalFile } from '../../utils/icalUtils';
@@ -165,7 +166,12 @@ const MemberEvents: React.FC = () => {
     setPendingEvent(null);
   };
 
+  const handleRefresh = useCallback(async () => {
+    await fetchUserRsvps();
+  }, [fetchUserRsvps]);
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <SwipeablePage className="px-6 pt-2 relative min-h-screen overflow-hidden">
       <section className="mb-4 pt-2">
         <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Events</h1>
@@ -337,6 +343,7 @@ const MemberEvents: React.FC = () => {
         </div>
       )}
     </SwipeablePage>
+    </PullToRefresh>
   );
 };
 

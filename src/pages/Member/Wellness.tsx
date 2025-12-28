@@ -7,6 +7,7 @@ import { useToast } from '../../components/Toast';
 import { apiRequest } from '../../lib/apiRequest';
 import TabButton from '../../components/TabButton';
 import SwipeablePage from '../../components/SwipeablePage';
+import PullToRefresh from '../../components/PullToRefresh';
 import { MotionList, MotionListItem } from '../../components/motion';
 import { EmptyEvents } from '../../components/EmptyState';
 import { playSound } from '../../utils/sounds';
@@ -110,7 +111,25 @@ const Wellness: React.FC = () => {
     }
   };
 
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshPromiseResolve, setRefreshPromiseResolve] = useState<(() => void) | null>(null);
+
+  const handleRefresh = useCallback(async () => {
+    return new Promise<void>((resolve) => {
+      setRefreshPromiseResolve(() => resolve);
+      setRefreshKey(k => k + 1);
+    });
+  }, []);
+
+  const onRefreshComplete = useCallback(() => {
+    if (refreshPromiseResolve) {
+      refreshPromiseResolve();
+      setRefreshPromiseResolve(null);
+    }
+  }, [refreshPromiseResolve]);
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <SwipeablePage className="px-6 pt-2 relative min-h-screen overflow-hidden">
       <section className="mb-4 pt-2">
         <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Wellness</h1>
@@ -125,7 +144,7 @@ const Wellness: React.FC = () => {
       </section>
 
       <div className="relative z-10">
-        {activeTab === 'classes' && <ClassesView onBook={handleBook} isDark={isDark} userEmail={user?.email} />}
+        {activeTab === 'classes' && <ClassesView onBook={handleBook} isDark={isDark} userEmail={user?.email} refreshKey={refreshKey} onRefreshComplete={onRefreshComplete} />}
         {activeTab === 'medspa' && <MedSpaView isDark={isDark} />}
       </div>
 
@@ -141,10 +160,11 @@ const Wellness: React.FC = () => {
       )}
 
     </SwipeablePage>
+    </PullToRefresh>
   );
 };
 
-const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: boolean; userEmail?: string}> = ({ onBook, isDark = true, userEmail }) => {
+const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: boolean; userEmail?: string; refreshKey?: number; onRefreshComplete?: () => void}> = ({ onBook, isDark = true, userEmail, refreshKey = 0, onRefreshComplete }) => {
   const { showToast } = useToast();
   const { setPageReady } = usePageReady();
   const [selectedFilter, setSelectedFilter] = useState('All');
@@ -216,12 +236,14 @@ const ClassesView: React.FC<{onBook: (cls: WellnessClass) => void; isDark?: bool
   }, [enrollments]);
 
   useEffect(() => {
-    fetchClasses();
-  }, [fetchClasses]);
-
-  useEffect(() => {
-    fetchEnrollments();
-  }, [fetchEnrollments]);
+    const loadData = async () => {
+      await Promise.all([fetchClasses(), fetchEnrollments()]);
+      if (refreshKey > 0 && onRefreshComplete) {
+        onRefreshComplete();
+      }
+    };
+    loadData();
+  }, [fetchClasses, fetchEnrollments, refreshKey, onRefreshComplete]);
 
   useEffect(() => {
     if (!isLoading) {
