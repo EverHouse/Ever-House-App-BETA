@@ -670,18 +670,22 @@ html.dark .text-accent-accessible {
 @keyframes pageEnter {
   0% {
     opacity: 0;
+    transform: scale(0.995);
   }
   100% {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
 .animate-page-enter {
-  animation: pageEnter 0.15s ease-out forwards;
+  opacity: 0;
+  animation: pageEnter 0.12s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 .page-fade-in {
-  animation: pageEnter 0.2s ease-out forwards;
+  opacity: 0;
+  animation: pageEnter 0.12s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 /* Page Content Animation - Staggered fade for page elements (no vertical offset) */
