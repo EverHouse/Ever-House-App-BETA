@@ -43,7 +43,10 @@ The application is built with a React 19 frontend utilizing Vite, styled with Ta
 - **Real-Time Booking**: Database-backed booking with shared availability, duration-aware slot generation, and collision detection.
 - **PWA Features**: Service Worker caching, safe area support, overscroll prevention, offline support, and a scroll-aware bottom navigation that interacts with Safari's toolbar.
 - **Motion Architecture**: Pure CSS keyframe animations for transitions, staggered content animations, and reusable components for animated lists.
-- **Pacific Timezone Handling**: All date/time operations use America/Los_Angeles timezone for consistency with club operations. Frontend uses `src/utils/dateUtils.ts` utilities (getTodayPacific, getPacificHour, addDaysToPacificDate) that leverage Intl.DateTimeFormat for timezone-safe operations. Date filtering uses YYYY-MM-DD string comparison to avoid timezone drift for users in non-Pacific timezones.
+- **Pacific Timezone Handling**: All date/time operations use America/Los_Angeles timezone for consistency with club operations.
+  - Backend: `server/utils/dateUtils.ts` provides createPacificDate() for storage, formatDateDisplayWithDay()/formatDatePacific() for display, and getTodayPacific()/getTomorrowPacific() for filtering. DST is handled correctly by computing the Pacific offset based on the target date.
+  - Frontend: `src/utils/dateUtils.ts` uses Zeller's algorithm for timezone-agnostic day-of-week calculation and direct string parsing for month/day display (no Date object creation that could shift dates).
+  - Date filtering uses YYYY-MM-DD string comparison with getTodayPacific() to avoid timezone drift for users in non-Pacific timezones.
 
 ### Feature Specifications
 - **Public Pages**: Landing, Login, Contact, FAQ, Gallery, Membership details, Cafe Menu.
