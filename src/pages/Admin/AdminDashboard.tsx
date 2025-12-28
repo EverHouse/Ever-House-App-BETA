@@ -3117,6 +3117,7 @@ const SimulatorAdmin: React.FC = () => {
                                                 const res = await fetch(`/api/booking-requests/${selectedCalendarBooking.id}`, {
                                                     method: 'PUT',
                                                     headers: { 'Content-Type': 'application/json' },
+                                                    credentials: 'include',
                                                     body: JSON.stringify({
                                                         status: 'cancelled',
                                                         staff_notes: 'Cancelled from calendar view',
