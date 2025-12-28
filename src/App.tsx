@@ -22,6 +22,7 @@ import { NavigationLoadingProvider, useNavigationLoading } from './contexts/Navi
 import { PageReadyProvider } from './contexts/PageReadyContext';
 import WalkingGolferLoader from './components/WalkingGolferLoader';
 import NavigationLoader from './components/NavigationLoader';
+import { useNotificationSounds } from './hooks/useNotificationSounds';
 
 const INITIAL_LOAD_SAFETY_TIMEOUT_MS = 2000;
 
@@ -334,6 +335,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { announcements, user, actualUser, isViewingAs } = useData();
   const { effectiveTheme } = useTheme();
   const { endNavigation } = useNavigationLoading();
+  const { processNotifications } = useNotificationSounds(false, user?.email);
   
   // End navigation loading when route changes
   useEffect(() => {
@@ -354,6 +356,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           if (res.ok) {
             const data = await res.json();
             setUnreadCount(data.length);
+            processNotifications(data);
           }
         } catch (err) {
           console.error('Failed to fetch notifications:', err);
@@ -371,7 +374,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         window.removeEventListener('notifications-read', handleNotificationsRead);
       };
     }
-  }, [user?.email]);
+  }, [user?.email, processNotifications]);
   
   useDebugLayout();
 

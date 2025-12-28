@@ -22,6 +22,7 @@ import { changelog } from '../../data/changelog';
 import { useToast } from '../../components/Toast';
 import { APP_VERSION, formatLastUpdated } from '../../config/version';
 import Avatar from '../../components/Avatar';
+import { useNotificationSounds } from '../../hooks/useNotificationSounds';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -1242,6 +1243,7 @@ const StaffUpdatesAdmin: React.FC = () => {
     const [notifications, setNotifications] = useState<StaffNotification[]>([]);
     const [notificationsLoading, setNotificationsLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
+    const { processNotifications } = useNotificationSounds(true, actualUser?.email);
 
     useEffect(() => {
         if (!notificationsLoading) {
@@ -1257,13 +1259,14 @@ const StaffUpdatesAdmin: React.FC = () => {
                 const data = await res.json();
                 setNotifications(data);
                 setUnreadCount(data.filter((n: StaffNotification) => !n.is_read).length);
+                processNotifications(data);
             }
         } catch (err) {
             console.error('Failed to fetch notifications:', err);
         } finally {
             setNotificationsLoading(false);
         }
-    }, [actualUser?.email]);
+    }, [actualUser?.email, processNotifications]);
 
     useEffect(() => {
         if (actualUser?.email) {

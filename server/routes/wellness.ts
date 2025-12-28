@@ -4,7 +4,7 @@ import { isStaffOrAdmin } from '../core/middleware';
 import { syncWellnessCalendarEvents, discoverCalendarIds, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { db } from '../db';
 import { wellnessEnrollments, wellnessClasses, users, notifications } from '../../shared/schema';
-import { notifyAllStaff } from '../core/staffNotifications';
+import { notifyAllStaffRequired, notifyMemberRequired } from '../core/staffNotifications';
 import { eq, and, gte, sql, isNull, asc, desc } from 'drizzle-orm';
 import { sendPushNotification } from './push';
 import { formatDateDisplayWithDay } from '../utils/dateUtils';
@@ -378,14 +378,6 @@ router.post('/api/wellness-enrollments', async (req, res) => {
       return res.status(409).json({ error: 'Already enrolled in this class' });
     }
     
-    const result = await db.insert(wellnessEnrollments)
-      .values({
-        classId: class_id,
-        userEmail: user_email,
-        status: 'confirmed'
-      })
-      .returning();
-    
     const classData = await db.select({
       title: wellnessClasses.title,
       date: wellnessClasses.date,
@@ -393,41 +385,55 @@ router.post('/api/wellness-enrollments', async (req, res) => {
       instructor: wellnessClasses.instructor
     }).from(wellnessClasses).where(eq(wellnessClasses.id, class_id));
     
-    if (classData.length > 0) {
-      const cls = classData[0];
-      const formattedDate = formatDateDisplayWithDay(cls.date);
-      const message = `You're enrolled in ${cls.title} with ${cls.instructor} on ${formattedDate} at ${cls.time}.`;
+    if (classData.length === 0) {
+      return res.status(404).json({ error: 'Wellness class not found' });
+    }
+    
+    const cls = classData[0];
+    const formattedDate = formatDateDisplayWithDay(cls.date);
+    const memberMessage = `You're enrolled in ${cls.title} with ${cls.instructor} on ${formattedDate} at ${cls.time}.`;
+    const memberName = user_email.split('@')[0];
+    const staffMessage = `${memberName} enrolled in ${cls.title} on ${formattedDate}`;
+    
+    const result = await db.transaction(async (tx) => {
+      const enrollmentResult = await tx.insert(wellnessEnrollments)
+        .values({
+          classId: class_id,
+          userEmail: user_email,
+          status: 'confirmed'
+        })
+        .returning();
       
-      await db.insert(notifications).values({
+      await tx.insert(notifications).values({
         userEmail: user_email,
         title: 'Wellness Class Confirmed',
-        message: message,
+        message: memberMessage,
         type: 'wellness_booking',
         relatedId: class_id,
         relatedType: 'wellness_class'
       });
       
-      sendPushNotification(user_email, {
-        title: 'Class Booked!',
-        body: message,
-        url: '/#/member-wellness'
-      }).catch(err => console.error('Push notification failed:', err));
-      
-      const memberName = user_email.split('@')[0];
-      const staffMessage = `${memberName} enrolled in ${cls.title} on ${formattedDate}`;
-      notifyAllStaff(
+      await notifyAllStaffRequired(
         'New Wellness Enrollment',
         staffMessage,
         'wellness_enrollment',
         class_id,
         'wellness_class'
-      ).catch(err => console.error('Staff enrollment notification failed:', err));
-    }
+      );
+      
+      return enrollmentResult[0];
+    });
     
-    res.status(201).json(result[0]);
+    sendPushNotification(user_email, {
+      title: 'Class Booked!',
+      body: memberMessage,
+      url: '/#/member-wellness'
+    }).catch(err => console.error('Push notification failed:', err));
+    
+    res.status(201).json(result);
   } catch (error: any) {
     if (!isProduction) console.error('Wellness enrollment error:', error);
-    res.status(500).json({ error: 'Failed to enroll in class' });
+    res.status(500).json({ error: 'Failed to enroll in class. Staff notification is required.' });
   }
 });
 
@@ -440,32 +446,36 @@ router.delete('/api/wellness-enrollments/:class_id/:user_email', async (req, res
       date: wellnessClasses.date,
     }).from(wellnessClasses).where(eq(wellnessClasses.id, parseInt(class_id)));
     
-    await db.update(wellnessEnrollments)
-      .set({ status: 'cancelled' })
-      .where(and(
-        eq(wellnessEnrollments.classId, parseInt(class_id)),
-        eq(wellnessEnrollments.userEmail, user_email)
-      ));
+    if (classData.length === 0) {
+      return res.status(404).json({ error: 'Wellness class not found' });
+    }
     
-    if (classData.length > 0) {
-      const cls = classData[0];
-      const formattedDate = formatDateDisplayWithDay(cls.date);
-      const memberName = user_email.split('@')[0];
-      const staffMessage = `${memberName} cancelled their enrollment for ${cls.title} on ${formattedDate}`;
+    const cls = classData[0];
+    const formattedDate = formatDateDisplayWithDay(cls.date);
+    const memberName = user_email.split('@')[0];
+    const staffMessage = `${memberName} cancelled their enrollment for ${cls.title} on ${formattedDate}`;
+    
+    await db.transaction(async (tx) => {
+      await tx.update(wellnessEnrollments)
+        .set({ status: 'cancelled' })
+        .where(and(
+          eq(wellnessEnrollments.classId, parseInt(class_id)),
+          eq(wellnessEnrollments.userEmail, user_email)
+        ));
       
-      notifyAllStaff(
+      await notifyAllStaffRequired(
         'Wellness Enrollment Cancelled',
         staffMessage,
         'wellness_cancellation',
         parseInt(class_id),
         'wellness_class'
-      ).catch(err => console.error('Staff cancellation notification failed:', err));
-    }
+      );
+    });
     
     res.json({ success: true });
   } catch (error: any) {
     if (!isProduction) console.error('Wellness enrollment cancellation error:', error);
-    res.status(500).json({ error: 'Failed to cancel enrollment' });
+    res.status(500).json({ error: 'Failed to cancel enrollment. Staff notification is required.' });
   }
 });
 

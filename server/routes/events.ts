@@ -6,7 +6,7 @@ import { events, eventRsvps, users, notifications } from '../../shared/schema';
 import { eq, and, sql, gte, desc } from 'drizzle-orm';
 import { syncGoogleCalendarEvents, syncWellnessCalendarEvents, backfillWellnessToCalendar, getCalendarIdByName, createCalendarEventOnCalendar, deleteCalendarEvent, updateCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { sendPushNotification } from './push';
-import { notifyAllStaff } from '../core/staffNotifications';
+import { notifyAllStaffRequired, notifyMemberRequired } from '../core/staffNotifications';
 import { createPacificDate, parseLocalDate, formatDateDisplayWithDay } from '../utils/dateUtils';
 
 const router = Router();
@@ -462,14 +462,6 @@ router.post('/api/rsvps', async (req, res) => {
   try {
     const { event_id, user_email } = req.body;
     
-    const result = await db.insert(eventRsvps).values({
-      eventId: event_id,
-      userEmail: user_email,
-    }).onConflictDoUpdate({
-      target: [eventRsvps.eventId, eventRsvps.userEmail],
-      set: { status: 'confirmed' },
-    }).returning();
-    
     const eventData = await db.select({
       title: events.title,
       eventDate: events.eventDate,
@@ -477,46 +469,56 @@ router.post('/api/rsvps', async (req, res) => {
       location: events.location
     }).from(events).where(eq(events.id, event_id));
     
-    try {
-      if (eventData.length > 0) {
-        const evt = eventData[0];
-        const formattedDate = formatDateDisplayWithDay(evt.eventDate);
-        const formattedTime = evt.startTime?.substring(0, 5) || '';
-        const message = `You're confirmed for ${evt.title} on ${formattedDate}${formattedTime ? ` at ${formattedTime}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`;
-        
-        await db.insert(notifications).values({
-          userEmail: user_email,
-          title: 'Event RSVP Confirmed',
-          message: message,
-          type: 'event_rsvp',
-          relatedId: event_id,
-          relatedType: 'event'
-        });
-        
-        sendPushNotification(user_email, {
-          title: 'RSVP Confirmed!',
-          body: message,
-          url: '/#/member-events'
-        }).catch(err => console.error('Push notification failed:', err));
-        
-        const memberName = user_email.split('@')[0];
-        const staffMessage = `${memberName} RSVP'd for ${evt.title} on ${formattedDate}`;
-        notifyAllStaff(
-          'New Event RSVP',
-          staffMessage,
-          'event_rsvp',
-          event_id,
-          'event'
-        ).catch(err => console.error('Staff RSVP notification failed:', err));
-      }
-    } catch (notifyErr) {
-      console.error('Non-blocking notification error:', notifyErr);
+    if (eventData.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
     }
     
-    res.status(201).json(result[0]);
+    const evt = eventData[0];
+    const formattedDate = formatDateDisplayWithDay(evt.eventDate);
+    const formattedTime = evt.startTime?.substring(0, 5) || '';
+    const memberMessage = `You're confirmed for ${evt.title} on ${formattedDate}${formattedTime ? ` at ${formattedTime}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`;
+    const memberName = user_email.split('@')[0];
+    const staffMessage = `${memberName} RSVP'd for ${evt.title} on ${formattedDate}`;
+    
+    const result = await db.transaction(async (tx) => {
+      const rsvpResult = await tx.insert(eventRsvps).values({
+        eventId: event_id,
+        userEmail: user_email,
+      }).onConflictDoUpdate({
+        target: [eventRsvps.eventId, eventRsvps.userEmail],
+        set: { status: 'confirmed' },
+      }).returning();
+      
+      await tx.insert(notifications).values({
+        userEmail: user_email,
+        title: 'Event RSVP Confirmed',
+        message: memberMessage,
+        type: 'event_rsvp',
+        relatedId: event_id,
+        relatedType: 'event'
+      });
+      
+      await notifyAllStaffRequired(
+        'New Event RSVP',
+        staffMessage,
+        'event_rsvp',
+        event_id,
+        'event'
+      );
+      
+      return rsvpResult[0];
+    });
+    
+    sendPushNotification(user_email, {
+      title: 'RSVP Confirmed!',
+      body: memberMessage,
+      url: '/#/member-events'
+    }).catch(err => console.error('Push notification failed:', err));
+    
+    res.status(201).json(result);
   } catch (error: any) {
-    if (!isProduction) console.error('Booking creation error:', error);
-    res.status(500).json({ error: 'Failed to create booking' });
+    if (!isProduction) console.error('RSVP creation error:', error);
+    res.status(500).json({ error: 'Failed to create RSVP. Staff notification is required.' });
   }
 });
 
@@ -529,32 +531,36 @@ router.delete('/api/rsvps/:event_id/:user_email', async (req, res) => {
       eventDate: events.eventDate,
     }).from(events).where(eq(events.id, parseInt(event_id)));
     
-    await db.update(eventRsvps)
-      .set({ status: 'cancelled' })
-      .where(and(
-        eq(eventRsvps.eventId, parseInt(event_id)),
-        eq(eventRsvps.userEmail, user_email)
-      ));
+    if (eventData.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
     
-    if (eventData.length > 0) {
-      const evt = eventData[0];
-      const formattedDate = formatDateDisplayWithDay(evt.eventDate);
-      const memberName = user_email.split('@')[0];
-      const staffMessage = `${memberName} cancelled their RSVP for ${evt.title} on ${formattedDate}`;
+    const evt = eventData[0];
+    const formattedDate = formatDateDisplayWithDay(evt.eventDate);
+    const memberName = user_email.split('@')[0];
+    const staffMessage = `${memberName} cancelled their RSVP for ${evt.title} on ${formattedDate}`;
+    
+    await db.transaction(async (tx) => {
+      await tx.update(eventRsvps)
+        .set({ status: 'cancelled' })
+        .where(and(
+          eq(eventRsvps.eventId, parseInt(event_id)),
+          eq(eventRsvps.userEmail, user_email)
+        ));
       
-      notifyAllStaff(
+      await notifyAllStaffRequired(
         'Event RSVP Cancelled',
         staffMessage,
         'event_rsvp_cancelled',
         parseInt(event_id),
         'event'
-      ).catch(err => console.error('Staff cancellation notification failed:', err));
-    }
+      );
+    });
     
     res.json({ success: true });
   } catch (error: any) {
-    if (!isProduction) console.error('API error:', error);
-    res.status(500).json({ error: 'Request failed' });
+    if (!isProduction) console.error('RSVP cancellation error:', error);
+    res.status(500).json({ error: 'Failed to cancel RSVP. Staff notification is required.' });
   }
 });
 
