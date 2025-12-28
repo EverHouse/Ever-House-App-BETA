@@ -12,8 +12,8 @@ router.get('/api/availability', async (req, res) => {
     }
     
     const durationMinutes = parseInt(duration as string) || 60;
-    // Slot increment matches duration: 30, 60, or 90 minutes
-    const slotIncrement = durationMinutes;
+    // Fixed 5-minute increment for more flexible start times
+    const slotIncrement = 5;
     
     // Get resource type to determine business hours
     const resourceResult = await pool.query(
