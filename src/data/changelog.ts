@@ -10,99 +10,98 @@ export const changelog: ChangelogEntry[] = [
   {
     version: "1.0",
     date: "2025-12-16",
-    title: "Foundation",
+    title: "Launch Day",
     isMajor: true,
     changes: [
-      "React 19 + Vite frontend with Tailwind CSS",
-      "Express.js backend with PostgreSQL database",
-      "HubSpot CRM integration for member management",
-      "Member profile and private events pages",
-      "Custom logo and branding system"
+      "The app is live! Built from the ground up for Even House members",
+      "Connected to HubSpot so your membership info stays in sync",
+      "Your profile page and private events are ready to explore",
+      "Fresh branding with custom logos throughout"
     ]
   },
   {
     version: "1.1",
     date: "2025-12-17",
-    title: "Design System & Branding",
+    title: "New Look & Feel",
     changes: [
-      "Dynamic logo component (auto-adjusts for light/dark backgrounds)",
-      "Consistent fonts: Playfair Display (headlines), Inter (body)",
-      "Material Symbols icon system",
-      "Brand color palette (Deep Green, Lavender, Bone)"
+      "Logo now adjusts automatically for light and dark backgrounds",
+      "Beautiful new fonts: elegant headlines and easy-to-read body text",
+      "Consistent icons throughout the app",
+      "Brand colors refined: Deep Green, Lavender, and Bone"
     ]
   },
   {
     version: "1.2",
     date: "2025-12-18",
-    title: "Real-Time Booking System",
+    title: "Book Your Bay",
     changes: [
-      "Database-backed booking with conflict detection",
-      "Real-time availability from Google Calendar",
-      "Duration-aware slot generation",
-      "Accessibility improvements"
+      "Bay booking is here — see real-time availability and reserve your spot",
+      "Syncs with Google Calendar so staff always know what's booked",
+      "Choose your session length and only see times that actually work",
+      "Easier to use for everyone, including screen reader users"
     ]
   },
   {
     version: "1.3",
     date: "2025-12-18",
-    title: "Mobile Experience",
+    title: "Better on Your Phone",
     changes: [
-      "Haptic feedback for touch interactions",
-      "Responsive layouts for iPhone, iPad, Desktop",
-      "Image logos replacing text throughout"
+      "Subtle vibrations when you tap buttons (feels more responsive)",
+      "Looks great on iPhone, iPad, and desktop",
+      "Replaced text labels with cleaner logo icons"
     ]
   },
   {
     version: "1.4",
     date: "2025-12-19",
-    title: "Tiered Membership System",
+    title: "Membership Tiers",
     changes: [
-      "Membership tiers (Social, Core, Premium, Corporate, VIP)",
-      "Guest pass system with atomic consumption",
-      "Tier-based booking limits and restrictions"
+      "Introduced membership levels: Social, Core, Premium, Corporate, and VIP",
+      "Guest passes now work seamlessly — use one and it's deducted automatically",
+      "Booking limits and perks adjust based on your membership tier"
     ]
   },
   {
     version: "1.5",
     date: "2025-12-19",
-    title: "Forms & Inquiries",
+    title: "Easy Inquiries",
     changes: [
-      "Tour request, membership inquiry, private hire forms",
-      "HubSpot Forms integration with local storage backup",
-      "Inquiry admin panel with filtering and notes"
+      "Request a tour, ask about membership, or inquire about private events",
+      "Your form submissions are saved even if you lose connection",
+      "Staff can now view and manage all inquiries in one place"
     ]
   },
   {
     version: "2.0",
     date: "2025-12-20",
-    title: "Staff Portal & PWA",
+    title: "Staff Portal & Install as App",
     isMajor: true,
     changes: [
-      "Staff Portal with 5-tab navigation",
-      "Admin dashboard with quick access cards",
-      "PWA support (installable, offline-capable)",
-      "Service worker caching strategy",
-      "Safe area support for iPhone notches"
+      "New Staff Portal with easy navigation for managing the club",
+      "Quick-access dashboard for staff to jump to common tasks",
+      "Install the app on your phone's home screen — works like a native app",
+      "Pages load faster, even on slow connections",
+      "Works properly on iPhones with the notch"
     ]
   },
   {
     version: "2.1",
     date: "2025-12-21",
-    title: "Security & Stability",
+    title: "Easier & Safer Login",
     changes: [
-      "Verification code authentication (email-based, passwordless)",
-      "Sessions stored in PostgreSQL",
-      "Vite security update",
-      "Network access restrictions"
+      "Log in with a code sent to your email — no password to remember",
+      "Your login stays active more reliably between visits",
+      "Security improvements under the hood",
+      "Tighter access controls for sensitive features"
     ]
   },
   {
     version: "2.2",
     date: "2025-12-22",
-    title: "Google Calendar Sync",
+    title: "Calendar Sync",
     changes: [
-      "Four-calendar integration (Golf, Conference, Events, Wellness)",
-      "Two-way sync for bookings"
+      "Bookings now sync to four calendars: Golf Bays, Conference Room, Events, and Wellness",
+      "Changes you make here show up in Google Calendar and vice versa"
     ]
   },
   {
@@ -110,206 +109,200 @@ export const changelog: ChangelogEntry[] = [
     date: "2025-12-23",
     title: "Facility Closures",
     changes: [
-      "Closure management in admin panel",
-      "Auto-generated announcements for closures",
-      "Calendar sync for closures (both Golf and Conference calendars)",
-      "Staff calendar shows red 'CLOSED' blocks"
+      "Staff can now mark facilities as closed for maintenance or holidays",
+      "Members automatically see closure announcements",
+      "Closures appear on all relevant calendars",
+      "Staff calendar shows clear red 'CLOSED' blocks"
     ]
   },
   {
     version: "2.4",
     date: "2025-12-24",
-    title: "Booking Request Workflow",
+    title: "Booking Requests",
     changes: [
-      "Request & Hold system with staff approval",
-      "Cancellation with notifications and calendar cleanup",
-      "Conflict detection (prevents approving over closures)",
-      "'My Requests' tab for members"
+      "Request a booking and staff will approve it — no more double-bookings",
+      "Get notified when your request is approved or declined",
+      "System prevents approving bookings over closures",
+      "New 'My Requests' tab so you can track your pending bookings"
     ]
   },
   {
     version: "2.5",
     date: "2025-12-25",
-    title: "Notifications",
+    title: "Stay in the Loop",
     changes: [
-      "In-app real-time notification system",
-      "Staff notifications for new booking requests",
-      "Push notification support"
+      "In-app notifications keep you updated in real time",
+      "Staff get alerted when new booking requests come in",
+      "Push notifications available if you want them on your phone"
     ]
   },
   {
     version: "2.6",
     date: "2025-12-25",
-    title: "Member Data Sync",
+    title: "Your Info, Always Current",
     changes: [
-      "Membership tier synced on login",
-      "Membership start date tracking",
-      "Mindbody/Trackman CSV import"
+      "Your membership tier updates automatically when you log in",
+      "We now track when your membership started",
+      "Staff can import member data from Mindbody and Trackman"
     ]
   },
   {
     version: "2.7",
     date: "2025-12-25",
-    title: "Polish & UX",
+    title: "Smoother Experience",
     changes: [
-      "Status bar matches brand green",
-      "Closure announcements visible immediately",
-      "Landing page header transparency effects",
-      "Virtual membership cards with benefits modal",
-      "Black logo variant for light backgrounds",
-      "Race condition fix for concurrent user creation",
-      "Add-to-homescreen modal improvements",
-      "Liquid glass effect on membership button",
-      "Image optimization (WebP conversion)",
-      "Booking validation for cancellations"
+      "The top of your screen now matches the Even House green",
+      "Closure notices appear right away — no refresh needed",
+      "Landing page header fades in beautifully as you scroll",
+      "New virtual membership card you can show at check-in",
+      "Logo looks crisp on light backgrounds too",
+      "Fixed a rare issue where two people signing up at once could cause problems",
+      "Improved 'Add to Home Screen' prompts",
+      "Subtle glass effect on the membership button",
+      "Images load faster (optimized for the web)",
+      "Better checks before canceling a booking"
     ]
   },
   {
     version: "2.8",
     date: "2025-12-26",
-    title: "Admin Changelog",
+    title: "Version History",
     changes: [
-      "Admin-only changelog page showing version history",
-      "Versioned updates with timestamps"
+      "Staff can now see a full history of app updates",
+      "Each update shows when it happened and what changed"
     ]
   },
   {
     version: "2.9",
     date: "2025-12-26",
-    title: "Booking System Refinements",
+    title: "Booking Improvements",
     changes: [
-      "Updated to use correct API endpoints for booking page prefetch",
-      "Booking requests now succeed even if notifications fail (non-blocking)",
-      "Fixed notification creation errors for closure events",
-      "Improved booking request notification delivery to staff",
-      "Limit 90-minute duration option to Premium+ tiers",
-      "Updated club timezone to Pacific (America/Los_Angeles) for accurate time filtering",
-      "Adjusted time slot availability to account for Pacific timezone",
-      "Filter out unavailable time slots for same-day bookings",
-      "Removed past booking times from availability choices",
-      "Adjusted booking date picker to exclude current day from advance booking limits"
+      "Booking pages load faster",
+      "Your booking goes through even if there's a hiccup sending the confirmation",
+      "Fixed an issue with closure-related notifications",
+      "Staff get booking request alerts more reliably",
+      "90-minute sessions now limited to Premium members and above",
+      "All times display correctly for California (Pacific timezone)",
+      "Same-day bookings only show times that are still available",
+      "Past times no longer appear when booking",
+      "Date picker now correctly shows which days you can book"
     ]
   },
   {
     version: "3.0",
     date: "2025-12-26",
-    title: "UI/UX Polish & Visual Consistency",
+    title: "Visual Polish",
     changes: [
-      "Standardized class creation button height to match sync button (min-h-[60px])",
-      "Improved button styling for consistent visual appearance across all sections",
-      "Aligned wellness administration buttons with event button styling",
-      "Made wellness class action buttons consistent with event buttons",
-      "Increased external service icons on admin dashboard (sync, integration buttons)",
-      "Made event sync icons larger to fill button space",
-      "Made integration/connector icons larger for better visual prominence"
+      "Buttons throughout the app now have consistent sizing",
+      "Staff dashboard buttons look cleaner and more professional",
+      "Wellness and Events sections now match visually",
+      "Sync and integration icons are larger and easier to tap"
     ]
   },
   {
     version: "3.1",
     date: "2025-12-26",
-    title: "Frontend Infrastructure",
+    title: "Behind the Scenes",
     changes: [
-      "Passed member tier information from frontend to booking API",
-      "Fixed 'View as Member' mode by bypassing database tier lookups",
-      "Updated database constraints to support all notification types"
+      "Booking system now knows your membership tier for smarter limits",
+      "Fixed 'View as Member' mode for staff testing the member experience",
+      "Notification system now supports all message types"
     ]
   },
   {
     version: "3.2",
     date: "2025-12-27",
-    title: "Staff Portal Navigation & Training Guide",
+    title: "Staff Portal Redesign",
     isMajor: true,
     changes: [
-      "Restructured staff portal navigation: Inquiries in bottom nav, campaign icon in header",
-      "New Updates page with Activity tab (staff notifications) and Announcements tab",
-      "URL parameter syncing for all staff portal tabs (deep linking support)",
-      "Staff header icon shows campaign icon linking to Updates page",
-      "Optimized animation system (animate-pop-in from 0.4s to 0.25s)",
-      "Staggered animations with 0.05s increments across all portal pages",
-      "Training Guide improvements: buttons repositioned below description",
-      "Training Guide: add/remove image support for step instructions",
-      "Training Guide: page icon badges showing relevant portal pages",
-      "Training Guide: comprehensive content for all portal features",
-      "Enhanced print CSS for cleaner PDF exports"
+      "Reorganized Staff Portal navigation — Inquiries moved to bottom bar",
+      "New Updates page showing your notifications and club announcements",
+      "You can now share direct links to specific tabs",
+      "Animations feel snappier throughout the app",
+      "Training Guide redesigned with clearer layout",
+      "Training Guide now supports images for each step",
+      "Training Guide shows which pages each guide relates to",
+      "Comprehensive how-to guides for all staff features",
+      "Cleaner printing when you need a paper copy"
     ]
   },
   {
     version: "3.3",
     date: "2025-12-27",
-    title: "Loading Screen Reliability",
+    title: "Faster Loading",
     changes: [
-      "Fixed loading screen race condition that could cause indefinite loading",
-      "Improved WalkingGolferLoader fade-out animation timing",
-      "Added safety timeout (2s) to ensure loader always dismisses",
-      "Enhanced React StrictMode compatibility for loading animations",
-      "Public pages now properly signal ready state after data loads"
+      "Fixed a bug where the app could get stuck on the loading screen",
+      "Loading animation fades out more smoothly",
+      "Loading screen now always disappears within 2 seconds",
+      "Better compatibility with all devices",
+      "Pages signal when they're ready so you're not left waiting"
     ]
   },
   {
     version: "3.4",
     date: "2025-12-27",
-    title: "Booking Notifications & Queue Improvements",
+    title: "Better Notifications",
     changes: [
-      "Members now receive notifications when staff manually books them a bay/conference room",
-      "Fixed notification badge not clearing after marking notifications as read",
-      "Recent Processed section now hides manual bookings and future approved bookings (no duplicates with Upcoming Bookings)",
-      "Member Dashboard shows all upcoming bookings including staff-created manual bookings",
-      "Staff notifications auto-dismiss for all staff when any staff member approves, declines, or cancels a booking request"
+      "You'll now get notified when staff books something on your behalf",
+      "The notification dot now disappears properly after you've seen your messages",
+      "Cleaned up duplicate entries in your booking history",
+      "Your dashboard shows all upcoming bookings, including ones staff made for you",
+      "When one staff member handles a request, it clears from everyone's queue"
     ]
   },
   {
     version: "3.5",
     date: "2025-12-27",
-    title: "Training Guide Stability",
+    title: "Training Guide Reliability",
     changes: [
-      "Added stable guideId identifiers to training sections for reliable updates",
-      "Training guide seeding now uses upsert logic (updates existing, inserts new)",
-      "Custom training guides added by admins are now preserved during updates",
-      "Fixed production auto-seed to populate guideIds correctly"
+      "Training guides update more reliably when we add new content",
+      "New guides appear automatically without losing custom ones you've added",
+      "Custom training guides you create are preserved during updates",
+      "Fixed an issue where guide content could go missing"
     ]
   },
   {
     version: "3.6",
     date: "2025-12-28",
-    title: "Navigation & Contact Updates",
+    title: "Simpler Navigation",
     changes: [
-      "Simplified side menu: removed Staff Portal and Member Portal buttons",
-      "Members access portal via header button instead of side menu",
-      "Updated Contact page with correct Google Maps and Apple Maps links"
+      "Cleaned up the side menu — fewer buttons, less clutter",
+      "Access your portal from the header instead of the menu",
+      "Contact page now has working links to Google Maps and Apple Maps"
     ]
   },
   {
     version: "3.7",
     date: "2025-12-28",
-    title: "Bug Reporting System",
+    title: "Report Issues Easily",
     changes: [
-      "New bug report submission form accessible from Profile page",
-      "Optional screenshot upload for bug reports",
-      "Admin bug reports dashboard to track and resolve issues",
-      "Status tracking: open, in progress, and resolved"
+      "New way to report bugs or issues right from your Profile",
+      "You can attach a screenshot to show us what went wrong",
+      "Staff can track and resolve reported issues",
+      "See the status of your reports: open, in progress, or resolved"
     ]
   },
   {
     version: "3.8",
     date: "2025-12-28",
-    title: "Session & Authentication Fixes",
+    title: "Login Fixes",
     changes: [
-      "Fixed API server crash caused by missing middleware export",
-      "Added cross-site cookie support (sameSite: none) for iframe compatibility",
-      "Training guide now shows 'Session Expired' message instead of empty page on auth errors",
-      "API requests now properly include credentials for session persistence",
-      "Fixed dev login to maintain session across page refreshes"
+      "Fixed an issue that could briefly make the app unresponsive",
+      "Login works better when using the app in a browser frame",
+      "Training guide shows a clear message if your session expires",
+      "Your login stays active more reliably as you use the app",
+      "Fixed a bug where you might get logged out unexpectedly"
     ]
   },
   {
     version: "3.9",
     date: "2025-12-28",
-    title: "Stability & Code Quality",
+    title: "Stability Check",
     changes: [
-      "Comprehensive bug audit and verification of all systems",
-      "Confirmed all API endpoints functioning correctly",
-      "Verified error handling and edge cases",
-      "No active issues identified in production codebase"
+      "Ran a full check of all app features — everything working smoothly",
+      "Verified all data loads correctly",
+      "Confirmed error messages appear when they should",
+      "No issues found — the app is running great"
     ]
   }
 ];
