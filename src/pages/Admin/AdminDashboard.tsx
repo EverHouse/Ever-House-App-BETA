@@ -734,6 +734,12 @@ const EventsAdminContent: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        const handleRefresh = () => fetchEvents();
+        window.addEventListener('refreshEventsData', handleRefresh);
+        return () => window.removeEventListener('refreshEventsData', handleRefresh);
+    }, []);
+
+    useEffect(() => {
         if (isEditing) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -1078,130 +1084,93 @@ const EventsAdminContent: React.FC = () => {
 
 const EventsWellnessAdmin: React.FC = () => {
     const [activeSubTab, setActiveSubTab] = useState<'events' | 'wellness'>('events');
-    const [isSyncing, setIsSyncing] = useState(false);
     const [syncMessage, setSyncMessage] = useState<string | null>(null);
     
-    const handleSyncCalendars = async () => {
-        setIsSyncing(true);
+    const handlePullRefresh = async () => {
         setSyncMessage(null);
         try {
-            const res = await fetch('/api/calendars/sync-all', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                setSyncMessage(data.message || 'Calendars synced successfully');
+            const [calRes, ebRes] = await Promise.all([
+                fetch('/api/calendars/sync-all', { method: 'POST', credentials: 'include' }),
+                fetch('/api/eventbrite/sync', { method: 'POST', credentials: 'include' })
+            ]);
+            
+            const calData = await calRes.json();
+            const ebData = await ebRes.json();
+            
+            window.dispatchEvent(new CustomEvent('refreshEventsData'));
+            window.dispatchEvent(new CustomEvent('refreshWellnessData'));
+            
+            if (calRes.ok && ebRes.ok) {
+                setSyncMessage('All calendars synced successfully');
             } else {
-                setSyncMessage(`Error: ${data.error || data.message || 'Sync failed'}`);
+                setSyncMessage('Some syncs may have failed. Check the data.');
             }
         } catch (err) {
-            console.error('Failed to sync calendars:', err);
-            setSyncMessage('Failed to sync with Google Calendar');
-        } finally {
-            setIsSyncing(false);
-            setTimeout(() => setSyncMessage(null), 5000);
+            console.error('Sync failed:', err);
+            setSyncMessage('Failed to sync calendars');
         }
-    };
-
-    const handleSyncEventbrite = async () => {
-        setIsSyncing(true);
-        setSyncMessage(null);
-        try {
-            const res = await fetch('/api/eventbrite/sync', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                setSyncMessage(data.message || 'Eventbrite synced successfully');
-            } else {
-                setSyncMessage(`Error: ${data.error || data.message || 'Sync failed'}`);
-            }
-        } catch (err) {
-            console.error('Failed to sync Eventbrite:', err);
-            setSyncMessage('Failed to sync with Eventbrite');
-        } finally {
-            setIsSyncing(false);
-            setTimeout(() => setSyncMessage(null), 5000);
-        }
+        setTimeout(() => setSyncMessage(null), 5000);
     };
 
     return (
-        <div className="animate-pop-in">
-            {syncMessage && (
-                <div className={`mb-4 px-4 py-2 rounded-lg text-sm font-medium ${
-                    syncMessage.startsWith('Error') 
-                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' 
-                        : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
-                }`}>
-                    {syncMessage}
+        <PullToRefresh onRefresh={handlePullRefresh}>
+            <div className="animate-pop-in">
+                {syncMessage && (
+                    <div className={`mb-4 px-4 py-2 rounded-lg text-sm font-medium ${
+                        syncMessage.startsWith('Error') || syncMessage.startsWith('Failed') || syncMessage.startsWith('Some syncs')
+                            ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' 
+                            : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
+                    }`}>
+                        {syncMessage}
+                    </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
+                    <button 
+                        onClick={() => { setActiveSubTab('events'); window.dispatchEvent(new CustomEvent('openEventCreate')); }}
+                        className="bg-primary text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">add</span>
+                        Event
+                    </button>
+                    <button 
+                        onClick={() => { setActiveSubTab('wellness'); window.dispatchEvent(new CustomEvent('openWellnessCreate')); }}
+                        className="bg-accent text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">add</span>
+                        Wellness
+                    </button>
                 </div>
-            )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
-                <button 
-                    onClick={handleSyncCalendars} 
-                    disabled={isSyncing}
-                    className="bg-[#6B8BA4] text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50 text-xs sm:text-sm"
-                >
-                    {isSyncing ? (
-                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                    ) : (
-                        <img src="/images/google-calendar-icon.png" alt="" className="w-6 h-6 object-contain" />
-                    )}
-                    <span className="hidden sm:inline">Calendar</span> Sync
-                </button>
-                <button 
-                    onClick={handleSyncEventbrite} 
-                    disabled={isSyncing}
-                    className="bg-[#8B5A3C] text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50 text-xs sm:text-sm"
-                >
-                    {isSyncing ? (
-                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                    ) : (
-                        <img src="/images/eventbrite-icon.png" alt="" className="w-6 h-6 object-contain rounded" />
-                    )}
-                    <span className="hidden sm:inline">Eventbrite</span> Sync
-                </button>
-                <button 
-                    onClick={() => { setActiveSubTab('events'); window.dispatchEvent(new CustomEvent('openEventCreate')); }}
-                    className="bg-primary text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm"
-                >
-                    <span className="material-symbols-outlined text-[18px]">add</span>
-                    Event
-                </button>
-                <button 
-                    onClick={() => { setActiveSubTab('wellness'); window.dispatchEvent(new CustomEvent('openWellnessCreate')); }}
-                    className="bg-accent text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm"
-                >
-                    <span className="material-symbols-outlined text-[18px]">add</span>
-                    Wellness
-                </button>
+                <div className="flex gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                    <button
+                        onClick={() => setActiveSubTab('events')}
+                        className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                            activeSubTab === 'events'
+                                ? 'bg-primary text-white shadow-md'
+                                : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-[18px]">event</span>
+                        Events
+                    </button>
+                    <button
+                        onClick={() => setActiveSubTab('wellness')}
+                        className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                            activeSubTab === 'wellness'
+                                ? 'bg-primary text-white shadow-md'
+                                : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-[18px]">spa</span>
+                        Wellness
+                    </button>
+                </div>
+
+                {activeSubTab === 'events' && <EventsAdminContent />}
+                {activeSubTab === 'wellness' && <WellnessAdminContent />}
             </div>
-
-            <div className="flex gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
-                <button
-                    onClick={() => setActiveSubTab('events')}
-                    className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                        activeSubTab === 'events'
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
-                    }`}
-                >
-                    <span className="material-symbols-outlined text-[18px]">event</span>
-                    Events
-                </button>
-                <button
-                    onClick={() => setActiveSubTab('wellness')}
-                    className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                        activeSubTab === 'wellness'
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
-                    }`}
-                >
-                    <span className="material-symbols-outlined text-[18px]">spa</span>
-                    Wellness
-                </button>
-            </div>
-
-            {activeSubTab === 'events' && <EventsAdminContent />}
-            {activeSubTab === 'wellness' && <WellnessAdminContent />}
-        </div>
+        </PullToRefresh>
     );
 };
 
@@ -3797,6 +3766,12 @@ const WellnessAdminContent: React.FC = () => {
         const handleOpenCreate = () => openCreate();
         window.addEventListener('openWellnessCreate', handleOpenCreate);
         return () => window.removeEventListener('openWellnessCreate', handleOpenCreate);
+    }, []);
+
+    useEffect(() => {
+        const handleRefresh = () => fetchClasses();
+        window.addEventListener('refreshWellnessData', handleRefresh);
+        return () => window.removeEventListener('refreshWellnessData', handleRefresh);
     }, []);
 
     useEffect(() => {
