@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   membershipStartDate: date("membership_start_date"),
   lifetimeVisits: integer("lifetime_visits").default(0),
   linkedEmails: jsonb("linked_emails").default(sql`'[]'::jsonb`),
+  trackmanLinkedEmails: jsonb("trackman_linked_emails").default(sql`'[]'::jsonb`),
   dataSource: varchar("data_source"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

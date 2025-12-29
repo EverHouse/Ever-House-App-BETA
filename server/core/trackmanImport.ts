@@ -36,41 +36,68 @@ function isPlaceholderEmail(email: string): boolean {
   return false;
 }
 
-function loadEmailMapping(): Map<string, string> {
+async function loadEmailMapping(): Promise<Map<string, string>> {
   const mappingPath = path.join(process.cwd(), 'attached_assets', 'even_house_cleaned_member_data_1767012619480.csv');
   const mapping = new Map<string, string>();
   
-  if (!fs.existsSync(mappingPath)) {
-    process.stderr.write('[Trackman Import] No email mapping file found at: ' + mappingPath + '\n');
-    return mapping;
+  // Load from CSV file first
+  if (fs.existsSync(mappingPath)) {
+    try {
+      const content = fs.readFileSync(mappingPath, 'utf-8');
+      const lines = content.split('\n').filter(line => line.trim());
+      
+      for (let i = 1; i < lines.length; i++) {
+        const fields = parseCSVLine(lines[i]);
+        if (fields.length >= 10) {
+          const realEmail = fields[3]?.trim().toLowerCase();
+          const linkedEmails = fields[9]?.trim();
+          
+          if (realEmail && linkedEmails) {
+            const placeholders = linkedEmails.split(',').map(e => e.trim().toLowerCase());
+            for (const placeholder of placeholders) {
+              if (placeholder) {
+                mapping.set(placeholder, realEmail);
+              }
+            }
+          }
+        }
+      }
+      
+      process.stderr.write(`[Trackman Import] Loaded ${mapping.size} email mappings from CSV\n`);
+    } catch (err: any) {
+      process.stderr.write('[Trackman Import] Error loading CSV mapping: ' + err.message + '\n');
+    }
   }
   
+  // Also load from database (from manual resolutions)
   try {
-    const content = fs.readFileSync(mappingPath, 'utf-8');
-    const lines = content.split('\n').filter(line => line.trim());
+    const usersWithMappings = await db.select({
+      email: users.email,
+      trackmanLinkedEmails: users.trackmanLinkedEmails
+    })
+    .from(users)
+    .where(sql`trackman_linked_emails IS NOT NULL AND jsonb_array_length(trackman_linked_emails) > 0`);
     
-    for (let i = 1; i < lines.length; i++) {
-      const fields = parseCSVLine(lines[i]);
-      if (fields.length >= 10) {
-        const realEmail = fields[3]?.trim().toLowerCase();
-        const linkedEmails = fields[9]?.trim();
-        
-        if (realEmail && linkedEmails) {
-          const placeholders = linkedEmails.split(',').map(e => e.trim().toLowerCase());
-          for (const placeholder of placeholders) {
-            if (placeholder) {
-              mapping.set(placeholder, realEmail);
-            }
+    let dbMappingsCount = 0;
+    for (const user of usersWithMappings) {
+      if (user.email && Array.isArray(user.trackmanLinkedEmails)) {
+        for (const placeholder of user.trackmanLinkedEmails) {
+          if (typeof placeholder === 'string' && placeholder.trim()) {
+            mapping.set(placeholder.toLowerCase().trim(), user.email.toLowerCase());
+            dbMappingsCount++;
           }
         }
       }
     }
     
-    process.stderr.write(`[Trackman Import] Loaded ${mapping.size} email mappings\n`);
+    if (dbMappingsCount > 0) {
+      process.stderr.write(`[Trackman Import] Loaded ${dbMappingsCount} email mappings from database\n`);
+    }
   } catch (err: any) {
-    process.stderr.write('[Trackman Import] Error loading mapping: ' + err.message + '\n');
+    process.stderr.write('[Trackman Import] Error loading DB mappings: ' + err.message + '\n');
   }
   
+  process.stderr.write(`[Trackman Import] Total email mappings: ${mapping.size}\n`);
   return mapping;
 }
 
@@ -159,7 +186,7 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
     }
   }
 
-  const emailMapping = loadEmailMapping();
+  const emailMapping = await loadEmailMapping();
   process.stderr.write(`[Trackman Import] Email mapping loaded with ${emailMapping.size} entries, membersByEmail has ${membersByEmail.size} entries\n`);
 
   let matchedRows = 0;
@@ -414,6 +441,24 @@ export async function resolveUnmatchedBooking(
       SET lifetime_visits = COALESCE(lifetime_visits, 0) + 1 
       WHERE email = ${memberEmail}
     `);
+  }
+
+  // Save the placeholder email mapping to the member's trackman_linked_emails for future imports
+  const originalEmail = booking.originalEmail?.toLowerCase().trim();
+  if (originalEmail && isPlaceholderEmail(originalEmail)) {
+    // Add the email only if it's not already in the array
+    const emailAsJsonb = JSON.stringify(originalEmail);
+    await db.execute(sql`
+      UPDATE users 
+      SET trackman_linked_emails = 
+        CASE 
+          WHEN COALESCE(trackman_linked_emails, '[]'::jsonb) ? ${originalEmail}
+          THEN trackman_linked_emails
+          ELSE COALESCE(trackman_linked_emails, '[]'::jsonb) || ${emailAsJsonb}::jsonb
+        END
+      WHERE email = ${memberEmail}
+    `);
+    process.stderr.write(`[Trackman Resolve] Saved email mapping: ${originalEmail} -> ${memberEmail}\n`);
   }
 
   await db.update(trackmanUnmatchedBookings)
