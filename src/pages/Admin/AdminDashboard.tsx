@@ -338,13 +338,10 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
   ];
 
-  const publicContentLinks = [
+  const adminLinks = [
     { id: 'cafe' as TabType, icon: 'local_cafe', label: 'Cafe Menu', description: 'Update menu items and prices' },
     { id: 'gallery' as TabType, icon: 'photo_library', label: 'Gallery', description: 'Manage venue photos' },
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
-  ];
-
-  const adminLinks = [
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings' },
     { id: 'bugs' as TabType, icon: 'bug_report', label: 'Bug Reports', description: 'Review user-reported issues' },
   ];
@@ -364,15 +361,6 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
   return (
     <div className="animate-pop-in pb-32">
       <div>
-        <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Employee Resources</h2>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {employeeResourcesLinks.map((link) => (
-            <CardButton key={link.id} link={link} />
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6 sm:mt-8">
         <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Operations</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {operationsLinks.map((link) => (
@@ -382,9 +370,9 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
       </div>
 
       <div className="mt-6 sm:mt-8">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Public Content</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-primary/50 dark:text-white/50 mb-4">Employee Resources</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {publicContentLinks.map((link) => (
+          {employeeResourcesLinks.map((link) => (
             <CardButton key={link.id} link={link} />
           ))}
         </div>
