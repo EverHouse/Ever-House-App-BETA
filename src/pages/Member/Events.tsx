@@ -12,6 +12,7 @@ import { MotionList, MotionListItem } from '../../components/motion';
 import { EmptyEvents } from '../../components/EmptyState';
 import { downloadICalFile } from '../../utils/icalUtils';
 import { getTodayPacific } from '../../utils/dateUtils';
+import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 
 interface UserRsvp {
   event_id: number;
@@ -277,9 +278,9 @@ const MemberEvents: React.FC = () => {
                             <button 
                               onClick={(e) => { e.stopPropagation(); handleCancelRSVP(event); }}
                               disabled={isLoadingThis}
-                              className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border ${isDark ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' : 'border-red-500/50 text-red-500 hover:bg-red-500/10'} ${isLoadingThis ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border flex items-center justify-center gap-2 ${isDark ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' : 'border-red-500/50 text-red-500 hover:bg-red-500/10'} ${isLoadingThis ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                              {isLoadingThis ? 'Cancelling...' : 'Cancel RSVP'}
+                              {isLoadingThis ? <WalkingGolferSpinner size="sm" variant={isDark ? 'light' : 'dark'} /> : 'Cancel RSVP'}
                             </button>
                           ) : event.source === 'eventbrite' ? (
                             <button 
@@ -292,9 +293,9 @@ const MemberEvents: React.FC = () => {
                             <button 
                               onClick={(e) => { e.stopPropagation(); handleRSVP(event); }}
                               disabled={isLoadingThis}
-                              className={`flex-1 py-3 rounded-xl font-semibold text-sm bg-brand-green text-white hover:opacity-90 transition-opacity ${isLoadingThis ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`flex-1 py-3 rounded-xl font-semibold text-sm bg-brand-green text-white hover:opacity-90 transition-opacity flex items-center justify-center gap-2 ${isLoadingThis ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                              {isLoadingThis ? 'Saving...' : 'RSVP'}
+                              {isLoadingThis ? <WalkingGolferSpinner size="sm" variant="light" /> : 'RSVP'}
                             </button>
                           )}
                         </div>

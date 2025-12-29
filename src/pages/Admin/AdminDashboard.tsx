@@ -25,6 +25,7 @@ import Avatar from '../../components/Avatar';
 import { formatPhoneNumber } from '../../utils/formatting';
 import { useNotificationSounds } from '../../hooks/useNotificationSounds';
 import FloatingActionButton from '../../components/FloatingActionButton';
+import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -3999,7 +4000,10 @@ const WellnessAdminContent: React.FC = () => {
                 )}
 
                 {isLoading ? (
-                    <div className="py-8 text-center text-gray-500">Loading...</div>
+                    <div className="py-8 flex flex-col items-center gap-2">
+                      <WalkingGolferSpinner size="md" variant="dark" />
+                      <p className="text-sm text-gray-500">Loading classes...</p>
+                    </div>
                 ) : filteredClasses.length === 0 ? (
                     <div className="py-8 text-center text-gray-500 dark:text-gray-400">
                         No {activeCategory === 'all' ? 'wellness classes' : activeCategory.toLowerCase()} scheduled. Add your first!
@@ -4698,7 +4702,10 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                 )}
 
                 {isLoading ? (
-                    <div className="py-8 text-center text-gray-500">Loading...</div>
+                    <div className="py-8 flex flex-col items-center gap-2">
+                      <WalkingGolferSpinner size="md" variant="dark" />
+                      <p className="text-sm text-gray-500">Loading team...</p>
+                    </div>
                 ) : staffUsers.length === 0 ? (
                     <div className="py-8 text-center text-gray-500 dark:text-gray-400">
                         {isAdmin ? 'No staff members added yet. Add an email to grant staff access.' : 'No team members to display.'}
@@ -5076,7 +5083,10 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                 )}
 
                 {isLoading ? (
-                    <div className="py-8 text-center text-gray-500">Loading...</div>
+                    <div className="py-8 flex flex-col items-center gap-2">
+                      <WalkingGolferSpinner size="md" variant="dark" />
+                      <p className="text-sm text-gray-500">Loading admins...</p>
+                    </div>
                 ) : adminUsers.length === 0 ? (
                     <div className="py-8 text-center text-gray-500 dark:text-gray-400">
                         No admins configured. Add an email to grant admin access.
@@ -7867,9 +7877,9 @@ const TrackmanAdmin: React.FC = () => {
           `}
         >
           {isImporting ? (
-            <div className="flex flex-col items-center gap-2">
-              <span className="material-symbols-outlined text-4xl text-accent animate-spin">sync</span>
-              <p className="text-sm font-medium text-primary dark:text-white">Processing...</p>
+            <div className="flex flex-col items-center gap-3">
+              <WalkingGolferSpinner size="lg" variant="dark" />
+              <p className="text-sm font-medium text-primary dark:text-white">Processing import...</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
