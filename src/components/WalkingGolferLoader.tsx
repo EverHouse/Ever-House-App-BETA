@@ -51,9 +51,12 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
     >
       <div className={`loader-content ${isExiting ? 'content-exit' : ''}`}>
         <div className="walking-mascot">
-          <img 
-            src="/assets/logos/walking-mascot-white.gif" 
-            alt="Loading..." 
+          <video 
+            src="/assets/logos/walking-mascot-white.webm" 
+            autoPlay
+            loop
+            muted
+            playsInline
             className="mascot-image"
           />
         </div>
