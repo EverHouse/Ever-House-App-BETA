@@ -1,4 +1,6 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
+import { useBottomNav } from '../contexts/BottomNavContext';
 
 export type FABColor = 'brand' | 'amber' | 'green' | 'purple' | 'red';
 
@@ -23,16 +25,24 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   icon = 'add',
   label,
 }) => {
-  return (
+  const { isAtBottom } = useBottomNav();
+  
+  const fabContent = (
     <button
       onClick={onClick}
-      className={`fixed right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 ${colorClasses[color]}`}
-      style={{ bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}
+      className={`fixed right-4 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out hover:scale-110 active:scale-95 ${colorClasses[color]}`}
+      style={{ 
+        bottom: isAtBottom 
+          ? 'calc(24px + env(safe-area-inset-bottom, 0px))' 
+          : 'calc(100px + env(safe-area-inset-bottom, 0px))' 
+      }}
       aria-label={label || 'Add new item'}
     >
       <span className="material-symbols-outlined text-2xl">{icon}</span>
     </button>
   );
+  
+  return createPortal(fabContent, document.body);
 };
 
 export default FloatingActionButton;
