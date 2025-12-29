@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Toggle from '../../components/Toggle';
 import { usePageReady } from '../../contexts/PageReadyContext';
+import FloatingActionButton from '../../components/FloatingActionButton';
 
 interface FAQ {
     id: number;
@@ -199,24 +200,16 @@ const FaqsAdmin: React.FC = () => {
         <div className="animate-pop-in">
             <div className="flex justify-between items-center mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <h2 className="text-xl font-bold text-primary dark:text-white">FAQs ({faqs.length})</h2>
-                <div className="flex gap-2">
-                    {faqs.length === 0 && (
-                        <button
-                            onClick={handleSeedFaqs}
-                            disabled={isSeeding}
-                            className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap disabled:opacity-50"
-                        >
-                            <span className="material-symbols-outlined text-sm">{isSeeding ? 'sync' : 'database'}</span>
-                            {isSeeding ? 'Seeding...' : 'Seed FAQs'}
-                        </button>
-                    )}
+                {faqs.length === 0 && (
                     <button
-                        onClick={openCreate}
-                        className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap"
+                        onClick={handleSeedFaqs}
+                        disabled={isSeeding}
+                        className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap disabled:opacity-50"
                     >
-                        <span className="material-symbols-outlined text-sm">add</span> Add FAQ
+                        <span className="material-symbols-outlined text-sm">{isSeeding ? 'sync' : 'database'}</span>
+                        {isSeeding ? 'Seeding...' : 'Seed FAQs'}
                     </button>
-                </div>
+                )}
             </div>
 
             {message && (
@@ -420,6 +413,7 @@ const FaqsAdmin: React.FC = () => {
                     ))}
                 </div>
             )}
+            <FloatingActionButton onClick={openCreate} color="brand" label="Add FAQ" />
         </div>
     );
 };

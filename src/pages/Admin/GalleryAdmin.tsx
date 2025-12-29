@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Toggle from '../../components/Toggle';
 import { usePageReady } from '../../contexts/PageReadyContext';
+import FloatingActionButton from '../../components/FloatingActionButton';
 
 interface GalleryImage {
     id: number;
@@ -174,9 +175,6 @@ const GalleryAdmin: React.FC = () => {
         <div className="animate-pop-in">
             <div className="flex justify-between items-center mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <h2 className="text-xl font-bold text-primary dark:text-white">Gallery Images</h2>
-                <button onClick={openCreate} className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap">
-                    <span className="material-symbols-outlined text-sm">add</span> Add Image
-                </button>
             </div>
 
             {isEditing && createPortal(
@@ -367,6 +365,12 @@ const GalleryAdmin: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            <FloatingActionButton 
+                onClick={openCreate}
+                color="brand"
+                label="Add new image"
+            />
         </div>
     );
 };

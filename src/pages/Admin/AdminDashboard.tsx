@@ -23,6 +23,7 @@ import { useToast } from '../../components/Toast';
 import { APP_VERSION, formatLastUpdated } from '../../config/version';
 import Avatar from '../../components/Avatar';
 import { useNotificationSounds } from '../../hooks/useNotificationSounds';
+import FloatingActionButton from '../../components/FloatingActionButton';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -500,21 +501,16 @@ const CafeAdmin: React.FC = () => {
         <div className="animate-pop-in">
             <div className="flex justify-between items-center mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <h2 className="text-xl font-bold text-primary dark:text-white">Menu Items</h2>
-                <div className="flex gap-2">
-                    {cafeMenu.length === 0 && (
-                        <button 
-                            onClick={handleSeedMenu} 
-                            disabled={isSeeding}
-                            className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap disabled:opacity-50"
-                        >
-                            <span className="material-symbols-outlined text-sm">{isSeeding ? 'sync' : 'database'}</span> 
-                            {isSeeding ? 'Seeding...' : 'Seed Menu'}
-                        </button>
-                    )}
-                    <button onClick={openCreate} className="bg-primary text-white px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap">
-                        <span className="material-symbols-outlined text-sm">add</span> Add
+                {cafeMenu.length === 0 && (
+                    <button 
+                        onClick={handleSeedMenu} 
+                        disabled={isSeeding}
+                        className="bg-accent text-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md text-xs whitespace-nowrap disabled:opacity-50"
+                    >
+                        <span className="material-symbols-outlined text-sm">{isSeeding ? 'sync' : 'database'}</span> 
+                        {isSeeding ? 'Seeding...' : 'Seed Menu'}
                     </button>
-                </div>
+                )}
             </div>
             {seedMessage && (
                 <div className="mb-4 p-3 bg-accent/20 text-primary dark:text-white rounded-lg text-sm">
@@ -632,6 +628,7 @@ const CafeAdmin: React.FC = () => {
                     </div>
                 ))}
             </div>
+            <FloatingActionButton onClick={openCreate} color="brand" label="Add menu item" />
         </div>
     );
 };
@@ -1113,24 +1110,7 @@ const EventsWellnessAdmin: React.FC = () => {
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
-                    <button 
-                        onClick={() => { setActiveSubTab('events'); window.dispatchEvent(new CustomEvent('openEventCreate')); }}
-                        className="bg-primary text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm"
-                    >
-                        <span className="material-symbols-outlined text-[18px]">add</span>
-                        Event
-                    </button>
-                    <button 
-                        onClick={() => { setActiveSubTab('wellness'); window.dispatchEvent(new CustomEvent('openWellnessCreate')); }}
-                        className="bg-accent text-white px-3 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm"
-                    >
-                        <span className="material-symbols-outlined text-[18px]">add</span>
-                        Wellness
-                    </button>
-                </div>
-
-                <div className="flex gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                <div className="flex gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                     <button
                         onClick={() => setActiveSubTab('events')}
                         className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
@@ -1157,6 +1137,17 @@ const EventsWellnessAdmin: React.FC = () => {
 
                 {activeSubTab === 'events' && <EventsAdminContent />}
                 {activeSubTab === 'wellness' && <WellnessAdminContent />}
+                <FloatingActionButton 
+                    onClick={() => {
+                        if (activeSubTab === 'events') {
+                            window.dispatchEvent(new CustomEvent('openEventCreate'));
+                        } else {
+                            window.dispatchEvent(new CustomEvent('openWellnessCreate'));
+                        }
+                    }} 
+                    color={activeSubTab === 'events' ? 'green' : 'purple'} 
+                    label={activeSubTab === 'events' ? 'Add event' : 'Add wellness session'} 
+                />
             </div>
         </PullToRefresh>
     );
@@ -1440,15 +1431,6 @@ const StaffUpdatesAdmin: React.FC = () => {
     return (
         <PullToRefresh onRefresh={handleRefresh}>
             <div className="animate-pop-in pb-32">
-                <div className="flex justify-end mb-4 animate-pop-in">
-                    <button 
-                        onClick={handleCreateAnnouncement}
-                        className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 px-4 py-2.5 rounded-xl font-bold flex items-center gap-1.5 shadow-sm text-sm hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors border border-amber-200 dark:border-amber-500/30"
-                    >
-                        <span className="material-symbols-outlined text-lg">add</span> Announcement
-                    </button>
-                </div>
-
                 <div className="flex gap-2 mb-6 animate-pop-in" style={{animationDelay: '0.05s'}}>
                     <button
                         onClick={() => setActiveSubTab('activity')}
@@ -1478,6 +1460,7 @@ const StaffUpdatesAdmin: React.FC = () => {
                 </div>
 
                 {activeSubTab === 'activity' ? renderActivityTab() : <AnnouncementsAdmin triggerCreate={triggerCreateAnnouncement} />}
+                <FloatingActionButton onClick={handleCreateAnnouncement} color="amber" label="Add announcement" />
             </div>
         </PullToRefresh>
     );
@@ -2515,13 +2498,6 @@ const SimulatorAdmin: React.FC = () => {
                         )}
                     </button>
                 </div>
-                <button
-                    onClick={() => setShowManualBooking(true)}
-                    className="py-2 px-3 bg-primary text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/90 transition-colors"
-                >
-                    <span className="material-symbols-outlined text-sm">add</span>
-                    Manual Booking
-                </button>
             </div>
 
             {isLoading ? (
@@ -3177,6 +3153,7 @@ const SimulatorAdmin: React.FC = () => {
                 document.body
             )}
                 </div>
+                <FloatingActionButton onClick={() => setShowManualBooking(true)} color="brand" label="Create manual booking" />
             </div>
         </PullToRefresh>
     );
@@ -4308,13 +4285,6 @@ const TeamAdmin: React.FC = () => {
                             Admins
                         </button>
                     </div>
-                    <button
-                        onClick={() => setIsAddingPerson(true)}
-                        className="w-10 h-10 min-h-[44px] min-w-[44px] flex items-center justify-center bg-brand-green text-white rounded-lg hover:opacity-90 transition-opacity"
-                        title="Add Staff or Admin"
-                    >
-                        <span className="material-symbols-outlined text-xl">person_add</span>
-                    </button>
                 </div>
             )}
 
@@ -4422,6 +4392,7 @@ const TeamAdmin: React.FC = () => {
                 </div>,
                 document.body
             )}
+            <FloatingActionButton onClick={() => setIsAddingPerson(true)} color="brand" label="Add team member" />
         </div>
     );
 };
@@ -5537,14 +5508,6 @@ const BlocksAdmin: React.FC = () => {
 
             {activeTab === 'closures' && (
                 <div className="space-y-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
-                    <button
-                        onClick={openNewClosure}
-                        className="w-full py-3 rounded-xl bg-red-500 text-white font-bold flex items-center justify-center gap-2 hover:bg-red-600 transition-all"
-                    >
-                        <span className="material-symbols-outlined">add</span>
-                        Add Closure
-                    </button>
-
                     {closuresLoading ? (
                         <div className="text-center py-8 text-gray-400 dark:text-white/50">Loading closures...</div>
                     ) : closures.length === 0 ? (
@@ -5914,6 +5877,7 @@ const BlocksAdmin: React.FC = () => {
                     </div>
                 </div>
             )}
+            <FloatingActionButton onClick={openNewClosure} color="red" label="Add closure" />
         </div>
     );
 };
@@ -6125,13 +6089,6 @@ const TiersAdmin: React.FC = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                     {tiers.length} membership tier{tiers.length !== 1 ? 's' : ''}
                 </p>
-                <button 
-                    onClick={openCreate}
-                    className="bg-primary text-white px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-md text-sm hover:bg-primary/90 transition-colors"
-                >
-                    <span className="material-symbols-outlined text-lg">add</span>
-                    New Tier
-                </button>
             </div>
 
             {/* Edit Modal - Native sheet style for reliable mobile scrolling */}
@@ -6514,6 +6471,7 @@ const TiersAdmin: React.FC = () => {
                     ))}
                 </div>
             )}
+            <FloatingActionButton onClick={openCreate} color="brand" label="Add new tier" />
         </div>
     );
 };
