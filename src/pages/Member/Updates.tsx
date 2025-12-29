@@ -429,15 +429,22 @@ const MemberUpdates: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : notifications.length === 0 ? (
-        <div className={`text-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
-          <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">notifications_off</span>
-          <p className="text-lg font-medium">No activity yet</p>
-          <p className="text-sm mt-1 opacity-70">Your booking updates and alerts will appear here.</p>
-        </div>
-      ) : (
-        <MotionList className="space-y-3">
-          {notifications.map((notif) => (
+      ) : (() => {
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        const recentNotifications = notifications.filter(n => 
+          n.created_at && new Date(n.created_at) >= fourteenDaysAgo
+        );
+        
+        return recentNotifications.length === 0 ? (
+          <div className={`text-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+            <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">notifications_off</span>
+            <p className="text-lg font-medium">No recent activity</p>
+            <p className="text-sm mt-1 opacity-70">Your booking updates and alerts will appear here.</p>
+          </div>
+        ) : (
+          <MotionList className="space-y-3">
+            {recentNotifications.map((notif) => (
             <MotionListItem
               key={notif.id}
               onClick={() => handleNotificationClick(notif)}
@@ -479,8 +486,9 @@ const MemberUpdates: React.FC = () => {
               </div>
             </MotionListItem>
           ))}
-        </MotionList>
-      )}
+          </MotionList>
+        );
+      })()}
     </div>
   );
 

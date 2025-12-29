@@ -2221,12 +2221,17 @@ const SimulatorAdmin: React.FC = () => {
     
     // Recent Processed: show declined/cancelled member requests only
     // Exclude future approved/confirmed (they're in Upcoming Bookings) and manual bookings
+    // Only show items from the last 14 days (frontend filter - data stays in DB for tracking)
     const today = getTodayPacific();
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
     const processedRequests = requests.filter(r => {
       // Only include non-pending requests
       if (r.status === 'pending' || r.status === 'pending_approval') return false;
       // Exclude manual bookings (source === 'booking' means it came from approved bookings, not member requests)
       if (r.source === 'booking') return false;
+      // Filter out items older than 14 days
+      if (r.created_at && new Date(r.created_at) < fourteenDaysAgo) return false;
       // For approved/confirmed, only show past ones (future ones are in Upcoming Bookings)
       if (r.status === 'approved' || r.status === 'confirmed') {
         return r.request_date < today;
