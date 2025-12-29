@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "6.4",
+    date: "2025-12-29",
+    title: "Formatting Polish",
+    changes: [
+      "Phone numbers now display in a consistent (XXX) XXX-XXXX format across the app",
+      "Staff profiles now show job title in the Account section",
+      "Closures tab dates and times now use friendly formatting to match Blocks tab"
+    ]
+  },
+  {
     version: "1.0",
     date: "2025-12-16",
     title: "Launch Day",

@@ -22,6 +22,7 @@ import { changelog } from '../../data/changelog';
 import { useToast } from '../../components/Toast';
 import { APP_VERSION, formatLastUpdated } from '../../config/version';
 import Avatar from '../../components/Avatar';
+import { formatPhoneNumber } from '../../utils/formatting';
 import { useNotificationSounds } from '../../hooks/useNotificationSounds';
 import FloatingActionButton from '../../components/FloatingActionButton';
 
@@ -1237,7 +1238,7 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">{p.userEmail}</p>
                                             )}
                                             {p.phone && (
-                                                <p className="text-xs text-gray-400">{p.phone}</p>
+                                                <p className="text-xs text-gray-400">{formatPhoneNumber(p.phone)}</p>
                                             )}
                                         </div>
                                     </div>
@@ -1782,7 +1783,7 @@ const MembersAdmin: React.FC = () => {
                             <div className="flex-1">
                                 <h4 className="font-bold text-lg text-primary dark:text-white">{m.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
-                                {m.phone && <p className="text-xs text-gray-500 dark:text-gray-400">{m.phone}</p>}
+                                {m.phone && <p className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneNumber(m.phone)}</p>}
                             </div>
                         </div>
                         <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-white/5">
@@ -1878,7 +1879,7 @@ const MembersAdmin: React.FC = () => {
                                 {selectedMember.phone && (
                                     <div className="flex items-center gap-3">
                                         <span className="material-symbols-outlined text-gray-400">phone</span>
-                                        <span className="text-gray-700 dark:text-gray-300">{selectedMember.phone}</span>
+                                        <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedMember.phone)}</span>
                                     </div>
                                 )}
                                 {selectedMember.tier && (
@@ -4679,7 +4680,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                                 <div className="flex-1 min-w-0">
                                     <p className="font-medium text-primary dark:text-white">{staff.name || staff.email}</p>
                                     {staff.name && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.email}</p>}
-                                    {staff.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{staff.phone}</p>}
+                                    {staff.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{formatPhoneNumber(staff.phone)}</p>}
                                 </div>
                             </div>
                         ))}
@@ -4710,7 +4711,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                                 {selectedStaff.phone && (
                                     <div className="flex items-center gap-3">
                                         <span className="material-symbols-outlined text-gray-400">phone</span>
-                                        <span className="text-gray-700 dark:text-gray-300">{selectedStaff.phone}</span>
+                                        <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedStaff.phone)}</span>
                                     </div>
                                 )}
                                 {selectedStaff.job_title && (
@@ -5057,7 +5058,7 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                                 <div className="flex-1 min-w-0">
                                     <p className="font-medium text-primary dark:text-white">{admin.name || admin.email}</p>
                                     {admin.name && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.email}</p>}
-                                    {admin.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{admin.phone}</p>}
+                                    {admin.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{formatPhoneNumber(admin.phone)}</p>}
                                 </div>
                             </div>
                         ))}
@@ -5087,7 +5088,7 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                                 {selectedAdmin.phone && (
                                     <div className="flex items-center gap-3">
                                         <span className="material-symbols-outlined text-gray-400">phone</span>
-                                        <span className="text-gray-700 dark:text-gray-300">{selectedAdmin.phone}</span>
+                                        <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedAdmin.phone)}</span>
                                     </div>
                                 )}
                                 {selectedAdmin.job_title && (
@@ -5637,14 +5638,14 @@ const BlocksAdmin: React.FC = () => {
                                                 <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-500/20 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
                                                     <span className="material-symbols-outlined text-[12px]">calendar_today</span>
                                                     <span>
-                                                        {closure.startDate}
-                                                        {closure.endDate && closure.endDate !== closure.startDate ? ` - ${closure.endDate}` : ''}
+                                                        {formatDate(closure.startDate)}
+                                                        {closure.endDate && closure.endDate !== closure.startDate ? ` - ${formatDate(closure.endDate)}` : ''}
                                                     </span>
                                                 </div>
                                                 {(closure.startTime || closure.endTime) && (
                                                     <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-500/20 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
                                                         <span className="material-symbols-outlined text-[12px]">schedule</span>
-                                                        <span>{closure.startTime}{closure.endTime ? ` - ${closure.endTime}` : ''}</span>
+                                                        <span>{formatTime(closure.startTime || '')}{closure.endTime ? ` - ${formatTime(closure.endTime)}` : ''}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -7518,7 +7519,7 @@ const ToursAdmin: React.FC = () => {
             <p className="text-xs text-primary/60 dark:text-white/60 truncate">{tour.guestEmail}</p>
           )}
           {tour.guestPhone && (
-            <p className="text-xs text-primary/60 dark:text-white/60">{tour.guestPhone}</p>
+            <p className="text-xs text-primary/60 dark:text-white/60">{formatPhoneNumber(tour.guestPhone)}</p>
           )}
           {!isToday && (
             <p className="text-xs text-primary/50 dark:text-white/50 mt-1">{formatDate(tour.tourDate)}</p>
