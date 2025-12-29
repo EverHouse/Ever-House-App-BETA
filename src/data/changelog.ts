@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "5.7",
+    date: "2025-12-29",
+    title: "Glass UI & Calendar Fix",
+    changes: [
+      "Members button and profile avatar now have a frosted glass effect",
+      "Fixed Book a Tour modal appearing off-screen on some devices",
+      "Fixed calendar events not importing on iPhone — now works reliably with Apple Calendar"
+    ]
+  },
+  {
     version: "5.6",
     date: "2025-12-29",
     title: "Training Guide Updates",
