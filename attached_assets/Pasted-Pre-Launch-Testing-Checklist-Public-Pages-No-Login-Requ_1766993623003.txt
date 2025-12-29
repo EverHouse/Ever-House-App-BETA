@@ -1,0 +1,68 @@
+Pre-Launch Testing Checklist:
+
+Public Pages (No Login Required)
+*  Landing page loads with hero image and parallax effect
+*  Login page works and sends verification codes via email
+*  Membership page displays all tier information correctly
+*  Cafe Menu shows all items with correct prices
+*  FAQ page displays questions and answers
+*  Gallery loads photos properly
+*  Contact page has working Google/Apple Maps links
+*  What's On shows upcoming public events
+
+Member Login & Authentication
+*  Verification code emails arrive within 1-2 minutes
+*  Codes expire after 15 minutes (security check)
+*  Session stays active between app visits
+*  Pull-to-refresh works to reload data
+
+Member Portal Features
+*  Dashboard shows upcoming bookings, events, and announcements
+*  Book Golf - can see available time slots
+*  Book Golf - can submit a booking request (30/60/90/120 min based on tier)
+*  My Requests tab shows pending booking requests
+*  Cancel booking works from Dashboard
+*  Wellness page shows classes and MedSpa link
+*  Events page shows upcoming events with RSVP button
+*  RSVP works and shows success message
+*  Add to Calendar works on iOS Safari
+*  Profile shows correct membership tier and info
+*  Notifications bell shows unread count and clears properly
+*  Guest passes display correctly for applicable tiers
+
+Staff Portal Features
+*  Staff members can log in and access Staff Portal
+*  Booking Requests shows pending requests with badge count
+*  Approve booking works and notifies member
+*  Decline booking works and notifies member
+*  Calendar view shows approved bookings and closures
+*  Reschedule booking from calendar works
+*  Manual booking for members works
+*  Events management - create, edit, delete works
+*  Wellness classes - create, edit works
+*  Announcements - create and publish works
+*  Facility Closures - creating one also creates announcement
+*  Member Directory search works
+*  Cafe Menu editing works
+*  Training Guide displays all sections
+
+Admin-Only Features
+*  Team Access - can promote/demote users
+*  Tier Configuration - can edit tier limits
+*  View As Member - works and shows banner
+
+Integrations
+*  Google Calendar - bookings sync to Booked Golf calendar
+*  Google Calendar - events sync from Events calendar
+*  Google Calendar - closures appear on calendars
+*  HubSpot - member data syncs correctly
+*  Email notifications - booking approvals/declines send emails
+
+PWA / Mobile Experience
+*  Add to Home Screen prompt appears
+*  App works in standalone mode (no Safari chrome)
+*  Bottom navigation works smoothly
+*  Safe area spacing looks correct on iPhone (notch area)
+*  Loading animation transitions smoothly
+*  Haptic feedback works on taps
+

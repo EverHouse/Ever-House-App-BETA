@@ -1,0 +1,139 @@
+Here's your Backend/Frontend Logic Testing Checklist:
+
+Authentication & Sessions
+*  Verification code generates and sends correctly
+*  Invalid/expired codes are rejected
+*  Valid codes log user in and create session
+*  Session persists across page refreshes
+*  Session survives app close/reopen
+*  Logout clears session completely
+*  Protected routes redirect to login when not authenticated
+*  Staff/admin routes block regular members
+
+User Data & Profiles
+*  User profile loads with correct data from database
+*  Membership tier displays correctly
+*  Tier syncs from HubSpot on login
+*  Join date displays correctly
+*  Guest pass count matches database
+*  Profile updates save correctly
+
+Booking System (Golf Simulators)
+*  Available slots calculate correctly based on existing bookings
+*  Slots respect facility closures
+*  Past times don't appear for today
+*  Duration options match user's tier (30/60/90/120 min)
+*  Booking request saves to database
+*  Request creates pending status
+*  Staff receives notification of new request
+*  Approval changes status and creates Google Calendar event
+*  Decline changes status and notifies member
+*  Conflict detection prevents double-booking
+*  Booking cancellation removes from database and calendar
+*  Reschedule cancels old booking and creates new one
+*  Manual booking by staff works and notifies member
+
+Conference Room Booking
+*  Conference room shows in resource dropdown
+*  Availability calculates separately from simulators
+*  Booking syncs to MBO_Conference_Room calendar
+
+Guest Passes
+*  Guest pass count displays correctly on profile
+*  Adding guest to booking decrements pass count
+*  Pass count can't go negative
+*  Different tiers have correct pass limits
+
+Events
+*  Events load from database (synced from Google Calendar)
+*  Past events filter correctly
+*  Future events show first
+*  Members-only events hidden from public
+*  RSVP saves to database
+*  RSVP count displays correctly
+*  User can cancel RSVP
+*  Add to Calendar generates correct .ics file
+
+Wellness Classes
+*  Classes load from database (synced from Wellness calendar)
+*  Enrollment saves to database
+*  Enrollment count displays correctly
+*  Past classes don't show enroll button
+*  MedSpa link opens external booking
+
+Announcements
+*  Announcements load and display correctly
+*  Priority levels display differently (Normal, High, Urgent)
+*  Start/end dates respect visibility
+*  Closure-linked announcements show properly
+
+Notifications
+*  Notifications save to database
+*  Unread badge count is accurate
+*  Clicking notification marks as read
+*  Badge clears after viewing all
+*  Booking approval/decline triggers notification
+*  Staff booking triggers member notification
+
+Cafe Menu
+*  Menu items load by category
+*  Prices display correctly
+*  Inactive items hidden from members
+*  Staff can add/edit/toggle items
+
+FAQs
+*  FAQs load and display correctly
+*  Staff can add/edit/delete FAQs
+*  Changes appear immediately on public page
+
+Gallery
+*  Photos load and display correctly
+*  Image optimization (WebP) works on upload
+*  Staff can upload/delete photos
+
+Inquiries & Forms
+*  Contact form saves to database
+*  Tour request saves to database
+*  Membership inquiry saves to database
+*  Private hire inquiry saves to database
+*  HubSpot form submission works
+*  Staff can view/filter/update inquiry status
+
+Facility Closures
+*  Closure saves to database
+*  Closure syncs to Google Calendar
+*  Announcement auto-creates with closure
+*  Booking approval blocked during closure
+*  Closure deletion removes calendar event and announcement
+
+Google Calendar Sync
+*  Bookings sync to Booked Golf calendar
+*  Events sync FROM Events calendar
+*  Wellness syncs FROM Wellness calendar
+*  Tours sync FROM Tours calendar
+*  Closures sync bidirectionally
+*  Auto-sync runs periodically
+
+HubSpot Integration
+*  Contacts load from HubSpot
+*  Member tier syncs from HubSpot properties
+*  Form submissions post to HubSpot Forms API
+
+Admin Features
+*  Role promotion/demotion works
+*  Tier configuration saves correctly
+*  View As Member switches context correctly
+*  View As banner shows and exit works
+*  Bug reports save and display correctly
+
+Error Handling
+*  API errors show user-friendly messages
+*  Network failures show offline banner
+*  Form validation errors display inline
+*  404 pages display properly
+*  Error boundary catches React crashes
+
+Data Refresh
+*  Pull-to-refresh fetches fresh data
+*  Data updates after mutations (RSVP, booking, etc.)
+*  Stale data doesn't persist after actions
