@@ -364,9 +364,10 @@ const BookGolf: React.FC = () => {
       });
       
       if (ok) {
+        setMyRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
         haptic.success();
         showToast(wasApproved ? 'Booking cancelled' : 'Request cancelled', 'success');
-        await handleRefresh();
+        setTimeout(() => handleRefresh(), 500);
       } else {
         haptic.error();
         showToast('Failed to cancel request', 'error');

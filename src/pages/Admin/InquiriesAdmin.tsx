@@ -106,8 +106,8 @@ const InquiriesAdmin: React.FC = () => {
                 body: JSON.stringify({ status }),
             });
             if (res.ok) {
+                setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? { ...i, status } : i));
                 setSelectedInquiry(prev => prev ? { ...prev, status } : null);
-                await fetchInquiries();
             }
         } catch (err) {
             console.error('Failed to update status:', err);

@@ -2290,12 +2290,17 @@ const SimulatorAdmin: React.FC = () => {
             }
             
             const updated = await res.json();
+            setRequests(prev => prev.map(r => 
+                r.id === selectedRequest.id && r.source === selectedRequest.source 
+                    ? { ...r, status: 'confirmed' as const } 
+                    : r
+            ));
             setShowTrackmanConfirm(false);
             setActionModal(null);
             setSelectedRequest(null);
             setSelectedBayId(null);
             setStaffNotes('');
-            await handleRefresh();
+            setTimeout(() => handleRefresh(), 300);
         } catch (err: any) {
             setError(err.message);
             setShowTrackmanConfirm(false);
@@ -2341,11 +2346,16 @@ const SimulatorAdmin: React.FC = () => {
                 throw new Error(errData.error || 'Failed to process request');
             }
             
+            setRequests(prev => prev.map(r => 
+                r.id === selectedRequest.id && r.source === selectedRequest.source 
+                    ? { ...r, status: newStatus as 'declined' | 'cancelled' } 
+                    : r
+            ));
             setActionModal(null);
             setSelectedRequest(null);
             setStaffNotes('');
             setSuggestedTime('');
-            await handleRefresh();
+            setTimeout(() => handleRefresh(), 300);
         } catch (err: any) {
             setError(err.message);
         } finally {
