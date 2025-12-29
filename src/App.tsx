@@ -413,7 +413,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isLandingPage = location.pathname === '/';
   const isFullBleedHeroPage = isLandingPage || location.pathname === '/private-hire';
-  const isDarkTheme = isAdminRoute || (isMemberRoute && effectiveTheme === 'dark');
+  const isDarkTheme = (isAdminRoute || isMemberRoute) && effectiveTheme === 'dark';
   const showHeader = !isAdminRoute;
 
   const handleTopLeftClick = () => {

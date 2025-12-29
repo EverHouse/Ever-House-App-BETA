@@ -542,7 +542,8 @@ export const changelog: ChangelogEntry[] = [
     date: "2025-12-29",
     title: "Staff Portal Polish",
     changes: [
-      "Staff portal now uses bone white background in light mode for a softer look",
+      "Staff portal now respects your light/dark theme setting",
+      "Light mode shows bone white background for a softer, cohesive look",
       "Upcoming Bookings now show an Edit button to quickly view or reschedule",
       "All staff and admin modals now open with smooth fade and pop animations",
       "Booking cards restyled with liquid glass design for a more cohesive look",
