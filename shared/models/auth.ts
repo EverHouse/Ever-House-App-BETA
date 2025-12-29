@@ -78,6 +78,8 @@ export const wellnessClasses = pgTable("wellness_classes", {
   date: date("date").notNull(),
   isActive: boolean("is_active").default(true),
   googleCalendarId: varchar("google_calendar_id"),
+  imageUrl: text("image_url"),
+  externalUrl: text("external_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -193,6 +195,7 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at").defaultNow(),
   eventbriteId: varchar("eventbrite_id"),
   eventbriteUrl: text("eventbrite_url"),
+  externalUrl: text("external_url"),
   source: varchar("source").default("manual"),
   visibility: varchar("visibility").default("public"),
   googleCalendarId: varchar("google_calendar_id"),
