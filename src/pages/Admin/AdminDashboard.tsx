@@ -2613,32 +2613,30 @@ const SimulatorAdmin: React.FC = () => {
                         ) : (
                             <div className="space-y-2">
                                 {processedRequests.slice(0, 10).map(req => (
-                                    <div key={req.id} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
-                                                <p className="text-xs text-primary/60 dark:text-white/60">
-                                                    {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
-                                                </p>
-                                                {req.bay_name && (
-                                                    <p className="text-xs text-primary/60 dark:text-white/60 mt-1">{req.bay_name}</p>
-                                                )}
-                                            </div>
+                                    <div key={req.id} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center">
+                                        <div>
+                                            <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                            <p className="text-xs text-primary/60 dark:text-white/60">
+                                                {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                            </p>
+                                            {req.bay_name && (
+                                                <p className="text-xs text-primary/60 dark:text-white/60 mt-0.5">{req.bay_name}</p>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
                                             <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
                                                 {formatStatusLabel(req.status)}
                                             </span>
-                                        </div>
-                                        {req.status === 'approved' && (
-                                            <div className="mt-2 pt-2 border-t border-primary/10 dark:border-white/10">
+                                            {req.status === 'approved' && (
                                                 <button
                                                     onClick={() => setSelectedCalendarBooking(req)}
-                                                    className="text-xs text-primary/70 dark:text-white/70 hover:text-primary dark:hover:text-white flex items-center gap-1 transition-colors"
+                                                    className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
                                                 >
                                                     <span className="material-symbols-outlined text-xs">edit</span>
-                                                    View / Edit
+                                                    Edit
                                                 </button>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
