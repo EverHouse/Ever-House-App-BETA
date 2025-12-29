@@ -2598,10 +2598,13 @@ const SimulatorAdmin: React.FC = () => {
                                         <div>
                                             <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
                                             <p className="text-xs text-primary/60 dark:text-white/60">
-                                                {formatDateShort(booking.request_date)} • {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
+                                                {formatDateShort(booking.request_date)}
+                                            </p>
+                                            <p className="text-xs text-primary/60 dark:text-white/60">
+                                                {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
                                             </p>
                                             {booking.bay_name && (
-                                                <p className="text-xs text-primary/60 dark:text-white/60 mt-0.5">{booking.bay_name}</p>
+                                                <p className="text-xs text-primary/60 dark:text-white/60">{booking.bay_name}</p>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -2624,7 +2627,7 @@ const SimulatorAdmin: React.FC = () => {
                                                         console.error('Check-in failed:', err);
                                                     }
                                                 }}
-                                                className="py-1.5 px-3 bg-blue-500 text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-blue-600 transition-colors"
+                                                className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
                                             >
                                                 <span className="material-symbols-outlined text-xs">how_to_reg</span>
                                                 Check In
@@ -2659,10 +2662,13 @@ const SimulatorAdmin: React.FC = () => {
                                         <div>
                                             <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
                                             <p className="text-xs text-primary/60 dark:text-white/60">
-                                                {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                {formatDateShort(req.request_date)}
+                                            </p>
+                                            <p className="text-xs text-primary/60 dark:text-white/60">
+                                                {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
                                             </p>
                                             {req.bay_name && (
-                                                <p className="text-xs text-primary/60 dark:text-white/60 mt-0.5">{req.bay_name}</p>
+                                                <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2">
