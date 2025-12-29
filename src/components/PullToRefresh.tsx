@@ -175,22 +175,18 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
             }
 
             .ptr-loader-exit {
-              animation: ptrMinimizeToStatusBar 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+              animation: ptrMinimizeToStatusBar 0.55s cubic-bezier(0.32, 0, 0.67, 0) forwards;
               pointer-events: none;
             }
 
             @keyframes ptrMinimizeToStatusBar {
               0% {
-                clip-path: inset(0 0 0 0);
-              }
-              30% {
-                clip-path: inset(0 0 40% 0);
-              }
-              60% {
-                clip-path: inset(0 0 75% 0);
+                transform: translateY(0);
+                opacity: 1;
               }
               100% {
-                clip-path: inset(0 0 calc(100% - env(safe-area-inset-top, 44px)) 0);
+                transform: translateY(-100%);
+                opacity: 1;
               }
             }
 
@@ -215,21 +211,17 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
             }
 
             .ptr-content-exit {
-              animation: ptrContentFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+              animation: ptrContentFadeOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
             }
 
             @keyframes ptrContentFadeOut {
               0% {
                 opacity: 1;
-                transform: scale(1) translateY(0);
-              }
-              50% {
-                opacity: 0.3;
-                transform: scale(0.9) translateY(-20px);
+                transform: translateY(0);
               }
               100% {
                 opacity: 0;
-                transform: scale(0.7) translateY(-50px);
+                transform: translateY(-30px);
               }
             }
 

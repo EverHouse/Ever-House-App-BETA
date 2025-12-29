@@ -73,34 +73,18 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         }
 
         .loader-exit {
-          animation: minimizeToStatusBar 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: minimizeToStatusBar 0.55s cubic-bezier(0.32, 0, 0.67, 0) forwards;
           pointer-events: none;
         }
 
         @keyframes minimizeToStatusBar {
           0% {
-            transform: translateY(0) scaleY(1);
-            transform-origin: top center;
+            transform: translateY(0);
             opacity: 1;
-            border-radius: 0;
-          }
-          40% {
-            transform: translateY(0) scaleY(0.4);
-            transform-origin: top center;
-            opacity: 1;
-            border-radius: 0 0 24px 24px;
-          }
-          70% {
-            transform: translateY(0) scaleY(0.08);
-            transform-origin: top center;
-            opacity: 0.9;
-            border-radius: 0 0 16px 16px;
           }
           100% {
-            transform: translateY(0) scaleY(0);
-            transform-origin: top center;
-            opacity: 0;
-            border-radius: 0;
+            transform: translateY(-100%);
+            opacity: 1;
           }
         }
 
@@ -113,21 +97,17 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         }
 
         .content-exit {
-          animation: contentFadeOut 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          animation: contentFadeOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
 
         @keyframes contentFadeOut {
           0% {
             opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-          60% {
-            opacity: 0;
-            transform: scale(0.85) translateY(-40px);
+            transform: translateY(0);
           }
           100% {
             opacity: 0;
-            transform: scale(0.6) translateY(-80px);
+            transform: translateY(-30px);
           }
         }
 
