@@ -39,6 +39,7 @@ import toursRouter, { syncToursFromCalendar, sendTodayTourReminders } from './ro
 import bugReportsRouter from './routes/bugReports';
 import trackmanRouter from './routes/trackman';
 import { registerObjectStorageRoutes } from './replit_integrations/object_storage';
+import { ensureDatabaseConstraints } from './db-init';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -300,6 +301,8 @@ async function startServer() {
   console.log(`[Startup] Environment: ${isProduction ? 'production' : 'development'}`);
   console.log(`[Startup] DATABASE_URL: ${process.env.DATABASE_URL ? 'configured' : 'MISSING'}`);
   console.log(`[Startup] PORT env: ${process.env.PORT || 'not set'}`);
+  
+  await ensureDatabaseConstraints();
   
   try {
     setupSupabaseAuthRoutes(app);

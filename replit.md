@@ -42,6 +42,7 @@ The application is built with a React 19 frontend utilizing Vite, styled with Ta
 - **Portal Separation**: Staff/admin users are redirected to the Staff Portal, with specific profile information displayed.
 - **Guest Pass System**: Tracks and atomically consumes guest passes.
 - **Real-Time Booking**: Database-backed booking with shared availability, duration-aware slot generation, and collision detection.
+- **Trackman Historical Import**: Admin tool for importing historical booking data from Trackman CSV exports. Features email mapping (placeholder to real email via member CSV), name matching fallback, idempotent imports, and automatic lifetime_visits tracking. Supported booking statuses: pending, approved, declined, cancelled, attended, no_show. Supported durations: 30-300 minutes.
 - **PWA Features**: Service Worker caching, safe area support, overscroll prevention, offline support, scroll-aware bottom navigation that interacts with Safari's toolbar, and pull-to-refresh with desktop scroll wheel support.
 - **Motion Architecture**: Pure CSS keyframe animations for transitions, staggered content animations, and reusable components for animated lists. Parallax scrolling on hero images using `useParallax` hook with scroll-reactive gradient overlays.
 - **Sound Design**: Premium booking confirmation tones using Web Audio API (`src/utils/sounds.ts`) with graceful fallback for unsupported browsers.

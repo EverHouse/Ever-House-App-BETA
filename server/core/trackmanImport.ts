@@ -36,6 +36,44 @@ function isPlaceholderEmail(email: string): boolean {
   return false;
 }
 
+function loadEmailMapping(): Map<string, string> {
+  const mappingPath = path.join(process.cwd(), 'attached_assets', 'even_house_cleaned_member_data_1767012619480.csv');
+  const mapping = new Map<string, string>();
+  
+  if (!fs.existsSync(mappingPath)) {
+    process.stderr.write('[Trackman Import] No email mapping file found at: ' + mappingPath + '\n');
+    return mapping;
+  }
+  
+  try {
+    const content = fs.readFileSync(mappingPath, 'utf-8');
+    const lines = content.split('\n').filter(line => line.trim());
+    
+    for (let i = 1; i < lines.length; i++) {
+      const fields = parseCSVLine(lines[i]);
+      if (fields.length >= 10) {
+        const realEmail = fields[3]?.trim().toLowerCase();
+        const linkedEmails = fields[9]?.trim();
+        
+        if (realEmail && linkedEmails) {
+          const placeholders = linkedEmails.split(',').map(e => e.trim().toLowerCase());
+          for (const placeholder of placeholders) {
+            if (placeholder) {
+              mapping.set(placeholder, realEmail);
+            }
+          }
+        }
+      }
+    }
+    
+    process.stderr.write(`[Trackman Import] Loaded ${mapping.size} email mappings\n`);
+  } catch (err: any) {
+    process.stderr.write('[Trackman Import] Error loading mapping: ' + err.message + '\n');
+  }
+  
+  return mapping;
+}
+
 function normalizeStatus(status: string): string | null {
   const s = status.toLowerCase().trim();
   if (s === 'attended') return 'attended';
@@ -121,10 +159,15 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
     }
   }
 
+  const emailMapping = loadEmailMapping();
+  process.stderr.write(`[Trackman Import] Email mapping loaded with ${emailMapping.size} entries, membersByEmail has ${membersByEmail.size} entries\n`);
+
   let matchedRows = 0;
   let unmatchedRows = 0;
   let skippedRows = 0;
   const errors: string[] = [];
+  let mappingMatchCount = 0;
+  let mappingFoundButNotInDb = 0;
 
   for (let i = 1; i < lines.length; i++) {
     try {
@@ -156,7 +199,25 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
       let matchedEmail: string | null = null;
       let matchReason = '';
 
-      if (!isPlaceholderEmail(row.userEmail) && row.userEmail.includes('@')) {
+      const mappedEmail = emailMapping.get(row.userEmail.toLowerCase().trim());
+      if (mappedEmail) {
+        const existingMember = membersByEmail.get(mappedEmail.toLowerCase());
+        if (existingMember) {
+          matchedEmail = existingMember;
+          matchReason = 'Matched via email mapping';
+          mappingMatchCount++;
+          if (mappingMatchCount <= 3) {
+            process.stderr.write(`[Trackman Import] Match: ${row.userEmail} -> ${mappedEmail} -> ${existingMember}\n`);
+          }
+        } else {
+          mappingFoundButNotInDb++;
+          if (mappingFoundButNotInDb <= 3) {
+            process.stderr.write(`[Trackman Import] Mapped ${row.userEmail} -> ${mappedEmail} but NOT in membersByEmail\n`);
+          }
+        }
+      }
+
+      if (!matchedEmail && !isPlaceholderEmail(row.userEmail) && row.userEmail.includes('@')) {
         const existingMember = membersByEmail.get(row.userEmail.toLowerCase());
         if (existingMember) {
           matchedEmail = existingMember;
@@ -210,7 +271,7 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
 
       const existingBooking = await db.select({ id: bookingRequests.id })
         .from(bookingRequests)
-        .where(sql`notes LIKE ${'%[Trackman Import]%'} AND notes LIKE ${'%' + row.bookingId + '%'}`)
+        .where(sql`notes LIKE ${'%[Trackman Import ID:' + row.bookingId + ']%'}`)
         .limit(1);
       
       if (existingBooking.length > 0) {
@@ -219,28 +280,34 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
       }
 
       if (matchedEmail) {
-        await db.insert(bookingRequests).values({
-          userEmail: matchedEmail,
-          userName: row.userName,
-          bayId: parseInt(row.bayNumber) || null,
-          requestDate: bookingDate,
-          startTime: startTime,
-          durationMinutes: row.durationMins,
-          endTime: endTime,
-          notes: `[Trackman Import ID:${row.bookingId}] ${row.notes}`,
-          status: normalizedStatus,
-          createdAt: new Date(row.bookedDate.replace(' ', 'T') + ':00')
-        });
+        try {
+          await db.insert(bookingRequests).values({
+            userEmail: matchedEmail,
+            userName: row.userName,
+            bayId: parseInt(row.bayNumber) || null,
+            requestDate: bookingDate,
+            startTime: startTime,
+            durationMinutes: row.durationMins,
+            endTime: endTime,
+            notes: `[Trackman Import ID:${row.bookingId}] ${row.notes}`,
+            status: normalizedStatus,
+            createdAt: new Date(row.bookedDate.replace(' ', 'T') + ':00')
+          });
 
-        if (normalizedStatus === 'attended') {
-          await db.execute(sql`
-            UPDATE users 
-            SET lifetime_visits = COALESCE(lifetime_visits, 0) + 1 
-            WHERE email = ${matchedEmail}
-          `);
+          if (normalizedStatus === 'attended') {
+            await db.execute(sql`
+              UPDATE users 
+              SET lifetime_visits = COALESCE(lifetime_visits, 0) + 1 
+              WHERE email = ${matchedEmail}
+            `);
+          }
+
+          matchedRows++;
+        } catch (insertErr: any) {
+          const errDetails = insertErr.cause?.message || insertErr.detail || insertErr.code || 'no details';
+          process.stderr.write(`[Trackman Import] Insert error for ${row.bookingId}: ${insertErr.message} | Details: ${errDetails}\n`);
+          throw insertErr;
         }
-
-        matchedRows++;
       } else {
         await db.insert(trackmanUnmatchedBookings).values({
           trackmanBookingId: row.bookingId,
@@ -266,6 +333,8 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
       skippedRows++;
     }
   }
+
+  process.stderr.write(`[Trackman Import] Summary: mappingMatchCount=${mappingMatchCount}, mappingFoundButNotInDb=${mappingFoundButNotInDb}, matchedRows=${matchedRows}, unmatchedRows=${unmatchedRows}, skipped=${skippedRows}\n`);
 
   await db.insert(trackmanImportRuns).values({
     filename: path.basename(csvPath),
