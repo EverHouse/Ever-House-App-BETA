@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { isProduction } from '../core/db';
 import { db } from '../db';
-import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks, announcements, notifications } from '../../shared/schema';
+import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks, announcements, notifications, resources } from '../../shared/schema';
 import { eq, desc, or, isNull, inArray } from 'drizzle-orm';
 import webpush from 'web-push';
 import { isStaffOrAdmin } from '../core/middleware';
@@ -54,11 +54,11 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
       .select({ id: bays.id })
       .from(bays)
       .where(eq(bays.isActive, true));
-    return activeBays.map(bay => bay.id);
+    const allResources = await db.select({ id: resources.id }).from(resources);
+    return [...activeBays.map(bay => bay.id), ...allResources.map(r => r.id)];
   }
   
-  // Handle conference room closure - bay_id 11 is the Conference Room
-  if (affectedAreas === 'conference_room') {
+  if (affectedAreas === 'conference_room' || affectedAreas === 'Conference Room') {
     return [11];
   }
   
@@ -92,11 +92,24 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
   
   const bayIds: number[] = [];
   const parts = affectedAreas.split(',').map(s => s.trim());
+  
   for (const part of parts) {
     if (part.startsWith('bay_')) {
       const bayId = parseInt(part.replace('bay_', ''));
       if (!isNaN(bayId)) {
         bayIds.push(bayId);
+      }
+    } else if (part.toLowerCase() === 'conference room') {
+      bayIds.push(11);
+    } else if (part.match(/^Bay\s*(\d+)$/i)) {
+      const match = part.match(/^Bay\s*(\d+)$/i);
+      if (match) {
+        bayIds.push(parseInt(match[1]));
+      }
+    } else if (part.match(/^Simulator\s*Bay\s*(\d+)$/i)) {
+      const match = part.match(/^Simulator\s*Bay\s*(\d+)$/i);
+      if (match) {
+        bayIds.push(parseInt(match[1]));
       }
     } else {
       const parsed = parseInt(part);
@@ -735,6 +748,74 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Closure update error:', error);
     res.status(500).json({ error: 'Failed to update closure' });
+  }
+});
+
+router.post('/api/closures/backfill-blocks', isStaffOrAdmin, async (req, res) => {
+  try {
+    const allClosures = await db
+      .select()
+      .from(facilityClosures)
+      .where(eq(facilityClosures.isActive, true));
+    
+    let totalBlocksCreated = 0;
+    const results: { closureId: number; title: string; blocksCreated: number }[] = [];
+    
+    for (const closure of allClosures) {
+      const existingBlocks = await db
+        .select({ id: availabilityBlocks.id })
+        .from(availabilityBlocks)
+        .where(eq(availabilityBlocks.closureId, closure.id));
+      
+      if (existingBlocks.length > 0) {
+        results.push({ closureId: closure.id, title: closure.title, blocksCreated: 0 });
+        continue;
+      }
+      
+      const affectedBayIds = await getAffectedBayIds(closure.affectedAreas || 'entire_facility');
+      const dates = getDatesBetween(closure.startDate, closure.endDate || closure.startDate);
+      
+      if (affectedBayIds.length > 0) {
+        const blockStartTime = closure.startTime || '08:00:00';
+        const blockEndTime = closure.endTime || '22:00:00';
+        
+        const insertValues = [];
+        for (const bayId of affectedBayIds) {
+          for (const date of dates) {
+            insertValues.push({
+              bayId,
+              blockDate: date,
+              startTime: blockStartTime,
+              endTime: blockEndTime,
+              blockType: 'blocked',
+              notes: closure.reason || 'Facility closure',
+              createdBy: closure.createdBy,
+              closureId: closure.id
+            });
+          }
+        }
+        
+        if (insertValues.length > 0) {
+          await db.insert(availabilityBlocks).values(insertValues);
+          totalBlocksCreated += insertValues.length;
+          results.push({ closureId: closure.id, title: closure.title, blocksCreated: insertValues.length });
+          console.log(`[Backfill] Created ${insertValues.length} blocks for closure #${closure.id}: ${closure.title}`);
+        }
+      } else {
+        results.push({ closureId: closure.id, title: closure.title, blocksCreated: 0 });
+      }
+    }
+    
+    console.log(`[Backfill] Complete: ${totalBlocksCreated} total blocks created for ${allClosures.length} closures`);
+    res.json({ 
+      success: true, 
+      totalClosures: allClosures.length,
+      totalBlocksCreated,
+      details: results 
+    });
+  } catch (error: any) {
+    console.error('Backfill error:', error);
+    res.status(500).json({ error: 'Failed to backfill availability blocks' });
   }
 });
 
