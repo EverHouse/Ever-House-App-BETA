@@ -120,7 +120,7 @@ const WhatsOn: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#EAEBE6] overflow-x-hidden">
-      <section className="px-6 pt-10 pb-6 bg-[#EAEBE6] animate-pop-in">
+      <section className="px-6 pt-2 pb-6 bg-[#EAEBE6] animate-pop-in">
         <h1 className="text-5xl font-light text-primary mb-4 tracking-tight">What's On</h1>
         <p className="text-primary/70 text-base leading-relaxed max-w-[90%]">
            Curated experiences at Even House. Join us for culture, conversation, and community in Tustin.

@@ -134,7 +134,7 @@ const WelcomeBanner: React.FC = () => {
       </div>
 
       {showIOSModal && (
-        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-20 p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className={`w-full max-w-sm p-6 rounded-3xl ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'} shadow-2xl`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-brand-green'}`}>

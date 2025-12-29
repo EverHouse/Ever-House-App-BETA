@@ -64,7 +64,7 @@ const FAQ: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
-      <div className="px-6 pt-8 pb-4 animate-pop-in">
+      <div className="px-6 pt-2 pb-4 animate-pop-in">
         <h1 className="text-3xl font-bold tracking-tight text-primary mb-2">Frequently Asked Questions</h1>
         <p className="text-primary/70 text-base font-medium">Common questions about membership, amenities, and policies.</p>
       </div>

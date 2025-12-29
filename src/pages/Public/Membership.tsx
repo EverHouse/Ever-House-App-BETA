@@ -198,8 +198,8 @@ const MembershipOverview: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="px-4 pt-6 pb-0 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen overflow-x-hidden">
-        <div className="text-center px-2 pt-4 animate-pulse">
+      <div className="px-4 pt-4 pb-0 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen overflow-x-hidden">
+        <div className="text-center px-2 animate-pulse">
           <div className="h-8 bg-primary/10 rounded-lg w-48 mx-auto mb-3"></div>
           <div className="h-4 bg-primary/10 rounded w-64 mx-auto"></div>
         </div>
@@ -213,8 +213,8 @@ const MembershipOverview: React.FC = () => {
   }
 
   return (
-    <div className="px-4 pt-6 pb-0 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen overflow-x-hidden">
-      <div className="text-center px-2 pt-4 animate-pop-in">
+    <div className="px-4 pt-4 pb-0 flex flex-col gap-8 bg-[#F2F2EC] min-h-screen overflow-x-hidden">
+      <div className="text-center px-2 animate-pop-in">
         <h2 className="text-3xl font-medium tracking-tight text-primary mb-3">Membership Overview</h2>
         <p className="text-primary/70 text-base font-light leading-relaxed max-w-[320px] mx-auto">
           A space for connection and growth. Select the membership that fits your lifestyle.
