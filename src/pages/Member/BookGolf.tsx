@@ -175,6 +175,7 @@ const BookGolf: React.FC = () => {
   const [myRequests, setMyRequests] = useState<BookingRequest[]>([]);
   const [previousTab, setPreviousTab] = useState<'simulator' | 'conference'>(initialTab as 'simulator' | 'conference');
   const [closures, setClosures] = useState<Closure[]>([]);
+  const [expandedHour, setExpandedHour] = useState<string | null>(null);
 
   const effectiveUser = viewAsUser || user;
   
@@ -469,9 +470,30 @@ const BookGolf: React.FC = () => {
     });
   }, [closures, selectedDateObj, activeTab]);
 
+  const slotsByHour = useMemo(() => {
+    const grouped: Record<string, { hourLabel: string; hour24: string; slots: TimeSlot[]; totalAvailable: number }> = {};
+    
+    availableSlots.forEach(slot => {
+      const hour24 = slot.startTime24.split(':')[0];
+      const hourNum = parseInt(hour24, 10);
+      const period = hourNum >= 12 ? 'PM' : 'AM';
+      const hour12 = hourNum === 0 ? 12 : hourNum > 12 ? hourNum - 12 : hourNum;
+      const hourLabel = `${hour12}:00 ${period}`;
+      
+      if (!grouped[hour24]) {
+        grouped[hour24] = { hourLabel, hour24, slots: [], totalAvailable: 0 };
+      }
+      grouped[hour24].slots.push(slot);
+      grouped[hour24].totalAvailable += slot.availableResourceDbIds.length;
+    });
+    
+    return Object.values(grouped).sort((a, b) => a.hour24.localeCompare(b.hour24));
+  }, [availableSlots]);
+
   const handleRefresh = useCallback(async () => {
     setSelectedSlot(null);
     setSelectedResource(null);
+    setExpandedHour(null);
     const newResources = await fetchResources();
     await Promise.all([
       fetchAvailability(newResources),
@@ -653,7 +675,7 @@ const BookGolf: React.FC = () => {
                     day={d.day} 
                     date={d.dateNum} 
                     active={selectedDateObj.date === d.date} 
-                    onClick={() => setSelectedDateObj(d)} 
+                    onClick={() => { setSelectedDateObj(d); setExpandedHour(null); }} 
                     isDark={isDark}
                   />
                 ))}
@@ -662,7 +684,7 @@ const BookGolf: React.FC = () => {
                 {[30, 60, 90, 120].filter(mins => (mins !== 90 && mins !== 120) || tierPermissions.hasExtendedSessions).map(mins => (
                   <button 
                     key={mins}
-                    onClick={() => { haptic.selection(); setDuration(mins); }}
+                    onClick={() => { haptic.selection(); setDuration(mins); setExpandedHour(null); }}
                     aria-pressed={duration === mins}
                     className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-accent focus:outline-none ${
                       duration === mins 
@@ -727,38 +749,88 @@ const BookGolf: React.FC = () => {
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Available Times</h3>
             
             <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-100' : 'opacity-0 hidden'}`}>
-                <div className="grid grid-cols-2 gap-3">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-14 rounded-xl bg-white/5 animate-pulse" />
                   ))}
                 </div>
               </div>
               <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-0 hidden' : 'opacity-100'}`}>
-              <div className="grid grid-cols-2 gap-3">
-                {availableSlots.map((slot, index) => (
-                  <button
-                    key={slot.id}
-                    onClick={() => {
-                      haptic.light();
-                      setSelectedSlot(slot);
-                      setSelectedResource(null);
-                    }}
-                    aria-pressed={selectedSlot?.id === slot.id}
-                    className={`p-4 rounded-xl border text-left transition-all active:scale-[0.98] relative overflow-hidden flex flex-col justify-center animate-pop-in focus:ring-2 focus:ring-accent focus:outline-none ${
-                      selectedSlot?.id === slot.id
-                      ? 'bg-accent text-[#293515] border-accent shadow-glow'
-                      : (isDark ? 'glass-card text-white hover:bg-white/10 border-white/10' : 'bg-white text-primary hover:bg-black/5 border-black/10 shadow-sm')
-                    }`}
-                    style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
-                  >
-                    <div className="font-bold text-base mb-0.5">{slot.start}</div>
-                    <div className={`text-[10px] font-bold uppercase tracking-wide ${selectedSlot?.id === slot.id ? 'opacity-80' : 'opacity-40'}`}>
-                      {slot.availableResourceDbIds.length} Available
+              <div className="space-y-2">
+                {slotsByHour.map((hourGroup, groupIndex) => {
+                  const isExpanded = expandedHour === hourGroup.hour24;
+                  const hasSelectedSlot = hourGroup.slots.some(s => selectedSlot?.id === s.id);
+                  
+                  return (
+                    <div 
+                      key={hourGroup.hour24}
+                      className="animate-pop-in"
+                      style={{ animationDelay: `${groupIndex * 0.05}s`, animationFillMode: 'both' }}
+                    >
+                      <button
+                        onClick={() => {
+                          haptic.light();
+                          setExpandedHour(isExpanded ? null : hourGroup.hour24);
+                        }}
+                        className={`w-full p-4 rounded-xl border text-left transition-all active:scale-[0.99] flex items-center justify-between ${
+                          hasSelectedSlot
+                            ? 'bg-accent/20 border-accent/50'
+                            : isExpanded
+                              ? (isDark ? 'glass-card border-white/20 bg-white/10' : 'bg-white border-black/20')
+                              : (isDark ? 'glass-card border-white/10 hover:bg-white/5' : 'bg-white border-black/10 hover:bg-black/5 shadow-sm')
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`material-symbols-outlined text-xl transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''} ${
+                            hasSelectedSlot ? (isDark ? 'text-accent' : 'text-accent') : (isDark ? 'text-white/60' : 'text-primary/60')
+                          }`}>
+                            chevron_right
+                          </span>
+                          <div>
+                            <div className={`font-bold text-base ${hasSelectedSlot ? (isDark ? 'text-accent' : 'text-[#293515]') : (isDark ? 'text-white' : 'text-primary')}`}>
+                              {hourGroup.hourLabel}
+                            </div>
+                            <div className={`text-[10px] font-bold uppercase tracking-wide ${hasSelectedSlot ? 'text-accent/80' : 'opacity-50'}`}>
+                              {hourGroup.slots.length} {hourGroup.slots.length === 1 ? 'time' : 'times'} · {hourGroup.totalAvailable} {activeTab === 'simulator' ? 'bays' : 'rooms'}
+                            </div>
+                          </div>
+                        </div>
+                        {hasSelectedSlot && (
+                          <span className="material-symbols-outlined text-accent">check_circle</span>
+                        )}
+                      </button>
+                      
+                      <div className={`grid grid-cols-2 gap-2 overflow-hidden transition-all duration-300 ease-out ${
+                        isExpanded ? 'max-h-[500px] opacity-100 mt-2 pl-6' : 'max-h-0 opacity-0'
+                      }`}>
+                        {hourGroup.slots.map((slot, slotIndex) => (
+                          <button
+                            key={slot.id}
+                            onClick={() => {
+                              haptic.light();
+                              setSelectedSlot(slot);
+                              setSelectedResource(null);
+                            }}
+                            aria-pressed={selectedSlot?.id === slot.id}
+                            className={`p-3 rounded-xl border text-left transition-all active:scale-[0.98] focus:ring-2 focus:ring-accent focus:outline-none ${
+                              selectedSlot?.id === slot.id
+                              ? 'bg-accent text-[#293515] border-accent shadow-glow'
+                              : (isDark ? 'glass-card text-white hover:bg-white/10 border-white/10' : 'bg-white text-primary hover:bg-black/5 border-black/10 shadow-sm')
+                            }`}
+                            style={{ animationDelay: `${slotIndex * 0.03}s` }}
+                          >
+                            <div className="font-bold text-sm">{slot.start}</div>
+                            <div className={`text-[10px] font-bold uppercase tracking-wide ${selectedSlot?.id === slot.id ? 'opacity-80' : 'opacity-40'}`}>
+                              {slot.availableResourceDbIds.length} {activeTab === 'simulator' ? 'bays' : 'rooms'}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </button>
-                ))}
-                {availableSlots.length === 0 && !isLoading && (
-                  <div className={`col-span-2 text-center py-8 text-sm rounded-xl border border-dashed ${isDark ? 'text-white/60 glass-card border-white/20' : 'text-primary/60 bg-white border-black/20'}`}>
+                  );
+                })}
+                {slotsByHour.length === 0 && !isLoading && (
+                  <div className={`text-center py-8 text-sm rounded-xl border border-dashed ${isDark ? 'text-white/60 glass-card border-white/20' : 'text-primary/60 bg-white border-black/20'}`}>
                     No slots available for this date.
                   </div>
                 )}

@@ -495,5 +495,15 @@ export const changelog: ChangelogEntry[] = [
       "Fixed calendar events not importing on iPhone — now works reliably with Apple Calendar",
       "Added pull-to-refresh on Closures page to quickly sync data"
     ]
+  },
+  {
+    version: "5.8",
+    date: "2025-12-29",
+    title: "Accordion Time Slots & Closure Sorting",
+    changes: [
+      "Time slots are now grouped by hour in an accordion layout — tap an hour to see specific times",
+      "Closures are now sorted from soonest to furthest on both member and staff views",
+      "The closure alert card on the dashboard now shows the nearest upcoming closure first"
+    ]
   }
 ];
