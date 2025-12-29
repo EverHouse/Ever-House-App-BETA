@@ -1939,7 +1939,7 @@ interface BookingRequest {
     end_time: string;
     duration_minutes: number;
     notes: string | null;
-    status: 'pending' | 'pending_approval' | 'approved' | 'declined' | 'cancelled' | 'confirmed';
+    status: 'pending' | 'pending_approval' | 'approved' | 'declined' | 'cancelled' | 'confirmed' | 'attended' | 'no_show';
     staff_notes: string | null;
     suggested_time: string | null;
     created_at: string;
@@ -2028,6 +2028,8 @@ const SimulatorAdmin: React.FC = () => {
     const [rescheduleBookingId, setRescheduleBookingId] = useState<number | null>(null);
     const [selectedCalendarBooking, setSelectedCalendarBooking] = useState<BookingRequest | null>(null);
     const [isCancellingFromModal, setIsCancellingFromModal] = useState(false);
+    const [processedFilter, setProcessedFilter] = useState<'all' | 'approved' | 'attended' | 'no_show' | 'cancelled'>('all');
+    const [markStatusModal, setMarkStatusModal] = useState<{ booking: BookingRequest | null; confirmNoShow: boolean }>({ booking: null, confirmNoShow: false });
     
     const [calendarDate, setCalendarDate] = useState(() => getTodayPacific());
 
@@ -2038,7 +2040,7 @@ const SimulatorAdmin: React.FC = () => {
     }, [isLoading, setPageReady]);
 
     useEffect(() => {
-        if (actionModal || showTrackmanConfirm || selectedCalendarBooking) {
+        if (actionModal || showTrackmanConfirm || selectedCalendarBooking || markStatusModal.booking) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = '';
@@ -2046,7 +2048,7 @@ const SimulatorAdmin: React.FC = () => {
         return () => {
             document.body.style.overflow = '';
         };
-    }, [actionModal, showTrackmanConfirm, selectedCalendarBooking]);
+    }, [actionModal, showTrackmanConfirm, selectedCalendarBooking, markStatusModal.booking]);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -2375,6 +2377,31 @@ const SimulatorAdmin: React.FC = () => {
         }
     };
 
+    const getRelativeDateLabel = (dateStr: string): string => {
+        const today = getTodayPacific();
+        const tomorrow = addDaysToPacificDate(today, 1);
+        
+        if (dateStr === today) return 'Today';
+        if (dateStr === tomorrow) return 'Tomorrow';
+        
+        const todayDate = new Date(today + 'T12:00:00');
+        const targetDate = new Date(dateStr + 'T12:00:00');
+        const diffDays = Math.ceil((targetDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+        return `In ${diffDays} days`;
+    };
+
+    const groupBookingsByDate = (bookings: BookingRequest[]): Map<string, BookingRequest[]> => {
+        const grouped = new Map<string, BookingRequest[]>();
+        for (const booking of bookings) {
+            const date = booking.request_date;
+            if (!grouped.has(date)) {
+                grouped.set(date, []);
+            }
+            grouped.get(date)!.push(booking);
+        }
+        return grouped;
+    };
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'pending': 
@@ -2382,11 +2409,10 @@ const SimulatorAdmin: React.FC = () => {
                 return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300';
             case 'approved': 
             case 'confirmed':
-                return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300';
             case 'attended':
-                return 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300';
+                return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300';
             case 'no_show':
-                return 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300';
+                return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
             case 'declined': 
             case 'cancelled':
                 return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
@@ -2585,60 +2611,81 @@ const SimulatorAdmin: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Upcoming Bookings Section */}
+                    {/* Upcoming Bookings Section - Grouped by Date */}
                     {upcomingBookings.length > 0 && (
                         <div className="animate-pop-in" style={{animationDelay: '0.15s'}}>
                             <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-primary dark:text-accent">calendar_today</span>
                                 Upcoming Bookings ({upcomingBookings.length})
                             </h3>
-                            <div className="space-y-2">
-                                {upcomingBookings.map((booking, index) => (
-                                    <div key={`upcoming-${booking.id}`} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.2 + index * 0.03}s`}}>
-                                        <div>
-                                            <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
-                                            <p className="text-xs text-primary/60 dark:text-white/60">
-                                                {formatDateShort(booking.request_date)}
-                                            </p>
-                                            <p className="text-xs text-primary/60 dark:text-white/60">
-                                                {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
-                                            </p>
-                                            {booking.bay_name && (
-                                                <p className="text-xs text-primary/60 dark:text-white/60">{booking.bay_name}</p>
-                                            )}
+                            <div className="space-y-4">
+                                {Array.from(groupBookingsByDate(upcomingBookings)).map(([date, bookings]) => (
+                                    <div key={date}>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-bold text-primary/70 dark:text-white/70 uppercase tracking-wide">
+                                                {getRelativeDateLabel(date)}
+                                            </span>
+                                            <span className="text-xs text-primary/50 dark:text-white/50">
+                                                {formatDateShort(date)}
+                                            </span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={async () => {
-                                                    try {
-                                                        const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
-                                                            method: 'PUT',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            credentials: 'include',
-                                                            body: JSON.stringify({ source: booking.source })
-                                                        });
-                                                        if (res.ok) {
-                                                            setTimeout(() => handleRefresh(), 300);
-                                                        } else {
-                                                            const err = await res.json();
-                                                            console.error('Check-in failed:', err.error || 'Unknown error');
-                                                        }
-                                                    } catch (err) {
-                                                        console.error('Check-in failed:', err);
-                                                    }
-                                                }}
-                                                className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-xs">how_to_reg</span>
-                                                Check In
-                                            </button>
-                                            <button
-                                                onClick={() => setSelectedCalendarBooking(booking)}
-                                                className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-xs">edit</span>
-                                                Edit
-                                            </button>
+                                        <div className="space-y-2">
+                                            {bookings.map((booking, index) => {
+                                                const isToday = booking.request_date === getTodayPacific();
+                                                return (
+                                                    <div key={`upcoming-${booking.id}`} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.2 + index * 0.03}s`}}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
+                                                                    {(booking as any).tier && <TierBadge tier={(booking as any).tier} size="sm" />}
+                                                                </div>
+                                                                <p className="text-xs text-primary/60 dark:text-white/60">
+                                                                    {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
+                                                                </p>
+                                                                {booking.bay_name && (
+                                                                    <p className="text-xs text-primary/60 dark:text-white/60">{booking.bay_name}</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {isToday && (
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
+                                                                                method: 'PUT',
+                                                                                headers: { 'Content-Type': 'application/json' },
+                                                                                credentials: 'include',
+                                                                                body: JSON.stringify({ status: 'attended', source: booking.source })
+                                                                            });
+                                                                            if (res.ok) {
+                                                                                setTimeout(() => handleRefresh(), 300);
+                                                                            } else {
+                                                                                const err = await res.json();
+                                                                                console.error('Check-in failed:', err.error || 'Unknown error');
+                                                                            }
+                                                                        } catch (err) {
+                                                                            console.error('Check-in failed:', err);
+                                                                        }
+                                                                    }}
+                                                                    className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-xs">how_to_reg</span>
+                                                                    Check In
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => setSelectedCalendarBooking(booking)}
+                                                                className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
+                                                            >
+                                                                <span className="material-symbols-outlined text-xs">edit</span>
+                                                                Edit
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}
@@ -2646,49 +2693,74 @@ const SimulatorAdmin: React.FC = () => {
                         </div>
                     )}
                     
+                    {/* Recent Processed Section with Filter Tabs */}
                     <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary/60 dark:text-white/60">history</span>
                             Recent Processed ({processedRequests.length})
                         </h3>
-                        {processedRequests.length === 0 ? (
-                            <div className="py-8 text-center border-2 border-dashed border-primary/10 dark:border-white/10 rounded-xl">
-                                <p className="text-primary/40 dark:text-white/40">No processed requests yet</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {processedRequests.slice(0, 10).map(req => (
-                                    <div key={req.id} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center">
-                                        <div>
-                                            <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
-                                            <p className="text-xs text-primary/60 dark:text-white/60">
-                                                {formatDateShort(req.request_date)}
-                                            </p>
-                                            <p className="text-xs text-primary/60 dark:text-white/60">
-                                                {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
-                                            </p>
-                                            {req.bay_name && (
-                                                <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
-                                            )}
+                        
+                        {/* Filter Tabs */}
+                        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide -mx-1 px-1 mb-3">
+                            {(['all', 'approved', 'attended', 'no_show', 'cancelled'] as const).map(filter => (
+                                <button
+                                    key={filter}
+                                    onClick={() => setProcessedFilter(filter)}
+                                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                                        processedFilter === filter 
+                                            ? 'bg-primary text-white shadow-md' 
+                                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+                                    }`}
+                                >
+                                    {filter === 'all' ? 'All' : filter === 'no_show' ? 'No Show' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        {(() => {
+                            const filteredProcessed = processedFilter === 'all' 
+                                ? processedRequests 
+                                : processedRequests.filter(r => r.status === processedFilter);
+                            
+                            return filteredProcessed.length === 0 ? (
+                                <div className="py-8 text-center border-2 border-dashed border-primary/10 dark:border-white/10 rounded-xl">
+                                    <p className="text-primary/40 dark:text-white/40">No {processedFilter === 'all' ? 'processed requests' : processedFilter.replace('_', ' ') + ' bookings'} yet</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {filteredProcessed.slice(0, 20).map(req => (
+                                        <div key={`processed-${req.id}`} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center">
+                                            <div>
+                                                <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                                <p className="text-xs text-primary/60 dark:text-white/60">
+                                                    {formatDateShort(req.request_date)}
+                                                </p>
+                                                <p className="text-xs text-primary/60 dark:text-white/60">
+                                                    {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                </p>
+                                                {req.bay_name && (
+                                                    <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                    {formatStatusLabel(req.status)}
+                                                </span>
+                                                {req.status === 'approved' && (
+                                                    <button
+                                                        onClick={() => setMarkStatusModal({ booking: req, confirmNoShow: false })}
+                                                        className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-xs">task_alt</span>
+                                                        Mark Status
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
-                                                {formatStatusLabel(req.status)}
-                                            </span>
-                                            {req.status === 'approved' && (
-                                                <button
-                                                    onClick={() => setSelectedCalendarBooking(req)}
-                                                    className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
-                                                >
-                                                    <span className="material-symbols-outlined text-xs">edit</span>
-                                                    Edit
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             ) : (
@@ -3208,6 +3280,123 @@ const SimulatorAdmin: React.FC = () => {
                             </div>
                         </div>
                       </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Mark Status Modal */}
+            {markStatusModal.booking && createPortal(
+                <div className="fixed inset-0 z-[10002] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMarkStatusModal({ booking: null, confirmNoShow: false })} />
+                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-sm w-full pointer-events-auto animate-pop-in" style={{ overscrollBehavior: 'contain' }}>
+                            <div className="text-center mb-4">
+                                <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-3">
+                                    <span className="material-symbols-outlined text-primary dark:text-accent text-2xl">task_alt</span>
+                                </div>
+                                <h3 className="text-lg font-bold text-primary dark:text-white mb-2">
+                                    {markStatusModal.confirmNoShow ? 'Confirm No Show' : 'Mark Booking Status'}
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {markStatusModal.confirmNoShow 
+                                        ? 'Are you sure you want to mark this booking as a no show?' 
+                                        : 'Did the member attend their booking?'}
+                                </p>
+                            </div>
+                            
+                            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg mb-4 text-sm">
+                                <p className="font-medium text-primary dark:text-white">{markStatusModal.booking.user_name || markStatusModal.booking.user_email}</p>
+                                <p className="text-gray-500 dark:text-gray-400">
+                                    {formatDateShort(markStatusModal.booking.request_date)} • {formatTime12(markStatusModal.booking.start_time)} - {formatTime12(markStatusModal.booking.end_time)}
+                                </p>
+                                {markStatusModal.booking.bay_name && (
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        {markStatusModal.booking.bay_name}
+                                    </p>
+                                )}
+                            </div>
+                            
+                            {markStatusModal.confirmNoShow ? (
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setMarkStatusModal({ ...markStatusModal, confirmNoShow: false })}
+                                        className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                                    >
+                                        Go Back
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!markStatusModal.booking) return;
+                                            try {
+                                                const res = await fetch(`/api/bookings/${markStatusModal.booking.id}/checkin`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    credentials: 'include',
+                                                    body: JSON.stringify({ status: 'no_show', source: markStatusModal.booking.source })
+                                                });
+                                                if (res.ok) {
+                                                    setMarkStatusModal({ booking: null, confirmNoShow: false });
+                                                    setTimeout(() => handleRefresh(), 300);
+                                                } else {
+                                                    const err = await res.json();
+                                                    console.error('Mark no show failed:', err.error || 'Unknown error');
+                                                }
+                                            } catch (err) {
+                                                console.error('Mark no show failed:', err);
+                                            }
+                                        }}
+                                        className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">person_off</span>
+                                        Confirm No Show
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={async () => {
+                                            if (!markStatusModal.booking) return;
+                                            try {
+                                                const res = await fetch(`/api/bookings/${markStatusModal.booking.id}/checkin`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    credentials: 'include',
+                                                    body: JSON.stringify({ status: 'attended', source: markStatusModal.booking.source })
+                                                });
+                                                if (res.ok) {
+                                                    setMarkStatusModal({ booking: null, confirmNoShow: false });
+                                                    setTimeout(() => handleRefresh(), 300);
+                                                } else {
+                                                    const err = await res.json();
+                                                    console.error('Mark attended failed:', err.error || 'Unknown error');
+                                                }
+                                            } catch (err) {
+                                                console.error('Mark attended failed:', err);
+                                            }
+                                        }}
+                                        className="flex-1 py-3 px-4 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">check_circle</span>
+                                        Attended
+                                    </button>
+                                    <button
+                                        onClick={() => setMarkStatusModal({ ...markStatusModal, confirmNoShow: true })}
+                                        className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">person_off</span>
+                                        No Show
+                                    </button>
+                                </div>
+                            )}
+                            
+                            <button
+                                onClick={() => setMarkStatusModal({ booking: null, confirmNoShow: false })}
+                                className="w-full mt-3 py-2 px-4 rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>,
                 document.body
