@@ -308,7 +308,7 @@ const Gallery: React.FC = () => {
       <MascotLoader isVisible={showLoader} />
       
       <div className="flex flex-col min-h-screen bg-[#F2F2EC] overflow-x-hidden">
-        <div className="px-5 pt-8 pb-6 animate-pop-in">
+        <div className="px-5 pt-2 pb-6 animate-pop-in">
           <h1 className="text-3xl font-medium tracking-tight text-primary leading-tight">Gallery</h1>
           <p className="text-primary/70 text-base mt-2 font-light">Explore the exclusive spaces of Even House.</p>
         </div>

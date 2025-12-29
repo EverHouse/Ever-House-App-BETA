@@ -418,6 +418,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements', '/updates'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isLandingPage = location.pathname === '/';
+  const isFullBleedHeroPage = isLandingPage || location.pathname === '/private-hire';
   const isDarkTheme = isAdminRoute || (isMemberRoute && effectiveTheme === 'dark');
   const showHeader = !isAdminRoute;
 
@@ -597,7 +598,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <main 
                 id="main-content"
-                className={`flex-1 relative ${showHeader && !isLandingPage ? 'pt-[max(88px,calc(env(safe-area-inset-top)+72px))]' : ''}`}
+                className={`flex-1 relative ${showHeader && !isFullBleedHeroPage ? 'pt-[max(88px,calc(env(safe-area-inset-top)+72px))]' : ''}`}
             >
                 {children}
                 {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}
