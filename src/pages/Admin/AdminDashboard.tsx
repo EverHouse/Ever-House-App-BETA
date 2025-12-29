@@ -1126,7 +1126,7 @@ const EventsWellnessAdmin: React.FC = () => {
                         onClick={() => setActiveSubTab('wellness')}
                         className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                             activeSubTab === 'wellness'
-                                ? 'bg-primary text-white shadow-md'
+                                ? 'bg-[#CCB8E4] text-[#293515] shadow-md'
                                 : 'bg-white dark:bg-white/10 text-gray-600 dark:text-white/60 border border-gray-200 dark:border-white/10'
                         }`}
                     >
