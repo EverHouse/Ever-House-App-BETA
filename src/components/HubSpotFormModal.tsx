@@ -134,7 +134,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[10001] overflow-y-auto"
+      className="fixed inset-0 z-[10001] overflow-y-auto animate-fade-in"
       data-lenis-prevent
       onClick={handleClose}
     >
@@ -142,7 +142,7 @@ const HubSpotFormModal: React.FC<HubSpotFormModalProps> = ({
       
       <div className="flex min-h-full items-center justify-center p-4">
         <div 
-          className="relative glass-modal w-full max-w-md"
+          className="relative glass-modal w-full max-w-md animate-pop-in"
           onClick={(e) => e.stopPropagation()}
         >
           <button

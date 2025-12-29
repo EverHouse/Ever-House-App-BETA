@@ -1856,11 +1856,11 @@ const MembersAdmin: React.FC = () => {
             )}
 
             {isViewingDetails && selectedMember && createPortal(
-                <div className="fixed inset-0 z-[10001]">
+                <div className="fixed inset-0 z-[10001] animate-fade-in">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
                     <div className="fixed inset-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }} onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}>
                       <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl animate-pop-in" onClick={(e) => e.stopPropagation()}>
                             <button
                                 onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}
                                 className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -2513,27 +2513,27 @@ const SimulatorAdmin: React.FC = () => {
                     {upcomingBookings.length > 0 && (
                         <div className="animate-pop-in" style={{animationDelay: '0.05s'}}>
                             <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-blue-500">calendar_today</span>
+                                <span className="material-symbols-outlined text-primary dark:text-accent">calendar_today</span>
                                 Upcoming Bookings ({upcomingBookings.length})
                             </h3>
                             <div className="space-y-2">
                                 {upcomingBookings.map((booking, index) => (
-                                    <div key={`upcoming-${booking.id}`} className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border border-blue-200 dark:border-blue-500/20 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.1 + index * 0.03}s`}}>
+                                    <div key={`upcoming-${booking.id}`} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.1 + index * 0.03}s`}}>
                                         <div>
                                             <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            <p className="text-xs text-primary/60 dark:text-white/60">
                                                 {formatDateShort(booking.request_date)} • {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
                                             </p>
                                             {booking.bay_name && (
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{booking.bay_name}</p>
+                                                <p className="text-xs text-primary/60 dark:text-white/60 mt-0.5">{booking.bay_name}</p>
                                             )}
                                         </div>
                                         <button
-                                            onClick={() => { setSelectedRequest(booking); setActionModal('decline'); }}
-                                            className="py-1.5 px-3 bg-red-500 text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-red-600 transition-colors"
+                                            onClick={() => setSelectedCalendarBooking(booking)}
+                                            className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
                                         >
-                                            <span className="material-symbols-outlined text-xs">close</span>
-                                            Cancel
+                                            <span className="material-symbols-outlined text-xs">edit</span>
+                                            Edit
                                         </button>
                                     </div>
                                 ))}
@@ -2600,25 +2600,25 @@ const SimulatorAdmin: React.FC = () => {
                     
                     <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-gray-400">history</span>
+                            <span className="material-symbols-outlined text-primary/60 dark:text-white/60">history</span>
                             Recent Processed ({processedRequests.length})
                         </h3>
                         {processedRequests.length === 0 ? (
-                            <div className="py-8 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
-                                <p className="text-gray-400">No processed requests yet</p>
+                            <div className="py-8 text-center border-2 border-dashed border-primary/10 dark:border-white/10 rounded-xl">
+                                <p className="text-primary/40 dark:text-white/40">No processed requests yet</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
                                 {processedRequests.slice(0, 10).map(req => (
-                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-3 rounded-lg border border-gray-200 dark:border-white/10">
+                                    <div key={req.id} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10">
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                <p className="text-xs text-primary/60 dark:text-white/60">
                                                     {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
                                                 </p>
                                                 {req.bay_name && (
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{req.bay_name}</p>
+                                                    <p className="text-xs text-primary/60 dark:text-white/60 mt-1">{req.bay_name}</p>
                                                 )}
                                             </div>
                                             <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
@@ -2626,13 +2626,13 @@ const SimulatorAdmin: React.FC = () => {
                                             </span>
                                         </div>
                                         {req.status === 'approved' && (
-                                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-white/10">
+                                            <div className="mt-2 pt-2 border-t border-primary/10 dark:border-white/10">
                                                 <button
-                                                    onClick={() => { setSelectedRequest(req); setActionModal('decline'); }}
-                                                    className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
+                                                    onClick={() => setSelectedCalendarBooking(req)}
+                                                    className="text-xs text-primary/70 dark:text-white/70 hover:text-primary dark:hover:text-white flex items-center gap-1 transition-colors"
                                                 >
-                                                    <span className="material-symbols-outlined text-xs">close</span>
-                                                    Cancel Booking
+                                                    <span className="material-symbols-outlined text-xs">edit</span>
+                                                    View / Edit
                                                 </button>
                                             </div>
                                         )}
@@ -2680,7 +2680,11 @@ const SimulatorAdmin: React.FC = () => {
                         <div className="inline-block min-w-full">
                             <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, minmax(60px, 1fr))` }}>
                                 <div className="h-10 sticky left-0 z-10 bg-white dark:bg-surface-dark"></div>
-                                {resources.map(resource => (
+                                {[...resources].sort((a, b) => {
+                                    if (a.type === 'conference_room' && b.type !== 'conference_room') return 1;
+                                    if (a.type !== 'conference_room' && b.type === 'conference_room') return -1;
+                                    return 0;
+                                }).map(resource => (
                                     <div key={resource.id} className={`h-10 flex items-center justify-center font-bold text-[10px] text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10 px-0.5 ${resource.type === 'conference_room' ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}>
                                         {resource.type === 'conference_room' ? 'Conf' : resource.name.replace('Simulator Bay ', 'Bay ')}
                                     </div>
@@ -2691,7 +2695,11 @@ const SimulatorAdmin: React.FC = () => {
                                         <div className="h-8 flex items-center justify-end pr-1 text-[9px] text-gray-600 dark:text-white/70 font-medium whitespace-nowrap sticky left-0 z-10 bg-white dark:bg-surface-dark">
                                             {formatTime12(slot)}
                                         </div>
-                                        {resources.map(resource => {
+                                        {[...resources].sort((a, b) => {
+                                            if (a.type === 'conference_room' && b.type !== 'conference_room') return 1;
+                                            if (a.type !== 'conference_room' && b.type === 'conference_room') return -1;
+                                            return 0;
+                                        }).map(resource => {
                                             const [slotHour, slotMin] = slot.split(':').map(Number);
                                             const slotStart = slotHour * 60 + slotMin;
                                             const slotEnd = slotStart + 30;
@@ -2983,11 +2991,11 @@ const SimulatorAdmin: React.FC = () => {
             )}
 
             {selectedCalendarBooking && createPortal(
-                <div className="fixed inset-0 z-[10001]">
+                <div className="fixed inset-0 z-[10001] animate-fade-in">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
                     <div className="fixed inset-0 overflow-y-auto" onClick={() => setSelectedCalendarBooking(null)}>
                       <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-md w-full animate-pop-in" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-xl font-bold text-primary dark:text-white">
                                     Booking Details
@@ -4678,11 +4686,11 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
             </div>
 
             {isViewingDetails && selectedStaff && createPortal(
-                <div className="fixed inset-0 z-[10001]">
+                <div className="fixed inset-0 z-[10001] animate-fade-in">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
                     <div className="fixed inset-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }} onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}>
                       <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl animate-pop-in" onClick={(e) => e.stopPropagation()}>
                             <button
                                 onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}
                                 className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -4743,10 +4751,10 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
             )}
 
             {isAdmin && isEditing && selectedStaff && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
+                <div className="fixed inset-0 z-[10001] overflow-y-auto animate-fade-in" style={{ overscrollBehavior: 'contain' }}>
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl pointer-events-auto animate-pop-in">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Staff Member</h3>
                             
                             <div className="space-y-4">
@@ -5056,10 +5064,10 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
             </div>
 
             {isViewingDetails && selectedAdmin && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                <div className="fixed inset-0 z-[10001] overflow-y-auto animate-fade-in">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto animate-pop-in" style={{ overscrollBehavior: 'contain' }}>
                             <button
                                 onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }}
                                 className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -5117,10 +5125,10 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
             )}
 
             {isEditing && selectedAdmin && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
+                <div className="fixed inset-0 z-[10001] overflow-y-auto animate-fade-in">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto animate-pop-in" style={{ overscrollBehavior: 'contain' }}>
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Admin</h3>
                             
                             <div className="space-y-4">
