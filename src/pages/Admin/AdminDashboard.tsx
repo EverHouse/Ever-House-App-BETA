@@ -7838,8 +7838,9 @@ const TrackmanAdmin: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="material-symbols-outlined text-4xl text-primary/30 dark:text-white/30 animate-spin">sync</span>
+      <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <WalkingGolferSpinner size="lg" variant="dark" />
+        <p className="text-sm text-primary/50 dark:text-white/50">Loading import data...</p>
       </div>
     );
   }
@@ -7918,19 +7919,17 @@ const TrackmanAdmin: React.FC = () => {
           </h2>
           <div className="space-y-2">
             {importRuns.slice(0, 5).map((run: any) => (
-              <div key={run.id} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl flex justify-between items-center">
-                <div>
-                  <p className="font-medium text-primary dark:text-white text-sm">{run.filename}</p>
+              <div key={run.id} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl">
+                <div className="flex flex-col gap-1">
+                  <p className="font-medium text-primary dark:text-white text-sm truncate">{run.filename}</p>
                   <p className="text-xs text-primary/60 dark:text-white/60">
-                    {new Date(run.created_at).toLocaleDateString()} by {run.imported_by || 'system'}
+                    {run.createdAt ? new Date(run.createdAt).toLocaleDateString() : 'Unknown date'} by {run.importedBy || 'system'}
                   </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-primary/70 dark:text-white/70">
-                    <span className="text-green-600 dark:text-green-400">{run.matched_rows} matched</span>
-                    {' | '}
-                    <span className="text-orange-600 dark:text-orange-400">{run.unmatched_rows} unmatched</span>
-                  </p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    <span className="text-xs text-green-600 dark:text-green-400">{run.matchedRows ?? 0} matched</span>
+                    <span className="text-xs text-orange-600 dark:text-orange-400">{run.unmatchedRows ?? 0} unmatched</span>
+                    <span className="text-xs text-primary/50 dark:text-white/50">{run.skippedRows ?? 0} skipped</span>
+                  </div>
                 </div>
               </div>
             ))}
