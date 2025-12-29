@@ -8,26 +8,6 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
-    version: "5.7",
-    date: "2025-12-29",
-    title: "Glass UI & Calendar Fix",
-    changes: [
-      "Members button and profile avatar now have a frosted glass effect",
-      "Fixed Book a Tour modal appearing off-screen on some devices",
-      "Fixed calendar events not importing on iPhone — now works reliably with Apple Calendar"
-    ]
-  },
-  {
-    version: "5.6",
-    date: "2025-12-29",
-    title: "Training Guide Updates",
-    changes: [
-      "Updated staff training guide with reschedule booking instructions",
-      "Added documentation for 5-minute booking slot increments",
-      "Documented 120-minute booking option for premium tier members"
-    ]
-  },
-  {
     version: "1.0",
     date: "2025-12-16",
     title: "Launch Day",
@@ -493,6 +473,26 @@ export const changelog: ChangelogEntry[] = [
       "Fixed booking cancellation errors in calendar view and decline modal",
       "Improved loading screen exit animation - now fluidly minimizes into status bar",
       "In-app notifications are now required for booking cancellations to succeed"
+    ]
+  },
+  {
+    version: "5.6",
+    date: "2025-12-29",
+    title: "Training Guide Updates",
+    changes: [
+      "Updated staff training guide with reschedule booking instructions",
+      "Added documentation for 5-minute booking slot increments",
+      "Documented 120-minute booking option for premium tier members"
+    ]
+  },
+  {
+    version: "5.7",
+    date: "2025-12-29",
+    title: "Glass UI & Calendar Fix",
+    changes: [
+      "Members button and profile avatar now have a frosted glass effect",
+      "Fixed Book a Tour modal appearing off-screen on some devices",
+      "Fixed calendar events not importing on iPhone — now works reliably with Apple Calendar"
     ]
   }
 ];
