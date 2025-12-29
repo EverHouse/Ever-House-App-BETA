@@ -259,6 +259,8 @@ async function seed() {
         { title: 'Approving a Request', content: 'Tap a request to expand it, then tap "Approve". The system will check for conflicts with other approved bookings and facility closures. If there\'s a conflict, you\'ll see an error message explaining why.' },
         { title: 'Declining a Request', content: 'Tap "Decline" if you cannot accommodate the request. The member will be notified that their request was declined.' },
         { title: 'Calendar View', content: 'Switch to the Calendar view using the tabs at the top to see all approved bookings in a visual timeline. Red blocks indicate facility closures.' },
+        { title: 'Rescheduling Bookings', content: 'From the calendar view, tap any booking to open details. Use the "Reschedule" option to move the booking to a new time. The old booking is automatically cancelled and the member is notified of the change.' },
+        { title: 'Booking Durations', content: 'Members can book in 5-minute increments for flexible scheduling. Duration options include 30, 60, 90, and 120 minutes. The 90 and 120-minute options are available only to Premium, Corporate, and VIP members.' },
       ])},
       { icon: 'event', title: 'Managing Events', description: 'Create and manage club events for members', is_admin_only: false, sort_order: 3, steps: JSON.stringify([
         { title: 'Viewing Events', content: 'Tap "Events" in the bottom nav to see all upcoming and past events. Events sync with the club\'s Google Calendar.' },

@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "5.6",
+    date: "2025-12-29",
+    title: "Training Guide Updates",
+    changes: [
+      "Updated staff training guide with reschedule booking instructions",
+      "Added documentation for 5-minute booking slot increments",
+      "Documented 120-minute booking option for premium tier members"
+    ]
+  },
+  {
     version: "1.0",
     date: "2025-12-16",
     title: "Launch Day",
