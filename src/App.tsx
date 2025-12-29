@@ -561,7 +561,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         ) : (
           <button 
             onClick={handleTopRightClick}
-            className={`px-4 py-2 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-full border border-white/30 text-sm font-semibold tracking-wide`}
+            className={`px-4 py-2 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-full backdrop-blur-xl bg-white/15 border border-white/40 shadow-[0_4px_16px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.4)] text-sm font-semibold tracking-wide hover:bg-white/25 hover:border-white/50 transition-all duration-300`}
             aria-label={user ? 'Go to dashboard' : 'Members login'}
           >
             Members

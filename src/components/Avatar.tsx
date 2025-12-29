@@ -30,7 +30,7 @@ const Avatar: React.FC<AvatarProps> = ({ name, email, size = 'md', className = '
 
   return (
     <div 
-      className={`${sizeClasses[size]} rounded-full bg-accent text-brand-green font-bold flex items-center justify-center ${className}`}
+      className={`${sizeClasses[size]} rounded-full backdrop-blur-xl bg-white/15 border border-white/40 shadow-[0_4px_16px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.4)] text-white font-bold flex items-center justify-center ${className}`}
     >
       {getInitials()}
     </div>
