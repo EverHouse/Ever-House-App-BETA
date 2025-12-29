@@ -549,5 +549,16 @@ export const changelog: ChangelogEntry[] = [
       "Booking cards restyled with liquid glass design for a more cohesive look",
       "Conference Room column moved to the end of the calendar grid for clarity"
     ]
+  },
+  {
+    version: "6.3",
+    date: "2025-12-29",
+    title: "Smart Data Refresh",
+    changes: [
+      "Booking page now auto-refreshes after submitting or cancelling a request",
+      "Dashboard refreshes automatically when you return to the app",
+      "Staff booking approvals and declines now instantly update the queue",
+      "Pull-to-refresh works on all member pages for manual data updates"
+    ]
   }
 ];

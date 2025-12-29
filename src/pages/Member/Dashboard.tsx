@@ -188,6 +188,17 @@ const Dashboard: React.FC = () => {
   }, [isLoading, setPageReady]);
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUserData(false);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [fetchUserData]);
+
+  useEffect(() => {
     if (user?.email && !isStaffOrAdminProfile) {
       fetch(`/api/guest-passes/${encodeURIComponent(user.email)}?tier=${encodeURIComponent(user.tier || 'Social')}`, { credentials: 'include' })
         .then(res => {

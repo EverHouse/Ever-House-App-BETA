@@ -85,8 +85,8 @@ const BugReportsAdmin: React.FC = () => {
             });
             if (res.ok) {
                 const updated = await res.json();
-                setReports(prev => prev.map(r => r.id === selectedReport.id ? updated : r));
                 setSelectedReport(updated);
+                await fetchReports();
             }
         } catch (err) {
             console.error('Failed to update status:', err);
