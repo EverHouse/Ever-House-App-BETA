@@ -1,8 +1,10 @@
 import { db } from '../db';
-import { users, bookingRequests, trackmanUnmatchedBookings, trackmanImportRuns } from '../../shared/schema';
+import { users, bookingRequests, trackmanUnmatchedBookings, trackmanImportRuns, notifications } from '../../shared/schema';
 import { eq, or, ilike, sql } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getTodayPacific, getPacificDateParts } from '../utils/dateUtils';
+import { sendPushNotification } from '../routes/push';
 
 interface TrackmanRow {
   bookingId: string;
@@ -101,13 +103,39 @@ async function loadEmailMapping(): Promise<Map<string, string>> {
   return mapping;
 }
 
-function normalizeStatus(status: string): string | null {
+function normalizeStatus(status: string, bookingDate: string, startTime: string): string | null {
   const s = status.toLowerCase().trim();
-  if (s === 'attended') return 'attended';
-  if (s === 'confirmed') return 'attended';
+  const isFuture = isFutureBooking(bookingDate, startTime);
+  
+  // For future bookings with confirmed/attended status, mark as approved so they show as active
+  if (s === 'attended' || s === 'confirmed') {
+    return isFuture ? 'approved' : 'attended';
+  }
   if (s === 'cancelled' || s === 'canceled') return 'cancelled';
   if (s === 'no_show' || s === 'noshow') return 'no_show';
   return null;
+}
+
+function isFutureBooking(bookingDate: string, startTime: string): boolean {
+  const todayPacific = getTodayPacific();
+  
+  // If booking is in the future (date after today), it's definitely future
+  if (bookingDate > todayPacific) return true;
+  
+  // If booking is before today, it's definitely past
+  if (bookingDate < todayPacific) return false;
+  
+  // Same day - compare times as integers to avoid string comparison issues
+  const pacificNow = getPacificDateParts();
+  const currentMinutesSinceMidnight = pacificNow.hour * 60 + pacificNow.minute;
+  
+  // Parse startTime (could be "HH:MM:SS" or "H:MM:SS" or "HH:MM")
+  const timeParts = startTime.split(':');
+  const bookingHour = parseInt(timeParts[0], 10) || 0;
+  const bookingMinute = parseInt(timeParts[1], 10) || 0;
+  const bookingMinutesSinceMidnight = bookingHour * 60 + bookingMinute;
+  
+  return bookingMinutesSinceMidnight > currentMinutesSinceMidnight;
 }
 
 function parseCSVLine(line: string): string[] {
@@ -278,7 +306,8 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
       const bookingDate = extractDate(row.startDate);
       const startTime = extractTime(row.startDate);
       const endTime = extractTime(row.endDate);
-      const normalizedStatus = normalizeStatus(row.status);
+      const normalizedStatus = normalizeStatus(row.status, bookingDate, startTime);
+      const isUpcoming = isFutureBooking(bookingDate, startTime);
 
       if (!normalizedStatus) {
         skippedRows++;
@@ -308,7 +337,7 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
 
       if (matchedEmail) {
         try {
-          await db.insert(bookingRequests).values({
+          const insertResult = await db.insert(bookingRequests).values({
             userEmail: matchedEmail,
             userName: row.userName,
             bayId: parseInt(row.bayNumber) || null,
@@ -319,7 +348,7 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
             notes: `[Trackman Import ID:${row.bookingId}] ${row.notes}`,
             status: normalizedStatus,
             createdAt: new Date(row.bookedDate.replace(' ', 'T') + ':00')
-          });
+          }).returning({ id: bookingRequests.id });
 
           if (normalizedStatus === 'attended') {
             await db.execute(sql`
@@ -327,6 +356,29 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
               SET lifetime_visits = COALESCE(lifetime_visits, 0) + 1 
               WHERE email = ${matchedEmail}
             `);
+          }
+
+          // Send notification for upcoming approved bookings
+          if (normalizedStatus === 'approved' && isUpcoming && insertResult[0]) {
+            const approvalMessage = `Your simulator booking for ${bookingDate} at ${startTime.substring(0, 5)} has been approved.`;
+            
+            await db.insert(notifications).values({
+              userEmail: matchedEmail,
+              title: 'Booking Confirmed',
+              message: approvalMessage,
+              type: 'booking_approved',
+              relatedId: insertResult[0].id,
+              relatedType: 'booking_request'
+            });
+            
+            // Send push notification (non-blocking)
+            sendPushNotification(matchedEmail, {
+              title: 'Booking Confirmed!',
+              body: approvalMessage,
+              tag: `booking-${insertResult[0].id}`
+            }).catch(err => {
+              process.stderr.write(`[Trackman Import] Push notification failed for ${matchedEmail}: ${err.message}\n`);
+            });
           }
 
           matchedRows++;
