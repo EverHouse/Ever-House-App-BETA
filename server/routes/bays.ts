@@ -642,11 +642,79 @@ router.put('/api/booking-requests/:id', async (req, res) => {
   }
 });
 
+router.put('/api/bookings/:id/checkin', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // First check the current booking status
+    const existing = await db.select({
+      status: bookingRequests.status,
+      userEmail: bookingRequests.userEmail
+    })
+      .from(bookingRequests)
+      .where(eq(bookingRequests.id, parseInt(id)));
+    
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    const currentStatus = existing[0].status;
+    
+    // Only allow check-in from approved or confirmed status (idempotent - skip if already attended)
+    if (currentStatus === 'attended') {
+      return res.json({ success: true, message: 'Already checked in', alreadyCheckedIn: true });
+    }
+    
+    if (currentStatus !== 'approved' && currentStatus !== 'confirmed') {
+      return res.status(400).json({ error: `Cannot check in booking with status: ${currentStatus}` });
+    }
+    
+    // Update booking request status to attended
+    const result = await db.update(bookingRequests)
+      .set({
+        status: 'attended',
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(bookingRequests.id, parseInt(id)),
+        or(
+          eq(bookingRequests.status, 'approved'),
+          eq(bookingRequests.status, 'confirmed')
+        )
+      ))
+      .returning();
+    
+    if (result.length === 0) {
+      return res.status(400).json({ error: 'Booking status changed before update' });
+    }
+    
+    // Increment lifetime visits for the member
+    const booking = result[0];
+    if (booking.userEmail) {
+      await db.execute(sql`
+        UPDATE users 
+        SET lifetime_visits = COALESCE(lifetime_visits, 0) + 1 
+        WHERE email = ${booking.userEmail}
+      `);
+    }
+    
+    res.json({ success: true, booking: result[0] });
+  } catch (error: any) {
+    console.error('Check-in error:', error);
+    res.status(500).json({ error: 'Failed to check in booking' });
+  }
+});
+
 router.get('/api/approved-bookings', async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
     
-    const conditions: any[] = [eq(bookingRequests.status, 'approved')];
+    const conditions: any[] = [
+      or(
+        eq(bookingRequests.status, 'approved'),
+        eq(bookingRequests.status, 'attended')
+      )
+    ];
     
     if (start_date) {
       conditions.push(gte(bookingRequests.requestDate, start_date as string));

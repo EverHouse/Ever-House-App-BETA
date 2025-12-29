@@ -64,7 +64,7 @@ interface BookingRequest {
   end_time: string;
   duration_minutes: number;
   notes: string | null;
-  status: 'pending' | 'approved' | 'declined' | 'cancelled';
+  status: 'pending' | 'approved' | 'confirmed' | 'attended' | 'no_show' | 'declined' | 'cancelled';
   staff_notes: string | null;
   suggested_time: string | null;
   created_at: string;
@@ -85,8 +85,11 @@ interface Closure {
 const getStatusColor = (status: string, isDark: boolean): string => {
   switch (status) {
     case 'pending': return isDark ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-500/20 text-yellow-700';
-    case 'approved': return isDark ? 'bg-green-500/20 text-green-300' : 'bg-green-500/20 text-green-700';
+    case 'approved': 
+    case 'confirmed': return isDark ? 'bg-green-500/20 text-green-300' : 'bg-green-500/20 text-green-700';
+    case 'attended': return isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-500/20 text-blue-700';
     case 'declined': return isDark ? 'bg-red-500/20 text-red-300' : 'bg-red-500/20 text-red-700';
+    case 'no_show': return isDark ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-500/20 text-orange-700';
     case 'cancelled': return isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-500/20 text-gray-500';
     default: return isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-500/20 text-gray-500';
   }

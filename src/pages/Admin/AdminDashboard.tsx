@@ -1973,6 +1973,8 @@ const formatStatusLabel = (status: string): string => {
         case 'pending_approval': return 'pending';
         case 'approved': return 'approved';
         case 'confirmed': return 'confirmed';
+        case 'attended': return 'attended';
+        case 'no_show': return 'no show';
         case 'declined': return 'declined';
         case 'cancelled': return 'cancelled';
         default: return status;
@@ -2377,6 +2379,10 @@ const SimulatorAdmin: React.FC = () => {
             case 'approved': 
             case 'confirmed':
                 return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300';
+            case 'attended':
+                return 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300';
+            case 'no_show':
+                return 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300';
             case 'declined': 
             case 'cancelled':
                 return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
@@ -2594,13 +2600,39 @@ const SimulatorAdmin: React.FC = () => {
                                                 <p className="text-xs text-primary/60 dark:text-white/60 mt-0.5">{booking.bay_name}</p>
                                             )}
                                         </div>
-                                        <button
-                                            onClick={() => setSelectedCalendarBooking(booking)}
-                                            className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-xs">edit</span>
-                                            Edit
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
+                                                            method: 'PUT',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            credentials: 'include',
+                                                            body: JSON.stringify({ source: booking.source })
+                                                        });
+                                                        if (res.ok) {
+                                                            setTimeout(() => handleRefresh(), 300);
+                                                        } else {
+                                                            const err = await res.json();
+                                                            console.error('Check-in failed:', err.error || 'Unknown error');
+                                                        }
+                                                    } catch (err) {
+                                                        console.error('Check-in failed:', err);
+                                                    }
+                                                }}
+                                                className="py-1.5 px-3 bg-blue-500 text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-blue-600 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-xs">how_to_reg</span>
+                                                Check In
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedCalendarBooking(booking)}
+                                                className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-xs">edit</span>
+                                                Edit
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
