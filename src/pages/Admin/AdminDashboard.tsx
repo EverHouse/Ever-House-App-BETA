@@ -7263,7 +7263,6 @@ const ToursAdmin: React.FC = () => {
   const [todayTours, setTodayTours] = useState<Tour[]>([]);
   const [pastTours, setPastTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [checkInModalOpen, setCheckInModalOpen] = useState(false);
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
@@ -7318,28 +7317,21 @@ const ToursAdmin: React.FC = () => {
     fetchTours();
   }, [fetchTours]);
 
-  const handleRefresh = useCallback(async () => {
-    await fetchTours();
-  }, [fetchTours]);
-
-  const handleSync = async () => {
-    setSyncing(true);
+  const handlePullRefresh = useCallback(async () => {
     setSyncMessage(null);
     try {
       const res = await fetch('/api/tours/sync', { method: 'POST', credentials: 'include' });
       const data = await res.json();
       if (res.ok) {
         setSyncMessage(`Synced ${data.synced} tours (${data.created} new, ${data.updated} updated)`);
-        fetchTours();
       } else {
         setSyncMessage(data.error || 'Sync failed');
       }
     } catch (err) {
-      setSyncMessage('Network error');
-    } finally {
-      setSyncing(false);
+      setSyncMessage('Network error during sync');
     }
-  };
+    await fetchTours();
+  }, [fetchTours]);
 
   const openCheckIn = (tour: Tour) => {
     setSelectedTour(tour);
@@ -7464,23 +7456,11 @@ const ToursAdmin: React.FC = () => {
   );
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
+    <PullToRefresh onRefresh={handlePullRefresh}>
       <div className="space-y-6 animate-pop-in pb-32">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-primary/60 dark:text-white/60">
-            Tours synced from Google Calendar
-          </p>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary dark:bg-white/10 text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            <span className={`material-symbols-outlined text-sm ${syncing ? 'animate-spin' : ''}`}>
-              {syncing ? 'sync' : 'sync'}
-            </span>
-            {syncing ? 'Syncing...' : 'Sync Calendar'}
-          </button>
-        </div>
+        <p className="text-sm text-primary/60 dark:text-white/60">
+          Tours synced from Google Calendar
+        </p>
 
       {syncMessage && (
         <div className="p-3 rounded-xl bg-accent/20 text-primary dark:text-accent text-sm text-center">
