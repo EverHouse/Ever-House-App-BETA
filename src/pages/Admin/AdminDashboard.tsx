@@ -2512,39 +2512,8 @@ const SimulatorAdmin: React.FC = () => {
                 </div>
             ) : activeView === 'requests' ? (
                 <div className="space-y-6 p-5 animate-pop-in" style={{animationDelay: '0.1s'}}>
-                    {/* Upcoming Bookings Section */}
-                    {upcomingBookings.length > 0 && (
-                        <div className="animate-pop-in" style={{animationDelay: '0.05s'}}>
-                            <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary dark:text-accent">calendar_today</span>
-                                Upcoming Bookings ({upcomingBookings.length})
-                            </h3>
-                            <div className="space-y-2">
-                                {upcomingBookings.map((booking, index) => (
-                                    <div key={`upcoming-${booking.id}`} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.1 + index * 0.03}s`}}>
-                                        <div>
-                                            <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
-                                            <p className="text-xs text-primary/60 dark:text-white/60">
-                                                {formatDateShort(booking.request_date)} • {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
-                                            </p>
-                                            {booking.bay_name && (
-                                                <p className="text-xs text-primary/60 dark:text-white/60 mt-0.5">{booking.bay_name}</p>
-                                            )}
-                                        </div>
-                                        <button
-                                            onClick={() => setSelectedCalendarBooking(booking)}
-                                            className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-xs">edit</span>
-                                            Edit
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    <div>
+                    {/* Pending Requests Section */}
+                    <div className="animate-pop-in" style={{animationDelay: '0.05s'}}>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-yellow-500">pending</span>
                             Pending Requests ({pendingRequests.length})
@@ -2556,7 +2525,7 @@ const SimulatorAdmin: React.FC = () => {
                         ) : (
                             <div className="space-y-3">
                                 {pendingRequests.map((req, index) => (
-                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10 animate-pop-in" style={{animationDelay: `${0.15 + index * 0.05}s`}}>
+                                    <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10 animate-pop-in" style={{animationDelay: `${0.1 + index * 0.05}s`}}>
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
                                                 <p className="font-bold text-primary dark:text-white">{req.user_name || req.user_email}</p>
@@ -2600,6 +2569,38 @@ const SimulatorAdmin: React.FC = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Upcoming Bookings Section */}
+                    {upcomingBookings.length > 0 && (
+                        <div className="animate-pop-in" style={{animationDelay: '0.15s'}}>
+                            <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary dark:text-accent">calendar_today</span>
+                                Upcoming Bookings ({upcomingBookings.length})
+                            </h3>
+                            <div className="space-y-2">
+                                {upcomingBookings.map((booking, index) => (
+                                    <div key={`upcoming-${booking.id}`} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.2 + index * 0.03}s`}}>
+                                        <div>
+                                            <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
+                                            <p className="text-xs text-primary/60 dark:text-white/60">
+                                                {formatDateShort(booking.request_date)} • {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
+                                            </p>
+                                            {booking.bay_name && (
+                                                <p className="text-xs text-primary/60 dark:text-white/60 mt-0.5">{booking.bay_name}</p>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => setSelectedCalendarBooking(booking)}
+                                            className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-xs">edit</span>
+                                            Edit
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     
                     <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
