@@ -31,11 +31,13 @@ interface PullToRefreshProps {
 }
 
 const PULL_THRESHOLD = 80;
-const MAX_PULL = 140;
+const MAX_PULL = 160;
+const HEADER_HEIGHT = 72;
 
 const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disabled = false, className = '' }) => {
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isFillingScreen, setIsFillingScreen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [tagline] = useState(() => taglines[Math.floor(Math.random() * taglines.length)]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,7 +68,7 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
     const diff = currentY - startYRef.current;
 
     if (diff > 0) {
-      const resistance = 0.4;
+      const resistance = 0.5;
       const distance = Math.min(diff * resistance, MAX_PULL);
       setPullDistance(distance);
       
@@ -84,26 +86,32 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
     isPullingRef.current = false;
     startYRef.current = null;
 
-    if (pullDistance >= PULL_THRESHOLD && !isRefreshing) {
-      setIsRefreshing(true);
+    if (pullDistance >= PULL_THRESHOLD && !isRefreshing && !isFillingScreen) {
+      setIsFillingScreen(true);
       setPullDistance(0);
+      
+      await new Promise(resolve => setTimeout(resolve, 350));
+      
+      setIsFillingScreen(false);
+      setIsRefreshing(true);
       
       try {
         await onRefresh();
-      } finally {
-        setIsExiting(true);
-        setTimeout(() => {
-          setIsRefreshing(false);
-          setIsExiting(false);
-        }, 700);
+      } catch (e) {
+        console.error('Refresh failed:', e);
       }
+      
+      setIsExiting(true);
+      await new Promise(resolve => setTimeout(resolve, 550));
+      setIsRefreshing(false);
+      setIsExiting(false);
     } else {
       setPullDistance(0);
     }
-  }, [pullDistance, isRefreshing, onRefresh, disabled]);
+  }, [pullDistance, isRefreshing, isFillingScreen, onRefresh, disabled]);
 
   useEffect(() => {
-    if (isRefreshing) {
+    if (isRefreshing || isFillingScreen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -111,10 +119,11 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isRefreshing]);
+  }, [isRefreshing, isFillingScreen]);
 
   const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
-  const showIndicator = pullDistance > 10 && !isRefreshing;
+  const showPullBar = pullDistance > 5 && !isRefreshing && !isFillingScreen;
+  const barHeight = HEADER_HEIGHT + pullDistance;
 
   return (
     <div
@@ -125,28 +134,100 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
       className={`min-h-full ${className}`}
       style={{ touchAction: pullDistance > 0 ? 'none' : 'pan-y' }}
     >
-      {showIndicator && (
+      {showPullBar && createPortal(
         <div 
-          className="fixed left-0 right-0 flex flex-col items-center pointer-events-none z-[9998]"
+          className="ptr-pull-bar"
           style={{ 
-            top: `calc(env(safe-area-inset-top, 0px) + 80px)`,
-            opacity: pullProgress,
-            transform: `translateY(${pullDistance - 40}px) scale(${0.6 + pullProgress * 0.4})`
+            height: `${barHeight}px`,
+            paddingTop: 'env(safe-area-inset-top, 0px)'
           }}
         >
-          <div className="w-16 h-16 rounded-full bg-[#293515] flex items-center justify-center shadow-lg border-2 border-white/20 overflow-hidden">
+          <div 
+            className="ptr-pull-content"
+            style={{
+              opacity: pullProgress,
+              transform: `scale(${0.7 + pullProgress * 0.3})`
+            }}
+          >
             <img 
               src="/assets/logos/walking-mascot-white.gif" 
               alt="" 
-              className="w-12 h-12 object-contain"
+              className="ptr-pull-mascot"
             />
+            {pullProgress >= 1 && (
+              <span className="ptr-release-text">Release to refresh</span>
+            )}
           </div>
-          {pullProgress >= 1 && (
-            <div className="mt-2 text-xs text-[#293515] dark:text-white font-medium bg-white/80 dark:bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-              Release to refresh
-            </div>
-          )}
-        </div>
+
+          <style>{`
+            .ptr-pull-bar {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              background-color: #293515;
+              z-index: 9999;
+              display: flex;
+              align-items: flex-end;
+              justify-content: center;
+              padding-bottom: 12px;
+              border-radius: 0 0 20px 20px;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+              will-change: height;
+            }
+
+            .ptr-pull-content {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 6px;
+              will-change: opacity, transform;
+            }
+
+            .ptr-pull-mascot {
+              width: 56px;
+              height: 56px;
+              object-fit: contain;
+            }
+
+            .ptr-release-text {
+              font-family: 'Inter', sans-serif;
+              font-size: 12px;
+              font-weight: 500;
+              color: rgba(255,255,255,0.9);
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+          `}</style>
+        </div>,
+        document.body
+      )}
+
+      {isFillingScreen && createPortal(
+        <div className="ptr-fill-overlay">
+          <style>{`
+            .ptr-fill-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background-color: #293515;
+              z-index: 99999;
+              animation: ptrFillScreen 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }
+
+            @keyframes ptrFillScreen {
+              0% {
+                clip-path: inset(0 0 100% 0);
+              }
+              100% {
+                clip-path: inset(0 0 0 0);
+              }
+            }
+          `}</style>
+        </div>,
+        document.body
       )}
 
       {isRefreshing && createPortal(
@@ -171,22 +252,20 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
               justify-content: center;
               align-items: center;
               background-color: #293515;
-              will-change: clip-path;
+              will-change: transform;
             }
 
             .ptr-loader-exit {
-              animation: ptrMinimizeToStatusBar 0.55s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+              animation: ptrSlideUp 0.55s cubic-bezier(0.32, 0, 0.67, 0) forwards;
               pointer-events: none;
             }
 
-            @keyframes ptrMinimizeToStatusBar {
+            @keyframes ptrSlideUp {
               0% {
                 transform: translateY(0);
-                opacity: 1;
               }
               100% {
                 transform: translateY(-100%);
-                opacity: 1;
               }
             }
 
