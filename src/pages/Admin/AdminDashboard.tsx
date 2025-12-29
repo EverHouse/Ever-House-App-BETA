@@ -1703,6 +1703,17 @@ const MembersAdmin: React.FC = () => {
         setPageReady(true);
     }, [setPageReady]);
 
+    useEffect(() => {
+        if (isViewingDetails && selectedMember) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isViewingDetails, selectedMember]);
+
     // Filter to regular members only
     const regularMembers = useMemo(() => 
         members.filter(m => !m.role || m.role === 'member'), 
@@ -1892,10 +1903,10 @@ const MembersAdmin: React.FC = () => {
 
             {isViewingDetails && selectedMember && createPortal(
                 <div className="fixed inset-0 z-[10001]">
-                    <div className="fixed inset-0 bg-black/50" />
-                    <div className="fixed inset-0 overflow-y-auto" onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}>
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+                    <div className="fixed inset-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }} onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}>
                       <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                             <button
                                 onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}
                                 className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -2810,7 +2821,7 @@ const SimulatorAdmin: React.FC = () => {
                                     <select
                                         value={selectedBayId || ''}
                                         onChange={(e) => setSelectedBayId(Number(e.target.value))}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     >
                                         <option value="">Select a resource...</option>
                                         {resources.map(resource => (
@@ -2848,7 +2859,7 @@ const SimulatorAdmin: React.FC = () => {
                                         type="time"
                                         value={suggestedTime}
                                         onChange={(e) => setSuggestedTime(e.target.value)}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
                             )}
@@ -3456,11 +3467,18 @@ const ManualBookingModal: React.FC<{
 
     const bookingSources = ['Trackman', 'YGB', 'Mindbody', 'Texted Concierge', 'Called', 'Other'];
 
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, []);
+
     return (
-        <div className="fixed inset-0 z-[10001] overflow-y-auto">
+        <div className="fixed inset-0 z-[10001] overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
             <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto max-h-[90vh] overflow-y-auto">
+                <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-white/10">
                     <div className="flex items-center justify-between mb-5">
                         <h3 className="text-xl font-bold text-primary dark:text-white">{rescheduleFromId ? 'Reschedule Booking' : 'Manual Booking'}</h3>
                         <button 
@@ -4076,7 +4094,7 @@ const WellnessAdminContent: React.FC = () => {
                                         value={formData.title || ''}
                                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                         placeholder="Morning Yoga Flow"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
                                 
@@ -4087,7 +4105,7 @@ const WellnessAdminContent: React.FC = () => {
                                             type="date"
                                             value={formData.date || ''}
                                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                     <div>
@@ -4097,7 +4115,7 @@ const WellnessAdminContent: React.FC = () => {
                                             value={formData.time || ''}
                                             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                                             placeholder="9:00 AM"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -4109,7 +4127,7 @@ const WellnessAdminContent: React.FC = () => {
                                         value={formData.instructor || ''}
                                         onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
                                         placeholder="Jane Smith"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -4119,7 +4137,7 @@ const WellnessAdminContent: React.FC = () => {
                                         <select
                                             value={formData.category || 'Yoga'}
                                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         >
                                             {categories.map(cat => (
                                                 <option key={cat} value={cat}>{cat}</option>
@@ -4133,7 +4151,7 @@ const WellnessAdminContent: React.FC = () => {
                                             value={formData.duration || ''}
                                             onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                                             placeholder="60 min"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -4145,7 +4163,7 @@ const WellnessAdminContent: React.FC = () => {
                                         value={formData.spots || ''}
                                         onChange={(e) => setFormData({ ...formData, spots: e.target.value })}
                                         placeholder="12 spots"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -4316,7 +4334,7 @@ const TeamAdmin: React.FC = () => {
                                             value={newPerson.firstName}
                                             onChange={(e) => setNewPerson({...newPerson, firstName: e.target.value})}
                                             placeholder="Jane"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                     <div>
@@ -4328,7 +4346,7 @@ const TeamAdmin: React.FC = () => {
                                             value={newPerson.lastName}
                                             onChange={(e) => setNewPerson({...newPerson, lastName: e.target.value})}
                                             placeholder="Doe"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -4342,7 +4360,7 @@ const TeamAdmin: React.FC = () => {
                                         value={newPerson.email}
                                         onChange={(e) => setNewPerson({...newPerson, email: e.target.value})}
                                         placeholder="email@example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -4355,7 +4373,7 @@ const TeamAdmin: React.FC = () => {
                                         value={newPerson.phone}
                                         onChange={(e) => setNewPerson({...newPerson, phone: e.target.value})}
                                         placeholder="+1 (555) 123-4567"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -4366,7 +4384,7 @@ const TeamAdmin: React.FC = () => {
                                     <select
                                         value={newPerson.role}
                                         onChange={(e) => setNewPerson({...newPerson, role: e.target.value as 'staff' | 'admin'})}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     >
                                         <option value="staff">Staff</option>
                                         <option value="admin">Admin</option>
@@ -4429,6 +4447,17 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
     useEffect(() => {
         fetchStaffUsers();
     }, [refreshKey]);
+
+    useEffect(() => {
+        if ((isViewingDetails && selectedStaff) || (isEditing && selectedStaff)) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isViewingDetails, isEditing, selectedStaff]);
 
     const fetchStaffUsers = async () => {
         try {
@@ -4590,10 +4619,10 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
 
             {isViewingDetails && selectedStaff && createPortal(
                 <div className="fixed inset-0 z-[10001]">
-                    <div className="fixed inset-0 bg-black/50" />
-                    <div className="fixed inset-0 overflow-y-auto" onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}>
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+                    <div className="fixed inset-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }} onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}>
                       <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                             <button
                                 onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}
                                 className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -4654,10 +4683,10 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
             )}
 
             {isAdmin && isEditing && selectedStaff && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }} />
+                <div className="fixed inset-0 z-[10001] overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl pointer-events-auto">
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Staff Member</h3>
                             
                             <div className="space-y-4">
@@ -4671,7 +4700,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                                             value={selectedStaff.first_name || ''}
                                             onChange={(e) => setSelectedStaff({...selectedStaff, first_name: e.target.value || null})}
                                             placeholder="Jane"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                     <div>
@@ -4683,7 +4712,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                                             value={selectedStaff.last_name || ''}
                                             onChange={(e) => setSelectedStaff({...selectedStaff, last_name: e.target.value || null})}
                                             placeholder="Doe"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -4697,7 +4726,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                                         value={selectedStaff.email}
                                         onChange={(e) => setSelectedStaff({...selectedStaff, email: e.target.value})}
                                         placeholder="staff@example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -4710,7 +4739,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                                         value={selectedStaff.phone || ''}
                                         onChange={(e) => setSelectedStaff({...selectedStaff, phone: e.target.value || null})}
                                         placeholder="+1 (555) 123-4567"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -4723,7 +4752,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                                         value={selectedStaff.job_title || ''}
                                         onChange={(e) => setSelectedStaff({...selectedStaff, job_title: e.target.value || null})}
                                         placeholder="Manager"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -5034,7 +5063,7 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                                             value={selectedAdmin.first_name || ''}
                                             onChange={(e) => setSelectedAdmin({...selectedAdmin, first_name: e.target.value || null})}
                                             placeholder="Jane"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                     <div>
@@ -5046,7 +5075,7 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                                             value={selectedAdmin.last_name || ''}
                                             onChange={(e) => setSelectedAdmin({...selectedAdmin, last_name: e.target.value || null})}
                                             placeholder="Doe"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -5060,7 +5089,7 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                                         value={selectedAdmin.email}
                                         onChange={(e) => setSelectedAdmin({...selectedAdmin, email: e.target.value})}
                                         placeholder="admin@example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -5073,7 +5102,7 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                                         value={selectedAdmin.phone || ''}
                                         onChange={(e) => setSelectedAdmin({...selectedAdmin, phone: e.target.value || null})}
                                         placeholder="+1 (555) 123-4567"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
@@ -5086,7 +5115,7 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                                         value={selectedAdmin.job_title || ''}
                                         onChange={(e) => setSelectedAdmin({...selectedAdmin, job_title: e.target.value || null})}
                                         placeholder="Director"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                     />
                                 </div>
 
