@@ -30,7 +30,6 @@ const taglines = [
 const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = true, onFadeComplete }) => {
   const [isExiting, setIsExiting] = React.useState(false);
   const [shouldRender, setShouldRender] = React.useState(true);
-  const [videoLoaded, setVideoLoaded] = React.useState(false);
   const [tagline] = React.useState(() => taglines[Math.floor(Math.random() * taglines.length)]);
 
   React.useEffect(() => {
@@ -52,15 +51,10 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
     >
       <div className={`loader-content ${isExiting ? 'content-exit' : ''}`}>
         <div className="walking-mascot">
-          <video 
-            src="/assets/logos/walking-mascot-white.webm" 
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            onCanPlay={() => setVideoLoaded(true)}
-            className={`mascot-video ${videoLoaded ? 'video-loaded' : ''}`}
+          <img 
+            src="/assets/logos/walking-mascot-white.gif" 
+            alt="Loading..." 
+            className="mascot-image"
           />
         </div>
         <p className="tagline-text">{tagline}</p>
@@ -137,16 +131,9 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
           }
         }
 
-        .mascot-video {
+        .mascot-image {
           width: 120px;
           height: auto;
-          background: transparent;
-          opacity: 0;
-          transition: opacity 0.2s ease-in;
-        }
-
-        .mascot-video.video-loaded {
-          opacity: 1;
         }
 
         .tagline-text {
