@@ -30,11 +30,11 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   const fabContent = (
     <button
       onClick={onClick}
-      className={`fixed right-4 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out hover:scale-110 active:scale-95 ${colorClasses[color]}`}
+      className={`fixed right-5 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out hover:scale-110 active:scale-95 ${colorClasses[color]}`}
       style={{ 
         bottom: isAtBottom 
           ? 'calc(24px + env(safe-area-inset-bottom, 0px))' 
-          : 'calc(100px + env(safe-area-inset-bottom, 0px))' 
+          : 'calc(140px + env(safe-area-inset-bottom, 0px))' 
       }}
       aria-label={label || 'Add new item'}
     >
