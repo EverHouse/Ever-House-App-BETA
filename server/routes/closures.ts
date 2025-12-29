@@ -284,7 +284,7 @@ router.get('/api/closures', async (req, res) => {
       .select()
       .from(facilityClosures)
       .where(eq(facilityClosures.isActive, true))
-      .orderBy(desc(facilityClosures.startDate), desc(facilityClosures.startTime));
+      .orderBy(facilityClosures.startDate, facilityClosures.startTime);
     res.json(results);
   } catch (error: any) {
     if (!isProduction) console.error('Closures fetch error:', error);
