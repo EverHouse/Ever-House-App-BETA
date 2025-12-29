@@ -92,7 +92,6 @@ const BookGolf = lazyWithPrefetch(() => import('./pages/Member/BookGolf'));
 const MemberEvents = lazyWithPrefetch(() => import('./pages/Member/Events'));
 const MemberWellness = lazyWithPrefetch(() => import('./pages/Member/Wellness'));
 const Profile = lazyWithPrefetch(() => import('./pages/Member/Profile'));
-const MemberAnnouncements = lazyWithPrefetch(() => import('./pages/Member/Announcements'));
 const MemberUpdates = lazyWithPrefetch(() => import('./pages/Member/Updates'));
 const Landing = lazy(() => import('./pages/Public/Landing'));
 const Membership = lazy(() => import('./pages/Public/Membership'));
@@ -311,11 +310,6 @@ const AnimatedRoutes: React.FC = () => {
                 <DirectionalPageTransition><Profile /></DirectionalPageTransition>
               </MemberPortalRoute>
             } />
-            <Route path="/announcements" element={
-              <MemberPortalRoute>
-                <DirectionalPageTransition><MemberAnnouncements /></DirectionalPageTransition>
-              </MemberPortalRoute>
-            } />
             <Route path="/updates" element={
               <MemberPortalRoute>
                 <DirectionalPageTransition><MemberUpdates /></DirectionalPageTransition>
@@ -380,7 +374,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   useEffect(() => {
     const metaThemeColor = document.getElementById('theme-color-meta');
-    const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements'].some(path => location.pathname.startsWith(path));
+    const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/updates'].some(path => location.pathname.startsWith(path));
     const isAdmin = location.pathname.startsWith('/admin');
     
     const updateThemeColor = (scrolledPastHero: boolean) => {
@@ -415,7 +409,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
   
-  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/announcements', '/updates'].some(path => location.pathname.startsWith(path));
+  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/updates'].some(path => location.pathname.startsWith(path));
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isLandingPage = location.pathname === '/';
   const isFullBleedHeroPage = isLandingPage || location.pathname === '/private-hire';
@@ -470,7 +464,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       if (path === '/profile') return 'Profile';
       if (path.startsWith('/book')) return 'Book Golf';
       if (path.startsWith('/member-wellness')) return 'Wellness';
-      if (path.startsWith('/announcements')) return 'News';
       if (path.startsWith('/updates')) return 'Updates';
       if (path.startsWith('/member-events')) return 'Events';
       return 'Dashboard';

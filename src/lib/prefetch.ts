@@ -9,14 +9,14 @@ const routeImports: Record<string, () => Promise<any>> = {
   '/member-wellness': () => import('../pages/Member/Wellness'),
   '/profile': () => import('../pages/Member/Profile'),
   '/dashboard': () => import('../pages/Member/Dashboard'),
-  '/announcements': () => import('../pages/Member/Announcements'),
+  '/updates': () => import('../pages/Member/Updates'),
 };
 
 const routeAPIs: Record<string, string[]> = {
   '/book': ['/api/bays', '/api/approved-bookings'],
   '/member-events': ['/api/events'],
   '/member-wellness': ['/api/wellness-classes'],
-  '/announcements': ['/api/announcements'],
+  '/updates': ['/api/announcements', '/api/closures'],
   '/dashboard': ['/api/events', '/api/announcements'],
 };
 
@@ -39,7 +39,7 @@ export const prefetchRoute = (path: string) => {
 };
 
 export const prefetchAdjacentRoutes = (currentPath: string) => {
-  const navOrder = ['/dashboard', '/book', '/member-wellness', '/member-events', '/announcements'];
+  const navOrder = ['/dashboard', '/book', '/member-wellness', '/member-events', '/updates'];
   const idx = navOrder.indexOf(currentPath);
   if (idx === -1) return;
   

@@ -515,5 +515,16 @@ export const changelog: ChangelogEntry[] = [
       "Fixed closure card navigating to the wrong page — now correctly opens Updates",
       "Announcement cards now navigate to the unified Updates page"
     ]
+  },
+  {
+    version: "6.0",
+    date: "2025-12-29",
+    title: "Unified Updates Page",
+    isMajor: true,
+    changes: [
+      "Consolidated announcements and closures into a single Updates page",
+      "Closure alerts now appear at the top of the Announcements tab",
+      "Removed the separate Announcements page — everything is now in Updates"
+    ]
   }
 ];

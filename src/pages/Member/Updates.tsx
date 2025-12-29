@@ -6,7 +6,7 @@ import { usePageReady } from '../../contexts/PageReadyContext';
 import SwipeablePage from '../../components/SwipeablePage';
 import PullToRefresh from '../../components/PullToRefresh';
 import { MotionList, MotionListItem } from '../../components/motion';
-import { getTodayPacific } from '../../utils/dateUtils';
+import { getTodayPacific, parseLocalDate } from '../../utils/dateUtils';
 
 interface UserNotification {
   id: number;
@@ -18,6 +18,41 @@ interface UserNotification {
   is_read: boolean;
   created_at: string;
 }
+
+interface Closure {
+  id: number;
+  title: string;
+  reason: string | null;
+  startDate: string;
+  endDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  affectedAreas: string;
+}
+
+const formatAffectedAreas = (areas: string): string => {
+  if (areas === 'entire_facility') return 'Entire Facility';
+  if (areas === 'all_bays') return 'All Simulator Bays';
+  return areas;
+};
+
+const formatClosureDateRange = (startDate: string, endDate: string, startTime: string | null, endTime: string | null): string => {
+  const start = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
+  const startFormatted = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const endFormatted = end.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  
+  const timeRange = startTime && endTime 
+    ? ` (${startTime.substring(0, 5)} - ${endTime.substring(0, 5)})`
+    : startTime 
+      ? ` from ${startTime.substring(0, 5)}`
+      : '';
+  
+  if (startDate === endDate) {
+    return `${startFormatted}${timeRange}`;
+  }
+  return `${startFormatted} - ${endFormatted}${timeRange}`;
+};
 
 const formatDate = (dateStr: string): string => {
   if (!dateStr || dateStr === 'Just now') return dateStr;
@@ -68,12 +103,36 @@ const MemberUpdates: React.FC = () => {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [closures, setClosures] = useState<Closure[]>([]);
+  const [closuresLoading, setClosuresLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoading && !notificationsLoading) {
+    if (!isLoading && !notificationsLoading && !closuresLoading) {
       setPageReady(true);
     }
-  }, [isLoading, notificationsLoading, setPageReady]);
+  }, [isLoading, notificationsLoading, closuresLoading, setPageReady]);
+
+  const fetchClosures = useCallback(async () => {
+    try {
+      const res = await fetch('/api/closures', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        const todayStr = getTodayPacific();
+        const activeClosures = data
+          .filter((c: Closure) => c.endDate >= todayStr)
+          .sort((a: Closure, b: Closure) => a.startDate.localeCompare(b.startDate));
+        setClosures(activeClosures);
+      }
+    } catch (err) {
+      console.error('Failed to fetch closures:', err);
+    } finally {
+      setClosuresLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchClosures();
+  }, [fetchClosures]);
 
   useEffect(() => {
     if (tabParam === 'activity' || tabParam === 'announcements') {
@@ -111,8 +170,8 @@ const MemberUpdates: React.FC = () => {
   }, [user?.email, fetchNotifications]);
 
   const handleRefresh = useCallback(async () => {
-    await fetchNotifications();
-  }, [fetchNotifications]);
+    await Promise.all([fetchNotifications(), fetchClosures()]);
+  }, [fetchNotifications, fetchClosures]);
 
   const handleNotificationClick = async (notif: UserNotification) => {
     if (!notif.is_read) {
@@ -185,7 +244,7 @@ const MemberUpdates: React.FC = () => {
 
   const renderAnnouncementsTab = () => (
     <div className="relative z-10 pb-32">
-      {isLoading ? (
+      {isLoading || closuresLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={`p-5 rounded-2xl animate-pulse ${isDark ? 'bg-white/[0.03]' : 'bg-white'}`}>
@@ -198,7 +257,7 @@ const MemberUpdates: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : sortedAnnouncements.length === 0 ? (
+      ) : sortedAnnouncements.length === 0 && closures.length === 0 ? (
         <div className={`text-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
           <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">campaign</span>
           <p className="text-lg font-medium">No announcements right now</p>
@@ -206,6 +265,43 @@ const MemberUpdates: React.FC = () => {
         </div>
       ) : (
         <MotionList className="space-y-4">
+          {closures.map((closure) => (
+            <MotionListItem 
+              key={`closure-${closure.id}`}
+              className={`rounded-2xl transition-all overflow-hidden ${isDark ? 'bg-red-500/10 shadow-layered-dark' : 'bg-red-50 shadow-layered'}`}
+            >
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-red-500/20' : 'bg-red-100'}`}>
+                    <span className={`material-symbols-outlined text-xl ${isDark ? 'text-red-400' : 'text-red-600'}`}>event_busy</span>
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                        Closure
+                      </span>
+                    </div>
+                    <h3 className={`text-lg font-bold leading-snug truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {closure.title}
+                    </h3>
+                  </div>
+                </div>
+                <div className="ml-12">
+                  <p className={`text-sm ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
+                    {formatAffectedAreas(closure.affectedAreas)}
+                  </p>
+                  <p className={`text-sm mt-1 ${isDark ? 'text-white/60' : 'text-gray-500'}`}>
+                    {formatClosureDateRange(closure.startDate, closure.endDate, closure.startTime, closure.endTime)}
+                  </p>
+                  {closure.reason && (
+                    <p className={`text-sm mt-2 ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
+                      {closure.reason}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </MotionListItem>
+          ))}
           {sortedAnnouncements.map((item) => {
             const isExpanded = expandedId === item.id;
             const hasLongDesc = item.desc && item.desc.length > 100;
