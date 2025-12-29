@@ -114,9 +114,11 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in overflow-y-auto">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-2xl bg-[#F2F2EC] dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in max-h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] flex flex-col">
+    <div className="fixed inset-0 z-50 animate-fade-in">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
+      <div className="fixed inset-0 overflow-y-auto" onClick={onClose}>
+        <div className="flex min-h-full items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="relative w-full max-w-2xl bg-[#F2F2EC] dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in max-h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-primary/10 dark:border-white/10">
           <div>
             <h2 className="text-xl font-bold text-[#293515] dark:text-white">Book a Tour</h2>
@@ -216,6 +218,8 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
         ) : (
           <div ref={containerRef} className="p-4 overflow-y-auto flex-1 min-h-[500px]"></div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

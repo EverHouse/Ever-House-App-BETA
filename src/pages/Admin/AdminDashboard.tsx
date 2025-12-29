@@ -1891,10 +1891,11 @@ const MembersAdmin: React.FC = () => {
             )}
 
             {isViewingDetails && selectedMember && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                <div className="fixed inset-0 z-[10001]">
+                    <div className="fixed inset-0 bg-black/50" />
+                    <div className="fixed inset-0 overflow-y-auto" onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}>
+                      <div className="flex min-h-full items-center justify-center p-4">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
                             <button
                                 onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}
                                 className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -1945,6 +1946,7 @@ const MembersAdmin: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                      </div>
                     </div>
                 </div>,
                 document.body
@@ -2780,10 +2782,11 @@ const SimulatorAdmin: React.FC = () => {
             )}
 
             {actionModal && selectedRequest && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto">
+                <div className="fixed inset-0 z-[10001]">
+                    <div className="fixed inset-0 bg-black/50" />
+                    <div className="fixed inset-0 overflow-y-auto" onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }}>
+                      <div className="flex min-h-full items-center justify-center p-4">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
                                 {actionModal === 'approve' ? 'Approve Request' : 'Decline Request'}
                             </h3>
@@ -2889,6 +2892,7 @@ const SimulatorAdmin: React.FC = () => {
                                 </button>
                             </div>
                         </div>
+                      </div>
                     </div>
                 </div>,
                 document.body
@@ -3010,10 +3014,11 @@ const SimulatorAdmin: React.FC = () => {
             )}
 
             {selectedCalendarBooking && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => setSelectedCalendarBooking(null)} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl pointer-events-auto">
+                <div className="fixed inset-0 z-[10001]">
+                    <div className="fixed inset-0 bg-black/50" />
+                    <div className="fixed inset-0 overflow-y-auto" onClick={() => setSelectedCalendarBooking(null)}>
+                      <div className="flex min-h-full items-center justify-center p-4">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-xl font-bold text-primary dark:text-white">
                                     Booking Details
@@ -3176,6 +3181,7 @@ const SimulatorAdmin: React.FC = () => {
                                 </button>
                             </div>
                         </div>
+                      </div>
                     </div>
                 </div>,
                 document.body
@@ -4583,10 +4589,11 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
             </div>
 
             {isViewingDetails && selectedStaff && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                <div className="fixed inset-0 z-[10001]">
+                    <div className="fixed inset-0 bg-black/50" />
+                    <div className="fixed inset-0 overflow-y-auto" onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}>
+                      <div className="flex min-h-full items-center justify-center p-4">
+                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
                             <button
                                 onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}
                                 className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -4640,6 +4647,7 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                                 </div>
                             )}
                         </div>
+                      </div>
                     </div>
                 </div>,
                 document.body
