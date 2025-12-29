@@ -33,12 +33,14 @@ interface PullToRefreshProps {
 const PULL_THRESHOLD = 80;
 const MAX_PULL = 160;
 const HEADER_HEIGHT = 72;
+const DESKTOP_SETTLE_DELAY = 300;
 
 const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disabled = false, className = '' }) => {
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isFillingScreen, setIsFillingScreen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [isSpringBack, setIsSpringBack] = useState(false);
   const [tagline] = useState(() => taglines[Math.floor(Math.random() * taglines.length)]);
   const containerRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef<number | null>(null);
@@ -46,12 +48,45 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
   const wheelAccumulatorRef = useRef(0);
   const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isWheelPullingRef = useRef(false);
+  const isSettledAtTopRef = useRef(false);
+  const settleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const springBackAnimationRef = useRef<number | null>(null);
+
+  const animateSpringBack = useCallback((fromDistance: number) => {
+    if (springBackAnimationRef.current) {
+      cancelAnimationFrame(springBackAnimationRef.current);
+    }
+    
+    setIsSpringBack(true);
+    const startTime = performance.now();
+    const duration = 280;
+    
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const newDistance = fromDistance * (1 - easeOut);
+      
+      setPullDistance(newDistance);
+      
+      if (progress < 1) {
+        springBackAnimationRef.current = requestAnimationFrame(animate);
+      } else {
+        setPullDistance(0);
+        setIsSpringBack(false);
+        springBackAnimationRef.current = null;
+      }
+    };
+    
+    springBackAnimationRef.current = requestAnimationFrame(animate);
+  }, []);
 
   const triggerRefresh = useCallback(async () => {
     if (isRefreshing || isFillingScreen) return;
     
     wheelAccumulatorRef.current = 0;
     isWheelPullingRef.current = false;
+    isSettledAtTopRef.current = false;
     setIsFillingScreen(true);
     setPullDistance(0);
     
@@ -72,15 +107,31 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
     setIsExiting(false);
   }, [isRefreshing, isFillingScreen, onRefresh]);
 
-  // Desktop scroll wheel support
+  // Desktop scroll wheel support with settlement tracking
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (disabled || isRefreshing || isFillingScreen) return;
+      if (disabled || isRefreshing || isFillingScreen || isSpringBack) return;
       
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       
-      // Only activate when at top of page and scrolling up
+      // When at top and scrolling up
       if (scrollTop <= 5 && e.deltaY < 0) {
+        // If not yet settled at top, start settlement timer
+        if (!isSettledAtTopRef.current && !isWheelPullingRef.current) {
+          // Clear any existing settle timeout
+          if (settleTimeoutRef.current) {
+            clearTimeout(settleTimeoutRef.current);
+          }
+          // Start settlement - user needs to pause at top before PTR activates
+          settleTimeoutRef.current = setTimeout(() => {
+            isSettledAtTopRef.current = true;
+          }, DESKTOP_SETTLE_DELAY);
+          return;
+        }
+        
+        // Only allow pull-to-refresh if settled at top
+        if (!isSettledAtTopRef.current) return;
+        
         // Accumulate upward scroll
         wheelAccumulatorRef.current += Math.abs(e.deltaY) * 0.3;
         wheelAccumulatorRef.current = Math.min(wheelAccumulatorRef.current, MAX_PULL);
@@ -96,16 +147,38 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
           if (wheelAccumulatorRef.current >= PULL_THRESHOLD && !isRefreshing && !isFillingScreen) {
             triggerRefresh();
           } else {
+            // Spring back animation instead of instant reset
+            const currentDistance = wheelAccumulatorRef.current;
             wheelAccumulatorRef.current = 0;
             isWheelPullingRef.current = false;
-            setPullDistance(0);
+            if (currentDistance > 5) {
+              animateSpringBack(currentDistance);
+            } else {
+              setPullDistance(0);
+            }
           }
         }, 150);
-      } else if (scrollTop > 5 || e.deltaY > 0) {
-        // Reset if scrolled away from top or scrolling down
-        wheelAccumulatorRef.current = 0;
-        isWheelPullingRef.current = false;
-        setPullDistance(0);
+      } else if (scrollTop > 5) {
+        // Reset settlement when scrolled away from top
+        isSettledAtTopRef.current = false;
+        if (settleTimeoutRef.current) {
+          clearTimeout(settleTimeoutRef.current);
+          settleTimeoutRef.current = null;
+        }
+        if (wheelAccumulatorRef.current > 0) {
+          const currentDistance = wheelAccumulatorRef.current;
+          wheelAccumulatorRef.current = 0;
+          isWheelPullingRef.current = false;
+          animateSpringBack(currentDistance);
+        }
+      } else if (e.deltaY > 0 && scrollTop <= 5) {
+        // Scrolling down while at top - reset pull but maintain settlement
+        if (wheelAccumulatorRef.current > 0) {
+          const currentDistance = wheelAccumulatorRef.current;
+          wheelAccumulatorRef.current = 0;
+          isWheelPullingRef.current = false;
+          animateSpringBack(currentDistance);
+        }
       }
     };
     
@@ -115,26 +188,34 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
       if (wheelTimeoutRef.current) {
         clearTimeout(wheelTimeoutRef.current);
       }
+      if (settleTimeoutRef.current) {
+        clearTimeout(settleTimeoutRef.current);
+      }
     };
-  }, [disabled, isRefreshing, isFillingScreen, triggerRefresh]);
+  }, [disabled, isRefreshing, isFillingScreen, isSpringBack, triggerRefresh, animateSpringBack]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (disabled || isRefreshing) return;
+    if (disabled || isRefreshing || isSpringBack) return;
     
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     if (scrollTop <= 5) {
       startYRef.current = e.touches[0].clientY;
       isPullingRef.current = true;
     }
-  }, [disabled, isRefreshing]);
+  }, [disabled, isRefreshing, isSpringBack]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isPullingRef.current || startYRef.current === null || disabled || isRefreshing) return;
+    if (!isPullingRef.current || startYRef.current === null || disabled || isRefreshing || isSpringBack) return;
 
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     if (scrollTop > 5) {
       isPullingRef.current = false;
-      setPullDistance(0);
+      const currentDistance = pullDistance;
+      if (currentDistance > 5) {
+        animateSpringBack(currentDistance);
+      } else {
+        setPullDistance(0);
+      }
       return;
     }
 
@@ -152,7 +233,7 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
     } else {
       setPullDistance(0);
     }
-  }, [disabled, isRefreshing]);
+  }, [disabled, isRefreshing, isSpringBack, pullDistance, animateSpringBack]);
 
   const handleTouchEnd = useCallback(async () => {
     if (!isPullingRef.current || disabled) return;
@@ -180,9 +261,14 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
       setIsRefreshing(false);
       setIsExiting(false);
     } else {
-      setPullDistance(0);
+      // Spring back animation instead of instant reset
+      if (pullDistance > 5) {
+        animateSpringBack(pullDistance);
+      } else {
+        setPullDistance(0);
+      }
     }
-  }, [pullDistance, isRefreshing, isFillingScreen, onRefresh, disabled]);
+  }, [pullDistance, isRefreshing, isFillingScreen, onRefresh, disabled, animateSpringBack]);
 
   useEffect(() => {
     if (isRefreshing || isFillingScreen) {
@@ -194,6 +280,31 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
       document.body.style.overflow = '';
     };
   }, [isRefreshing, isFillingScreen]);
+
+  // Set body attribute for header fade effect
+  useEffect(() => {
+    const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
+    if (pullDistance > 0 || isFillingScreen || isRefreshing) {
+      document.body.setAttribute('data-ptr-active', 'true');
+      document.body.style.setProperty('--ptr-progress', String(pullProgress));
+    } else {
+      document.body.removeAttribute('data-ptr-active');
+      document.body.style.removeProperty('--ptr-progress');
+    }
+    return () => {
+      document.body.removeAttribute('data-ptr-active');
+      document.body.style.removeProperty('--ptr-progress');
+    };
+  }, [pullDistance, isFillingScreen, isRefreshing]);
+
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (springBackAnimationRef.current) {
+        cancelAnimationFrame(springBackAnimationRef.current);
+      }
+    };
+  }, []);
 
   const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
   const showPullBar = pullDistance > 5 && !isRefreshing && !isFillingScreen;

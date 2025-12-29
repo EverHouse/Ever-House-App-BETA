@@ -1209,3 +1209,15 @@ img[loading="lazy"] {
     size: A4;
   }
 }
+
+/* Pull-to-refresh header fade effect */
+body[data-ptr-active="true"] header[role="banner"] {
+  opacity: calc(1 - var(--ptr-progress, 0));
+  transition: opacity 0.15s ease-out;
+}
+
+body[data-ptr-active="true"]:has(.ptr-fill-overlay) header[role="banner"],
+body[data-ptr-active="true"]:has(.ptr-loader-overlay) header[role="banner"] {
+  opacity: 0;
+  pointer-events: none;
+}
