@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import BackToTop from '../../components/BackToTop';
@@ -113,8 +114,8 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 animate-fade-in">
+  const modalContent = (
+    <div className="fixed inset-0 z-[10001] animate-fade-in">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
       <div className="fixed inset-0 overflow-y-auto" onClick={onClose}>
         <div className="flex min-h-full items-center justify-center p-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))', paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
@@ -223,6 +224,8 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 const Landing: React.FC = () => {
