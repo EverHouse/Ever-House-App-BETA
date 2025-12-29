@@ -134,15 +134,11 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
             transform: `translateY(${pullDistance - 40}px) scale(${0.6 + pullProgress * 0.4})`
           }}
         >
-          <div className="w-16 h-16 rounded-full bg-[#293515] flex items-center justify-center shadow-lg border-2 border-white/20">
+          <div className="w-16 h-16 rounded-full bg-[#293515] flex items-center justify-center shadow-lg border-2 border-white/20 overflow-hidden">
             <img 
-              src="/assets/logos/mascot-white.webp" 
+              src="/assets/logos/walking-mascot-white.gif" 
               alt="" 
-              className="w-10 h-10 object-contain"
-              style={{ 
-                transform: `rotate(${pullProgress * 360}deg)`,
-                transition: 'transform 0.1s ease-out'
-              }}
+              className="w-12 h-12 object-contain"
             />
           </div>
           {pullProgress >= 1 && (
@@ -156,9 +152,9 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
       {isRefreshing && createPortal(
         <div className={`ptr-loader-overlay ${isExiting ? 'ptr-loader-exit' : ''}`}>
           <div className={`ptr-loader-content ${isExiting ? 'ptr-content-exit' : ''}`}>
-            <div className="ptr-mascot-walk">
+            <div className="ptr-mascot">
               <img 
-                src="/assets/logos/mascot-white.webp" 
+                src="/assets/logos/walking-mascot-white.gif" 
                 alt="Refreshing..." 
                 className="ptr-mascot-image"
               />
@@ -251,23 +247,10 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
               padding: 0 2rem;
             }
 
-            .ptr-mascot-walk {
-              animation: ptrWalk 0.6s ease-in-out infinite;
-            }
-
-            @keyframes ptrWalk {
-              0%, 100% { 
-                transform: translateY(0) rotate(-2deg); 
-              }
-              25% {
-                transform: translateY(-8px) rotate(0deg);
-              }
-              50% { 
-                transform: translateY(0) rotate(2deg); 
-              }
-              75% {
-                transform: translateY(-8px) rotate(0deg);
-              }
+            .ptr-mascot {
+              display: flex;
+              justify-content: center;
+              align-items: center;
             }
           `}</style>
         </div>,

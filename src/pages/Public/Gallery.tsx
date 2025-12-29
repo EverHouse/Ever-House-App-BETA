@@ -53,9 +53,9 @@ const MascotLoader: React.FC<{ isVisible: boolean; onFadeComplete?: () => void }
   return createPortal(
     <div className={`gallery-loader-overlay ${isExiting ? 'gallery-loader-exit' : ''}`}>
       <div className={`gallery-loader-content ${isExiting ? 'gallery-content-exit' : ''}`}>
-        <div className="gallery-mascot-walk">
+        <div className="gallery-mascot">
           <img 
-            src="/assets/logos/mascot-white.webp" 
+            src="/assets/logos/walking-mascot-white.gif" 
             alt="Loading gallery..." 
             style={{ width: '120px', height: 'auto' }}
           />
@@ -122,23 +122,10 @@ const MascotLoader: React.FC<{ isVisible: boolean; onFadeComplete?: () => void }
           }
         }
 
-        .gallery-mascot-walk {
-          animation: galleryWalk 0.6s ease-in-out infinite;
-        }
-
-        @keyframes galleryWalk {
-          0%, 100% { 
-            transform: translateY(0) rotate(-2deg); 
-          }
-          25% {
-            transform: translateY(-8px) rotate(0deg);
-          }
-          50% { 
-            transform: translateY(0) rotate(2deg); 
-          }
-          75% {
-            transform: translateY(-8px) rotate(0deg);
-          }
+        .gallery-mascot {
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
 
         .gallery-tagline {

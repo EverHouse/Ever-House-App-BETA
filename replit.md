@@ -12,6 +12,7 @@ The Even House Members App is a private members club application designed for go
 - Do not make changes to the folder `Z`.
 - Do not make changes to the file `Y`.
 - **Auto-versioning**: When making app changes, automatically update `src/data/changelog.ts` with a new version entry and sync `src/config/version.ts` (APP_VERSION and LAST_UPDATED) to match.
+- **Loading animations**: When updating loading screen animations/mascot, update ALL instances across the app including: WalkingGolferLoader, WalkingGolferSpinner, Gallery MascotLoader, PullToRefresh, and any other loading components using the mascot.
 
 ## System Architecture
 The application is built with a React 19 frontend utilizing Vite, styled with Tailwind CSS, and an Express.js backend powered by a PostgreSQL database.
