@@ -154,7 +154,7 @@ router.get('/api/wellness-classes', async (req, res) => {
 
 router.post('/api/wellness-classes', isStaffOrAdmin, async (req, res) => {
   try {
-    const { title, time, instructor, duration, category, spots, status, description, date } = req.body;
+    const { title, time, instructor, duration, category, spots, status, description, date, image_url, external_url } = req.body;
     
     if (!title || !time || !instructor || !duration || !category || !spots || !date) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -214,9 +214,9 @@ router.post('/api/wellness-classes', isStaffOrAdmin, async (req, res) => {
     }
     
     const result = await pool.query(
-      `INSERT INTO wellness_classes (title, time, instructor, duration, category, spots, status, description, date, google_calendar_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-      [title, time, instructor, duration, category, spots, status || 'available', description || null, date, googleCalendarId]
+      `INSERT INTO wellness_classes (title, time, instructor, duration, category, spots, status, description, date, google_calendar_id, image_url, external_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [title, time, instructor, duration, category, spots, status || 'available', description || null, date, googleCalendarId, image_url || null, external_url || null]
     );
     
     res.status(201).json(result.rows[0]);
@@ -229,7 +229,7 @@ router.post('/api/wellness-classes', isStaffOrAdmin, async (req, res) => {
 router.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, time, instructor, duration, category, spots, status, description, date, is_active } = req.body;
+    const { title, time, instructor, duration, category, spots, status, description, date, is_active, image_url, external_url } = req.body;
     
     const existing = await pool.query('SELECT google_calendar_id, title, time, instructor, duration, category, date FROM wellness_classes WHERE id = $1', [id]);
     
@@ -245,9 +245,11 @@ router.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
         description = COALESCE($8, description),
         date = COALESCE($9, date),
         is_active = COALESCE($10, is_active),
+        image_url = COALESCE($11, image_url),
+        external_url = COALESCE($12, external_url),
         updated_at = NOW()
-       WHERE id = $11 RETURNING *`,
-      [title, time, instructor, duration, category, spots, status, description, date, is_active, id]
+       WHERE id = $13 RETURNING *`,
+      [title, time, instructor, duration, category, spots, status, description, date, is_active, image_url, external_url, id]
     );
     
     if (result.rows.length === 0) {

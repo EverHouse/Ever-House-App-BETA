@@ -116,6 +116,7 @@ router.get('/api/events', async (req, res) => {
       max_attendees: events.maxAttendees,
       eventbrite_id: events.eventbriteId,
       eventbrite_url: events.eventbriteUrl,
+      external_url: events.externalUrl,
       source: events.source,
       visibility: events.visibility,
       requires_rsvp: events.requiresRsvp,
@@ -138,7 +139,7 @@ router.get('/api/events', async (req, res) => {
 
 router.post('/api/events', isStaffOrAdmin, async (req, res) => {
   try {
-    const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility, requires_rsvp } = req.body;
+    const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, visibility, requires_rsvp, external_url } = req.body;
     
     const trimmedTitle = title?.toString().trim();
     const trimmedEventDate = event_date?.toString().trim();
@@ -201,6 +202,7 @@ router.post('/api/events', isStaffOrAdmin, async (req, res) => {
       visibility: visibility || 'public',
       requiresRsvp: requires_rsvp || false,
       googleCalendarId: googleCalendarId,
+      externalUrl: external_url || null,
     }).returning();
     
     res.status(201).json(result[0]);
@@ -213,7 +215,7 @@ router.post('/api/events', isStaffOrAdmin, async (req, res) => {
 router.put('/api/events/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees } = req.body;
+    const { title, description, event_date, start_time, end_time, location, category, image_url, max_attendees, external_url } = req.body;
     
     const trimmedTitle = title?.toString().trim();
     const trimmedEventDate = event_date?.toString().trim();
@@ -256,6 +258,7 @@ router.put('/api/events/:id', isStaffOrAdmin, async (req, res) => {
       category,
       imageUrl: image_url,
       maxAttendees: max_attendees,
+      externalUrl: external_url || null,
     }).where(eq(events.id, parseInt(id))).returning();
     
     if (result.length === 0) {

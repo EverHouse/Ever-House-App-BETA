@@ -660,6 +660,7 @@ interface DBEvent {
     max_attendees: number | null;
     eventbrite_id: string | null;
     eventbrite_url: string | null;
+    external_url?: string | null;
 }
 
 const CATEGORY_TABS = [
@@ -781,6 +782,7 @@ const EventsAdminContent: React.FC = () => {
             category: newItem.category || 'Social',
             image_url: newItem.image_url || null,
             max_attendees: newItem.max_attendees || null,
+            external_url: newItem.external_url || null,
         };
 
         setIsSaving(true);
@@ -906,6 +908,7 @@ const EventsAdminContent: React.FC = () => {
                                 <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Location" value={newItem.location || ''} onChange={e => setNewItem({...newItem, location: e.target.value})} />
                                 <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Image URL (optional)" value={newItem.image_url || ''} onChange={e => setNewItem({...newItem, image_url: e.target.value})} />
                                 <input type="number" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Max Attendees (optional)" value={newItem.max_attendees || ''} onChange={e => setNewItem({...newItem, max_attendees: parseInt(e.target.value) || null})} />
+                                <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="External Link URL (optional)" value={newItem.external_url || ''} onChange={e => setNewItem({...newItem, external_url: e.target.value})} />
                                 <textarea className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                             </div>
                             <div className="flex gap-3 justify-end">
@@ -3688,6 +3691,12 @@ interface WellnessClass {
   description: string | null;
   date: string;
   is_active: boolean;
+  image_url?: string | null;
+  external_url?: string | null;
+}
+
+interface WellnessFormData extends Partial<WellnessClass> {
+  imageFile?: File | null;
 }
 
 const WELLNESS_CATEGORY_TABS = [
@@ -3709,11 +3718,12 @@ const WellnessAdminContent: React.FC = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
-    const [formData, setFormData] = useState<Partial<WellnessClass>>({
+    const [formData, setFormData] = useState<WellnessFormData>({
         category: 'Classes',
         status: 'available',
         duration: '60 min'
     });
+    const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [isViewingEnrollments, setIsViewingEnrollments] = useState(false);
@@ -3811,13 +3821,42 @@ const WellnessAdminContent: React.FC = () => {
 
         try {
             setError(null);
+            setIsUploading(true);
+            
+            let imageUrl = formData.image_url;
+            
+            if (formData.imageFile) {
+                const uploadFormData = new FormData();
+                uploadFormData.append('image', formData.imageFile);
+                const uploadRes = await fetch('/api/admin/upload-image', {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: uploadFormData,
+                });
+                if (uploadRes.ok) {
+                    const uploadData = await uploadRes.json();
+                    imageUrl = uploadData.url;
+                } else {
+                    setError('Failed to upload image');
+                    setIsUploading(false);
+                    return;
+                }
+            }
+            
             const url = editId ? `/api/wellness-classes/${editId}` : '/api/wellness-classes';
             const method = editId ? 'PUT' : 'POST';
+
+            const { imageFile, ...restFormData } = formData;
+            const payload = {
+                ...restFormData,
+                image_url: imageUrl || null,
+                external_url: formData.external_url || null,
+            };
 
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
             if (res.ok) {
@@ -3832,6 +3871,8 @@ const WellnessAdminContent: React.FC = () => {
             }
         } catch (err) {
             setError('Failed to save class');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -4084,10 +4125,9 @@ const WellnessAdminContent: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time *</label>
                                         <input
-                                            type="text"
+                                            type="time"
                                             value={formData.time || ''}
                                             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                            placeholder="9:00 AM"
                                             className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                                         />
                                     </div>
@@ -4151,6 +4191,46 @@ const WellnessAdminContent: React.FC = () => {
                                     />
                                 </div>
 
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image (optional)</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+                                            setFormData({ ...formData, imageFile: file });
+                                        }}
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary dark:file:bg-white/10 dark:file:text-white file:font-medium file:cursor-pointer"
+                                    />
+                                    {(formData.imageFile || formData.image_url) && (
+                                        <div className="mt-2 relative">
+                                            <img
+                                                src={formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.image_url || ''}
+                                                alt="Preview"
+                                                className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-white/10"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, imageFile: null, image_url: null })}
+                                                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">close</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">External URL (optional)</label>
+                                    <input
+                                        type="url"
+                                        value={formData.external_url || ''}
+                                        onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
+                                        placeholder="https://example.com"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                                    />
+                                </div>
+
                                 {error && (
                                     <p className="text-red-600 text-sm">{error}</p>
                                 )}
@@ -4165,9 +4245,11 @@ const WellnessAdminContent: React.FC = () => {
                                 </button>
                                 <button
                                     onClick={handleSave}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                                    disabled={isUploading}
+                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
-                                    {editId ? 'Save Changes' : 'Add Class'}
+                                    {isUploading && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                                    {isUploading ? 'Saving...' : editId ? 'Save Changes' : 'Add Class'}
                                 </button>
                             </div>
                         </div>

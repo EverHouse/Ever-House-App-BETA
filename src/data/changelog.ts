@@ -526,5 +526,15 @@ export const changelog: ChangelogEntry[] = [
       "Closure alerts now appear at the top of the Announcements tab",
       "Removed the separate Announcements page — everything is now in Updates"
     ]
+  },
+  {
+    version: "6.1",
+    date: "2025-12-29",
+    title: "Enhanced Admin Forms",
+    changes: [
+      "Add Class modal now uses a native time picker instead of text input",
+      "Added optional image upload for wellness classes",
+      "Added optional external URL field for classes and events — link members to booking pages or more info"
+    ]
   }
 ];
