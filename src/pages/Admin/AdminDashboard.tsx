@@ -733,6 +733,17 @@ const EventsAdminContent: React.FC = () => {
         return () => window.removeEventListener('openEventCreate', handleOpenCreate);
     }, []);
 
+    useEffect(() => {
+        if (isEditing) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isEditing]);
+
     const filteredEvents = activeCategory === 'all' 
         ? events 
         : events.filter(e => e.category === activeCategory);
@@ -874,7 +885,7 @@ const EventsAdminContent: React.FC = () => {
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setError(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
                             <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">{editId ? 'Edit Event' : 'Create Event'}</h3>
                             {error && (
                                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg text-sm mb-4">
@@ -1226,7 +1237,7 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
         <div className="fixed inset-0 z-[10001] overflow-y-auto">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
             <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                <div className="relative bg-white dark:bg-surface-dark p-6 rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto">
+                <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="font-bold text-lg text-primary dark:text-white">{title}</h3>
@@ -2076,6 +2087,17 @@ const SimulatorAdmin: React.FC = () => {
         }
     }, [isLoading, setPageReady]);
 
+    useEffect(() => {
+        if (actionModal || showTrackmanConfirm || selectedCalendarBooking) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [actionModal, showTrackmanConfirm, selectedCalendarBooking]);
+
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -2794,10 +2816,10 @@ const SimulatorAdmin: React.FC = () => {
 
             {actionModal && selectedRequest && createPortal(
                 <div className="fixed inset-0 z-[10001]">
-                    <div className="fixed inset-0 bg-black/50" />
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
                     <div className="fixed inset-0 overflow-y-auto" onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }}>
                       <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
                                 {actionModal === 'approve' ? 'Approve Request' : 'Decline Request'}
                             </h3>
@@ -2871,7 +2893,7 @@ const SimulatorAdmin: React.FC = () => {
                                     onChange={(e) => setStaffNotes(e.target.value)}
                                     placeholder="Add a note for the member..."
                                     rows={2}
-                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white resize-none"
+                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white resize-none"
                                 />
                             </div>
                             
@@ -2911,9 +2933,9 @@ const SimulatorAdmin: React.FC = () => {
 
             {showTrackmanConfirm && selectedRequest && createPortal(
                 <div className="fixed inset-0 z-[10002] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => setShowTrackmanConfirm(false)} />
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowTrackmanConfirm(false)} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-sm w-full shadow-xl pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-sm w-full pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
                             <div className="text-center mb-4">
                                 <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mx-auto mb-3">
                                     <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-2xl">sports_golf</span>
@@ -3026,10 +3048,10 @@ const SimulatorAdmin: React.FC = () => {
 
             {selectedCalendarBooking && createPortal(
                 <div className="fixed inset-0 z-[10001]">
-                    <div className="fixed inset-0 bg-black/50" />
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
                     <div className="fixed inset-0 overflow-y-auto" onClick={() => setSelectedCalendarBooking(null)}>
                       <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-xl font-bold text-primary dark:text-white">
                                     Booking Details
@@ -3777,6 +3799,17 @@ const WellnessAdminContent: React.FC = () => {
         return () => window.removeEventListener('openWellnessCreate', handleOpenCreate);
     }, []);
 
+    useEffect(() => {
+        if (isEditing) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isEditing]);
+
     const fetchClasses = async () => {
         try {
             setIsLoading(true);
@@ -4079,9 +4112,9 @@ const WellnessAdminContent: React.FC = () => {
 
             {isEditing && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setError(null); }} />
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setError(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md modal-safe-height overflow-y-auto pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md modal-safe-height overflow-y-auto pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
                                 {editId ? 'Edit Class' : 'Add Class'}
                             </h3>
@@ -4174,7 +4207,7 @@ const WellnessAdminContent: React.FC = () => {
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                         placeholder="A restorative session designed to improve flexibility..."
                                         rows={3}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-primary dark:text-white resize-none"
+                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white resize-none"
                                     />
                                 </div>
 
@@ -4216,6 +4249,17 @@ const TeamAdmin: React.FC = () => {
     const [newPerson, setNewPerson] = useState({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' as 'staff' | 'admin' });
     const [addError, setAddError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    useEffect(() => {
+        if (isAddingPerson) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isAddingPerson]);
 
     const handleAddPerson = async () => {
         if (!newPerson.email.trim()) {
@@ -4318,9 +4362,9 @@ const TeamAdmin: React.FC = () => {
             {/* Add Person Modal */}
             {isAddingPerson && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsAddingPerson(false); setAddError(null); setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' }); }} />
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsAddingPerson(false); setAddError(null); setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' }); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Team Member</h3>
                             
                             <div className="space-y-4">
@@ -4810,6 +4854,17 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
     const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
+        if (isEditing || isViewingDetails) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isEditing, isViewingDetails]);
+
+    useEffect(() => {
         fetchAdminUsers();
     }, [refreshKey]);
 
@@ -4986,9 +5041,9 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
 
             {isViewingDetails && selectedAdmin && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }} />
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
                             <button
                                 onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }}
                                 className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -5047,9 +5102,9 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
 
             {isEditing && selectedAdmin && createPortal(
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }} />
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-md pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
                             <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Admin</h3>
                             
                             <div className="space-y-4">
@@ -5258,6 +5313,17 @@ const BlocksAdmin: React.FC = () => {
         notify_members: false
     });
     const [closureSaving, setClosureSaving] = useState(false);
+
+    useEffect(() => {
+        if (isClosureModalOpen || isEditing) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isClosureModalOpen, isEditing]);
 
     const fetchClosures = async () => {
         try {
@@ -5677,7 +5743,7 @@ const BlocksAdmin: React.FC = () => {
                 <div className="fixed inset-0 z-[10001] overflow-y-auto">
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} />
                     <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
+                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
                             <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
                                 <span className="material-symbols-outlined text-red-500">block</span>
                                 {editingClosureId ? 'Edit Closure' : 'Add Closure'}
@@ -6119,7 +6185,7 @@ const TiersAdmin: React.FC = () => {
                             </div>
 
                             {/* Scrollable Content */}
-                            <div className="flex-1 min-h-0 overflow-y-auto p-6 pt-4" style={{ touchAction: 'pan-y' }}>
+                            <div className="flex-1 min-h-0 overflow-y-auto p-6 pt-4" style={{ touchAction: 'pan-y', overscrollBehavior: 'contain' }}>
                             {error && (
                                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
                                     {error}
