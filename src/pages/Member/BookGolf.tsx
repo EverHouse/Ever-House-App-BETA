@@ -70,6 +70,18 @@ interface BookingRequest {
   created_at: string;
 }
 
+interface Closure {
+  id: number;
+  title: string | null;
+  reason: string | null;
+  startDate: string;
+  startTime: string | null;
+  endDate: string;
+  endTime: string | null;
+  affectedAreas: string;
+  isActive: boolean;
+}
+
 const getStatusColor = (status: string, isDark: boolean): string => {
   switch (status) {
     case 'pending': return isDark ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-500/20 text-yellow-700';
@@ -107,6 +119,40 @@ const generateDates = (advanceDays: number = 7): { label: string; date: string; 
   return dates;
 };
 
+const doesClosureAffectResource = (affectedAreas: string, resourceType: 'simulator' | 'conference'): boolean => {
+  if (!affectedAreas) return false;
+  
+  const normalized = affectedAreas.toLowerCase().trim();
+  if (normalized === 'entire_facility') return true;
+  
+  let parts: string[];
+  if (normalized.startsWith('[')) {
+    try {
+      parts = JSON.parse(affectedAreas).map((p: string) => p.toLowerCase().trim());
+    } catch {
+      parts = [normalized];
+    }
+  } else {
+    parts = normalized.split(',').map(p => p.trim());
+  }
+  
+  if (resourceType === 'simulator') {
+    return parts.some(part => 
+      part === 'all_bays' || 
+      part.startsWith('bay_') || 
+      part.startsWith('bay ') ||
+      /^bay\s*\d+$/.test(part)
+    );
+  } else if (resourceType === 'conference') {
+    return parts.some(part => 
+      part === 'conference_room' || 
+      part === 'conference room'
+    );
+  }
+  
+  return false;
+};
+
 const BookGolf: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { addBooking, user, viewAsUser, actualUser, isViewingAs } = useData();
@@ -128,6 +174,7 @@ const BookGolf: React.FC = () => {
   const [showViewAsConfirm, setShowViewAsConfirm] = useState(false);
   const [myRequests, setMyRequests] = useState<BookingRequest[]>([]);
   const [previousTab, setPreviousTab] = useState<'simulator' | 'conference'>(initialTab as 'simulator' | 'conference');
+  const [closures, setClosures] = useState<Closure[]>([]);
 
   const effectiveUser = viewAsUser || user;
   
@@ -286,9 +333,23 @@ const BookGolf: React.FC = () => {
     }
   }, [effectiveUser?.email]);
 
+  const fetchClosures = useCallback(async () => {
+    try {
+      const { ok, data } = await apiRequest<Closure[]>('/api/closures', {
+        credentials: 'include'
+      });
+      if (ok && data) {
+        setClosures(data);
+      }
+    } catch (err) {
+      console.error('[BookGolf] Failed to fetch closures:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMyRequests();
-  }, [fetchMyRequests, showConfirmation]);
+    fetchClosures();
+  }, [fetchMyRequests, fetchClosures, showConfirmation]);
 
   const handleCancelRequest = async (id: number) => {
     haptic.light();
@@ -397,15 +458,27 @@ const BookGolf: React.FC = () => {
 
   const canBook = Boolean(selectedDateObj && duration && selectedSlot && selectedResource && !isBooking && activeTab !== 'my-requests');
 
+  const activeClosures = useMemo(() => {
+    if (!selectedDateObj?.date) return [];
+    return closures.filter(closure => {
+      const selectedDate = selectedDateObj.date;
+      if (selectedDate < closure.startDate || selectedDate > closure.endDate) {
+        return false;
+      }
+      return doesClosureAffectResource(closure.affectedAreas, activeTab === 'conference' ? 'conference' : 'simulator');
+    });
+  }, [closures, selectedDateObj, activeTab]);
+
   const handleRefresh = useCallback(async () => {
     setSelectedSlot(null);
     setSelectedResource(null);
     const newResources = await fetchResources();
     await Promise.all([
       fetchAvailability(newResources),
-      fetchMyRequests()
+      fetchMyRequests(),
+      fetchClosures()
     ]);
-  }, [fetchResources, fetchAvailability, fetchMyRequests]);
+  }, [fetchResources, fetchAvailability, fetchMyRequests, fetchClosures]);
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
@@ -608,6 +681,45 @@ const BookGolf: React.FC = () => {
             <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm flex items-center gap-3">
               <span className="material-symbols-outlined">error</span>
               {error}
+            </div>
+          )}
+
+          {activeClosures.length > 0 && (
+            <div className="space-y-3">
+              {activeClosures.map(closure => {
+                const hasTimeRange = closure.startTime && closure.endTime;
+                const isPartialDay = hasTimeRange;
+                return (
+                  <div 
+                    key={closure.id}
+                    className={`rounded-xl p-4 border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className={`material-symbols-outlined text-2xl ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>event_busy</span>
+                      <div className="flex-1">
+                        <h4 className={`font-bold ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>
+                          {closure.title || 'Closure Notice'}
+                        </h4>
+                        {hasTimeRange && (
+                          <p className={`text-sm mt-1 ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
+                            {formatTime12(closure.startTime!)} - {formatTime12(closure.endTime!)}
+                          </p>
+                        )}
+                        {closure.reason && (
+                          <p className={`text-sm mt-1 ${isDark ? 'text-amber-300/70' : 'text-amber-600'}`}>
+                            {closure.reason}
+                          </p>
+                        )}
+                        {isPartialDay && (
+                          <p className={`text-xs mt-2 font-medium ${isDark ? 'text-amber-400/80' : 'text-amber-700'}`}>
+                            Limited availability - see times below
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
