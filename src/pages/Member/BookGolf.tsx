@@ -364,9 +364,9 @@ const BookGolf: React.FC = () => {
       });
       
       if (ok) {
-        setMyRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
         haptic.success();
         showToast(wasApproved ? 'Booking cancelled' : 'Request cancelled', 'success');
+        await handleRefresh();
       } else {
         haptic.error();
         showToast('Failed to cancel request', 'error');
@@ -429,11 +429,11 @@ const BookGolf: React.FC = () => {
       playSound('bookingConfirmed');
       showToast('Booking request sent! We\'ll confirm shortly.', 'success');
       setShowConfirmation(true);
-      setTimeout(() => {
+      setTimeout(async () => {
         setShowConfirmation(false);
         setSelectedSlot(null);
         setSelectedResource(null);
-        setAvailableSlots(prev => prev.filter(s => s.id !== selectedSlot.id));
+        await handleRefresh();
       }, 2500);
     } catch (err: any) {
       haptic.error();
