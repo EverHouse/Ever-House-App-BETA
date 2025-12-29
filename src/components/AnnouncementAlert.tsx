@@ -41,7 +41,7 @@ const AnnouncementAlert: React.FC = () => {
           return;
       }
     }
-    navigate('/announcements');
+    navigate('/updates');
   };
 
   const handleViewAll = () => {

@@ -314,13 +314,13 @@ export async function updateCalendarEvent(
   }
 }
 
-export async function syncGoogleCalendarEvents(): Promise<{ synced: number; created: number; updated: number; error?: string }> {
+export async function syncGoogleCalendarEvents(): Promise<{ synced: number; created: number; updated: number; deleted: number; error?: string }> {
   try {
     const calendar = await getGoogleCalendarClient();
     const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
     
     if (!calendarId) {
-      return { synced: 0, created: 0, updated: 0, error: `Calendar "${CALENDAR_CONFIG.events.name}" not found` };
+      return { synced: 0, created: 0, updated: 0, deleted: 0, error: `Calendar "${CALENDAR_CONFIG.events.name}" not found` };
     }
     
     const oneYearAgo = new Date();
@@ -336,6 +336,7 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
     });
     
     const events = response.data.items || [];
+    const fetchedEventIds = new Set<string>();
     let created = 0;
     let updated = 0;
     
@@ -343,6 +344,7 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
       if (!event.id || !event.summary) continue;
       
       const googleEventId = event.id;
+      fetchedEventIds.add(googleEventId);
       const title = event.summary;
       const description = event.description || null;
       
@@ -393,20 +395,34 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
       }
     }
     
-    return { synced: events.length, created, updated };
+    // Delete events that no longer exist in the Google Calendar
+    const existingEvents = await pool.query(
+      'SELECT id, google_calendar_id FROM events WHERE google_calendar_id IS NOT NULL'
+    );
+    
+    let deleted = 0;
+    for (const dbEvent of existingEvents.rows) {
+      if (!fetchedEventIds.has(dbEvent.google_calendar_id)) {
+        // This event's source no longer exists in Google Calendar, delete it
+        await pool.query('DELETE FROM events WHERE id = $1', [dbEvent.id]);
+        deleted++;
+      }
+    }
+    
+    return { synced: events.length, created, updated, deleted };
   } catch (error) {
     console.error('Error syncing Google Calendar events:', error);
-    return { synced: 0, created: 0, updated: 0, error: 'Failed to sync events' };
+    return { synced: 0, created: 0, updated: 0, deleted: 0, error: 'Failed to sync events' };
   }
 }
 
-export async function syncWellnessCalendarEvents(): Promise<{ synced: number; created: number; updated: number; error?: string }> {
+export async function syncWellnessCalendarEvents(): Promise<{ synced: number; created: number; updated: number; deleted: number; error?: string }> {
   try {
     const calendar = await getGoogleCalendarClient();
     const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
     
     if (!calendarId) {
-      return { synced: 0, created: 0, updated: 0, error: `Calendar "${CALENDAR_CONFIG.wellness.name}" not found` };
+      return { synced: 0, created: 0, updated: 0, deleted: 0, error: `Calendar "${CALENDAR_CONFIG.wellness.name}" not found` };
     }
     
     const oneYearAgo = new Date();
@@ -422,6 +438,7 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
     });
     
     const events = response.data.items || [];
+    const fetchedEventIds = new Set<string>();
     let created = 0;
     let updated = 0;
     
@@ -429,6 +446,7 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
       if (!event.id || !event.summary) continue;
       
       const googleEventId = event.id;
+      fetchedEventIds.add(googleEventId);
       const rawTitle = event.summary;
       const description = event.description || null;
       
@@ -510,10 +528,24 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
       }
     }
     
-    return { synced: events.length, created, updated };
+    // Deactivate wellness classes that no longer exist in the Google Calendar
+    const existingClasses = await pool.query(
+      'SELECT id, google_calendar_id FROM wellness_classes WHERE google_calendar_id IS NOT NULL AND is_active = true'
+    );
+    
+    let deleted = 0;
+    for (const dbClass of existingClasses.rows) {
+      if (!fetchedEventIds.has(dbClass.google_calendar_id)) {
+        // This wellness class's source no longer exists in Google Calendar, deactivate it
+        await pool.query('UPDATE wellness_classes SET is_active = false WHERE id = $1', [dbClass.id]);
+        deleted++;
+      }
+    }
+    
+    return { synced: events.length, created, updated, deleted };
   } catch (error) {
     console.error('Error syncing Wellness Calendar events:', error);
-    return { synced: 0, created: 0, updated: 0, error: 'Failed to sync wellness classes' };
+    return { synced: 0, created: 0, updated: 0, deleted: 0, error: 'Failed to sync wellness classes' };
   }
 }
 

@@ -505,5 +505,15 @@ export const changelog: ChangelogEntry[] = [
       "Closures are now sorted from soonest to furthest on both member and staff views",
       "The closure alert card on the dashboard now shows the nearest upcoming closure first"
     ]
+  },
+  {
+    version: "5.9",
+    date: "2025-12-29",
+    title: "Calendar Sync & Navigation Fixes",
+    changes: [
+      "Events and wellness classes are now automatically removed when deleted from Google Calendar",
+      "Fixed closure card navigating to the wrong page — now correctly opens Updates",
+      "Announcement cards now navigate to the unified Updates page"
+    ]
   }
 ];

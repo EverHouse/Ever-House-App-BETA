@@ -354,7 +354,7 @@ async function startServer() {
         if (gcalResult.error) {
           console.log(`[Startup] Google Calendar sync skipped: ${gcalResult.error}`);
         } else {
-          console.log(`[Startup] Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated)`);
+          console.log(`[Startup] Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated, ${gcalResult.deleted} removed)`);
         }
       } catch (err) {
         console.log('[Startup] Google Calendar sync failed:', err);
@@ -385,8 +385,8 @@ async function startServer() {
       const SYNC_INTERVAL_MS = 5 * 60 * 1000;
       setInterval(async () => {
         try {
-          const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Events sync failed' }));
-          const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Wellness sync failed' }));
+          const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Events sync failed' }));
+          const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Wellness sync failed' }));
           const toursResult = await syncToursFromCalendar().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Tours sync failed' }));
           const closuresResult = await syncInternalCalendarToClosures().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Closures sync failed' }));
           const eventsMsg = eventsResult.error ? eventsResult.error : `${eventsResult.synced} synced`;

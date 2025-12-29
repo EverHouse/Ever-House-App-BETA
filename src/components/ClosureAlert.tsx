@@ -99,7 +99,7 @@ const ClosureAlert: React.FC = () => {
   };
 
   const handleViewDetails = () => {
-    navigate('/announcements');
+    navigate('/updates');
   };
 
   if (isLoading || activeClosures.length === 0) return null;
