@@ -536,5 +536,17 @@ export const changelog: ChangelogEntry[] = [
       "Added optional image upload for wellness classes",
       "Added optional external URL field for classes and events — link members to booking pages or more info"
     ]
+  },
+  {
+    version: "6.2",
+    date: "2025-12-29",
+    title: "Staff Portal Polish",
+    changes: [
+      "Staff portal now uses bone white background in light mode for a softer look",
+      "Upcoming Bookings now show an Edit button to quickly view or reschedule",
+      "All staff and admin modals now open with smooth fade and pop animations",
+      "Booking cards restyled with liquid glass design for a more cohesive look",
+      "Conference Room column moved to the end of the calendar grid for clarity"
+    ]
   }
 ];
