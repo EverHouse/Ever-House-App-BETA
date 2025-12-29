@@ -492,3 +492,41 @@ export const bugReports = pgTable("bug_reports", {
 
 export type BugReport = typeof bugReports.$inferSelect;
 export type InsertBugReport = typeof bugReports.$inferInsert;
+
+// Trackman unmatched bookings - historical bookings that couldn't be matched to members
+export const trackmanUnmatchedBookings = pgTable("trackman_unmatched_bookings", {
+  id: serial("id").primaryKey(),
+  trackmanBookingId: varchar("trackman_booking_id").notNull(),
+  userName: varchar("user_name"),
+  originalEmail: varchar("original_email"),
+  bookingDate: date("booking_date").notNull(),
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
+  durationMinutes: integer("duration_minutes"),
+  status: varchar("status"),
+  bayNumber: varchar("bay_number"),
+  playerCount: integer("player_count"),
+  notes: text("notes"),
+  matchAttemptReason: text("match_attempt_reason"),
+  resolvedEmail: varchar("resolved_email"),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type TrackmanUnmatchedBooking = typeof trackmanUnmatchedBookings.$inferSelect;
+export type InsertTrackmanUnmatchedBooking = typeof trackmanUnmatchedBookings.$inferInsert;
+
+// Trackman import runs - track import history
+export const trackmanImportRuns = pgTable("trackman_import_runs", {
+  id: serial("id").primaryKey(),
+  filename: varchar("filename").notNull(),
+  totalRows: integer("total_rows").notNull(),
+  matchedRows: integer("matched_rows").notNull(),
+  unmatchedRows: integer("unmatched_rows").notNull(),
+  skippedRows: integer("skipped_rows").notNull(),
+  importedBy: varchar("imported_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type TrackmanImportRun = typeof trackmanImportRuns.$inferSelect;
