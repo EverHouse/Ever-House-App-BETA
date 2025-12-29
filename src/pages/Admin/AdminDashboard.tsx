@@ -5398,6 +5398,11 @@ const BlocksAdmin: React.FC = () => {
         setIsClosureModalOpen(true);
     };
 
+    const handlePullRefresh = async () => {
+        await Promise.all([fetchClosures(), fetchBlocks()]);
+        showToast('Closures and blocks refreshed', 'success');
+    };
+
     const handleDeleteBlock = async (id: number) => {
         if (!confirm('Are you sure you want to delete this availability block?')) return;
         
@@ -5480,6 +5485,7 @@ const BlocksAdmin: React.FC = () => {
     }
 
     return (
+        <PullToRefresh onRefresh={handlePullRefresh}>
         <div className="space-y-6 animate-pop-in">
             <div className="flex gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <button
@@ -5879,6 +5885,7 @@ const BlocksAdmin: React.FC = () => {
             )}
             <FloatingActionButton onClick={openNewClosure} color="red" label="Add closure" />
         </div>
+        </PullToRefresh>
     );
 };
 

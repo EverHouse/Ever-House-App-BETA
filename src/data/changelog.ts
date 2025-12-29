@@ -492,7 +492,8 @@ export const changelog: ChangelogEntry[] = [
     changes: [
       "Members button and profile avatar now have a frosted glass effect",
       "Fixed Book a Tour modal appearing off-screen on some devices",
-      "Fixed calendar events not importing on iPhone — now works reliably with Apple Calendar"
+      "Fixed calendar events not importing on iPhone — now works reliably with Apple Calendar",
+      "Added pull-to-refresh on Closures page to quickly sync data"
     ]
   }
 ];
