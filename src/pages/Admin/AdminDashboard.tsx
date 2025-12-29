@@ -39,7 +39,7 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const tabParam = searchParams.get('tab') as TabType | null;
-    const validTabs: TabType[] = ['home', 'cafe', 'events', 'announcements', 'directory', 'simulator', 'team', 'faqs', 'inquiries', 'gallery', 'tiers', 'blocks', 'changelog', 'training', 'updates', 'tours', 'bugs'];
+    const validTabs: TabType[] = ['home', 'cafe', 'events', 'announcements', 'directory', 'simulator', 'team', 'faqs', 'inquiries', 'gallery', 'tiers', 'blocks', 'changelog', 'training', 'updates', 'tours', 'bugs', 'trackman'];
     if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam);
     } else if (!tabParam) {
@@ -145,6 +145,7 @@ const AdminDashboard: React.FC = () => {
       case 'training': return 'Training';
       case 'updates': return 'Updates';
       case 'tours': return 'Tours';
+      case 'trackman': return 'Trackman Import';
       default: return 'Dashboard';
     }
   };
@@ -218,6 +219,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'training' && <StaffTrainingGuide />}
         {activeTab === 'updates' && <StaffUpdatesAdmin />}
         {activeTab === 'tours' && <ToursAdmin />}
+        {activeTab === 'trackman' && actualUser?.role === 'admin' && <TrackmanAdmin />}
         <BottomSentinel />
       </main>
 
@@ -238,7 +240,7 @@ const AdminDashboard: React.FC = () => {
 
 // --- Sub-Components ---
 
-type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training' | 'updates' | 'tours' | 'bugs';
+type TabType = 'home' | 'cafe' | 'events' | 'announcements' | 'directory' | 'simulator' | 'team' | 'faqs' | 'inquiries' | 'gallery' | 'tiers' | 'blocks' | 'changelog' | 'training' | 'updates' | 'tours' | 'bugs' | 'trackman';
 
 interface NavItemData {
   id: TabType;
@@ -346,6 +348,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
     { id: 'faqs' as TabType, icon: 'help_outline', label: 'FAQs', description: 'Edit frequently asked questions' },
     { id: 'tiers' as TabType, icon: 'loyalty', label: 'Manage Tiers', description: 'Configure membership tier settings' },
     { id: 'bugs' as TabType, icon: 'bug_report', label: 'Bug Reports', description: 'Review user-reported issues' },
+    { id: 'trackman' as TabType, icon: 'upload_file', label: 'Trackman Import', description: 'Import historical bookings' },
   ];
 
   const CardButton = ({ link }: { link: { id: TabType; icon: string; label: string; description: string } }) => (
@@ -7700,6 +7703,272 @@ const ToursAdmin: React.FC = () => {
       )}
       </div>
     </PullToRefresh>
+  );
+};
+
+const TrackmanAdmin: React.FC = () => {
+  const { setPageReady } = usePageReady();
+  const { actualUser } = useData();
+  const [unmatchedBookings, setUnmatchedBookings] = useState<any[]>([]);
+  const [importRuns, setImportRuns] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+  const [resolveModal, setResolveModal] = useState<{ booking: any; memberEmail: string } | null>(null);
+  const [members, setMembers] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchData = async () => {
+    try {
+      const [unmatchedRes, runsRes, membersRes] = await Promise.all([
+        fetch('/api/admin/trackman/unmatched?resolved=false', { credentials: 'include' }),
+        fetch('/api/admin/trackman/import-runs', { credentials: 'include' }),
+        fetch('/api/hubspot/contacts', { credentials: 'include' })
+      ]);
+      
+      if (unmatchedRes.ok) {
+        const data = await unmatchedRes.json();
+        setUnmatchedBookings(data);
+      }
+      if (runsRes.ok) {
+        const data = await runsRes.json();
+        setImportRuns(data);
+      }
+      if (membersRes.ok) {
+        const data = await membersRes.json();
+        setMembers(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch Trackman data:', err);
+    } finally {
+      setIsLoading(false);
+      setPageReady(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleImport = async () => {
+    setIsImporting(true);
+    setImportResult(null);
+    try {
+      const res = await fetch('/api/admin/trackman/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ filename: 'trackman_bookings_1767009308200.csv' })
+      });
+      const data = await res.json();
+      setImportResult(data);
+      fetchData();
+    } catch (err: any) {
+      setImportResult({ success: false, error: err.message });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleResolve = async () => {
+    if (!resolveModal) return;
+    try {
+      const res = await fetch(`/api/admin/trackman/unmatched/${resolveModal.booking.id}/resolve`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ memberEmail: resolveModal.memberEmail })
+      });
+      if (res.ok) {
+        setResolveModal(null);
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Failed to resolve booking:', err);
+    }
+  };
+
+  const filteredMembers = members.filter(m => {
+    const query = searchQuery.toLowerCase();
+    const name = `${m.firstname || ''} ${m.lastname || ''}`.toLowerCase();
+    const email = (m.email || '').toLowerCase();
+    return name.includes(query) || email.includes(query);
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <span className="material-symbols-outlined text-4xl text-primary/30 dark:text-white/30 animate-spin">sync</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-6 py-4 space-y-6">
+      <div className="glass-card p-6 rounded-2xl border border-primary/10 dark:border-white/10">
+        <h2 className="text-lg font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
+          <span className="material-symbols-outlined">upload_file</span>
+          Import Trackman Bookings
+        </h2>
+        <p className="text-sm text-primary/70 dark:text-white/70 mb-4">
+          Import historical booking data from Trackman CSV. The system will match bookings to existing members by name and email.
+        </p>
+        <button
+          onClick={handleImport}
+          disabled={isImporting}
+          className="px-6 py-3 bg-accent text-primary rounded-full font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+        >
+          {isImporting ? (
+            <>
+              <span className="material-symbols-outlined animate-spin text-sm">sync</span>
+              Importing...
+            </>
+          ) : (
+            <>
+              <span className="material-symbols-outlined text-sm">cloud_upload</span>
+              Run Import
+            </>
+          )}
+        </button>
+        
+        {importResult && (
+          <div className={`mt-4 p-4 rounded-xl ${importResult.success ? 'bg-green-100 dark:bg-green-500/20' : 'bg-red-100 dark:bg-red-500/20'}`}>
+            {importResult.success ? (
+              <div className="space-y-1">
+                <p className="font-bold text-green-700 dark:text-green-300">Import Complete</p>
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Total: {importResult.totalRows} | Matched: {importResult.matchedRows} | Unmatched: {importResult.unmatchedRows} | Skipped: {importResult.skippedRows}
+                </p>
+              </div>
+            ) : (
+              <p className="text-red-700 dark:text-red-300">{importResult.error || 'Import failed'}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {importRuns.length > 0 && (
+        <div className="glass-card p-6 rounded-2xl border border-primary/10 dark:border-white/10">
+          <h2 className="text-lg font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
+            <span className="material-symbols-outlined">history</span>
+            Import History
+          </h2>
+          <div className="space-y-2">
+            {importRuns.slice(0, 5).map((run: any) => (
+              <div key={run.id} className="p-3 bg-white/50 dark:bg-white/5 rounded-xl flex justify-between items-center">
+                <div>
+                  <p className="font-medium text-primary dark:text-white text-sm">{run.filename}</p>
+                  <p className="text-xs text-primary/60 dark:text-white/60">
+                    {new Date(run.created_at).toLocaleDateString()} by {run.imported_by || 'system'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-primary/70 dark:text-white/70">
+                    <span className="text-green-600 dark:text-green-400">{run.matched_rows} matched</span>
+                    {' | '}
+                    <span className="text-orange-600 dark:text-orange-400">{run.unmatched_rows} unmatched</span>
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="glass-card p-6 rounded-2xl border border-primary/10 dark:border-white/10">
+        <h2 className="text-lg font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
+          <span className="material-symbols-outlined">warning</span>
+          Unmatched Bookings ({unmatchedBookings.length})
+        </h2>
+        <p className="text-sm text-primary/70 dark:text-white/70 mb-4">
+          These bookings couldn't be matched to a member. Click "Resolve" to manually assign them.
+        </p>
+        
+        {unmatchedBookings.length === 0 ? (
+          <div className="py-8 text-center border-2 border-dashed border-primary/10 dark:border-white/10 rounded-xl">
+            <span className="material-symbols-outlined text-4xl text-primary/20 dark:text-white/20 mb-2">check_circle</span>
+            <p className="text-primary/40 dark:text-white/40">No unmatched bookings</p>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+            {unmatchedBookings.map((booking: any) => (
+              <div key={booking.id} className="p-4 bg-white/50 dark:bg-white/5 rounded-xl flex justify-between items-start">
+                <div>
+                  <p className="font-bold text-primary dark:text-white">{booking.user_name || 'Unknown'}</p>
+                  <p className="text-xs text-primary/60 dark:text-white/60">{booking.original_email}</p>
+                  <p className="text-xs text-primary/60 dark:text-white/60 mt-1">
+                    {booking.booking_date} • {booking.start_time?.substring(0, 5)} - {booking.end_time?.substring(0, 5)} • Bay {booking.bay_number}
+                  </p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">{booking.match_attempt_reason}</p>
+                </div>
+                <button
+                  onClick={() => setResolveModal({ booking, memberEmail: '' })}
+                  className="px-3 py-1.5 bg-accent text-primary rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"
+                >
+                  Resolve
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {resolveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setResolveModal(null)}></div>
+          <div className="relative w-full max-w-md bg-bone dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-primary/10 dark:border-white/10">
+              <h2 className="text-xl font-bold text-primary dark:text-white">Resolve Booking</h2>
+              <p className="text-sm text-primary/60 dark:text-white/60 mt-1">
+                Assign this booking to: {resolveModal.booking.user_name}
+              </p>
+            </div>
+            <div className="p-6 space-y-4">
+              <input
+                type="text"
+                placeholder="Search members..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-white/10 border border-primary/20 dark:border-white/20 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40"
+              />
+              <div className="max-h-60 overflow-y-auto space-y-1">
+                {filteredMembers.slice(0, 20).map((member: any) => (
+                  <button
+                    key={member.email}
+                    onClick={() => setResolveModal({ ...resolveModal, memberEmail: member.email })}
+                    className={`w-full p-3 text-left rounded-xl transition-colors ${
+                      resolveModal.memberEmail === member.email
+                        ? 'bg-accent/20 border-2 border-accent'
+                        : 'bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10'
+                    }`}
+                  >
+                    <p className="font-medium text-primary dark:text-white text-sm">
+                      {member.firstname} {member.lastname}
+                    </p>
+                    <p className="text-xs text-primary/60 dark:text-white/60">{member.email}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="p-4 border-t border-primary/10 dark:border-white/10 flex justify-end gap-3">
+              <button
+                onClick={() => setResolveModal(null)}
+                className="px-4 py-2 rounded-full text-sm font-medium text-primary/70 dark:text-white/70 hover:bg-primary/10 dark:hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResolve}
+                disabled={!resolveModal.memberEmail}
+                className="px-6 py-2 rounded-full bg-accent text-primary text-sm font-bold hover:opacity-90 disabled:opacity-50"
+              >
+                Assign & Resolve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
