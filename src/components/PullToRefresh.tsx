@@ -43,6 +43,80 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ children, onRefresh, disa
   const containerRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef<number | null>(null);
   const isPullingRef = useRef(false);
+  const wheelAccumulatorRef = useRef(0);
+  const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isWheelPullingRef = useRef(false);
+
+  const triggerRefresh = useCallback(async () => {
+    if (isRefreshing || isFillingScreen) return;
+    
+    wheelAccumulatorRef.current = 0;
+    isWheelPullingRef.current = false;
+    setIsFillingScreen(true);
+    setPullDistance(0);
+    
+    await new Promise(resolve => setTimeout(resolve, 350));
+    
+    setIsFillingScreen(false);
+    setIsRefreshing(true);
+    
+    try {
+      await onRefresh();
+    } catch (e) {
+      console.error('Refresh failed:', e);
+    }
+    
+    setIsExiting(true);
+    await new Promise(resolve => setTimeout(resolve, 550));
+    setIsRefreshing(false);
+    setIsExiting(false);
+  }, [isRefreshing, isFillingScreen, onRefresh]);
+
+  // Desktop scroll wheel support
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (disabled || isRefreshing || isFillingScreen) return;
+      
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      
+      // Only activate when at top of page and scrolling up
+      if (scrollTop <= 5 && e.deltaY < 0) {
+        // Accumulate upward scroll
+        wheelAccumulatorRef.current += Math.abs(e.deltaY) * 0.3;
+        wheelAccumulatorRef.current = Math.min(wheelAccumulatorRef.current, MAX_PULL);
+        isWheelPullingRef.current = true;
+        
+        setPullDistance(wheelAccumulatorRef.current);
+        
+        // Reset accumulator after a pause in scrolling
+        if (wheelTimeoutRef.current) {
+          clearTimeout(wheelTimeoutRef.current);
+        }
+        wheelTimeoutRef.current = setTimeout(() => {
+          if (wheelAccumulatorRef.current >= PULL_THRESHOLD && !isRefreshing && !isFillingScreen) {
+            triggerRefresh();
+          } else {
+            wheelAccumulatorRef.current = 0;
+            isWheelPullingRef.current = false;
+            setPullDistance(0);
+          }
+        }, 150);
+      } else if (scrollTop > 5 || e.deltaY > 0) {
+        // Reset if scrolled away from top or scrolling down
+        wheelAccumulatorRef.current = 0;
+        isWheelPullingRef.current = false;
+        setPullDistance(0);
+      }
+    };
+    
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      if (wheelTimeoutRef.current) {
+        clearTimeout(wheelTimeoutRef.current);
+      }
+    };
+  }, [disabled, isRefreshing, isFillingScreen, triggerRefresh]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (disabled || isRefreshing) return;
