@@ -7717,6 +7717,8 @@ const TrackmanAdmin: React.FC = () => {
   const [resolveModal, setResolveModal] = useState<{ booking: any; memberEmail: string } | null>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
     try {
@@ -7750,15 +7752,23 @@ const TrackmanAdmin: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleImport = async () => {
+  const handleFileUpload = async (file: File) => {
+    if (!file.name.endsWith('.csv')) {
+      setImportResult({ success: false, error: 'Please upload a CSV file' });
+      return;
+    }
+    
     setIsImporting(true);
     setImportResult(null);
+    
     try {
-      const res = await fetch('/api/admin/trackman/import', {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/admin/trackman/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ filename: 'trackman_bookings_1767009308200.csv' })
+        body: formData
       });
       const data = await res.json();
       setImportResult(data);
@@ -7768,6 +7778,27 @@ const TrackmanAdmin: React.FC = () => {
     } finally {
       setIsImporting(false);
     }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileUpload(file);
   };
 
   const handleResolve = async () => {
@@ -7811,25 +7842,47 @@ const TrackmanAdmin: React.FC = () => {
           Import Trackman Bookings
         </h2>
         <p className="text-sm text-primary/70 dark:text-white/70 mb-4">
-          Import historical booking data from Trackman CSV. The system will match bookings to existing members by name and email.
+          Upload a Trackman booking export (CSV). The system will match bookings to existing members by name and email.
         </p>
-        <button
-          onClick={handleImport}
-          disabled={isImporting}
-          className="px-6 py-3 bg-accent text-primary rounded-full font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+        
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept=".csv"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClick={() => !isImporting && fileInputRef.current?.click()}
+          className={`
+            border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all
+            ${isDragging 
+              ? 'border-accent bg-accent/10' 
+              : 'border-primary/20 dark:border-white/20 hover:border-accent hover:bg-accent/5'}
+            ${isImporting ? 'pointer-events-none opacity-50' : ''}
+          `}
         >
           {isImporting ? (
-            <>
-              <span className="material-symbols-outlined animate-spin text-sm">sync</span>
-              Importing...
-            </>
+            <div className="flex flex-col items-center gap-2">
+              <span className="material-symbols-outlined text-4xl text-accent animate-spin">sync</span>
+              <p className="text-sm font-medium text-primary dark:text-white">Processing...</p>
+            </div>
           ) : (
-            <>
-              <span className="material-symbols-outlined text-sm">cloud_upload</span>
-              Run Import
-            </>
+            <div className="flex flex-col items-center gap-2">
+              <span className="material-symbols-outlined text-4xl text-primary/40 dark:text-white/40">cloud_upload</span>
+              <p className="text-sm font-medium text-primary dark:text-white">
+                Drop a CSV file here or click to browse
+              </p>
+              <p className="text-xs text-primary/50 dark:text-white/50">
+                Export from Trackman and upload here
+              </p>
+            </div>
           )}
-        </button>
+        </div>
         
         {importResult && (
           <div className={`mt-4 p-4 rounded-xl ${importResult.success ? 'bg-green-100 dark:bg-green-500/20' : 'bg-red-100 dark:bg-red-500/20'}`}>

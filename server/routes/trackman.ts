@@ -1,8 +1,38 @@
 import { Router } from 'express';
 import { importTrackmanBookings, getUnmatchedBookings, resolveUnmatchedBooking, getImportRuns } from '../core/trackmanImport';
 import path from 'path';
+import multer from 'multer';
+import fs from 'fs';
 
 const router = Router();
+
+const uploadDir = path.join(process.cwd(), 'uploads', 'trackman');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+    cb(null, `trackman_${timestamp}_${safeName}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
+    }
+  }
+});
 
 router.get('/api/admin/trackman/unmatched', async (req, res) => {
   try {
@@ -49,6 +79,37 @@ router.post('/api/admin/trackman/import', async (req, res) => {
   } catch (error: any) {
     console.error('Import error:', error);
     res.status(500).json({ error: error.message || 'Failed to import bookings' });
+  }
+});
+
+router.post('/api/admin/trackman/upload', upload.single('file'), async (req, res) => {
+  let csvPath: string | undefined;
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    const user = (req as any).session?.user?.email || 'admin';
+    csvPath = req.file.path;
+    
+    const result = await importTrackmanBookings(csvPath, user);
+    
+    res.json({
+      success: true,
+      filename: req.file.filename,
+      ...result
+    });
+  } catch (error: any) {
+    console.error('Upload/Import error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload and import bookings' });
+  } finally {
+    if (csvPath && fs.existsSync(csvPath)) {
+      try {
+        fs.unlinkSync(csvPath);
+      } catch (cleanupErr) {
+        console.error('Failed to cleanup uploaded file:', cleanupErr);
+      }
+    }
   }
 });
 
