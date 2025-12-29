@@ -52,7 +52,7 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
       <div className={`loader-content ${isExiting ? 'content-exit' : ''}`}>
         <div className="walking-mascot">
           <img 
-            src="/assets/logos/mascot-white.webp" 
+            src="/assets/logos/walking-mascot-white.gif" 
             alt="Loading..." 
             className="mascot-image"
           />
@@ -159,22 +159,9 @@ const WalkingGolferLoader: React.FC<WalkingGolferLoaderProps> = ({ isVisible = t
         }
 
         .walking-mascot {
-          animation: walk 0.6s ease-in-out infinite;
-        }
-
-        @keyframes walk {
-          0%, 100% { 
-            transform: translateY(0) rotate(-2deg); 
-          }
-          25% {
-            transform: translateY(-8px) rotate(0deg);
-          }
-          50% { 
-            transform: translateY(0) rotate(2deg); 
-          }
-          75% {
-            transform: translateY(-8px) rotate(0deg);
-          }
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
       `}</style>
     </div>
