@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import { isFoundingMember, getBaseTier } from '../../utils/permissions';
 import { getTierColor } from '../../utils/tierUtils';
+import { formatPhoneNumber } from '../../utils/formatting';
 import { useTierPermissions } from '../../hooks/useTierPermissions';
 import TierBadge from '../../components/TierBadge';
 import TagBadge from '../../components/TagBadge';
@@ -201,7 +202,10 @@ const Profile: React.FC = () => {
          <Section title="Account" isDark={isDark} delay="0.05s">
             <Row icon="person" label="Name" value={user.name} isDark={isDark} />
             <Row icon="mail" label="Email" value={user.email} isDark={isDark} />
-            <Row icon="call" label="Phone" value={staffDetails?.phone || user.phone} isDark={isDark} />
+            <Row icon="call" label="Phone" value={formatPhoneNumber(staffDetails?.phone || user.phone)} isDark={isDark} />
+            {isStaffOrAdminProfile && staffDetails?.job_title && (
+              <Row icon="badge" label="Job Title" value={staffDetails.job_title} isDark={isDark} />
+            )}
          </Section>
 
          <Section title="Settings" isDark={isDark} delay="0.1s">
