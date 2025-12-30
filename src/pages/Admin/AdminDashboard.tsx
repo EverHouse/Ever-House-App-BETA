@@ -4000,6 +4000,7 @@ interface WellnessClass {
 
 interface WellnessFormData extends Partial<WellnessClass> {
   imageFile?: File | null;
+  endTime?: string;
 }
 
 const WELLNESS_CATEGORY_TABS = [
@@ -4078,10 +4079,23 @@ const WellnessAdminContent: React.FC = () => {
         }
     };
 
+    const calculateEndTime = (startTime: string, durationStr: string): string => {
+        if (!startTime) return '';
+        const match = durationStr?.match(/(\d+)/);
+        const durationMinutes = match ? parseInt(match[1]) : 60;
+        const [hours, mins] = startTime.split(':').map(Number);
+        const totalMins = hours * 60 + mins + durationMinutes;
+        const endHours = Math.floor(totalMins / 60) % 24;
+        const endMins = totalMins % 60;
+        return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+    };
+
     const openEdit = (cls: WellnessClass) => {
+        const endTime = calculateEndTime(cls.time, cls.duration);
         setFormData({
             ...cls,
-            date: cls.date.split('T')[0]
+            date: cls.date.split('T')[0],
+            endTime
         });
         setEditId(cls.id);
         setIsEditing(true);
@@ -4094,7 +4108,8 @@ const WellnessAdminContent: React.FC = () => {
         setFormData({
             category: activeCategory === 'all' ? 'Classes' : activeCategory,
             status: 'available',
-            duration: '60 min',
+            time: '09:00',
+            endTime: '10:00',
             date: tomorrow.toISOString().split('T')[0]
         });
         setEditId(null);
@@ -4116,8 +4131,17 @@ const WellnessAdminContent: React.FC = () => {
         return classDate < today;
     }).sort((a, b) => b.date.localeCompare(a.date));
 
+    const calculateDuration = (startTime: string, endTime: string): string => {
+        if (!startTime || !endTime) return '60 min';
+        const [startHours, startMins] = startTime.split(':').map(Number);
+        const [endHours, endMins] = endTime.split(':').map(Number);
+        let durationMins = (endHours * 60 + endMins) - (startHours * 60 + startMins);
+        if (durationMins <= 0) durationMins += 24 * 60;
+        return `${durationMins} min`;
+    };
+
     const handleSave = async () => {
-        if (!formData.title || !formData.time || !formData.instructor || !formData.date || !formData.spots) {
+        if (!formData.title || !formData.time || !formData.endTime || !formData.instructor || !formData.date || !formData.spots) {
             setError('Please fill in all required fields');
             return;
         }
@@ -4149,9 +4173,11 @@ const WellnessAdminContent: React.FC = () => {
             const url = editId ? `/api/wellness-classes/${editId}` : '/api/wellness-classes';
             const method = editId ? 'PUT' : 'POST';
 
-            const { imageFile, ...restFormData } = formData;
+            const { imageFile, endTime, ...restFormData } = formData;
+            const duration = calculateDuration(formData.time!, endTime!);
             const payload = {
                 ...restFormData,
+                duration,
                 image_url: imageUrl || null,
                 external_url: formData.external_url || null,
             };
@@ -4413,25 +4439,32 @@ const WellnessAdminContent: React.FC = () => {
                         />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="min-w-0">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date *</label>
-                            <input
-                                type="date"
-                                value={formData.date || ''}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                            />
-                        </div>
-                        <div className="min-w-0">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time *</label>
-                            <input
-                                type="time"
-                                value={formData.time || ''}
-                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date *</label>
+                        <input
+                            type="date"
+                            value={formData.date || ''}
+                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Time *</label>
+                        <input
+                            type="time"
+                            value={formData.time || ''}
+                            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Time *</label>
+                        <input
+                            type="time"
+                            value={formData.endTime || ''}
+                            onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
                     </div>
 
                     <div>
@@ -4445,29 +4478,17 @@ const WellnessAdminContent: React.FC = () => {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="min-w-0">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                            <select
-                                value={formData.category || 'Yoga'}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                            >
-                                {categories.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="min-w-0">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration</label>
-                            <input
-                                type="text"
-                                value={formData.duration || ''}
-                                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                placeholder="60 min"
-                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                        <select
+                            value={formData.category || 'Yoga'}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        >
+                            {categories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>
@@ -6008,45 +6029,41 @@ const BlocksAdmin: React.FC = () => {
                                 onChange={e => setClosureForm({...closureForm, title: e.target.value})} 
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="min-w-0">
-                                <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Date *</label>
-                                <input 
-                                    type="date" 
-                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                    value={closureForm.start_date} 
-                                    onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
-                                />
-                            </div>
-                            <div className="min-w-0">
-                                <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Time</label>
-                                <input 
-                                    type="time" 
-                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                    value={closureForm.start_time} 
-                                    onChange={e => setClosureForm({...closureForm, start_time: e.target.value})} 
-                                />
-                            </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Date *</label>
+                            <input 
+                                type="date" 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                value={closureForm.start_date} 
+                                onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
+                            />
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="min-w-0">
-                                <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Date</label>
-                                <input 
-                                    type="date" 
-                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                    value={closureForm.end_date} 
-                                    onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
-                                />
-                            </div>
-                            <div className="min-w-0">
-                                <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Time</label>
-                                <input 
-                                    type="time" 
-                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                    value={closureForm.end_time} 
-                                    onChange={e => setClosureForm({...closureForm, end_time: e.target.value})} 
-                                />
-                            </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Time</label>
+                            <input 
+                                type="time" 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                value={closureForm.start_time} 
+                                onChange={e => setClosureForm({...closureForm, start_time: e.target.value})} 
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Date</label>
+                            <input 
+                                type="date" 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                value={closureForm.end_date} 
+                                onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Time</label>
+                            <input 
+                                type="time" 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                value={closureForm.end_time} 
+                                onChange={e => setClosureForm({...closureForm, end_time: e.target.value})} 
+                            />
                         </div>
                         
                         <div>
@@ -6126,25 +6143,23 @@ const BlocksAdmin: React.FC = () => {
                         />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="min-w-0">
-                            <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">Start Time</label>
-                            <input
-                                type="time"
-                                value={selectedBlock?.start_time.substring(0, 5)}
-                                onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, start_time: e.target.value + ':00'})}
-                                className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                            />
-                        </div>
-                        <div className="min-w-0">
-                            <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">End Time</label>
-                            <input
-                                type="time"
-                                value={selectedBlock?.end_time.substring(0, 5)}
-                                onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, end_time: e.target.value + ':00'})}
-                                className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                            />
-                        </div>
+                    <div>
+                        <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">Start Time</label>
+                        <input
+                            type="time"
+                            value={selectedBlock?.start_time.substring(0, 5)}
+                            onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, start_time: e.target.value + ':00'})}
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">End Time</label>
+                        <input
+                            type="time"
+                            value={selectedBlock?.end_time.substring(0, 5)}
+                            onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, end_time: e.target.value + ':00'})}
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
                     </div>
                     
                     <div>
