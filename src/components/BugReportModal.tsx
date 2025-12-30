@@ -16,7 +16,6 @@ const BugReportModal: React.FC<BugReportModalProps> = ({
   onSuccess
 }) => {
   const { effectiveTheme } = useTheme();
-  const isDark = effectiveTheme === 'dark';
   const [description, setDescription] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
@@ -122,7 +121,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({
   return (
     <ModalShell isOpen={isOpen} onClose={handleClose} title="Report a Bug" size="md">
       <div className="px-6 -mt-2 mb-4">
-        <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+        <p className="text-sm text-primary/60 dark:text-white/60">
           Help us improve by reporting issues
         </p>
       </div>
@@ -133,15 +132,15 @@ const BugReportModal: React.FC<BugReportModalProps> = ({
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
               <span className="material-symbols-outlined text-3xl">check</span>
             </div>
-            <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>
+            <h3 className="text-xl font-bold mb-2 text-primary dark:text-white">
               Report Submitted
             </h3>
-            <p className={`${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+            <p className="text-primary/60 dark:text-white/60">
               Thank you for helping us improve. Our team will review your report.
             </p>
             <button
               onClick={handleClose}
-              className={`mt-6 px-6 py-3 rounded-xl font-bold text-sm ${isDark ? 'bg-white text-black' : 'bg-primary text-white'}`}
+              className="mt-6 px-6 py-3 rounded-xl font-bold text-sm bg-primary dark:bg-white text-white dark:text-black"
             >
               Done
             </button>
@@ -155,7 +154,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({
             )}
 
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+              <label className="block text-sm font-medium mb-2 text-primary/80 dark:text-white/80">
                 What went wrong? <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -163,17 +162,13 @@ const BugReportModal: React.FC<BugReportModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe what you were trying to do and what happened instead..."
                 rows={4}
-                className={`w-full rounded-xl px-4 py-3 text-sm resize-none transition-colors ${
-                  isDark 
-                    ? 'bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:border-accent focus:ring-1 focus:ring-accent' 
-                    : 'bg-[#F9F9F7] border border-black/10 text-primary placeholder:text-primary/40 focus:border-primary focus:ring-1 focus:ring-primary'
-                }`}
+                className="w-full rounded-xl px-4 py-3 text-sm resize-none transition-colors bg-[#F9F9F7] dark:bg-white/5 border border-black/10 dark:border-white/10 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 focus:border-primary dark:focus:border-accent focus:ring-1 focus:ring-primary dark:focus:ring-accent"
                 required
               />
             </div>
 
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+              <label className="block text-sm font-medium mb-2 text-primary/80 dark:text-white/80">
                 Screenshot (optional)
               </label>
               
@@ -196,11 +191,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className={`w-full py-8 rounded-xl border-2 border-dashed transition-colors flex flex-col items-center gap-2 ${
-                    isDark 
-                      ? 'border-white/20 hover:border-white/40 text-white/60' 
-                      : 'border-black/20 hover:border-black/40 text-primary/60'
-                  }`}
+                  className="w-full py-8 rounded-xl border-2 border-dashed transition-colors flex flex-col items-center gap-2 border-black/20 dark:border-white/20 hover:border-black/40 dark:hover:border-white/40 text-primary/60 dark:text-white/60"
                 >
                   <span className="material-symbols-outlined text-2xl">add_photo_alternate</span>
                   <span className="text-sm">Tap to add screenshot</span>
@@ -219,14 +210,10 @@ const BugReportModal: React.FC<BugReportModalProps> = ({
             <button
               type="submit"
               disabled={loading || !description.trim()}
-              className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                isDark 
-                  ? 'bg-accent text-primary hover:opacity-90' 
-                  : 'bg-primary text-white hover:bg-primary/90'
-              }`}
+              className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-primary dark:bg-accent text-white dark:text-primary hover:bg-primary/90 dark:hover:opacity-90"
             >
               {loading ? (
-                <WalkingGolferSpinner size="sm" variant={isDark ? 'dark' : 'light'} />
+                <WalkingGolferSpinner size="sm" variant={effectiveTheme === 'dark' ? 'dark' : 'light'} />
               ) : (
                 <>
                   <span className="material-symbols-outlined text-lg">send</span>

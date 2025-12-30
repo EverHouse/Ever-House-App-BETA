@@ -60,7 +60,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
         
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-multiply"></div>
 
-        <div className={`relative z-10 flex flex-col h-full py-8 safe-area-inset-menu ${isDark ? 'text-[#F2F2EC]' : 'text-[#293515]'}`}>
+        <div className="relative z-10 flex flex-col h-full py-8 safe-area-inset-menu text-[#293515] dark:text-[#F2F2EC]">
             
             <div className="flex items-center justify-between mb-8">
                 <button 
@@ -77,29 +77,29 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                 <button 
                   onClick={handleClose}
                   aria-label="Close menu"
-                  className={`w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center hover:rotate-90 transition-transform duration-300 rounded-full active:scale-90 ${isDark ? 'text-[#F2F2EC] hover:bg-white/10' : 'text-[#293515] hover:bg-black/5'}`}
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center hover:rotate-90 transition-transform duration-300 rounded-full active:scale-90 text-[#293515] hover:bg-black/5 dark:text-[#F2F2EC] dark:hover:bg-white/10"
                 >
                     <span className="material-symbols-outlined text-3xl">close</span>
                 </button>
             </div>
             
             <nav className="flex flex-col gap-4 flex-1 overflow-y-auto scrollbar-hide py-2">
-                <MenuLink label="Membership" onClick={() => handleNav('/membership')} delay="0.05s" isDark={isDark} />
-                <MenuLink label="Cafe" onClick={() => handleNav('/menu')} delay="0.1s" isDark={isDark} />
-                <MenuLink label="Host Events" onClick={() => handleNav('/private-hire')} delay="0.15s" isDark={isDark} />
-                <MenuLink label="What's On" onClick={() => handleNav('/whats-on')} delay="0.2s" isDark={isDark} />
-                <MenuLink label="Gallery" onClick={() => handleNav('/gallery')} delay="0.25s" isDark={isDark} />
-                <MenuLink label="FAQ" onClick={() => handleNav('/faq')} delay="0.3s" isDark={isDark} />
+                <MenuLink label="Membership" onClick={() => handleNav('/membership')} delay="0.05s" />
+                <MenuLink label="Cafe" onClick={() => handleNav('/menu')} delay="0.1s" />
+                <MenuLink label="Host Events" onClick={() => handleNav('/private-hire')} delay="0.15s" />
+                <MenuLink label="What's On" onClick={() => handleNav('/whats-on')} delay="0.2s" />
+                <MenuLink label="Gallery" onClick={() => handleNav('/gallery')} delay="0.25s" />
+                <MenuLink label="FAQ" onClick={() => handleNav('/faq')} delay="0.3s" />
             </nav>
             
-            <div className={`mt-4 pt-6 border-t animate-pop-in ${isDark ? 'border-[#F2F2EC]/10' : 'border-[#293515]/10'}`} style={{ animationDelay: '0.4s' }}>
+            <div className="mt-4 pt-6 border-t animate-pop-in border-[#293515]/10 dark:border-[#F2F2EC]/10" style={{ animationDelay: '0.4s' }}>
                 <button 
                     onClick={() => handleNav('/contact')}
-                    className={`w-full group flex items-center justify-between px-4 py-3 min-h-[44px] rounded-[2rem] glass-button border ${isDark ? 'border-white/20' : 'border-black/20'}`}
+                    className="w-full group flex items-center justify-between px-4 py-3 min-h-[44px] rounded-[2rem] glass-button border border-black/20 dark:border-white/20"
                 >
-                    <span className={`text-xl font-bold ${isDark ? 'text-[#F2F2EC]' : 'text-[#293515]'}`}>Contact Us</span>
+                    <span className="text-xl font-bold text-[#293515] dark:text-[#F2F2EC]">Contact Us</span>
                     <span className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full glass-button flex items-center justify-center group-hover:scale-110 transition-all duration-[400ms] ease-in-out">
-                        <span className={`material-symbols-outlined ${isDark ? 'text-[#F2F2EC]' : 'text-[#293515]'}`}>arrow_forward</span>
+                        <span className="material-symbols-outlined text-[#293515] dark:text-[#F2F2EC]">arrow_forward</span>
                     </span>
                 </button>
             </div>
@@ -111,7 +111,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   return createPortal(menuContent, document.body);
 };
 
-const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string; isDark: boolean }> = ({ label, onClick, delay, isDark }) => {
+const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string }> = ({ label, onClick, delay }) => {
   const lastTapRef = useRef(0);
   
   const handlePointerUp = () => {
@@ -126,7 +126,7 @@ const MenuLink: React.FC<{ label: string; onClick: () => void; delay: string; is
       onClick={onClick}
       onPointerUp={handlePointerUp}
       style={{ touchAction: 'manipulation', animationDelay: delay, animationFillMode: 'both' }}
-      className={`text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight min-h-[44px] hoverable-translate active:translate-x-2 ${isDark ? 'text-[#F2F2EC] hover:text-[#F2F2EC]/80' : 'text-[#293515] hover:text-[#293515]/80'}`}
+      className="text-left text-[24px] font-display font-medium transition-all duration-300 tracking-tight animate-pop-in leading-tight min-h-[44px] hoverable-translate active:translate-x-2 text-[#293515] hover:text-[#293515]/80 dark:text-[#F2F2EC] dark:hover:text-[#F2F2EC]/80"
     >
       {label}
     </button>

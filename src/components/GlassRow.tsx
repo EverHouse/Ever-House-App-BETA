@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface Action {
   icon: string;
@@ -18,9 +17,6 @@ interface GlassRowProps {
 }
 
 const GlassRow: React.FC<GlassRowProps> = ({ title, subtitle, icon, color, actions, delay, onClick }) => {
-   const { effectiveTheme } = useTheme();
-   const isDark = effectiveTheme === 'dark';
-   
    return (
      <div 
        onClick={onClick}
@@ -31,8 +27,8 @@ const GlassRow: React.FC<GlassRowProps> = ({ title, subtitle, icon, color, actio
            <span className="material-symbols-outlined text-[24px]">{icon}</span>
         </div>
         <div className="flex-1 min-w-0">
-           <h4 className={`font-bold text-sm truncate ${isDark ? 'text-white' : 'text-primary'}`}>{title}</h4>
-           <p className={`text-xs truncate ${isDark ? 'text-white/60' : 'text-primary/70'}`}>{subtitle}</p>
+           <h4 className="font-bold text-sm truncate text-primary dark:text-white">{title}</h4>
+           <p className="text-xs truncate text-primary/70 dark:text-white/60">{subtitle}</p>
         </div>
         {actions && (
             <div className="flex gap-2">
@@ -40,7 +36,7 @@ const GlassRow: React.FC<GlassRowProps> = ({ title, subtitle, icon, color, actio
                   <button 
                       key={idx} 
                       onClick={(e) => { e.stopPropagation(); action.onClick(); }} 
-                      className={`w-8 h-8 rounded-[1rem] glass-button flex items-center justify-center active:scale-90 ${isDark ? 'text-white/60 hover:text-white' : 'text-primary/60 hover:text-primary'}`}
+                      className="w-8 h-8 rounded-[1rem] glass-button flex items-center justify-center active:scale-90 text-primary/60 hover:text-primary dark:text-white/60 dark:hover:text-white"
                       aria-label={action.label}
                   >
                       <span className="material-symbols-outlined text-[18px]">{action.icon}</span>

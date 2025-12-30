@@ -1,6 +1,5 @@
 import { useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface ModalShellProps {
   isOpen: boolean;
@@ -31,8 +30,6 @@ export function ModalShell({
   size = 'md',
   className = ''
 }: ModalShellProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
@@ -95,14 +92,14 @@ export function ModalShell({
             aria-labelledby={title ? 'modal-title' : undefined}
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
-            className={`relative w-full ${sizeClasses[size]} ${isDark ? 'bg-[#1a1d15] border-white/10' : 'bg-white border-gray-200'} rounded-2xl shadow-2xl border ${className}`}
+            className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-[#1a1d15] border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl border ${className}`}
           >
             {(title || showCloseButton) && (
-              <div className={`flex items-center justify-between p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/10">
                 {title && (
                   <h3 
                     id="modal-title"
-                    className={`text-xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}
+                    className="text-xl font-bold text-primary dark:text-white"
                   >
                     {title}
                   </h3>
@@ -110,7 +107,7 @@ export function ModalShell({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className={`p-1.5 rounded-full transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
+                    className="p-1.5 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400"
                     aria-label="Close modal"
                   >
                     <span className="material-symbols-outlined text-xl">close</span>

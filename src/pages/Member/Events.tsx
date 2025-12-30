@@ -179,11 +179,11 @@ const MemberEvents: React.FC = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <SwipeablePage className="px-6 pt-2 relative min-h-screen overflow-hidden">
       <section className="mb-4 pt-2">
-        <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Events</h1>
-        <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Discover what's happening at the House.</p>
+        <h1 className="text-3xl font-bold leading-tight drop-shadow-md text-primary dark:text-white">Upcoming Events</h1>
+        <p className="text-sm font-medium mt-1 text-primary/70 dark:text-white/70">Discover what's happening at the House.</p>
       </section>
 
-      <section className={`mb-6 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+      <section className="mb-6 border-b -mx-6 px-6 border-black/10 dark:border-white/10">
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide">
           {['All', 'Social', 'Golf', 'Tournaments', 'Dining', 'Networking', 'Workshops', 'Family', 'Entertainment', 'Charity'].map(cat => (
             <TabButton 
@@ -214,13 +214,13 @@ const MemberEvents: React.FC = () => {
                 return (
                   <MotionListItem 
                     key={event.id}
-                    className={`rounded-2xl overflow-hidden transition-all glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}
+                    className="rounded-2xl overflow-hidden transition-all glass-card border-black/10 dark:border-white/10"
                   >
                     <div 
                       onClick={() => handleCardClick(event.id)}
-                      className={`flex gap-4 p-4 cursor-pointer transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}
+                      className="flex gap-4 p-4 cursor-pointer transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                     >
-                      <div className={`w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden relative ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
+                      <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden relative bg-black/5 dark:bg-white/10">
                         <img src={event.image} alt={event.title} className="w-full h-full object-cover opacity-90" />
                         {event.source === 'eventbrite' && (
                           <div className="absolute bottom-0 left-0 right-0 bg-[#F05537] text-white text-[8px] font-bold uppercase text-center py-0.5">
@@ -230,7 +230,7 @@ const MemberEvents: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start mb-1">
-                          <h4 className={`text-base font-bold leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-primary'}`}>{event.title}</h4>
+                          <h4 className="text-base font-bold leading-tight truncate pr-2 text-primary dark:text-white">{event.title}</h4>
                           {isRsvpd ? (
                             <span className="text-[10px] font-bold uppercase tracking-wider bg-accent text-brand-green px-1.5 py-0.5 rounded-md whitespace-nowrap">Going</span>
                           ) : event.source === 'eventbrite' ? (
@@ -239,11 +239,11 @@ const MemberEvents: React.FC = () => {
                             <span className="text-[10px] font-bold uppercase tracking-wider bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-md whitespace-nowrap">Open</span>
                           )}
                         </div>
-                        <p className={`text-xs mb-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{event.date} • {event.time}</p>
-                        <p className={`text-xs truncate ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{event.location}</p>
+                        <p className="text-xs mb-1 text-primary/60 dark:text-white/60">{event.date} • {event.time}</p>
+                        <p className="text-xs truncate text-primary/50 dark:text-white/50">{event.location}</p>
                       </div>
                       <div className="flex items-center">
-                        <span className={`material-symbols-outlined transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} ${isDark ? 'text-white/40' : 'text-primary/40'}`}>
+                        <span className={`material-symbols-outlined transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-primary/40 dark:text-white/40`}>
                           expand_more
                         </span>
                       </div>
@@ -252,13 +252,13 @@ const MemberEvents: React.FC = () => {
                     <div 
                       className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
                     >
-                      <div className={`px-4 pb-4 pt-2 border-t ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-                        <p className={`text-sm leading-relaxed mb-4 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>
+                      <div className="px-4 pb-4 pt-2 border-t border-black/10 dark:border-white/10">
+                        <p className="text-sm leading-relaxed mb-4 text-primary/70 dark:text-white/70">
                           {event.description}
                         </p>
 
                         {(event.ticketsSold || event.capacity) && (
-                          <div className={`flex items-center gap-2 mb-4 text-xs ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+                          <div className="flex items-center gap-2 mb-4 text-xs text-primary/50 dark:text-white/50">
                             <span className="material-symbols-outlined text-sm">group</span>
                             <span>
                               {event.ticketsSold || 0} / {event.capacity || '∞'} spots filled
@@ -269,7 +269,7 @@ const MemberEvents: React.FC = () => {
                         <div className="flex gap-3">
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleAddToCalendar(event); }}
-                            className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 ${isDark ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-black/5 text-primary hover:bg-black/10'}`}
+                            className="flex-1 py-3 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 bg-black/5 text-primary hover:bg-black/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
                           >
                             <span className="material-symbols-outlined text-lg">calendar_add_on</span>
                             Add to Cal
@@ -279,7 +279,7 @@ const MemberEvents: React.FC = () => {
                             <button 
                               onClick={(e) => { e.stopPropagation(); handleCancelRSVP(event); }}
                               disabled={isLoadingThis}
-                              className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border flex items-center justify-center gap-2 ${isDark ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' : 'border-red-500/50 text-red-500 hover:bg-red-500/10'} ${isLoadingThis ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border flex items-center justify-center gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 dark:text-red-400 ${isLoadingThis ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               {isLoadingThis ? <WalkingGolferSpinner size="sm" variant={isDark ? 'light' : 'dark'} /> : 'Cancel RSVP'}
                             </button>
@@ -319,22 +319,22 @@ const MemberEvents: React.FC = () => {
         {viewAsUser && pendingEvent && (
           <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-100 dark:bg-amber-500/20">
                 <span className="material-symbols-outlined text-2xl text-amber-500">warning</span>
               </div>
               <div>
-                <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>View As Mode Active</p>
+                <p className="text-sm text-primary/60 dark:text-white/60">View As Mode Active</p>
               </div>
             </div>
             
-            <p className={`text-sm mb-6 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+            <p className="text-sm mb-6 text-primary/80 dark:text-white/80">
               You're about to {hasRsvp(pendingEvent.id) ? 'cancel the RSVP for' : 'RSVP to'} <span className="font-bold">{pendingEvent.title}</span> on behalf of <span className="font-bold">{viewAsUser.name}</span>.
             </p>
             
             <div className="flex gap-3">
               <button 
                 onClick={() => { setShowViewAsConfirm(false); setPendingEvent(null); }}
-                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-colors ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-primary hover:bg-black/10'}`}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-colors bg-black/5 text-primary hover:bg-black/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
               >
                 Cancel
               </button>

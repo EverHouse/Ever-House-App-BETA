@@ -83,16 +83,16 @@ interface Closure {
   isActive: boolean;
 }
 
-const getStatusColor = (status: string, isDark: boolean): string => {
+const getStatusColor = (status: string): string => {
   switch (status) {
-    case 'pending': return isDark ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-500/20 text-yellow-700';
+    case 'pending': return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300';
     case 'approved': 
-    case 'confirmed': return isDark ? 'bg-green-500/20 text-green-300' : 'bg-green-500/20 text-green-700';
-    case 'attended': return isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-500/20 text-blue-700';
-    case 'declined': return isDark ? 'bg-red-500/20 text-red-300' : 'bg-red-500/20 text-red-700';
-    case 'no_show': return isDark ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-500/20 text-orange-700';
-    case 'cancelled': return isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-500/20 text-gray-500';
-    default: return isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-500/20 text-gray-500';
+    case 'confirmed': return 'bg-green-500/20 text-green-700 dark:text-green-300';
+    case 'attended': return 'bg-blue-500/20 text-blue-700 dark:text-blue-300';
+    case 'declined': return 'bg-red-500/20 text-red-700 dark:text-red-300';
+    case 'no_show': return 'bg-orange-500/20 text-orange-700 dark:text-orange-300';
+    case 'cancelled': return 'bg-gray-500/20 text-gray-500 dark:text-gray-400';
+    default: return 'bg-gray-500/20 text-gray-500 dark:text-gray-400';
   }
 };
 
@@ -108,7 +108,6 @@ const generateDates = (advanceDays: number = 7): { label: string; date: string; 
   const { year, month, day } = getPacificDateParts();
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
-  // Show today + advanceDays (today doesn't count toward the advance booking window)
   for (let i = 0; i <= advanceDays; i++) {
     const d = new Date(year, month - 1, day + i);
     const dayName = days[d.getDay()];
@@ -183,7 +182,6 @@ const BookGolf: React.FC = () => {
 
   const effectiveUser = viewAsUser || user;
   
-  // Check if admin is viewing as a member
   const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
 
   useEffect(() => {
@@ -213,7 +211,6 @@ const BookGolf: React.FC = () => {
   const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
   const [selectedDateObj, setSelectedDateObj] = useState(dates[0]);
 
-  // Sync selectedDateObj when dates array changes (e.g., when user tier loads)
   useEffect(() => {
     if (dates.length > 0 && (!selectedDateObj || !dates.find(d => d.date === selectedDateObj.date))) {
       setSelectedDateObj(dates[0]);
@@ -387,7 +384,6 @@ const BookGolf: React.FC = () => {
     return resources.filter(r => slot.availableResourceDbIds.includes(r.dbId));
   };
 
-  // Handle the actual booking submission
   const submitBooking = async () => {
     if (!selectedSlot || !selectedResource || !effectiveUser) return;
     
@@ -452,13 +448,11 @@ const BookGolf: React.FC = () => {
   const handleConfirm = async () => {
     if (!selectedSlot || !selectedResource || !effectiveUser) return;
     
-    // If admin is viewing as member, show confirmation popup first
     if (isAdminViewingAs) {
       setShowViewAsConfirm(true);
       return;
     }
     
-    // Otherwise proceed directly
     await submitBooking();
   };
 
@@ -511,11 +505,11 @@ const BookGolf: React.FC = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <SwipeablePage className="px-6 pt-4 relative min-h-screen">
       <section className="mb-6 pt-2">
-        <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Book</h1>
-        <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Reserve simulators or conference room.</p>
+        <h1 className="text-3xl font-bold leading-tight drop-shadow-md text-primary dark:text-white">Book</h1>
+        <p className="text-sm font-medium mt-1 text-primary/70 dark:text-white/70">Reserve simulators or conference room.</p>
       </section>
 
-      <section className={`mb-8 border-b -mx-6 px-6 ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+      <section className="mb-8 border-b -mx-6 px-6 border-black/10 dark:border-white/10">
         <div className="flex gap-6 overflow-x-auto pb-0 scrollbar-hide" role="tablist">
           <TabButton 
             label="Golf Simulator" 
@@ -535,8 +529,8 @@ const BookGolf: React.FC = () => {
             onClick={() => setActiveTab('my-requests')}
             className={`relative whitespace-nowrap pb-4 text-sm font-bold transition-all border-b-2 -mb-px ${
               activeTab === 'my-requests'
-                ? (isDark ? 'text-white border-accent' : 'text-primary border-accent')
-                : (isDark ? 'text-white/50 border-transparent hover:text-white/70' : 'text-primary/50 border-transparent hover:text-primary/70')
+                ? 'text-primary dark:text-white border-accent'
+                : 'text-primary/50 dark:text-white/50 border-transparent hover:text-primary/70 dark:hover:text-white/70'
             }`}
           >
             My Requests
@@ -550,10 +544,10 @@ const BookGolf: React.FC = () => {
       </section>
 
       {activeTab === 'simulator' && isTierLoaded && !canBookSimulators ? (
-        <section className={`rounded-2xl p-6 border text-center glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+        <section className="rounded-2xl p-6 border text-center glass-card border-black/10 dark:border-white/10">
           <span className="material-symbols-outlined text-4xl text-accent mb-4">lock</span>
-          <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Upgrade to Book Simulators</h3>
-          <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+          <h3 className="text-lg font-bold mb-2 text-primary dark:text-white">Upgrade to Book Simulators</h3>
+          <p className="text-sm mb-4 text-primary/60 dark:text-white/60">
             Golf simulator access is available for Core, Premium, and Corporate members. Upgrade your membership to start booking.
           </p>
           <a 
@@ -565,10 +559,10 @@ const BookGolf: React.FC = () => {
           </a>
         </section>
       ) : activeTab === 'conference' && isTierLoaded && !canBookConference ? (
-        <section className={`rounded-2xl p-6 border text-center glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+        <section className="rounded-2xl p-6 border text-center glass-card border-black/10 dark:border-white/10">
           <span className="material-symbols-outlined text-4xl text-accent mb-4">lock</span>
-          <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-primary'}`}>Upgrade for Conference Room Access</h3>
-          <p className={`text-sm mb-4 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+          <h3 className="text-lg font-bold mb-2 text-primary dark:text-white">Upgrade for Conference Room Access</h3>
+          <p className="text-sm mb-4 text-primary/60 dark:text-white/60">
             Conference room booking is available for Core, Premium, and Corporate members. Upgrade your membership to start booking.
           </p>
           <a 
@@ -582,9 +576,9 @@ const BookGolf: React.FC = () => {
       ) : activeTab === 'my-requests' ? (
         <div className="space-y-4">
           {myRequests.length === 0 ? (
-            <div className={`text-center py-12 rounded-2xl border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-              <span className={`material-symbols-outlined text-5xl mb-4 ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
-              <p className={`${isDark ? 'text-white/60' : 'text-primary/60'}`}>No booking requests yet</p>
+            <div className="text-center py-12 rounded-2xl border glass-card border-black/10 dark:border-white/10">
+              <span className="material-symbols-outlined text-5xl mb-4 text-primary/30 dark:text-white/30">inbox</span>
+              <p className="text-primary/60 dark:text-white/60">No booking requests yet</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -598,24 +592,24 @@ const BookGolf: React.FC = () => {
                 .map(request => (
                 <div 
                   key={request.id} 
-                  className={`rounded-xl p-4 border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}
+                  className="rounded-xl p-4 border glass-card border-black/10 dark:border-white/10"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className={`font-bold ${isDark ? 'text-white' : 'text-primary'}`}>
+                      <p className="font-bold text-primary dark:text-white">
                         {formatDateShort(request.request_date)}
                       </p>
-                      <p className={`text-sm ${isDark ? 'text-white/70' : 'text-primary/70'}`}>
+                      <p className="text-sm text-primary/70 dark:text-white/70">
                         {formatTime12(request.start_time)} - {formatTime12(request.end_time)}
                       </p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(request.status, isDark)}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(request.status)}`}>
                       {request.status}
                     </span>
                   </div>
                   
                   {request.bay_name && (
-                    <p className={`text-sm flex items-center gap-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>
+                    <p className="text-sm flex items-center gap-1 text-primary/70 dark:text-white/70">
                       <span className="material-symbols-outlined text-sm">
                         {request.notes?.includes('Conference room booking') ? 'meeting_room' : 'golf_course'}
                       </span>
@@ -624,12 +618,12 @@ const BookGolf: React.FC = () => {
                   )}
                   
                   {request.notes && (
-                    <p className={`text-sm mt-2 italic ${isDark ? 'text-white/60' : 'text-primary/60'}`}>"{request.notes}"</p>
+                    <p className="text-sm mt-2 italic text-primary/60 dark:text-white/60">"{request.notes}"</p>
                   )}
                   
                   {request.staff_notes && request.status !== 'pending' && (
-                    <div className={`mt-2 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                      <p className={`text-xs ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Staff note: {request.staff_notes}</p>
+                    <div className="mt-2 p-2 rounded-lg bg-black/5 dark:bg-white/5">
+                      <p className="text-xs text-primary/70 dark:text-white/70">Staff note: {request.staff_notes}</p>
                     </div>
                   )}
                   
@@ -656,9 +650,9 @@ const BookGolf: React.FC = () => {
                 }
                 return !request.notes?.includes('Conference room booking');
               }).length === 0 && (
-                <div className={`text-center py-12 rounded-2xl border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-                  <span className={`material-symbols-outlined text-5xl mb-4 ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
-                  <p className={`${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+                <div className="text-center py-12 rounded-2xl border glass-card border-black/10 dark:border-white/10">
+                  <span className="material-symbols-outlined text-5xl mb-4 text-primary/30 dark:text-white/30">inbox</span>
+                  <p className="text-primary/60 dark:text-white/60">
                     No {previousTab === 'conference' ? 'conference room' : 'simulator'} requests yet
                   </p>
                 </div>
@@ -668,9 +662,9 @@ const BookGolf: React.FC = () => {
         </div>
       ) : (
         <div className="relative z-10 animate-pop-in space-y-6">
-          <section className={`rounded-2xl p-4 border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+          <section className="rounded-2xl p-4 border glass-card border-black/10 dark:border-white/10">
             <div className="flex items-center justify-between mb-3">
-              <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Date & Duration</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary/60 dark:text-white/60">Date & Duration</span>
             </div>
             <div className="space-y-4">
               <div className="flex gap-3 overflow-x-auto py-8 px-3 -mx-3 scrollbar-hide">
@@ -685,7 +679,7 @@ const BookGolf: React.FC = () => {
                   />
                 ))}
               </div>
-              <div className={`flex gap-2 p-1 rounded-xl border ${isDark ? 'bg-black/20 border-white/5' : 'bg-black/5 border-black/5'}`}>
+              <div className="flex gap-2 p-1 rounded-xl border bg-black/5 border-black/5 dark:bg-black/20 dark:border-white/5">
                 {[30, 60, 90, 120].filter(mins => (mins !== 90 && mins !== 120) || tierPermissions.hasExtendedSessions).map(mins => (
                   <button 
                     key={mins}
@@ -694,7 +688,7 @@ const BookGolf: React.FC = () => {
                     className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-accent focus:outline-none ${
                       duration === mins 
                       ? 'bg-accent text-[#293515] shadow-glow'
-                      : (isDark ? 'text-white/60 hover:bg-white/5 hover:text-white' : 'text-primary/60 hover:bg-black/5 hover:text-primary')
+                      : 'text-primary/60 hover:bg-black/5 hover:text-primary dark:text-white/60 dark:hover:bg-white/5 dark:hover:text-white'
                     }`}
                   >
                     {mins}m
@@ -719,26 +713,26 @@ const BookGolf: React.FC = () => {
                 return (
                   <div 
                     key={closure.id}
-                    className={`rounded-xl p-4 border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}
+                    className="rounded-xl p-4 border bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30"
                   >
                     <div className="flex items-start gap-3">
-                      <span className={`material-symbols-outlined text-2xl ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>event_busy</span>
+                      <span className="material-symbols-outlined text-2xl text-amber-600 dark:text-amber-400">event_busy</span>
                       <div className="flex-1">
-                        <h4 className={`font-bold ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>
+                        <h4 className="font-bold text-amber-800 dark:text-amber-300">
                           {closure.title || 'Closure Notice'}
                         </h4>
                         {hasTimeRange && (
-                          <p className={`text-sm mt-1 ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
+                          <p className="text-sm mt-1 text-amber-700 dark:text-amber-300/80">
                             {formatTime12(closure.startTime!)} - {formatTime12(closure.endTime!)}
                           </p>
                         )}
                         {closure.reason && (
-                          <p className={`text-sm mt-1 ${isDark ? 'text-amber-300/70' : 'text-amber-600'}`}>
+                          <p className="text-sm mt-1 text-amber-600 dark:text-amber-300/70">
                             {closure.reason}
                           </p>
                         )}
                         {isPartialDay && (
-                          <p className={`text-xs mt-2 font-medium ${isDark ? 'text-amber-400/80' : 'text-amber-700'}`}>
+                          <p className="text-xs mt-2 font-medium text-amber-700 dark:text-amber-400/80">
                             Limited availability - see times below
                           </p>
                         )}
@@ -751,7 +745,7 @@ const BookGolf: React.FC = () => {
           )}
 
           <section className="min-h-[120px]">
-            <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Available Times</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider mb-3 pl-1 text-primary/80 dark:text-white/80">Available Times</h3>
             
             <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-100' : 'opacity-0 hidden'}`}>
                 <div className="space-y-2">
@@ -781,18 +775,18 @@ const BookGolf: React.FC = () => {
                           hasSelectedSlot
                             ? 'bg-accent/20 border-accent/50'
                             : isExpanded
-                              ? (isDark ? 'glass-card border-white/20 bg-white/10' : 'bg-white border-black/20')
-                              : (isDark ? 'glass-card border-white/10 hover:bg-white/5' : 'bg-white border-black/10 hover:bg-black/5 shadow-sm')
+                              ? 'bg-white border-black/20 dark:glass-card dark:border-white/20 dark:bg-white/10'
+                              : 'bg-white border-black/10 hover:bg-black/5 shadow-sm dark:glass-card dark:border-white/10 dark:hover:bg-white/5'
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <span className={`material-symbols-outlined text-xl transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''} ${
-                            hasSelectedSlot ? (isDark ? 'text-accent' : 'text-accent') : (isDark ? 'text-white/60' : 'text-primary/60')
+                            hasSelectedSlot ? 'text-accent' : 'text-primary/60 dark:text-white/60'
                           }`}>
                             chevron_right
                           </span>
                           <div>
-                            <div className={`font-bold text-base ${hasSelectedSlot ? (isDark ? 'text-accent' : 'text-[#293515]') : (isDark ? 'text-white' : 'text-primary')}`}>
+                            <div className={`font-bold text-base ${hasSelectedSlot ? 'text-[#293515] dark:text-accent' : 'text-primary dark:text-white'}`}>
                               {hourGroup.hourLabel}
                             </div>
                             <div className={`text-[10px] font-bold uppercase tracking-wide ${hasSelectedSlot ? 'text-accent/80' : 'opacity-50'}`}>
@@ -820,7 +814,7 @@ const BookGolf: React.FC = () => {
                             className={`p-3 rounded-xl border text-left transition-all active:scale-[0.98] focus:ring-2 focus:ring-accent focus:outline-none ${
                               selectedSlot?.id === slot.id
                               ? 'bg-accent text-[#293515] border-accent shadow-glow'
-                              : (isDark ? 'glass-card text-white hover:bg-white/10 border-white/10' : 'bg-white text-primary hover:bg-black/5 border-black/10 shadow-sm')
+                              : 'bg-white text-primary hover:bg-black/5 border-black/10 shadow-sm dark:glass-card dark:text-white dark:hover:bg-white/10 dark:border-white/10'
                             }`}
                             style={{ animationDelay: `${slotIndex * 0.03}s` }}
                           >
@@ -835,7 +829,7 @@ const BookGolf: React.FC = () => {
                   );
                 })}
                 {slotsByHour.length === 0 && !isLoading && (
-                  <div className={`text-center py-8 text-sm rounded-xl border border-dashed ${isDark ? 'text-white/60 glass-card border-white/20' : 'text-primary/60 bg-white border-black/20'}`}>
+                  <div className="text-center py-8 text-sm rounded-xl border border-dashed text-primary/60 bg-white border-black/20 dark:text-white/60 dark:glass-card dark:border-white/20">
                     No slots available for this date.
                   </div>
                 )}
@@ -845,7 +839,7 @@ const BookGolf: React.FC = () => {
 
           {selectedSlot && (
             <section className="animate-pop-in pb-48">
-              <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+              <h3 className="text-sm font-bold uppercase tracking-wider mb-3 pl-1 text-primary/80 dark:text-white/80">
                 Select {activeTab === 'simulator' ? 'Bay' : 'Room'}
               </h3>
               <div className="space-y-3">
@@ -855,7 +849,6 @@ const BookGolf: React.FC = () => {
                       resource={resource}
                       selected={selectedResource?.id === resource.id}
                       onClick={() => { haptic.medium(); setSelectedResource(resource); }}
-                      isDark={isDark}
                     />
                   </div>
                 ))}
@@ -889,7 +882,7 @@ const BookGolf: React.FC = () => {
 
       {showConfirmation && (
         <div className="fixed bottom-32 left-0 right-0 z-[60] flex justify-center pointer-events-none">
-          <div className={`backdrop-blur-md px-6 py-3 rounded-full shadow-2xl text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] border pointer-events-auto ${isDark ? 'bg-black/80 text-white border-white/10' : 'bg-white/95 text-primary border-black/10'}`}>
+          <div className="backdrop-blur-md px-6 py-3 rounded-full shadow-2xl text-sm font-bold flex items-center gap-3 animate-pop-in w-max max-w-[90%] border pointer-events-auto bg-white/95 text-primary border-black/10 dark:bg-black/80 dark:text-white dark:border-white/10">
             <span className="material-symbols-outlined text-xl text-green-500">schedule_send</span>
             <div>
               <p>Request sent!</p>
@@ -899,7 +892,6 @@ const BookGolf: React.FC = () => {
         </div>
       )}
 
-      {/* View As Confirmation Modal */}
       <ModalShell 
         isOpen={showViewAsConfirm && !!viewAsUser} 
         onClose={() => setShowViewAsConfirm(false)}
@@ -909,15 +901,15 @@ const BookGolf: React.FC = () => {
         {viewAsUser && (
           <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-100 dark:bg-amber-500/20">
                 <span className="material-symbols-outlined text-2xl text-amber-500">warning</span>
               </div>
               <div>
-                <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>View As Mode Active</p>
+                <p className="text-sm text-primary/60 dark:text-white/60">View As Mode Active</p>
               </div>
             </div>
             
-            <p className={`text-sm mb-6 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
+            <p className="text-sm mb-6 text-primary/80 dark:text-white/80">
               You're about to make a booking on behalf of <span className="font-bold">{viewAsUser.name}</span>. 
               This booking will appear in their account.
             </p>
@@ -925,7 +917,7 @@ const BookGolf: React.FC = () => {
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowViewAsConfirm(false)}
-                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-colors ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-primary hover:bg-black/10'}`}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-colors bg-black/5 text-primary hover:bg-black/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
               >
                 Cancel
               </button>
@@ -944,30 +936,30 @@ const BookGolf: React.FC = () => {
   );
 };
 
-const ResourceCard: React.FC<{resource: Resource; selected: boolean; onClick: () => void; isDark?: boolean}> = ({ resource, selected, onClick, isDark = true }) => (
+const ResourceCard: React.FC<{resource: Resource; selected: boolean; onClick: () => void}> = ({ resource, selected, onClick }) => (
   <button 
     onClick={onClick}
     aria-pressed={selected}
     className={`w-full flex items-center p-4 rounded-xl cursor-pointer transition-all active:scale-[0.98] border text-left focus:ring-2 focus:ring-accent focus:outline-none ${
       selected 
       ? 'bg-accent/10 border-accent ring-1 ring-accent' 
-      : (isDark ? 'glass-card hover:bg-white/5 border-white/10' : 'bg-white hover:bg-black/5 border-black/10 shadow-sm')
+      : 'bg-white hover:bg-black/5 border-black/10 shadow-sm dark:glass-card dark:hover:bg-white/5 dark:border-white/10'
     }`}
   >
-    <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center mr-4 overflow-hidden ${selected ? 'bg-accent text-[#293515]' : (isDark ? 'bg-white/5 text-white/40' : 'bg-black/5 text-primary/40')}`}>
+    <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center mr-4 overflow-hidden ${selected ? 'bg-accent text-[#293515]' : 'bg-black/5 text-primary/40 dark:bg-white/5 dark:text-white/40'}`}>
       <span className="material-symbols-outlined text-2xl">{resource.icon || 'meeting_room'}</span>
     </div>
     
     <div className="flex-1">
       <div className="flex justify-between items-center mb-0.5">
-        <span className={`font-bold text-base ${isDark ? 'text-white' : 'text-primary'}`}>{resource.name}</span>
+        <span className="font-bold text-base text-primary dark:text-white">{resource.name}</span>
         {resource.badge && (
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${selected ? 'bg-accent text-[#293515]' : (isDark ? 'bg-white/10 text-white/70' : 'bg-black/10 text-primary/70')}`}>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${selected ? 'bg-accent text-[#293515]' : 'bg-black/10 text-primary/70 dark:bg-white/10 dark:text-white/70'}`}>
             {resource.badge}
           </span>
         )}
       </div>
-      <p className={`text-xs ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{resource.meta}</p>
+      <p className="text-xs text-primary/60 dark:text-white/60">{resource.meta}</p>
     </div>
   </button>
 );

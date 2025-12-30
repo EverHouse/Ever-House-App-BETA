@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useData, Announcement } from '../../contexts/DataContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import SwipeablePage from '../../components/SwipeablePage';
 import PullToRefresh from '../../components/PullToRefresh';
@@ -78,7 +77,6 @@ const getNotificationRoute = (notif: UserNotification, isStaffOrAdmin: boolean):
   if (notif.type === 'event_reminder') {
     return '/member-events';
   }
-  // Tour notifications - navigate staff/admin to tours admin page
   if ((notif.type === 'tour_scheduled' || notif.type === 'tour_reminder') && isStaffOrAdmin) {
     return '/admin?tab=tours';
   }
@@ -89,9 +87,7 @@ const MemberUpdates: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { announcements, isLoading, user, actualUser } = useData();
-  const { effectiveTheme } = useTheme();
   const { setPageReady } = usePageReady();
-  const isDark = effectiveTheme === 'dark';
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
   const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
@@ -180,7 +176,6 @@ const MemberUpdates: React.FC = () => {
         await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT', credentials: 'include' });
         setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
-        // Dispatch event to sync header badge
         window.dispatchEvent(new CustomEvent('notifications-read'));
       } catch (err) {
         console.error('Failed to mark notification as read:', err);
@@ -203,7 +198,6 @@ const MemberUpdates: React.FC = () => {
       });
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
-      // Dispatch event to sync header badge
       window.dispatchEvent(new CustomEvent('notifications-read'));
     } catch (err) {
       console.error('Failed to mark all as read:', err);
@@ -248,18 +242,18 @@ const MemberUpdates: React.FC = () => {
       {isLoading || closuresLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={`p-5 rounded-2xl animate-pulse ${isDark ? 'bg-white/[0.03]' : 'bg-white'}`}>
+            <div key={i} className="p-5 rounded-2xl animate-pulse bg-white dark:bg-white/[0.03]">
               <div className="flex items-center gap-2 mb-3">
-                <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-white/20' : 'bg-gray-200'}`} />
-                <div className={`h-3 w-16 rounded ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                <div className="w-2 h-2 rounded-full bg-gray-200 dark:bg-white/20" />
+                <div className="h-3 w-16 rounded bg-gray-200 dark:bg-white/10" />
               </div>
-              <div className={`h-5 w-3/4 rounded mb-2 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-              <div className={`h-4 w-full rounded ${isDark ? 'bg-white/5' : 'bg-gray-100'}`} />
+              <div className="h-5 w-3/4 rounded mb-2 bg-gray-200 dark:bg-white/10" />
+              <div className="h-4 w-full rounded bg-gray-100 dark:bg-white/5" />
             </div>
           ))}
         </div>
       ) : sortedAnnouncements.length === 0 && closures.length === 0 ? (
-        <div className={`text-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+        <div className="text-center py-16 text-primary/50 dark:text-white/50">
           <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">campaign</span>
           <p className="text-lg font-medium">No announcements right now</p>
           <p className="text-sm mt-1 opacity-70">Check back soon for the latest news.</p>
@@ -269,33 +263,33 @@ const MemberUpdates: React.FC = () => {
           {closures.map((closure) => (
             <MotionListItem 
               key={`closure-${closure.id}`}
-              className={`rounded-2xl transition-all overflow-hidden ${isDark ? 'bg-red-500/10 shadow-layered-dark' : 'bg-red-50 shadow-layered'}`}
+              className="rounded-2xl transition-all overflow-hidden bg-red-50 shadow-layered dark:bg-red-500/10 dark:shadow-layered-dark"
             >
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-red-500/20' : 'bg-red-100'}`}>
-                    <span className={`material-symbols-outlined text-xl ${isDark ? 'text-red-400' : 'text-red-600'}`}>event_busy</span>
+                  <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-red-100 dark:bg-red-500/20">
+                    <span className="material-symbols-outlined text-xl text-red-600 dark:text-red-400">event_busy</span>
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
                         Closure
                       </span>
                     </div>
-                    <h3 className={`text-lg font-bold leading-snug truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <h3 className="text-lg font-bold leading-snug truncate text-gray-900 dark:text-white">
                       {closure.title}
                     </h3>
                   </div>
                 </div>
                 <div className="ml-12">
-                  <p className={`text-sm ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
+                  <p className="text-sm text-gray-600 dark:text-white/70">
                     {formatAffectedAreas(closure.affectedAreas)}
                   </p>
-                  <p className={`text-sm mt-1 ${isDark ? 'text-white/60' : 'text-gray-500'}`}>
+                  <p className="text-sm mt-1 text-gray-500 dark:text-white/60">
                     {formatClosureDateRange(closure.startDate, closure.endDate, closure.startTime, closure.endTime)}
                   </p>
                   {closure.reason && (
-                    <p className={`text-sm mt-2 ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
+                    <p className="text-sm mt-2 text-gray-500 dark:text-white/50">
                       {closure.reason}
                     </p>
                   )}
@@ -313,10 +307,10 @@ const MemberUpdates: React.FC = () => {
               : item.linkType === 'external' ? 'Learn More' : '';
             
             const priorityCardClass = item.priority === 'urgent' 
-              ? (isDark ? 'bg-red-500/10 shadow-layered-dark' : 'bg-red-50 shadow-layered')
+              ? 'bg-red-50 shadow-layered dark:bg-red-500/10 dark:shadow-layered-dark'
               : item.priority === 'high'
-                ? (isDark ? 'bg-amber-500/10 shadow-layered-dark' : 'bg-amber-50 shadow-layered')
-                : (isDark ? 'bg-white/[0.03] shadow-layered-dark' : 'bg-white shadow-layered');
+                ? 'bg-amber-50 shadow-layered dark:bg-amber-500/10 dark:shadow-layered-dark'
+                : 'bg-white shadow-layered dark:bg-white/[0.03] dark:shadow-layered-dark';
             
             const priorityDotClass = item.priority === 'urgent'
               ? 'bg-red-500'
@@ -341,34 +335,34 @@ const MemberUpdates: React.FC = () => {
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`w-2.5 h-2.5 rounded-full ${priorityDotClass}`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary/50 dark:text-white/50">
                       {item.type}
                     </span>
-                    <span className={`text-[10px] ${isDark ? 'text-white/30' : 'text-primary/30'}`}>•</span>
-                    <span className={`text-[10px] ${isDark ? 'text-white/40' : 'text-primary/40'}`}>
+                    <span className="text-[10px] text-primary/30 dark:text-white/30">•</span>
+                    <span className="text-[10px] text-primary/40 dark:text-white/40">
                       {formatDate(item.startDate || item.date)}
                     </span>
                   </div>
                   
-                  <h3 className={`text-lg font-bold mb-2 leading-snug ${isDark ? 'text-white' : 'text-primary'}`}>
+                  <h3 className="text-lg font-bold mb-2 leading-snug text-primary dark:text-white">
                     {item.title}
                   </h3>
                   
                   {item.desc && (
-                    <p className={`text-sm leading-relaxed ${isDark ? 'text-white/70' : 'text-primary/70'} ${!isExpanded && hasLongDesc ? 'line-clamp-2' : ''}`}>
+                    <p className={`text-sm leading-relaxed text-primary/70 dark:text-white/70 ${!isExpanded && hasLongDesc ? 'line-clamp-2' : ''}`}>
                       {item.desc}
                     </p>
                   )}
                   
                   {hasLongDesc && !hasLink && (
-                    <button className={`mt-3 text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${isDark ? 'text-white/50 hover:text-white/70' : 'text-primary/50 hover:text-primary/70'}`}>
+                    <button className="mt-3 text-xs font-bold uppercase tracking-wider flex items-center gap-1 text-primary/50 hover:text-primary/70 dark:text-white/50 dark:hover:text-white/70">
                       <span>{isExpanded ? 'Show less' : 'Read more'}</span>
                       <span className={`material-symbols-outlined text-sm transition-transform ${isExpanded ? 'rotate-180' : ''}`}>expand_more</span>
                     </button>
                   )}
                   
                   {item.endDate && (
-                    <div className={`mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs ${isDark ? 'bg-white/5 text-white/50' : 'bg-primary/5 text-primary/50'}`}>
+                    <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-primary/5 text-primary/50 dark:bg-white/5 dark:text-white/50">
                       <span className="material-symbols-outlined text-[14px]">schedule</span>
                       <span>Until {formatDate(item.endDate)}</span>
                     </div>
@@ -380,11 +374,7 @@ const MemberUpdates: React.FC = () => {
                         e.stopPropagation();
                         handleAnnouncementClick(item);
                       }}
-                      className={`mt-3 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
-                        isDark 
-                          ? 'bg-accent/20 text-accent hover:bg-accent/30' 
-                          : 'bg-accent/10 text-primary hover:bg-accent/20'
-                      }`}
+                      className="mt-3 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors bg-accent/10 text-primary hover:bg-accent/20 dark:bg-accent/20 dark:text-accent dark:hover:bg-accent/30"
                     >
                       <span>{linkLabel}</span>
                       <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -405,11 +395,7 @@ const MemberUpdates: React.FC = () => {
         <div className="flex justify-end mb-4">
           <button 
             onClick={markAllAsRead}
-            className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
-              isDark 
-                ? 'text-white/70 hover:text-white bg-white/5 hover:bg-white/10' 
-                : 'text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10'
-            }`}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10 dark:text-white/70 dark:hover:text-white dark:bg-white/5 dark:hover:bg-white/10"
           >
             Mark all as read
           </button>
@@ -419,12 +405,12 @@ const MemberUpdates: React.FC = () => {
       {notificationsLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={`p-4 rounded-2xl animate-pulse ${isDark ? 'bg-white/[0.03]' : 'bg-white'}`}>
+            <div key={i} className="p-4 rounded-2xl animate-pulse bg-white dark:bg-white/[0.03]">
               <div className="flex gap-3">
-                <div className={`w-10 h-10 rounded-lg ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-white/10" />
                 <div className="flex-1">
-                  <div className={`h-4 w-1/2 rounded mb-2 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-                  <div className={`h-3 w-3/4 rounded ${isDark ? 'bg-white/5' : 'bg-gray-100'}`} />
+                  <div className="h-4 w-1/2 rounded mb-2 bg-gray-200 dark:bg-white/10" />
+                  <div className="h-3 w-3/4 rounded bg-gray-100 dark:bg-white/5" />
                 </div>
               </div>
             </div>
@@ -438,7 +424,7 @@ const MemberUpdates: React.FC = () => {
         );
         
         return recentNotifications.length === 0 ? (
-          <div className={`text-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+          <div className="text-center py-16 text-primary/50 dark:text-white/50">
             <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">notifications_off</span>
             <p className="text-lg font-medium">No recent activity</p>
             <p className="text-sm mt-1 opacity-70">Your booking updates and alerts will appear here.</p>
@@ -500,20 +486,20 @@ const MemberUpdates: React.FC = () => {
                 onClick={() => handleNotificationClick(notif)}
                 className={`rounded-2xl transition-all cursor-pointer overflow-hidden ${
                   notif.is_read 
-                    ? isDark ? 'bg-white/[0.03] hover:bg-white/[0.06]' : 'bg-white hover:bg-gray-50'
-                    : isDark ? 'bg-accent/10 hover:bg-accent/15 border border-accent/20' : 'bg-accent/10 hover:bg-accent/15 border border-accent/30'
-                } ${isDark ? 'shadow-layered-dark' : 'shadow-layered'}`}
+                    ? 'bg-white hover:bg-gray-50 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]'
+                    : 'bg-accent/10 hover:bg-accent/15 border border-accent/30 dark:border-accent/20'
+                } shadow-layered dark:shadow-layered-dark`}
               >
                 <div className="flex gap-3 p-4">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                     notif.type === 'booking_approved' ? 'bg-green-500/20' :
                     notif.type === 'booking_declined' ? 'bg-red-500/20' :
-                    isDark ? 'bg-accent/20' : 'bg-accent/20'
+                    'bg-accent/20'
                   }`}>
                     <span className={`material-symbols-outlined text-[20px] ${
                       notif.type === 'booking_approved' ? 'text-green-500' :
                       notif.type === 'booking_declined' ? 'text-red-500' :
-                      isDark ? 'text-white' : 'text-primary'
+                      'text-primary dark:text-white'
                     }`}>
                       {notif.type === 'booking_approved' ? 'check_circle' :
                        notif.type === 'booking_declined' ? 'cancel' :
@@ -522,14 +508,14 @@ const MemberUpdates: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                      <h4 className={`font-bold text-sm ${notif.is_read ? (isDark ? 'text-white/70' : 'text-primary/70') : (isDark ? 'text-white' : 'text-primary')}`}>
+                      <h4 className={`font-bold text-sm ${notif.is_read ? 'text-primary/70 dark:text-white/70' : 'text-primary dark:text-white'}`}>
                         {notif.title}
                       </h4>
-                      <span className={`text-[10px] ml-2 shrink-0 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+                      <span className="text-[10px] ml-2 shrink-0 text-primary/50 dark:text-white/50">
                         {notif.created_at ? new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now'}
                       </span>
                     </div>
-                    <p className={`text-xs mt-0.5 ${notif.is_read ? (isDark ? 'text-white/50' : 'text-primary/50') : (isDark ? 'text-white/70' : 'text-primary/70')}`}>
+                    <p className={`text-xs mt-0.5 ${notif.is_read ? 'text-primary/50 dark:text-white/50' : 'text-primary/70 dark:text-white/70'}`}>
                       {notif.message}
                     </p>
                   </div>
@@ -547,8 +533,8 @@ const MemberUpdates: React.FC = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <SwipeablePage className="px-6 pt-2 relative min-h-screen overflow-hidden">
       <section className="mb-4 pt-2">
-        <h1 className={`text-3xl font-bold leading-tight drop-shadow-md ${isDark ? 'text-white' : 'text-primary'}`}>Updates</h1>
-        <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Stay in the loop with what's happening.</p>
+        <h1 className="text-3xl font-bold leading-tight drop-shadow-md text-primary dark:text-white">Updates</h1>
+        <p className="text-sm font-medium mt-1 text-primary/70 dark:text-white/70">Stay in the loop with what's happening.</p>
       </section>
 
       <div className="flex gap-2 mb-6">
@@ -557,7 +543,7 @@ const MemberUpdates: React.FC = () => {
           className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
             activeTab === 'announcements'
               ? 'bg-accent text-primary'
-              : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
+              : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
           }`}
         >
           Announcements
@@ -567,7 +553,7 @@ const MemberUpdates: React.FC = () => {
           className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all relative ${
             activeTab === 'activity'
               ? 'bg-accent text-primary'
-              : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
+              : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
           }`}
         >
           Activity
