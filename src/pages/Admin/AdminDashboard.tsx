@@ -1967,22 +1967,22 @@ const MembersAdmin: React.FC = () => {
 // --- SIMULATOR ADMIN ---
 
 interface BookingRequest {
-    id: number;
-    user_email: string;
-    user_name: string;
+    id: number | string;
+    user_email: string | null;
+    user_name: string | null;
     bay_id: number | null;
     bay_name: string | null;
     bay_preference: string | null;
     request_date: string;
     start_time: string;
     end_time: string;
-    duration_minutes: number;
+    duration_minutes: number | null;
     notes: string | null;
     status: 'pending' | 'pending_approval' | 'approved' | 'declined' | 'cancelled' | 'confirmed' | 'attended' | 'no_show';
     staff_notes: string | null;
     suggested_time: string | null;
-    created_at: string;
-    source?: 'booking_request' | 'booking';
+    created_at: string | null;
+    source?: 'booking_request' | 'booking' | 'calendar';
     resource_name?: string;
     first_name?: string;
     last_name?: string;

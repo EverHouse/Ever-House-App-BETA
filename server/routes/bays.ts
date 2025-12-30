@@ -983,7 +983,7 @@ router.get('/api/approved-bookings', isStaffOrAdmin, async (req, res) => {
       conditions.push(lte(bookingRequests.requestDate, end_date as string));
     }
     
-    const result = await db.select({
+    const dbResult = await db.select({
       id: bookingRequests.id,
       user_email: bookingRequests.userEmail,
       user_name: bookingRequests.userName,
@@ -1009,7 +1009,65 @@ router.get('/api/approved-bookings', isStaffOrAdmin, async (req, res) => {
     .where(and(...conditions))
     .orderBy(asc(bookingRequests.requestDate), asc(bookingRequests.startTime));
     
-    res.json(result);
+    // Also fetch conference room bookings from Google Calendar (Mindbody bookings)
+    let calendarBookings: any[] = [];
+    try {
+      const calendarEvents = await getConferenceRoomBookingsFromCalendar();
+      
+      // Get calendar event IDs from DB results to avoid duplicates
+      const dbCalendarEventIds = new Set(
+        dbResult
+          .filter(r => r.calendar_event_id)
+          .map(r => r.calendar_event_id)
+      );
+      
+      // Filter and format calendar bookings
+      calendarBookings = calendarEvents
+        .filter(event => {
+          // Exclude events that already exist in DB
+          if (dbCalendarEventIds.has(event.id)) return false;
+          
+          // Apply date filtering if specified
+          if (start_date && event.date < (start_date as string)) return false;
+          if (end_date && event.date > (end_date as string)) return false;
+          
+          return true;
+        })
+        .map(event => ({
+          id: `cal_${event.id}`,
+          user_email: null,
+          user_name: event.memberName,
+          bay_id: CONFERENCE_ROOM_BAY_ID,
+          bay_preference: null,
+          request_date: event.date,
+          start_time: event.startTime + ':00',
+          duration_minutes: null,
+          end_time: event.endTime + ':00',
+          notes: event.description,
+          status: 'approved',
+          staff_notes: null,
+          suggested_time: null,
+          reviewed_by: null,
+          reviewed_at: null,
+          created_at: null,
+          updated_at: null,
+          calendar_event_id: event.id,
+          bay_name: 'Conference Room',
+          source: 'calendar'
+        }));
+    } catch (calError) {
+      console.error('Failed to fetch calendar conference bookings (non-blocking):', calError);
+    }
+    
+    // Merge DB results with calendar bookings
+    const allBookings = [...dbResult, ...calendarBookings]
+      .sort((a, b) => {
+        const dateCompare = (a.request_date || '').localeCompare(b.request_date || '');
+        if (dateCompare !== 0) return dateCompare;
+        return (a.start_time || '').localeCompare(b.start_time || '');
+      });
+    
+    res.json(allBookings);
   } catch (error: any) {
     console.error('Approved bookings error:', error);
     res.status(500).json({ error: 'Failed to fetch approved bookings' });
