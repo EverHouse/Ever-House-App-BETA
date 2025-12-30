@@ -3,10 +3,16 @@ import { isProduction } from '../core/db';
 import { isStaffOrAdmin } from '../core/middleware';
 import { db } from '../db';
 import { announcements } from '../../shared/schema';
-import { eq, desc, sql, or, and, gte, lte, isNull } from 'drizzle-orm';
+import { eq, desc, sql, or, and, gte, lte, isNull, asc } from 'drizzle-orm';
 import { formatDatePacific, createPacificDate, CLUB_TIMEZONE } from '../utils/dateUtils';
 
 const router = Router();
+
+const PRIORITY_ORDER = sql`CASE 
+  WHEN ${announcements.priority} = 'urgent' THEN 1 
+  WHEN ${announcements.priority} = 'high' THEN 2 
+  ELSE 3 
+END`;
 
 router.get('/api/announcements', async (req, res) => {
   try {
@@ -31,7 +37,7 @@ router.get('/api/announcements', async (req, res) => {
       ) as typeof query;
     }
     
-    const results = await query.orderBy(desc(announcements.createdAt));
+    const results = await query.orderBy(asc(PRIORITY_ORDER), desc(announcements.createdAt));
     
     const formatted = results.map(a => ({
       id: a.id.toString(),

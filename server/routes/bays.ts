@@ -348,10 +348,30 @@ router.get('/api/booking-requests', async (req, res) => {
 
 router.post('/api/booking-requests', async (req, res) => {
   try {
+    const sessionUser = (req.session as any)?.user;
+    
+    if (!sessionUser) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
     const { user_email, user_name, bay_id, bay_preference, request_date, start_time, duration_minutes, notes, user_tier } = req.body;
     
     if (!user_email || !request_date || !start_time || !duration_minutes) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const sessionEmail = sessionUser.email?.toLowerCase() || '';
+    const requestEmail = user_email.toLowerCase();
+    
+    if (sessionEmail !== requestEmail) {
+      const hasStaffAccess = await isStaffOrAdminCheck(sessionEmail);
+      if (!hasStaffAccess) {
+        return res.status(403).json({ error: 'You can only create booking requests for yourself' });
+      }
+    }
+    
+    if (typeof duration_minutes !== 'number' || duration_minutes <= 0 || duration_minutes > 480) {
+      return res.status(400).json({ error: 'Invalid duration. Must be between 1 and 480 minutes.' });
     }
     
     const limitCheck = await checkDailyBookingLimit(user_email, request_date, duration_minutes, user_tier);
@@ -369,7 +389,7 @@ router.post('/api/booking-requests', async (req, res) => {
     const end_time = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
     
     const result = await db.insert(bookingRequests).values({
-      userEmail: user_email,
+      userEmail: user_email.toLowerCase(),
       userName: user_name,
       bayId: bay_id || null,
       bayPreference: bay_preference,

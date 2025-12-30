@@ -532,11 +532,11 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch announcements from API
+  // Fetch announcements from API (active only - already filtered and priority-sorted by API)
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const res = await fetch('/api/announcements');
+        const res = await fetch('/api/announcements?active_only=true');
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {

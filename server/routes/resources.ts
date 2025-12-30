@@ -9,6 +9,7 @@ import { logAndRespond, logger } from '../core/logger';
 import { sendPushNotification } from './push';
 import { DEFAULT_TIER } from '../../shared/constants/tiers';
 import { withRetry } from '../core/retry';
+import { checkDailyBookingLimit } from '../core/tierService';
 
 const router = Router();
 
@@ -62,16 +63,45 @@ router.get('/api/bookings/check-existing', isStaffOrAdmin, async (req, res) => {
 
 router.get('/api/bookings', async (req, res) => {
   try {
+    const sessionUser = (req.session as any)?.user;
+    
+    if (!sessionUser) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
     const { user_email: rawEmail, date, resource_id, status } = req.query;
     
     const user_email = rawEmail ? decodeURIComponent(rawEmail as string) : null;
+    const sessionEmail = sessionUser.email?.toLowerCase() || '';
+    
+    if (user_email && user_email.toLowerCase() !== sessionEmail) {
+      const { isAdminEmail, getAuthPool, queryWithRetry } = await import('../replit_integrations/auth/replitAuth');
+      const isAdmin = await isAdminEmail(sessionEmail);
+      if (!isAdmin) {
+        const pool = getAuthPool();
+        let isStaff = false;
+        if (pool) {
+          try {
+            const result = await queryWithRetry(
+              pool,
+              'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+              [sessionEmail]
+            );
+            isStaff = result.rows.length > 0;
+          } catch (e) {}
+        }
+        if (!isStaff) {
+          return res.status(403).json({ error: 'You can only view your own bookings' });
+        }
+      }
+    }
     
     const conditions = [
       eq(bookings.status, (status as string) || 'confirmed')
     ];
     
     if (user_email) {
-      conditions.push(eq(bookings.userEmail, user_email));
+      conditions.push(eq(bookings.userEmail, user_email.toLowerCase()));
     }
     if (date) {
       conditions.push(sql`${bookings.bookingDate} = ${date}`);
@@ -360,7 +390,42 @@ router.put('/api/bookings/:id/decline', isStaffOrAdmin, async (req, res) => {
 
 router.post('/api/bookings', async (req, res) => {
   try {
+    const sessionUser = (req.session as any)?.user;
+    
+    if (!sessionUser) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
     const { resource_id, user_email, booking_date, start_time, end_time, notes } = req.body;
+    
+    if (!resource_id || !user_email || !booking_date || !start_time || !end_time) {
+      return res.status(400).json({ error: 'Missing required fields: resource_id, user_email, booking_date, start_time, end_time' });
+    }
+    
+    const sessionEmail = sessionUser.email?.toLowerCase() || '';
+    const requestEmail = user_email.toLowerCase();
+    
+    if (sessionEmail !== requestEmail) {
+      const { isAdminEmail, getAuthPool, queryWithRetry } = await import('../replit_integrations/auth/replitAuth');
+      const isAdmin = await isAdminEmail(sessionEmail);
+      if (!isAdmin) {
+        const pool = getAuthPool();
+        let isStaff = false;
+        if (pool) {
+          try {
+            const result = await queryWithRetry(
+              pool,
+              'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+              [sessionEmail]
+            );
+            isStaff = result.rows.length > 0;
+          } catch (e) {}
+        }
+        if (!isStaff) {
+          return res.status(403).json({ error: 'You can only create bookings for yourself' });
+        }
+      }
+    }
     
     const userResult = await db.select({
       id: users.id,
@@ -389,6 +454,19 @@ router.post('/api/bookings', async (req, res) => {
         error: 'Membership upgrade required',
         bookingType: 'upgrade_required',
         message: 'Simulator booking is available for Core, Premium, VIP, and Corporate members'
+      });
+    }
+    
+    // Calculate duration in minutes and check tier limits (daily minutes + booking window)
+    const startParts = start_time.split(':').map(Number);
+    const endParts = end_time.split(':').map(Number);
+    const durationMinutes = (endParts[0] * 60 + endParts[1]) - (startParts[0] * 60 + startParts[1]);
+    
+    const limitCheck = await checkDailyBookingLimit(user_email, booking_date, durationMinutes, userTier);
+    if (!limitCheck.allowed) {
+      return res.status(403).json({ 
+        error: limitCheck.reason,
+        remainingMinutes: limitCheck.remainingMinutes
       });
     }
     
@@ -433,7 +511,7 @@ router.post('/api/bookings', async (req, res) => {
     const result = await db.insert(bookings)
       .values({
         resourceId: resource_id,
-        userEmail: user_email,
+        userEmail: user_email.toLowerCase(),
         bookingDate: booking_date,
         startTime: start_time,
         endTime: end_time,

@@ -4,6 +4,16 @@ import { logAndRespond, createErrorResponse } from '../core/logger';
 
 const router = Router();
 
+function getSessionEmail(req: any): string | null {
+  return (req.session as any)?.user?.email?.toLowerCase() || null;
+}
+
+function isAuthorizedForEmail(req: any, targetEmail: string): boolean {
+  const sessionEmail = getSessionEmail(req);
+  if (!sessionEmail) return false;
+  return sessionEmail === targetEmail.toLowerCase();
+}
+
 router.get('/api/notifications', async (req, res) => {
   try {
     const { user_email: rawEmail, unread_only } = req.query;
@@ -13,6 +23,10 @@ router.get('/api/notifications', async (req, res) => {
     }
     
     const user_email = decodeURIComponent(rawEmail as string);
+    
+    if (!isAuthorizedForEmail(req, user_email)) {
+      return res.status(403).json(createErrorResponse(req, 'You can only access your own notifications', 'FORBIDDEN'));
+    }
     
     let query = 'SELECT * FROM notifications WHERE user_email = $1';
     const params: any[] = [user_email];
@@ -40,6 +54,10 @@ router.get('/api/notifications/count', async (req, res) => {
     
     const user_email = decodeURIComponent(rawEmail as string);
     
+    if (!isAuthorizedForEmail(req, user_email)) {
+      return res.status(403).json(createErrorResponse(req, 'You can only access your own notifications', 'FORBIDDEN'));
+    }
+    
     const result = await queryWithRetry(
       'SELECT COUNT(*) as count FROM notifications WHERE user_email = $1 AND is_read = false',
       [user_email]
@@ -54,11 +72,20 @@ router.get('/api/notifications/count', async (req, res) => {
 router.put('/api/notifications/:id/read', async (req, res) => {
   try {
     const { id } = req.params;
+    const sessionEmail = getSessionEmail(req);
+    
+    if (!sessionEmail) {
+      return res.status(401).json(createErrorResponse(req, 'Authentication required', 'UNAUTHORIZED'));
+    }
     
     const result = await pool.query(
-      'UPDATE notifications SET is_read = true WHERE id = $1 RETURNING *',
-      [id]
+      'UPDATE notifications SET is_read = true WHERE id = $1 AND user_email = $2 RETURNING *',
+      [id, sessionEmail]
     );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json(createErrorResponse(req, 'Notification not found or access denied', 'NOT_FOUND'));
+    }
     
     res.json(result.rows[0]);
   } catch (error: any) {
@@ -72,6 +99,10 @@ router.put('/api/notifications/mark-all-read', async (req, res) => {
     
     if (!user_email) {
       return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
+    }
+    
+    if (!isAuthorizedForEmail(req, user_email)) {
+      return res.status(403).json(createErrorResponse(req, 'You can only modify your own notifications', 'FORBIDDEN'));
     }
     
     await pool.query(
@@ -93,6 +124,10 @@ router.delete('/api/notifications/dismiss-all', async (req, res) => {
       return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
     }
     
+    if (!isAuthorizedForEmail(req, user_email)) {
+      return res.status(403).json(createErrorResponse(req, 'You can only delete your own notifications', 'FORBIDDEN'));
+    }
+    
     const result = await pool.query(
       'DELETE FROM notifications WHERE user_email = $1',
       [user_email]
@@ -107,14 +142,19 @@ router.delete('/api/notifications/dismiss-all', async (req, res) => {
 router.delete('/api/notifications/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const sessionEmail = getSessionEmail(req);
+    
+    if (!sessionEmail) {
+      return res.status(401).json(createErrorResponse(req, 'Authentication required', 'UNAUTHORIZED'));
+    }
     
     const result = await pool.query(
-      'DELETE FROM notifications WHERE id = $1 RETURNING id',
-      [id]
+      'DELETE FROM notifications WHERE id = $1 AND user_email = $2 RETURNING id',
+      [id, sessionEmail]
     );
     
     if (result.rows.length === 0) {
-      return res.status(404).json(createErrorResponse(req, 'Notification not found', 'NOT_FOUND'));
+      return res.status(404).json(createErrorResponse(req, 'Notification not found or access denied', 'NOT_FOUND'));
     }
     
     res.json({ success: true, deletedId: parseInt(id) });

@@ -800,6 +800,57 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
     let created = 0;
     let updated = 0;
     
+    // Helper function to get all active bay IDs and resource IDs (for facility-wide closures)
+    const getAllResourceIds = async (): Promise<number[]> => {
+      const baysResult = await pool.query('SELECT id FROM bays WHERE is_active = true');
+      const resourcesResult = await pool.query('SELECT id FROM resources');
+      return [
+        ...baysResult.rows.map((r: any) => r.id),
+        ...resourcesResult.rows.map((r: any) => r.id)
+      ];
+    };
+    
+    // Helper function to get dates between start and end (inclusive)
+    const getDatesBetween = (start: string, end: string): string[] => {
+      const dates: string[] = [];
+      let current = new Date(start + 'T12:00:00');
+      const endDate = new Date(end + 'T12:00:00');
+      while (current <= endDate) {
+        dates.push(current.toISOString().split('T')[0]);
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    };
+    
+    // Helper function to create availability blocks for a closure
+    const createAvailabilityBlocks = async (
+      closureId: number,
+      resourceIds: number[],
+      dates: string[],
+      blockStartTime: string,
+      blockEndTime: string,
+      notes: string
+    ): Promise<number> => {
+      let blocksCreated = 0;
+      for (const resourceId of resourceIds) {
+        for (const date of dates) {
+          await pool.query(
+            `INSERT INTO availability_blocks (bay_id, block_date, start_time, end_time, block_type, notes, created_by, closure_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT DO NOTHING`,
+            [resourceId, date, blockStartTime, blockEndTime, 'blocked', notes, 'system', closureId]
+          );
+          blocksCreated++;
+        }
+      }
+      return blocksCreated;
+    };
+    
+    // Helper function to delete availability blocks for a closure
+    const deleteAvailabilityBlocks = async (closureId: number): Promise<void> => {
+      await pool.query('DELETE FROM availability_blocks WHERE closure_id = $1', [closureId]);
+    };
+    
     for (const event of events) {
       if (!event.id || !event.summary) continue;
       
@@ -845,15 +896,25 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
       }
       
       // All resources (facility-wide closure)
-      const affectedAreas = 'Bay 1,Bay 2,Bay 3,Bay 4,Conference Room';
+      const affectedAreas = 'entire_facility';
       
       // Check if this closure already exists
       const existing = await pool.query(
-        'SELECT id FROM facility_closures WHERE internal_calendar_id = $1',
+        'SELECT id, start_date, end_date, start_time, end_time FROM facility_closures WHERE internal_calendar_id = $1',
         [internalCalendarId]
       );
       
       if (existing.rows.length > 0) {
+        const existingClosure = existing.rows[0];
+        const closureId = existingClosure.id;
+        
+        // Check if dates/times changed - if so, recreate availability blocks
+        const datesChanged = 
+          existingClosure.start_date !== startDate || 
+          existingClosure.end_date !== endDate ||
+          existingClosure.start_time !== startTime ||
+          existingClosure.end_time !== endTime;
+        
         // Update existing closure
         await pool.query(
           `UPDATE facility_closures SET 
@@ -862,15 +923,39 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
            WHERE internal_calendar_id = $8`,
           [title, reason, startDate, startTime, endDate, endTime, affectedAreas, internalCalendarId]
         );
+        
+        // If dates/times changed, recreate availability blocks
+        if (datesChanged) {
+          await deleteAvailabilityBlocks(closureId);
+          const resourceIds = await getAllResourceIds();
+          const dates = getDatesBetween(startDate, endDate);
+          const blockStartTime = startTime || '08:00:00';
+          const blockEndTime = endTime || '22:00:00';
+          await createAvailabilityBlocks(closureId, resourceIds, dates, blockStartTime, blockEndTime, reason);
+          console.log(`[Calendar Sync] Updated availability blocks for closure #${closureId}: ${title}`);
+        }
+        
         updated++;
       } else {
         // Create new closure
-        await pool.query(
+        const result = await pool.query(
           `INSERT INTO facility_closures 
            (title, reason, start_date, start_time, end_date, end_time, affected_areas, is_active, created_by, internal_calendar_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'system', $8)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'system', $8)
+           RETURNING id`,
           [title, reason, startDate, startTime, endDate, endTime, affectedAreas, internalCalendarId]
         );
+        
+        const closureId = result.rows[0].id;
+        
+        // Create availability blocks to actually block bookings
+        const resourceIds = await getAllResourceIds();
+        const dates = getDatesBetween(startDate, endDate);
+        const blockStartTime = startTime || '08:00:00';
+        const blockEndTime = endTime || '22:00:00';
+        const blocksCreated = await createAvailabilityBlocks(closureId, resourceIds, dates, blockStartTime, blockEndTime, reason);
+        console.log(`[Calendar Sync] Created ${blocksCreated} availability blocks for closure #${closureId}: ${title}`);
+        
         created++;
       }
     }
@@ -883,8 +968,11 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
     let deleted = 0;
     for (const closure of existingClosures.rows) {
       if (!fetchedEventIds.has(closure.internal_calendar_id)) {
-        // This closure's source event no longer exists, deactivate it
+        // Delete availability blocks first
+        await deleteAvailabilityBlocks(closure.id);
+        // Then deactivate the closure
         await pool.query('UPDATE facility_closures SET is_active = false WHERE id = $1', [closure.id]);
+        console.log(`[Calendar Sync] Deactivated closure #${closure.id} and removed availability blocks`);
         deleted++;
       }
     }

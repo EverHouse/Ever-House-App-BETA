@@ -15,7 +15,7 @@ router.get('/api/guest-passes/:email', async (req, res) => {
     const { tier } = req.query;
     
     const tierLimits = tier ? await getTierLimits(tier as string) : null;
-    const passesTotal = tierLimits?.guest_passes_per_month || 4;
+    const passesTotal = tierLimits?.guest_passes_per_month ?? 0;
     
     let result = await withRetry(() => 
       db.select()

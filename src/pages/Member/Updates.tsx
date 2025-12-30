@@ -279,8 +279,16 @@ const MemberUpdates: React.FC = () => {
     return announcements.filter(isActiveAnnouncement);
   }, [announcements]);
 
+  const getPriorityOrder = (priority?: string): number => {
+    if (priority === 'urgent') return 1;
+    if (priority === 'high') return 2;
+    return 3;
+  };
+
   const sortedAnnouncements = useMemo(() => {
     return [...activeAnnouncements].sort((a, b) => {
+      const priorityDiff = getPriorityOrder(a.priority) - getPriorityOrder(b.priority);
+      if (priorityDiff !== 0) return priorityDiff;
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;

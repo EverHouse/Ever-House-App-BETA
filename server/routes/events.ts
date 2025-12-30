@@ -430,7 +430,37 @@ router.post('/api/eventbrite/sync', async (req, res) => {
 
 router.get('/api/rsvps', async (req, res) => {
   try {
-    const { user_email } = req.query;
+    const sessionUser = (req.session as any)?.user;
+    
+    if (!sessionUser) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const { user_email: rawEmail } = req.query;
+    const user_email = rawEmail ? decodeURIComponent(rawEmail as string) : null;
+    const sessionEmail = sessionUser.email?.toLowerCase() || '';
+    
+    if (user_email && user_email.toLowerCase() !== sessionEmail) {
+      const { isAdminEmail, getAuthPool, queryWithRetry } = await import('../replit_integrations/auth/replitAuth');
+      const isAdmin = await isAdminEmail(sessionEmail);
+      if (!isAdmin) {
+        const pool = getAuthPool();
+        let isStaff = false;
+        if (pool) {
+          try {
+            const result = await queryWithRetry(
+              pool,
+              'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+              [sessionEmail]
+            );
+            isStaff = result.rows.length > 0;
+          } catch (e) {}
+        }
+        if (!isStaff) {
+          return res.status(403).json({ error: 'You can only view your own RSVPs' });
+        }
+      }
+    }
     
     const conditions = [
       eq(eventRsvps.status, 'confirmed'),
@@ -438,7 +468,7 @@ router.get('/api/rsvps', async (req, res) => {
     ];
     
     if (user_email) {
-      conditions.push(eq(eventRsvps.userEmail, user_email as string));
+      conditions.push(eq(eventRsvps.userEmail, user_email));
     }
     
     const result = await db.select({

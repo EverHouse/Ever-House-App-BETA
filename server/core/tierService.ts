@@ -82,6 +82,8 @@ export function clearTierCache(): void {
 }
 
 export function invalidateTierCache(tierName: string): void {
+  const normalizedKey = normalizeTierName(tierName).toLowerCase();
+  tierCache.delete(normalizedKey);
   tierCache.delete(tierName.toLowerCase());
 }
 
@@ -142,6 +144,25 @@ export async function checkDailyBookingLimit(
   
   if (!limits.can_book_simulators) {
     return { allowed: false, reason: 'Your membership tier does not include simulator booking' };
+  }
+  
+  // Check booking window restriction (how far in advance user can book)
+  const bookingWindowDays = limits.booking_window_days ?? 7;
+  const bookingDate = new Date(date + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const maxBookingDate = new Date(today);
+  maxBookingDate.setDate(maxBookingDate.getDate() + bookingWindowDays);
+  
+  if (bookingDate > maxBookingDate) {
+    const formattedMaxDate = maxBookingDate.toLocaleDateString('en-US', { 
+      weekday: 'short', month: 'short', day: 'numeric' 
+    });
+    return { 
+      allowed: false, 
+      reason: `Your membership tier (${tier}) allows booking up to ${bookingWindowDays} days in advance. The latest date you can book is ${formattedMaxDate}.`
+    };
   }
   
   const dailyLimit = limits.daily_sim_minutes ?? 0;

@@ -322,10 +322,41 @@ router.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
 // Wellness enrollments endpoints
 router.get('/api/wellness-enrollments', async (req, res) => {
   try {
-    const { user_email } = req.query;
+    const sessionUser = (req.session as any)?.user;
     
-    if (!user_email) {
+    if (!sessionUser) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const { user_email: rawEmail } = req.query;
+    
+    if (!rawEmail) {
       return res.status(400).json({ error: 'User email is required' });
+    }
+    
+    const user_email = decodeURIComponent(rawEmail as string);
+    const sessionEmail = sessionUser.email?.toLowerCase() || '';
+    
+    if (user_email.toLowerCase() !== sessionEmail) {
+      const { isAdminEmail, getAuthPool, queryWithRetry } = await import('../replit_integrations/auth/replitAuth');
+      const isAdmin = await isAdminEmail(sessionEmail);
+      if (!isAdmin) {
+        const pool = getAuthPool();
+        let isStaff = false;
+        if (pool) {
+          try {
+            const result = await queryWithRetry(
+              pool,
+              'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+              [sessionEmail]
+            );
+            isStaff = result.rows.length > 0;
+          } catch (e) {}
+        }
+        if (!isStaff) {
+          return res.status(403).json({ error: 'You can only view your own enrollments' });
+        }
+      }
     }
     
     const conditions = [
