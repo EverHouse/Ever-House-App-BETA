@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -148,7 +149,7 @@ const IOSModal: React.FC<{ isDark: boolean; onClose: () => void }> = ({ isDark, 
     };
   }, []);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className={`w-full max-w-sm p-6 rounded-3xl ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'} shadow-2xl`}>
         <div className="flex items-center justify-between mb-4">
@@ -218,7 +219,8 @@ const IOSModal: React.FC<{ isDark: boolean; onClose: () => void }> = ({ isDark, 
           View Full Instructions
         </a>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
