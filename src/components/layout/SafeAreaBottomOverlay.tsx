@@ -18,10 +18,9 @@ export const SafeAreaBottomOverlay: React.FC<SafeAreaBottomOverlayProps> = ({ ch
     >
       {children}
       <div 
-        className="w-full pointer-events-none"
+        className="w-full pointer-events-none dark:bg-[#0f120a] bg-bone"
         style={{ 
-          height: 'env(safe-area-inset-bottom, 0px)', 
-          backgroundColor: '#0f120a' 
+          height: 'env(safe-area-inset-bottom, 0px)'
         }}
       />
     </div>
