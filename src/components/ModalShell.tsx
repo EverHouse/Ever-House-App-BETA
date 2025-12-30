@@ -37,34 +37,42 @@ export function ModalShell({
   const isDark = effectiveTheme === 'dark';
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
-
-  const handleEscapeKey = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && dismissible) {
-      onClose();
-    }
-  }, [onClose, dismissible]);
+  const onCloseRef = useRef(onClose);
+  const dismissibleRef = useRef(dismissible);
 
   useEffect(() => {
-    if (isOpen) {
-      previousActiveElement.current = document.activeElement as HTMLElement;
-      document.addEventListener('keydown', handleEscapeKey);
-      document.documentElement.classList.add('overflow-hidden');
-      
-      setTimeout(() => {
-        modalRef.current?.focus();
-      }, 50);
+    onCloseRef.current = onClose;
+    dismissibleRef.current = dismissible;
+  });
 
-      return () => {
-        document.removeEventListener('keydown', handleEscapeKey);
-        document.documentElement.classList.remove('overflow-hidden');
-        
-        if (previousActiveElement.current) {
-          previousActiveElement.current.focus();
-          previousActiveElement.current = null;
-        }
-      };
-    }
-  }, [isOpen, handleEscapeKey]);
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previousActiveElement.current = document.activeElement as HTMLElement;
+    
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && dismissibleRef.current) {
+        onCloseRef.current();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscapeKey);
+    document.documentElement.classList.add('overflow-hidden');
+    
+    setTimeout(() => {
+      modalRef.current?.focus();
+    }, 50);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.documentElement.classList.remove('overflow-hidden');
+      
+      if (previousActiveElement.current) {
+        previousActiveElement.current.focus();
+        previousActiveElement.current = null;
+      }
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
