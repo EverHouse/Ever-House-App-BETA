@@ -133,41 +133,45 @@ export function SwipeableListItem({
     <div className="relative overflow-hidden rounded-2xl">
       {leftActions.length > 0 && (
         <div 
-          className={`absolute inset-y-0 left-0 flex rounded-l-2xl overflow-hidden transition-opacity duration-100 ${showLeftActions ? 'opacity-100' : 'opacity-0'}`}
-          style={{ width: maxLeftSwipe }}
+          className={`absolute inset-0 flex items-stretch rounded-2xl overflow-hidden transition-opacity duration-100 ${showLeftActions ? 'opacity-100' : 'opacity-0'}`}
         >
-          {leftActions.map((action) => (
-            <button
-              key={action.id}
-              onClick={() => handleActionClick(action)}
-              className={`flex flex-col items-center justify-center gap-1 ${colorClasses[action.color]} tap-target`}
-              style={{ width: actionWidth }}
-              aria-label={action.label}
-            >
-              <span className="material-symbols-outlined text-xl">{action.icon}</span>
-              <span className="text-xs font-medium">{action.label}</span>
-            </button>
-          ))}
+          <div className="flex">
+            {leftActions.map((action) => (
+              <button
+                key={action.id}
+                onClick={() => handleActionClick(action)}
+                className={`flex flex-col items-center justify-center gap-1 ${colorClasses[action.color]} tap-target`}
+                style={{ width: actionWidth }}
+                aria-label={action.label}
+              >
+                <span className="material-symbols-outlined text-xl">{action.icon}</span>
+                <span className="text-xs font-medium">{action.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className={`flex-1 ${leftActions.length > 0 ? colorClasses[leftActions[leftActions.length - 1].color].split(' ')[0] : ''}`} />
         </div>
       )}
 
       {rightActions.length > 0 && (
         <div 
-          className={`absolute inset-y-0 right-0 flex rounded-r-2xl overflow-hidden transition-opacity duration-100 ${showRightActions ? 'opacity-100' : 'opacity-0'}`}
-          style={{ width: maxRightSwipe }}
+          className={`absolute inset-0 flex items-stretch justify-end rounded-2xl overflow-hidden transition-opacity duration-100 ${showRightActions ? 'opacity-100' : 'opacity-0'}`}
         >
-          {rightActions.map((action) => (
-            <button
-              key={action.id}
-              onClick={() => handleActionClick(action)}
-              className={`flex flex-col items-center justify-center gap-1 ${colorClasses[action.color]} tap-target`}
-              style={{ width: actionWidth }}
-              aria-label={action.label}
-            >
-              <span className="material-symbols-outlined text-xl">{action.icon}</span>
-              <span className="text-xs font-medium">{action.label}</span>
-            </button>
-          ))}
+          <div className={`flex-1 ${rightActions.length > 0 ? colorClasses[rightActions[0].color].split(' ')[0] : ''}`} />
+          <div className="flex">
+            {rightActions.map((action) => (
+              <button
+                key={action.id}
+                onClick={() => handleActionClick(action)}
+                className={`flex flex-col items-center justify-center gap-1 ${colorClasses[action.color]} tap-target`}
+                style={{ width: actionWidth }}
+                aria-label={action.label}
+              >
+                <span className="material-symbols-outlined text-xl">{action.icon}</span>
+                <span className="text-xs font-medium">{action.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

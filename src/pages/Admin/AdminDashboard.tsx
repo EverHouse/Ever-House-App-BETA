@@ -2638,11 +2638,15 @@ const SimulatorAdmin: React.FC = () => {
                                                         key={`upcoming-${booking.id}`}
                                                         leftActions={[
                                                             {
-                                                                id: 'edit',
-                                                                icon: 'edit',
-                                                                label: 'Edit',
+                                                                id: 'reschedule',
+                                                                icon: 'schedule',
+                                                                label: 'Reschedule',
                                                                 color: 'primary',
-                                                                onClick: () => setSelectedCalendarBooking(booking)
+                                                                onClick: () => {
+                                                                    setRescheduleEmail(booking.user_email);
+                                                                    setRescheduleBookingId(booking.id);
+                                                                    setShowManualBooking(true);
+                                                                }
                                                             },
                                                             ...(isToday ? [{
                                                                 id: 'checkin',
