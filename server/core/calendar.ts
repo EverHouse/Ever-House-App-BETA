@@ -355,7 +355,7 @@ export async function getConferenceRoomBookingsFromCalendar(
     for (const event of events) {
       if (!event.id || !event.summary) continue;
       
-      // Extract member name from summary (e.g., "Booking: John Smith" or just the name)
+      // Extract member name from summary
       const summary = event.summary;
       let extractedName: string | null = null;
       
@@ -363,15 +363,45 @@ export async function getConferenceRoomBookingsFromCalendar(
       const bookingMatch = summary.match(/^Booking:\s*(.+)$/i);
       if (bookingMatch) {
         extractedName = bookingMatch[1].trim();
+      } else if (summary.includes('|')) {
+        // Mindbody format: "Conference Room | 60 Minute Booking | Jamie Shon"
+        // The member name is typically the last pipe-separated segment
+        const segments = summary.split('|').map(s => s.trim());
+        // Take the last segment as the member name (it's usually the name)
+        extractedName = segments[segments.length - 1] || summary.trim();
       } else {
-        // For Mindbody events, the whole summary might be the name or booking info
+        // For other events, the whole summary might be the name or booking info
         extractedName = summary.trim();
       }
       
+      // Helper to normalize names for comparison (handles "First Last" vs "Last, First")
+      const normalizeName = (name: string): string[] => {
+        // Remove extra whitespace and convert to lowercase
+        const cleaned = name.toLowerCase().replace(/\s+/g, ' ').trim();
+        // Split by comma or space to get name parts
+        const parts = cleaned.split(/[,\s]+/).filter(p => p.length > 0);
+        return parts;
+      };
+      
       // Filter by member name or email if provided
       if (memberName || memberEmail) {
-        const nameMatch = memberName && extractedName && 
-          extractedName.toLowerCase().includes(memberName.toLowerCase());
+        let nameMatch = false;
+        
+        if (memberName && extractedName) {
+          // First try simple substring match
+          if (extractedName.toLowerCase().includes(memberName.toLowerCase())) {
+            nameMatch = true;
+          } else {
+            // Try matching name parts in any order (handles "First Last" vs "Last, First")
+            const searchParts = normalizeName(memberName);
+            const eventParts = normalizeName(extractedName);
+            // Check if all search parts appear in the event name
+            nameMatch = searchParts.every(sp => 
+              eventParts.some(ep => ep.includes(sp) || sp.includes(ep))
+            );
+          }
+        }
+        
         const emailMatch = memberEmail && 
           (summary.toLowerCase().includes(memberEmail.toLowerCase()) ||
            (event.description && event.description.toLowerCase().includes(memberEmail.toLowerCase())));
