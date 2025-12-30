@@ -751,26 +751,26 @@ const BookGolf: React.FC = () => {
                 return (
                   <div 
                     key={closure.id}
-                    className={`rounded-xl p-4 border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}
+                    className={`rounded-xl p-4 border ${isDark ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200'}`}
                   >
                     <div className="flex items-start gap-3">
-                      <span className={`material-symbols-outlined text-2xl ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>event_busy</span>
+                      <span className={`material-symbols-outlined text-2xl ${isDark ? 'text-red-400' : 'text-red-600'}`}>event_busy</span>
                       <div className="flex-1">
-                        <h4 className={`font-bold ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>
+                        <h4 className={`font-bold ${isDark ? 'text-red-300' : 'text-red-800'}`}>
                           {closure.title || 'Closure Notice'}
                         </h4>
                         {hasTimeRange && (
-                          <p className={`text-sm mt-1 ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
+                          <p className={`text-sm mt-1 ${isDark ? 'text-red-300/80' : 'text-red-700'}`}>
                             {formatTime12(closure.startTime!)} - {formatTime12(closure.endTime!)}
                           </p>
                         )}
                         {closure.reason && (
-                          <p className={`text-sm mt-1 ${isDark ? 'text-amber-300/70' : 'text-amber-600'}`}>
+                          <p className={`text-sm mt-1 ${isDark ? 'text-red-300/70' : 'text-red-600'}`}>
                             {closure.reason === 'Internal calendar event' ? 'Private event' : closure.reason}
                           </p>
                         )}
                         {isPartialDay && (
-                          <p className={`text-xs mt-2 font-medium ${isDark ? 'text-amber-400/80' : 'text-amber-700'}`}>
+                          <p className={`text-xs mt-2 font-medium ${isDark ? 'text-red-400/80' : 'text-red-700'}`}>
                             Limited availability - see times below
                           </p>
                         )}

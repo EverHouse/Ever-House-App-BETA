@@ -101,7 +101,7 @@ const getNotificationRoute = (notif: UserNotification, isStaffOrAdmin: boolean):
   
   // Closure notifications
   if (notif.type === 'closure') {
-    return isStaffOrAdmin ? '/admin?tab=blocks' : null;
+    return isStaffOrAdmin ? '/admin?tab=blocks' : '/updates?tab=closures';
   }
   
   // Guest pass notifications
@@ -124,8 +124,8 @@ const MemberUpdates: React.FC = () => {
   const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
   
   const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'announcements' | 'activity'>(
-    tabParam === 'activity' ? 'activity' : 'announcements'
+  const [activeTab, setActiveTab] = useState<'activity' | 'announcements' | 'closures'>(
+    tabParam === 'activity' ? 'activity' : tabParam === 'closures' ? 'closures' : 'announcements'
   );
   
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
@@ -163,12 +163,12 @@ const MemberUpdates: React.FC = () => {
   }, [fetchClosures]);
 
   useEffect(() => {
-    if (tabParam === 'activity' || tabParam === 'announcements') {
+    if (tabParam === 'activity' || tabParam === 'announcements' || tabParam === 'closures') {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
 
-  const handleTabChange = (tab: 'announcements' | 'activity') => {
+  const handleTabChange = (tab: 'activity' | 'announcements' | 'closures') => {
     setActiveTab(tab);
     setSearchParams({ tab });
   };
@@ -297,7 +297,7 @@ const MemberUpdates: React.FC = () => {
 
   const renderAnnouncementsTab = () => (
     <div className="relative z-10 pb-32">
-      {isLoading || closuresLoading ? (
+      {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={`p-5 rounded-2xl animate-pulse ${isDark ? 'bg-white/[0.03]' : 'bg-white'}`}>
@@ -310,7 +310,7 @@ const MemberUpdates: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : sortedAnnouncements.length === 0 && closures.length === 0 ? (
+      ) : sortedAnnouncements.length === 0 ? (
         <div className={`text-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
           <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">campaign</span>
           <p className="text-lg font-medium">No announcements right now</p>
@@ -318,43 +318,6 @@ const MemberUpdates: React.FC = () => {
         </div>
       ) : (
         <MotionList className="space-y-4">
-          {closures.map((closure) => (
-            <MotionListItem 
-              key={`closure-${closure.id}`}
-              className={`rounded-2xl transition-all overflow-hidden ${isDark ? 'bg-red-500/10 shadow-layered-dark' : 'bg-red-50 shadow-layered'}`}
-            >
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-red-500/20' : 'bg-red-100'}`}>
-                    <span className={`material-symbols-outlined text-xl ${isDark ? 'text-red-400' : 'text-red-600'}`}>event_busy</span>
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-                        Closure
-                      </span>
-                    </div>
-                    <h3 className={`text-lg font-bold leading-snug truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {closure.title}
-                    </h3>
-                  </div>
-                </div>
-                <div className="ml-12">
-                  <p className={`text-sm ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
-                    {formatAffectedAreas(closure.affectedAreas)}
-                  </p>
-                  <p className={`text-sm mt-1 ${isDark ? 'text-white/60' : 'text-gray-500'}`}>
-                    {formatClosureDateRange(closure.startDate, closure.endDate, closure.startTime, closure.endTime)}
-                  </p>
-                  {closure.reason && (
-                    <p className={`text-sm mt-2 ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
-                      {closure.reason}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </MotionListItem>
-          ))}
           {sortedAnnouncements.map((item) => {
             const isExpanded = expandedId === item.id;
             const hasLongDesc = item.desc && item.desc.length > 100;
@@ -607,6 +570,72 @@ const MemberUpdates: React.FC = () => {
     </div>
   );
 
+  const renderClosuresTab = () => (
+    <div className="relative z-10 pb-32">
+      {closuresLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className={`p-5 rounded-2xl animate-pulse ${isDark ? 'bg-white/[0.03]' : 'bg-white'}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                <div className="flex-1">
+                  <div className={`h-3 w-16 rounded mb-2 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                  <div className={`h-5 w-3/4 rounded ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : closures.length === 0 ? (
+        <div className={`text-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+          <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">event_available</span>
+          <p className="text-lg font-medium">No upcoming closures</p>
+          <p className="text-sm mt-1 opacity-70">The club is open as usual.</p>
+        </div>
+      ) : (
+        <MotionList className="space-y-4">
+          {closures.map((closure) => (
+            <MotionListItem 
+              key={`closure-${closure.id}`}
+              className={`rounded-2xl transition-all overflow-hidden ${isDark ? 'bg-red-500/10 shadow-layered-dark' : 'bg-red-50 shadow-layered'}`}
+            >
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-red-500/20' : 'bg-red-100'}`}>
+                    <span className={`material-symbols-outlined text-xl ${isDark ? 'text-red-400' : 'text-red-600'}`}>event_busy</span>
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                        Closure
+                      </span>
+                    </div>
+                    <h3 className={`text-lg font-bold leading-snug truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {closure.title}
+                    </h3>
+                  </div>
+                </div>
+                <div className="ml-12">
+                  <p className={`text-sm ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
+                    {formatAffectedAreas(closure.affectedAreas)}
+                  </p>
+                  <p className={`text-sm mt-1 ${isDark ? 'text-white/60' : 'text-gray-500'}`}>
+                    {formatClosureDateRange(closure.startDate, closure.endDate, closure.startTime, closure.endTime)}
+                  </p>
+                  {closure.reason && (
+                    <p className={`text-sm mt-2 ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
+                      {closure.reason}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </MotionListItem>
+          ))}
+        </MotionList>
+      )}
+    </div>
+  );
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
     <SwipeablePage className="px-6 pt-2 relative min-h-screen overflow-hidden">
@@ -616,16 +645,6 @@ const MemberUpdates: React.FC = () => {
       </section>
 
       <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => handleTabChange('announcements')}
-          className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
-            activeTab === 'announcements'
-              ? 'bg-accent text-primary'
-              : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
-          }`}
-        >
-          Announcements
-        </button>
         <button
           onClick={() => handleTabChange('activity')}
           className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all relative ${
@@ -641,9 +660,34 @@ const MemberUpdates: React.FC = () => {
             </span>
           )}
         </button>
+        <button
+          onClick={() => handleTabChange('announcements')}
+          className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
+            activeTab === 'announcements'
+              ? 'bg-amber-400 text-amber-900'
+              : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
+          }`}
+        >
+          Announcements
+        </button>
+        <button
+          onClick={() => handleTabChange('closures')}
+          className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all relative ${
+            activeTab === 'closures'
+              ? 'bg-red-500 text-white'
+              : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
+          }`}
+        >
+          Closures
+          {closures.length > 0 && activeTab !== 'closures' && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {closures.length > 9 ? '9+' : closures.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      {activeTab === 'announcements' ? renderAnnouncementsTab() : renderActivityTab()}
+      {activeTab === 'activity' ? renderActivityTab() : activeTab === 'announcements' ? renderAnnouncementsTab() : renderClosuresTab()}
     </SwipeablePage>
     </PullToRefresh>
   );
