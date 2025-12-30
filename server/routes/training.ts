@@ -44,6 +44,7 @@ export const TRAINING_SEED_DATA = [
       { title: 'Check for Conflicts', content: 'Green checkmark means the slot is available. Red warning indicates a conflict with another booking or closure.' },
       { title: 'Approve or Decline', content: 'Click Approve to confirm the booking (this syncs to Google Calendar) or Decline to reject it. You can add staff notes with either action.' },
       { title: 'Calendar View', content: 'Switch to Calendar view to see all approved bookings for a selected date. Closures appear as red "CLOSED" blocks.', pageIcon: 'calendar_month' },
+      { title: 'Quick Actions (FAB)', content: 'The floating action button (+) in the bottom right provides quick access to create a manual booking for walk-in members or phone reservations.' },
     ]
   },
   {
@@ -103,7 +104,7 @@ export const TRAINING_SEED_DATA = [
     steps: [
       { title: 'Access Updates', content: 'Click the campaign icon in the header or go to Updates from the dashboard.', pageIcon: 'campaign' },
       { title: 'Activity Tab', content: 'The Activity tab shows your staff notifications - new booking requests, system alerts, and other activity relevant to your role.' },
-      { title: 'Mark as Read', content: 'Click "Mark all as read" to clear unread notifications, or tap individual notifications to mark them read.' },
+      { title: 'Mark as Read', content: 'Click "Mark all as read" to clear unread notifications, or tap individual notifications to mark them read. Use "Dismiss all" to permanently remove all notifications.' },
       { title: 'Announcements Tab', content: 'Switch to the Announcements tab to create and manage announcements that members will see.' },
       { title: 'Create an Announcement', content: 'Click "Create" and fill in the title, content, and priority level. High priority announcements appear more prominently.' },
       { title: 'Edit or Delete', content: 'Use the edit and delete buttons on existing announcements to update or remove them.' },
@@ -121,7 +122,8 @@ export const TRAINING_SEED_DATA = [
       { title: 'Search Members', content: 'Use the search bar to find members by name, email, phone, or tier. Type "founding" to find founding members.' },
       { title: 'Filter by Tier', content: 'Use the tier filter buttons (All, Social, Core, Premium, Corporate, VIP) to narrow down the list.' },
       { title: 'View Member Details', content: 'Click on a member card to see their full profile, tier, tags, and contact information.' },
-      { title: 'View As Member (Admin Only)', content: 'Admins can click "View As" to see the app from a member\'s perspective. A banner will show when viewing as another member.' },
+      { title: 'View As Member (Admin Only)', content: 'Admins can click "View As" to see the app from a member\'s perspective. This allows testing the booking experience, viewing permissions, and validating what members see. A banner will show when viewing as another member, and you can exit by clicking the banner or going back to your profile.' },
+      { title: 'Quick Actions (FAB)', content: 'Look for the floating action button (+) in the bottom right corner. This provides quick access to common actions like creating bookings or viewing member profiles.' },
     ]
   },
   {
@@ -209,11 +211,12 @@ export const TRAINING_SEED_DATA = [
     isAdminOnly: true,
     steps: [
       { title: 'Access Tiers', content: 'Go to Manage Tiers from the Admin Settings section. This controls what each membership level can do.', pageIcon: 'loyalty' },
-      { title: 'Edit Tier Settings', content: 'Click on a tier to edit its name, description, price, and marketing copy.' },
-      { title: 'Booking Limits', content: 'Set daily simulator minutes, conference room minutes, and advance booking window for each tier.' },
-      { title: 'Guest Passes', content: 'Configure how many guest passes members receive per month for each tier.' },
-      { title: 'Access Permissions', content: 'Toggle which features each tier can access (simulator booking, conference room, events, etc.).' },
-      { title: 'Highlighted Features', content: 'Edit the bullet points that appear on the membership comparison page for each tier.' },
+      { title: 'Edit Tier Settings', content: 'Click on a tier to edit its name, description, price, and marketing copy. Changes take effect immediately for all members on that tier.' },
+      { title: 'Booking Limits', content: 'Set daily simulator minutes, conference room minutes, and advance booking window for each tier. Members cannot exceed these limits.' },
+      { title: 'Guest Passes', content: 'Configure how many guest passes members receive per month for each tier. Passes reset on the 1st of each month.' },
+      { title: 'Access Permissions', content: 'Toggle which features each tier can access: simulator booking, conference room, extended sessions, events, and more. Denied access hides those options from members.' },
+      { title: 'Highlighted Features', content: 'Edit the bullet points that appear on the membership comparison page. These are shown to prospective members during signup.' },
+      { title: 'Test with View As', content: 'After changing tier settings, use View As Member in the Directory to verify the member experience. This confirms booking limits and access permissions work as expected.' },
     ]
   },
 ];

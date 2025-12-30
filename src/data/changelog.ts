@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "6.9",
+    date: "2025-12-30",
+    title: "Staff Tools & UX Polish",
+    changes: [
+      "Staff Updates now has 'Mark All as Read' and 'Dismiss All' buttons",
+      "Booking page auto-scrolls through the entire flow: duration → time slots → bay selection → request button",
+      "Removed divider line from Book a Tour modal for cleaner appearance",
+      "Fixed white line appearing at bottom of navigation bar",
+      "Updated Training Guide with FAB instructions, tier management, and View As Member details"
+    ]
+  },
+  {
     version: "6.8",
     date: "2025-12-30",
     title: "UX Improvements",

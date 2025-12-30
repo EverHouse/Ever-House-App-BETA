@@ -15,9 +15,15 @@ export const SafeAreaBottomOverlay: React.FC<SafeAreaBottomOverlayProps> = ({ ch
   const overlayContent = (
     <div 
       className={`fixed inset-x-0 bottom-0 pointer-events-none z-[9999] transition-transform duration-300 ease-out ${isAtBottom ? 'translate-y-[calc(100%+env(safe-area-inset-bottom,0px))]' : 'translate-y-0'}`}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {children}
+      <div 
+        className="w-full pointer-events-none"
+        style={{ 
+          height: 'env(safe-area-inset-bottom, 0px)', 
+          backgroundColor: '#0f120a' 
+        }}
+      />
     </div>
   );
   

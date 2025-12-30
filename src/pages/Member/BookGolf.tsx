@@ -183,6 +183,7 @@ const BookGolf: React.FC = () => {
   const [hasUserSelectedDuration, setHasUserSelectedDuration] = useState(false);
   
   const timeSlotsRef = useRef<HTMLDivElement>(null);
+  const baySelectionRef = useRef<HTMLDivElement>(null);
   const requestButtonRef = useRef<HTMLDivElement>(null);
 
   const effectiveUser = viewAsUser || user;
@@ -369,7 +370,16 @@ const BookGolf: React.FC = () => {
     }
   }, [hasUserSelectedDuration, duration, activeTab]);
 
-  // Auto-scroll to request button when a slot is selected
+  // Auto-scroll to bay/room selection when a time slot is picked
+  useEffect(() => {
+    if (selectedSlot && !selectedResource && baySelectionRef.current) {
+      setTimeout(() => {
+        baySelectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
+  }, [selectedSlot, selectedResource]);
+
+  // Auto-scroll to request button when a bay/room is selected
   useEffect(() => {
     if (selectedSlot && selectedResource && requestButtonRef.current) {
       setTimeout(() => {
@@ -866,7 +876,7 @@ const BookGolf: React.FC = () => {
           </section>
 
           {selectedSlot && (
-            <section className="animate-pop-in pb-48">
+            <section ref={baySelectionRef} className="animate-pop-in pb-48">
               <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>
                 Select {activeTab === 'simulator' ? 'Bay' : 'Room'}
               </h3>

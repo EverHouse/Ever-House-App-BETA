@@ -11,6 +11,7 @@ interface ModalShellProps {
   dismissible?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   className?: string;
+  hideTitleBorder?: boolean;
 }
 
 const sizeClasses = {
@@ -29,7 +30,8 @@ export function ModalShell({
   showCloseButton = true,
   dismissible = true,
   size = 'md',
-  className = ''
+  className = '',
+  hideTitleBorder = false
 }: ModalShellProps) {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -102,7 +104,7 @@ export function ModalShell({
             className={`relative w-full ${sizeClasses[size]} ${isDark ? 'bg-[#1a1d15] border-white/10' : 'bg-white border-gray-200'} rounded-2xl shadow-2xl border ${className}`}
           >
             {(title || showCloseButton) && (
-              <div className={`flex items-center justify-between p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+              <div className={`flex items-center justify-between p-4 ${hideTitleBorder ? '' : `border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}`}>
                 {title && (
                   <h3 
                     id="modal-title"

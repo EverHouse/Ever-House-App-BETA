@@ -1377,15 +1377,38 @@ const StaffUpdatesAdmin: React.FC = () => {
         }
     };
 
+    const dismissAll = async () => {
+        if (!actualUser?.email) return;
+        try {
+            await fetch('/api/notifications/dismiss-all', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_email: actualUser.email }),
+            });
+            setNotifications([]);
+            setUnreadCount(0);
+        } catch (err) {
+            console.error('Failed to dismiss all notifications:', err);
+        }
+    };
+
     const renderActivityTab = () => (
         <div className="animate-pop-in" style={{animationDelay: '0.1s'}}>
-            {unreadCount > 0 && (
-                <div className="flex justify-end mb-4">
+            {notifications.length > 0 && (
+                <div className="flex justify-end gap-2 mb-4">
+                    {unreadCount > 0 && (
+                        <button 
+                            onClick={markAllAsRead}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10 dark:text-white/70 dark:hover:text-white dark:bg-white/5 dark:hover:bg-white/10"
+                        >
+                            Mark all as read
+                        </button>
+                    )}
                     <button 
-                        onClick={markAllAsRead}
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10 dark:text-white/70 dark:hover:text-white dark:bg-white/5 dark:hover:bg-white/10"
+                        onClick={dismissAll}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-red-600/70 hover:text-red-600 bg-red-500/5 hover:bg-red-500/10 dark:text-red-400/70 dark:hover:text-red-400"
                     >
-                        Mark all as read
+                        Dismiss all
                     </button>
                 </div>
             )}
@@ -7475,8 +7498,8 @@ const StaffTrainingGuide: React.FC = () => {
                 <p className="text-sm text-primary/60 dark:text-white/60 mb-4">
                     A complete guide to using the Even House Staff Portal. Tap any section to expand and view detailed instructions.
                 </p>
-                <div className="flex gap-2 print:hidden">
-                    {isAdmin && (
+                {isAdmin && (
+                    <div className="flex gap-2 print:hidden">
                         <button
                             onClick={openAddModal}
                             className="flex items-center gap-2 px-4 py-2.5 bg-accent text-primary rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
@@ -7484,15 +7507,8 @@ const StaffTrainingGuide: React.FC = () => {
                             <span className="material-symbols-outlined text-lg">add</span>
                             Add Section
                         </button>
-                    )}
-                    <button
-                        onClick={handlePrint}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-primary dark:bg-white/10 text-white rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
-                    >
-                        <span className="material-symbols-outlined text-lg">download</span>
-                        Download PDF
-                    </button>
-                </div>
+                    </div>
+                )}
             </div>
 
             <div ref={printRef} className="space-y-4 print:space-y-6">

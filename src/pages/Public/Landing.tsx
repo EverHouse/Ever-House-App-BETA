@@ -115,7 +115,7 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
   const subtitle = step === 'form' ? 'Tell us a bit about yourself.' : bookingConfirmed ? 'Your tour is confirmed!' : 'Select a time that works for you.';
 
   return (
-    <ModalShell isOpen={isOpen} onClose={onClose} title="Book a Tour" size="lg" className="bg-[#F2F2EC] dark:bg-[#1a1f12]">
+    <ModalShell isOpen={isOpen} onClose={onClose} title="Book a Tour" size="lg" className="bg-[#F2F2EC] dark:bg-[#1a1f12]" hideTitleBorder>
       <div className="px-6 pb-2">
         <p className="text-sm text-[#293515]/60 dark:text-white/60">{subtitle}</p>
       </div>
