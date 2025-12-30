@@ -152,12 +152,13 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+  retryCount: number;
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, error: null };
+  state: ErrorBoundaryState = { hasError: false, error: null, retryCount: 0 };
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
@@ -165,26 +166,66 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     console.error('Error caught by boundary:', error, errorInfo);
   }
 
+  handleRetry = () => {
+    localStorage.removeItem('sync_events');
+    localStorage.removeItem('sync_cafe_menu');
+    
+    this.setState(prev => ({
+      hasError: false,
+      error: null,
+      retryCount: prev.retryCount + 1
+    }));
+  };
+
+  handleReload = () => {
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
+      const isNetworkError = this.state.error?.message?.toLowerCase().includes('fetch') ||
+                              this.state.error?.message?.toLowerCase().includes('network') ||
+                              this.state.error?.message?.toLowerCase().includes('load failed');
+      const canRetry = this.state.retryCount < 3;
+
       return (
         <div className="flex items-center justify-center h-screen bg-[#0f120a] text-white p-6">
           <div className="glass-card rounded-2xl p-8 max-w-md text-center">
-            <span className="material-symbols-outlined text-6xl text-red-400 mb-4">error</span>
-            <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
-            <p className="text-white/70 mb-6">We're sorry for the inconvenience.</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-accent rounded-xl font-semibold hover:opacity-90 transition-opacity text-brand-green"
-            >
-              Reload Page
-            </button>
+            <span className="material-symbols-outlined text-6xl text-red-400 mb-4">
+              {isNetworkError ? 'wifi_off' : 'error'}
+            </span>
+            <h2 className="text-2xl font-bold mb-2">
+              {isNetworkError ? 'Connection Issue' : 'Something went wrong'}
+            </h2>
+            <p className="text-white/70 mb-6">
+              {isNetworkError 
+                ? 'Please check your internet connection and try again.'
+                : 'We\'re sorry for the inconvenience.'}
+            </p>
+            <div className="flex flex-col gap-3">
+              {canRetry && (
+                <button
+                  onClick={this.handleRetry}
+                  className="px-6 py-3 bg-accent rounded-xl font-semibold hover:opacity-90 transition-opacity text-brand-green"
+                >
+                  Try Again
+                </button>
+              )}
+              <button
+                onClick={this.handleReload}
+                className={`px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity ${
+                  canRetry ? 'bg-white/10 text-white' : 'bg-accent text-brand-green'
+                }`}
+              >
+                Reload Page
+              </button>
+            </div>
           </div>
         </div>
       );
     }
 
-    return this.props.children;
+    return <React.Fragment key={this.state.retryCount}>{this.props.children}</React.Fragment>;
   }
 }
 

@@ -1,5 +1,7 @@
 const SYNC_INTERVAL = 15 * 60 * 1000;
 const THROTTLE_MS = 60 * 1000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1000;
 
 interface SyncCache {
   data: any;
@@ -7,6 +9,7 @@ interface SyncCache {
 }
 
 const lastFetch: Record<string, number> = {};
+const failedFetches: Record<string, number> = {};
 
 const isOnline = () => navigator.onLine;
 const isVisible = () => document.visibilityState === 'visible';
@@ -24,7 +27,10 @@ export const getCached = <T>(key: string): T | null => {
 
 export const setCache = (key: string, data: any) => {
   const cache: SyncCache = { data, timestamp: Date.now() };
-  localStorage.setItem(`sync_${key}`, JSON.stringify(cache));
+  try {
+    localStorage.setItem(`sync_${key}`, JSON.stringify(cache));
+  } catch (e) {
+  }
 };
 
 const shouldFetch = (key: string): boolean => {
@@ -32,26 +38,52 @@ const shouldFetch = (key: string): boolean => {
   return Date.now() - last > THROTTLE_MS;
 };
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const fetchAndCache = async <T>(
   key: string,
   url: string,
-  onUpdate?: (data: T) => void
+  onUpdate?: (data: T) => void,
+  retryCount: number = 0
 ): Promise<T | null> => {
-  if (!shouldFetch(key)) return getCached<T>(key);
+  if (!shouldFetch(key) && retryCount === 0) return getCached<T>(key);
   if (!isOnline()) return getCached<T>(key);
 
-  lastFetch[key] = Date.now();
+  if (retryCount === 0) {
+    lastFetch[key] = Date.now();
+  }
 
   try {
-    const res = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
     if (res.ok) {
-      const data = await res.json();
-      setCache(key, data);
-      onUpdate?.(data);
-      return data;
+      const contentType = res.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const data = await res.json();
+        setCache(key, data);
+        failedFetches[key] = 0;
+        onUpdate?.(data);
+        return data;
+      }
+    } else if (res.status >= 500 && retryCount < MAX_RETRIES) {
+      await delay(RETRY_DELAY * (retryCount + 1));
+      return fetchAndCache(key, url, onUpdate, retryCount + 1);
     }
-  } catch (e) {
-    console.error(`[sync] Failed to fetch ${key}:`, e);
+  } catch (e: any) {
+    if (e.name !== 'AbortError') {
+      console.error(`[sync] Failed to fetch ${key}:`, e);
+    }
+    
+    failedFetches[key] = (failedFetches[key] || 0) + 1;
+    
+    if (retryCount < MAX_RETRIES && failedFetches[key] <= MAX_RETRIES) {
+      await delay(RETRY_DELAY * (retryCount + 1));
+      return fetchAndCache(key, url, onUpdate, retryCount + 1);
+    }
   }
   return getCached<T>(key);
 };
@@ -66,6 +98,7 @@ const syncAll = async () => {
 };
 
 let intervalId: number | null = null;
+let visibilityListenerAdded = false;
 
 export const startBackgroundSync = () => {
   if (intervalId) return;
@@ -73,9 +106,12 @@ export const startBackgroundSync = () => {
   syncAll();
   intervalId = window.setInterval(syncAll, SYNC_INTERVAL);
 
-  document.addEventListener('visibilitychange', () => {
-    if (isVisible()) syncAll();
-  });
+  if (!visibilityListenerAdded) {
+    visibilityListenerAdded = true;
+    document.addEventListener('visibilitychange', () => {
+      if (isVisible()) syncAll();
+    });
+  }
 };
 
 export const stopBackgroundSync = () => {

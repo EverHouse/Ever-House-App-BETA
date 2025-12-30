@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { pool } from '../core/db';
+import { pool, queryWithRetry } from '../core/db';
 import { logAndRespond, createErrorResponse } from '../core/logger';
 
 const router = Router();
@@ -21,7 +21,7 @@ router.get('/api/notifications', async (req, res) => {
     
     query += ' ORDER BY created_at DESC LIMIT 50';
     
-    const result = await pool.query(query, params);
+    const result = await queryWithRetry(query, params);
     res.json(result.rows);
   } catch (error: any) {
     logAndRespond(req, res, 500, 'Failed to fetch notifications', error, 'NOTIFICATIONS_FETCH_ERROR');
@@ -36,7 +36,7 @@ router.get('/api/notifications/count', async (req, res) => {
       return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
     }
     
-    const result = await pool.query(
+    const result = await queryWithRetry(
       'SELECT COUNT(*) as count FROM notifications WHERE user_email = $1 AND is_read = false',
       [user_email]
     );

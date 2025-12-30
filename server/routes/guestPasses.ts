@@ -5,6 +5,7 @@ import { guestPasses, notifications } from '../../shared/schema';
 import { getTierLimits } from '../core/tierService';
 import { sendPushNotification } from './push';
 import { logAndRespond } from '../core/logger';
+import { withRetry } from '../core/retry';
 
 const router = Router();
 
@@ -16,24 +17,32 @@ router.get('/api/guest-passes/:email', async (req, res) => {
     const tierLimits = tier ? await getTierLimits(tier as string) : null;
     const passesTotal = tierLimits?.guest_passes_per_month || 4;
     
-    let result = await db.select()
-      .from(guestPasses)
-      .where(eq(guestPasses.memberEmail, email));
+    let result = await withRetry(() => 
+      db.select()
+        .from(guestPasses)
+        .where(eq(guestPasses.memberEmail, email))
+    );
     
     if (result.length === 0) {
-      await db.insert(guestPasses)
-        .values({
-          memberEmail: email,
-          passesUsed: 0,
-          passesTotal: passesTotal
-        });
-      result = await db.select()
-        .from(guestPasses)
-        .where(eq(guestPasses.memberEmail, email));
+      await withRetry(() =>
+        db.insert(guestPasses)
+          .values({
+            memberEmail: email,
+            passesUsed: 0,
+            passesTotal: passesTotal
+          })
+      );
+      result = await withRetry(() =>
+        db.select()
+          .from(guestPasses)
+          .where(eq(guestPasses.memberEmail, email))
+      );
     } else if (result[0].passesTotal !== passesTotal) {
-      await db.update(guestPasses)
-        .set({ passesTotal: passesTotal })
-        .where(eq(guestPasses.memberEmail, email));
+      await withRetry(() =>
+        db.update(guestPasses)
+          .set({ passesTotal: passesTotal })
+          .where(eq(guestPasses.memberEmail, email))
+      );
       result[0].passesTotal = passesTotal;
     }
     

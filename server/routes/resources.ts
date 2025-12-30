@@ -8,14 +8,17 @@ import { createCalendarEventOnCalendar, getCalendarIdByName, deleteCalendarEvent
 import { logAndRespond, logger } from '../core/logger';
 import { sendPushNotification } from './push';
 import { DEFAULT_TIER } from '../../shared/constants/tiers';
+import { withRetry } from '../core/retry';
 
 const router = Router();
 
 router.get('/api/resources', async (req, res) => {
   try {
-    const result = await db.select()
-      .from(resources)
-      .orderBy(asc(resources.type), asc(resources.name));
+    const result = await withRetry(() =>
+      db.select()
+        .from(resources)
+        .orderBy(asc(resources.type), asc(resources.name))
+    );
     res.json(result);
   } catch (error: any) {
     logAndRespond(req, res, 500, 'Failed to fetch resources', error, 'RESOURCES_FETCH_ERROR');
@@ -75,23 +78,25 @@ router.get('/api/bookings', async (req, res) => {
       conditions.push(eq(bookings.resourceId, parseInt(resource_id as string)));
     }
     
-    const result = await db.select({
-      id: bookings.id,
-      resource_id: bookings.resourceId,
-      user_email: bookings.userEmail,
-      booking_date: bookings.bookingDate,
-      start_time: bookings.startTime,
-      end_time: bookings.endTime,
-      status: bookings.status,
-      notes: bookings.notes,
-      created_at: bookings.createdAt,
-      resource_name: resources.name,
-      resource_type: resources.type
-    })
-      .from(bookings)
-      .innerJoin(resources, eq(bookings.resourceId, resources.id))
-      .where(and(...conditions))
-      .orderBy(asc(bookings.bookingDate), asc(bookings.startTime));
+    const result = await withRetry(() =>
+      db.select({
+        id: bookings.id,
+        resource_id: bookings.resourceId,
+        user_email: bookings.userEmail,
+        booking_date: bookings.bookingDate,
+        start_time: bookings.startTime,
+        end_time: bookings.endTime,
+        status: bookings.status,
+        notes: bookings.notes,
+        created_at: bookings.createdAt,
+        resource_name: resources.name,
+        resource_type: resources.type
+      })
+        .from(bookings)
+        .innerJoin(resources, eq(bookings.resourceId, resources.id))
+        .where(and(...conditions))
+        .orderBy(asc(bookings.bookingDate), asc(bookings.startTime))
+    );
     
     res.json(result);
   } catch (error: any) {
@@ -101,8 +106,8 @@ router.get('/api/bookings', async (req, res) => {
 
 router.get('/api/pending-bookings', isStaffOrAdmin, async (req, res) => {
   try {
-    const result = await db
-      .select({
+    const result = await withRetry(() =>
+      db.select({
         id: bookings.id,
         resource_id: bookings.resourceId,
         user_email: bookings.userEmail,
@@ -117,11 +122,12 @@ router.get('/api/pending-bookings', isStaffOrAdmin, async (req, res) => {
         first_name: users.firstName,
         last_name: users.lastName,
       })
-      .from(bookings)
-      .innerJoin(resources, eq(bookings.resourceId, resources.id))
-      .leftJoin(users, eq(bookings.userEmail, users.email))
-      .where(eq(bookings.status, 'pending_approval'))
-      .orderBy(desc(bookings.createdAt));
+        .from(bookings)
+        .innerJoin(resources, eq(bookings.resourceId, resources.id))
+        .leftJoin(users, eq(bookings.userEmail, users.email))
+        .where(eq(bookings.status, 'pending_approval'))
+        .orderBy(desc(bookings.createdAt))
+    );
     res.json(result);
   } catch (error: any) {
     logAndRespond(req, res, 500, 'Failed to fetch pending bookings', error, 'PENDING_BOOKINGS_ERROR');
