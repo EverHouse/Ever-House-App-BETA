@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { haptic, type HapticType } from '@/utils/haptics';
+import { haptic, type HapticType } from '../utils/haptics';
 
 export function useHaptics() {
   const light = useCallback(() => haptic.light(), []);

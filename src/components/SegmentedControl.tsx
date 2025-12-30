@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { haptic } from '@/utils/haptics';
+import { haptic } from '../utils/haptics';
 
 interface Segment {
   id: string;
