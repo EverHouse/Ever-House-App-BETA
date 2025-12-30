@@ -738,6 +738,11 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
 router.put('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const { status: targetStatus } = req.body;
+    
+    // Validate the target status - must be 'attended' or 'no_show'
+    const validStatuses = ['attended', 'no_show'];
+    const newStatus = validStatuses.includes(targetStatus) ? targetStatus : 'attended';
     
     // First check the current booking status
     const existing = await db.select({
@@ -753,19 +758,20 @@ router.put('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
     
     const currentStatus = existing[0].status;
     
-    // Only allow check-in from approved or confirmed status (idempotent - skip if already attended)
-    if (currentStatus === 'attended') {
-      return res.json({ success: true, message: 'Already checked in', alreadyCheckedIn: true });
+    // Idempotent - skip if already at target status
+    if (currentStatus === newStatus) {
+      return res.json({ success: true, message: `Already marked as ${newStatus}`, alreadyProcessed: true });
     }
     
+    // Only allow status change from approved or confirmed
     if (currentStatus !== 'approved' && currentStatus !== 'confirmed') {
-      return res.status(400).json({ error: `Cannot check in booking with status: ${currentStatus}` });
+      return res.status(400).json({ error: `Cannot update booking with status: ${currentStatus}` });
     }
     
-    // Update booking request status to attended
+    // Update booking request status
     const result = await db.update(bookingRequests)
       .set({
-        status: 'attended',
+        status: newStatus,
         updatedAt: new Date()
       })
       .where(and(
@@ -781,9 +787,9 @@ router.put('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Booking status changed before update' });
     }
     
-    // Increment lifetime visits for the member
+    // Increment lifetime visits for the member only if marked as attended
     const booking = result[0];
-    if (booking.userEmail) {
+    if (newStatus === 'attended' && booking.userEmail) {
       await db.execute(sql`
         UPDATE users 
         SET lifetime_visits = COALESCE(lifetime_visits, 0) + 1 
@@ -794,7 +800,7 @@ router.put('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
     res.json({ success: true, booking: result[0] });
   } catch (error: any) {
     console.error('Check-in error:', error);
-    res.status(500).json({ error: 'Failed to check in booking' });
+    res.status(500).json({ error: 'Failed to update booking status' });
   }
 });
 

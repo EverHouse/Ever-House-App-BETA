@@ -31,8 +31,8 @@ export function ModalShell({
   size = 'md',
   className = ''
 }: ModalShellProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
