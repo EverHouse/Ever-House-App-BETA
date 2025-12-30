@@ -119,7 +119,7 @@ export function ModalShell({
               </div>
             )}
             
-            <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
+            <div className="max-h-[calc(90vh-120px)] overflow-y-auto overflow-x-hidden">
               {children}
             </div>
           </div>

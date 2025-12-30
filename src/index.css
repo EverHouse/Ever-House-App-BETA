@@ -478,6 +478,17 @@ html.dark .glass-input:focus {
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
+/* Modal form grid overflow fix - prevent inputs from causing horizontal scroll */
+[role="dialog"] .grid > * {
+  min-width: 0;
+}
+[role="dialog"] input,
+[role="dialog"] select,
+[role="dialog"] textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+
 /* Tab bar horizontal scroll - smooth snap with instant taps */
 .tab-scroll {
   overflow-x: auto;
