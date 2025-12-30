@@ -1,6 +1,12 @@
-const prefersReducedMotion = () => 
-  typeof window !== 'undefined' && 
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = () => {
+  try {
+    return typeof window !== 'undefined' && 
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+};
 
 const canVibrate = () => 
   typeof navigator !== 'undefined' && 'vibrate' in navigator;

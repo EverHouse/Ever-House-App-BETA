@@ -81,10 +81,14 @@ export function useEdgeSwipe(config: EdgeSwipeConfig = {}) {
     if (!state.isActive) return;
 
     const deltaX = state.currentX - state.startX;
-    const duration = (Date.now() - startTimeRef.current) / 1000;
-    const velocity = deltaX / duration / window.innerWidth;
+    const durationMs = Date.now() - startTimeRef.current;
+    
+    const minDuration = 50;
+    const safeDuration = Math.max(durationMs, minDuration) / 1000;
+    const velocity = Math.min(deltaX / safeDuration / window.innerWidth, 2);
 
-    const shouldNavigate = deltaX >= threshold || velocity > velocityThreshold;
+    const shouldNavigate = (deltaX >= threshold && durationMs > minDuration) || 
+                           (velocity > velocityThreshold && deltaX > threshold * 0.5);
 
     if (shouldNavigate && isHorizontalRef.current) {
       if (onBack) {

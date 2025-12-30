@@ -932,6 +932,63 @@ html.dark .text-accent-accessible {
   opacity: 0.8;
 }
 
+/* iOS HIG Spacing Utilities */
+.ios-section {
+  padding: 0 var(--space-4);
+}
+
+.ios-section-header {
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: rgba(41, 53, 21, 0.6);
+}
+
+.dark .ios-section-header {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ios-grouped-list {
+  background: white;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.dark .ios-grouped-list {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ios-list-item {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid rgba(41, 53, 21, 0.08);
+}
+
+.dark .ios-list-item {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.ios-list-item:last-child {
+  border-bottom: none;
+}
+
+.ios-inset {
+  margin-left: var(--space-4);
+  margin-right: var(--space-4);
+}
+
+.ios-card {
+  background: white;
+  border-radius: var(--radius-2xl);
+  padding: var(--space-4);
+  margin: 0 var(--space-4) var(--space-3);
+}
+
+.dark .ios-card {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 /* Walking Golfer Loading Animation */
 @keyframes golferWalk {
   0% {
