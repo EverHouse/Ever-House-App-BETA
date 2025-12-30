@@ -42,12 +42,6 @@ export function ModalShell({
     }
   }, [onClose, dismissible]);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (dismissible && e.target === e.currentTarget) {
-      onClose();
-    }
-  }, [onClose, dismissible]);
-
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
@@ -79,15 +73,25 @@ export function ModalShell({
     >
       <div 
         className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={handleBackdropClick}
         aria-hidden="true"
       />
       
       <div 
         className="fixed inset-0 overflow-y-auto"
-        onClick={handleBackdropClick}
+        onClick={(e) => {
+          if (dismissible && e.target === e.currentTarget) {
+            onClose();
+          }
+        }}
       >
-        <div className="flex min-h-full items-center justify-center p-4">
+        <div 
+          className="flex min-h-full items-center justify-center p-4"
+          onClick={(e) => {
+            if (dismissible && e.target === e.currentTarget) {
+              onClose();
+            }
+          }}
+        >
           <div
             ref={modalRef}
             role="dialog"

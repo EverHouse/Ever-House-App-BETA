@@ -93,6 +93,14 @@ html, body, #root {
   overflow-x: hidden !important;
 }
 
+/* Modal scroll lock - override the above when modal is open */
+html.overflow-hidden,
+html.overflow-hidden body,
+html.overflow-hidden #root {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
 
 html, body {
   width: 100%;
