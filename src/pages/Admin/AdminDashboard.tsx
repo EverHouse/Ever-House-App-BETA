@@ -91,7 +91,16 @@ const AdminDashboard: React.FC = () => {
     };
     fetchPendingCount();
     const interval = setInterval(fetchPendingCount, 30000);
-    return () => clearInterval(interval);
+    
+    const handleBookingAction = () => {
+      setPendingRequestsCount(prev => Math.max(0, prev - 1));
+    };
+    window.addEventListener('booking-action-completed', handleBookingAction);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('booking-action-completed', handleBookingAction);
+    };
   }, []);
 
   // Fetch unread notifications count
@@ -1384,9 +1393,11 @@ const StaffUpdatesAdmin: React.FC = () => {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_email: actualUser.email }),
+                credentials: 'include'
             });
             setNotifications([]);
             setUnreadCount(0);
+            window.dispatchEvent(new CustomEvent('notifications-read'));
         } catch (err) {
             console.error('Failed to dismiss all notifications:', err);
         }
@@ -2468,6 +2479,7 @@ const SimulatorAdmin: React.FC = () => {
             setSelectedRequest(null);
             setSelectedBayId(null);
             setStaffNotes('');
+            window.dispatchEvent(new CustomEvent('booking-action-completed'));
             setTimeout(() => handleRefresh(), 300);
         } catch (err: any) {
             setError(err.message);
@@ -2523,6 +2535,9 @@ const SimulatorAdmin: React.FC = () => {
             setSelectedRequest(null);
             setStaffNotes('');
             setSuggestedTime('');
+            if (selectedRequest.status === 'pending' || selectedRequest.status === 'pending_approval') {
+                window.dispatchEvent(new CustomEvent('booking-action-completed'));
+            }
             setTimeout(() => handleRefresh(), 300);
         } catch (err: any) {
             setError(err.message);

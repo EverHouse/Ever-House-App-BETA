@@ -15,7 +15,7 @@ const MEMBER_NAV_ITEMS: MemberNavItem[] = [
   { path: '/dashboard', icon: 'dashboard', label: 'Home' },
   { path: '/book', icon: 'sports_golf', label: 'Book' },
   { path: '/member-wellness', icon: 'spa', label: 'Wellness' },
-  { path: '/member-events', icon: 'calendar_month', label: 'Events' },
+  { path: '/member-events', icon: 'calendar_month', label: 'Calendar' },
 ];
 
 interface MemberBottomNavProps {

@@ -841,10 +841,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Wallet Button */}
-            <button className="mt-6 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow" onClick={() => alert("Added to Wallet")}>
-              Add to Apple Wallet
-            </button>
           </div>
         );
       })()}

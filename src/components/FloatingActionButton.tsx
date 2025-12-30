@@ -40,8 +40,14 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       }}
       aria-label={label || 'Add new item'}
     >
-      <span className={`material-symbols-outlined ${secondaryIcon ? 'text-xl' : 'text-2xl'}`}>{icon}</span>
-      {secondaryIcon && <span className="material-symbols-outlined text-lg">{secondaryIcon}</span>}
+      {secondaryIcon ? (
+        <>
+          <span className="material-symbols-outlined text-base">{icon}</span>
+          <span className="material-symbols-outlined text-xl">{secondaryIcon}</span>
+        </>
+      ) : (
+        <span className="material-symbols-outlined text-2xl">{icon}</span>
+      )}
     </button>
   );
   
