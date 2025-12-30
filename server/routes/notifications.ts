@@ -79,7 +79,7 @@ router.put('/api/notifications/:id/read', async (req, res) => {
     }
     
     const result = await pool.query(
-      'UPDATE notifications SET is_read = true WHERE id = $1 AND user_email = $2 RETURNING *',
+      'UPDATE notifications SET is_read = true WHERE id = $1 AND LOWER(user_email) = $2 RETURNING *',
       [id, sessionEmail]
     );
     
@@ -149,7 +149,7 @@ router.delete('/api/notifications/:id', async (req, res) => {
     }
     
     const result = await pool.query(
-      'DELETE FROM notifications WHERE id = $1 AND user_email = $2 RETURNING id',
+      'DELETE FROM notifications WHERE id = $1 AND LOWER(user_email) = $2 RETURNING id',
       [id, sessionEmail]
     );
     
