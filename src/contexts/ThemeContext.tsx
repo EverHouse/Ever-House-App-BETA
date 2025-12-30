@@ -1,33 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type ThemeMode = 'light' | 'dark' | 'system';
-
 interface ThemeContextType {
-  themeMode: ThemeMode;
-  setThemeMode: (mode: ThemeMode) => void;
   effectiveTheme: 'light' | 'dark';
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  themeMode: 'system',
-  setThemeMode: () => {},
   effectiveTheme: 'dark'
 });
 
 export const useTheme = () => useContext(ThemeContext);
-
-const getInitialTheme = (): ThemeMode => {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return 'system';
-  }
-  try {
-    const saved = localStorage.getItem('themeMode');
-    if (saved && ['light', 'dark', 'system'].includes(saved)) {
-      return saved as ThemeMode;
-    }
-  } catch (e) {}
-  return 'system';
-};
 
 const getSystemPreference = (): 'light' | 'dark' => {
   if (typeof window === 'undefined' || !window.matchMedia) {
@@ -37,19 +18,18 @@ const getSystemPreference = (): 'light' | 'dark' => {
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(getInitialTheme);
-  const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference);
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(getSystemPreference);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => {
-      setSystemPreference(e.matches ? 'dark' : 'light');
+      setEffectiveTheme(e.matches ? 'dark' : 'light');
     };
+    
+    setEffectiveTheme(mediaQuery.matches ? 'dark' : 'light');
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
-
-  const effectiveTheme: 'light' | 'dark' = themeMode === 'system' ? systemPreference : themeMode;
 
   useEffect(() => {
     if (effectiveTheme === 'dark') {
@@ -58,7 +38,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       document.documentElement.classList.remove('dark');
     }
     
-    // Update theme-color meta tag to match body background for Safari bottom bar
     const themeColor = effectiveTheme === 'dark' ? '#0f120a' : '#F2F2EC';
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
@@ -66,15 +45,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [effectiveTheme]);
 
-  const setThemeMode = (mode: ThemeMode) => {
-    setThemeModeState(mode);
-    try {
-      localStorage.setItem('themeMode', mode);
-    } catch (e) {}
-  };
-
   return (
-    <ThemeContext.Provider value={{ themeMode, setThemeMode, effectiveTheme }}>
+    <ThemeContext.Provider value={{ effectiveTheme }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -164,7 +164,7 @@ const BugReportsAdmin: React.FC = () => {
     const openCount = reports.filter(r => r.status === 'open').length;
 
     return (
-        <div className={`min-h-screen pb-32 ${isDark ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]'}`}>
+        <div className="min-h-screen pb-32">
             <div className="px-4 pt-6">
                 <div className="flex items-center justify-between mb-6 animate-pop-in">
                     <div>
