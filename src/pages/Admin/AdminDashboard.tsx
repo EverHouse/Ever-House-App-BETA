@@ -3588,21 +3588,15 @@ const ManualBookingModal: React.FC<{
     const [guestCount, setGuestCount] = useState(0);
     const [bookingSource, setBookingSource] = useState<string>('Trackman');
     const [notes, setNotes] = useState('');
+    const [staffNotes, setStaffNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [existingBookingWarning, setExistingBookingWarning] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const getDurationOptionsForTier = (tier: string | null): number[] => {
-        const normalizedTier = tier?.toLowerCase() || '';
-        if (['premium', 'corporate', 'vip'].some(t => normalizedTier.includes(t))) {
-            return [30, 60, 90, 120];
-        }
-        return [30, 60];
-    };
-
-    const availableDurations = useMemo(() => getDurationOptionsForTier(memberTier), [memberTier]);
+    // Staff manual bookings bypass tier limits - show all durations including extended options
+    const availableDurations = useMemo(() => [30, 60, 90, 120, 150, 180, 210, 240, 270, 300], []);
 
     const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -3676,10 +3670,7 @@ const ManualBookingModal: React.FC<{
         setMemberLookupStatus('found');
         setMemberName(member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : null);
         setMemberTier(member.tier);
-        const newDurations = getDurationOptionsForTier(member.tier);
-        if (!newDurations.includes(durationMinutes)) {
-            setDurationMinutes(newDurations[newDurations.length - 1]);
-        }
+        // Staff bypass tier limits - no duration adjustment needed
     };
 
     useEffect(() => {
@@ -3790,6 +3781,7 @@ const ManualBookingModal: React.FC<{
                     guest_count: guestCount,
                     booking_source: bookingSource,
                     notes: notes || undefined,
+                    staff_notes: staffNotes || undefined,
                     reschedule_from_id: rescheduleFromId
                 })
             });
@@ -4022,6 +4014,20 @@ const ManualBookingModal: React.FC<{
                                 placeholder="Any additional notes..."
                                 rows={2}
                                 className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white resize-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Staff Notes (optional)
+                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">- Staff only, not visible to member</span>
+                            </label>
+                            <textarea
+                                value={staffNotes}
+                                onChange={(e) => setStaffNotes(e.target.value)}
+                                placeholder="Internal notes about this booking (e.g., private event, Trackman import, special arrangements)..."
+                                rows={2}
+                                className="w-full p-3 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-primary dark:text-white resize-none"
                             />
                         </div>
                     </div>

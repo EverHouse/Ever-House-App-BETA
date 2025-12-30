@@ -661,6 +661,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       guest_count = 0, 
       booking_source, 
       notes,
+      staff_notes,
       reschedule_from_id
     } = req.body;
 
@@ -679,9 +680,10 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid booking source' });
     }
 
-    const validDurations = [30, 60, 90, 120];
+    // Staff manual bookings support extended durations for imports and private events
+    const validDurations = [30, 60, 90, 120, 150, 180, 210, 240, 270, 300];
     if (!validDurations.includes(duration_minutes)) {
-      return res.status(400).json({ error: 'Invalid duration. Must be 30, 60, 90, or 120 minutes' });
+      return res.status(400).json({ error: 'Invalid duration. Must be between 30 and 300 minutes in 30-minute increments.' });
     }
 
     const [member] = await db.select()
@@ -700,19 +702,8 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Resource not found' });
     }
 
-    // Tier-based duration validation
-    const memberTier = (member.tier || '').toLowerCase();
-    const isPremiumTier = ['premium', 'corporate', 'vip'].some(t => memberTier.includes(t));
-    const allowedDurations = isPremiumTier ? [30, 60, 90, 120] : [30, 60];
-    
-    if (!allowedDurations.includes(duration_minutes)) {
-      const tierName = member.tier || DEFAULT_TIER;
-      const maxDuration = allowedDurations[allowedDurations.length - 1];
-      return res.status(400).json({ 
-        error: 'Duration not allowed for membership tier',
-        message: `${tierName} members can only book up to ${maxDuration} minutes. Please select ${allowedDurations.join(' or ')} minutes.`
-      });
-    }
+    // Staff manual bookings bypass tier duration limits
+    // This allows staff to create extended bookings for private events, imports, etc.
 
     // If rescheduling, fetch old booking info but don't cancel yet (cancel only after new booking succeeds)
     let oldBookingRequest: typeof bookingRequests.$inferSelect | null = null;
@@ -846,6 +837,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
         durationMinutes: duration_minutes,
         endTime: end_time,
         notes: notes || null,
+        staffNotes: staff_notes || null,
         status: 'approved',
         reviewedBy: staffEmail,
         reviewedAt: new Date(),

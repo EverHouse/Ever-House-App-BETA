@@ -718,7 +718,16 @@ const BookGolf: React.FC = () => {
                 ))}
               </div>
               <div className={`flex gap-2 p-1 rounded-xl border ${isDark ? 'bg-black/20 border-white/5' : 'bg-black/5 border-black/5'}`}>
-                {[30, 60, 90, 120].filter(mins => (mins !== 90 && mins !== 120) || tierPermissions.hasExtendedSessions).map(mins => (
+                {[30, 60, 90, 120].filter(mins => {
+                  const maxMinutes = tierPermissions.dailySimulatorMinutes || 60;
+                  // VIP/unlimited gets all options
+                  if (maxMinutes >= 999 || tierPermissions.unlimitedAccess) return true;
+                  // Premium tiers with extended sessions see durations up to their limit
+                  if (tierPermissions.hasExtendedSessions) return mins <= maxMinutes;
+                  // Standard tiers (Core) see only their exact limit as the option
+                  // Core (60 min) = only 60m option
+                  return mins === maxMinutes;
+                }).map(mins => (
                   <button 
                     key={mins}
                     onClick={() => { haptic.selection(); setDuration(mins); setExpandedHour(null); setHasUserSelectedDuration(true); }}

@@ -1,4 +1,4 @@
-export const APP_VERSION = '6.9';
+export const APP_VERSION = '7.0';
 export const LAST_UPDATED = '2025-12-30';
 
 export function formatLastUpdated(): string {

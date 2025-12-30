@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.0",
+    date: "2025-12-30",
+    title: "Tier-Based Booking Limits",
+    isMajor: true,
+    changes: [
+      "Booking duration options now reflect tier settings from Manage Tiers page",
+      "Core members see only 60-minute option, Premium/VIP see all durations",
+      "Staff manual bookings can now create extended sessions (up to 5 hours) for private events",
+      "Added Staff Notes field for internal notes on bookings (not visible to members)",
+      "Dedicated Closures tab with red styling in Updates page",
+      "Booking page closure cards now use red theme for consistency"
+    ]
+  },
+  {
     version: "6.9",
     date: "2025-12-30",
     title: "Staff Tools & UX Polish",
