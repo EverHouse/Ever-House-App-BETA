@@ -81,4 +81,23 @@ router.put('/api/notifications/mark-all-read', async (req, res) => {
   }
 });
 
+router.delete('/api/notifications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      'DELETE FROM notifications WHERE id = $1 RETURNING id',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json(createErrorResponse(req, 'Notification not found', 'NOT_FOUND'));
+    }
+    
+    res.json({ success: true, deletedId: parseInt(id) });
+  } catch (error: any) {
+    logAndRespond(req, res, 500, 'Failed to delete notification', error, 'NOTIFICATION_DELETE_ERROR');
+  }
+});
+
 export default router;

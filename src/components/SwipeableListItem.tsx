@@ -5,7 +5,7 @@ interface SwipeAction {
   id: string;
   icon: string;
   label: string;
-  color: 'red' | 'green' | 'blue' | 'orange' | 'gray';
+  color: 'red' | 'green' | 'blue' | 'orange' | 'gray' | 'primary' | 'lavender';
   onClick: () => void;
 }
 
@@ -24,7 +24,9 @@ const colorClasses = {
   green: 'bg-green-500 text-white',
   blue: 'bg-blue-500 text-white',
   orange: 'bg-orange-500 text-white',
-  gray: 'bg-gray-500 text-white'
+  gray: 'bg-gray-500 text-white',
+  primary: 'bg-[#293515] text-white',
+  lavender: 'bg-[#CCB8E4] text-[#293515]'
 };
 
 export function SwipeableListItem({
@@ -122,11 +124,16 @@ export function SwipeableListItem({
     setTranslateX(0);
   }, []);
 
+  const isSwipingLeft = translateX < 0;
+  const isSwipingRight = translateX > 0;
+  const showLeftActions = isSwipingRight && leftActions.length > 0;
+  const showRightActions = isSwipingLeft && rightActions.length > 0;
+
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div className="relative overflow-hidden rounded-2xl">
       {leftActions.length > 0 && (
         <div 
-          className="absolute inset-y-0 left-0 flex"
+          className={`absolute inset-y-0 left-0 flex rounded-l-2xl overflow-hidden transition-opacity duration-100 ${showLeftActions ? 'opacity-100' : 'opacity-0'}`}
           style={{ width: maxLeftSwipe }}
         >
           {leftActions.map((action) => (
@@ -146,7 +153,7 @@ export function SwipeableListItem({
 
       {rightActions.length > 0 && (
         <div 
-          className="absolute inset-y-0 right-0 flex"
+          className={`absolute inset-y-0 right-0 flex rounded-r-2xl overflow-hidden transition-opacity duration-100 ${showRightActions ? 'opacity-100' : 'opacity-0'}`}
           style={{ width: maxRightSwipe }}
         >
           {rightActions.map((action) => (
@@ -165,7 +172,7 @@ export function SwipeableListItem({
       )}
 
       <div
-        className={`relative bg-bone dark:bg-[#1a1f12] ${isTransitioning ? 'transition-transform duration-200 ease-out' : ''}`}
+        className={`relative rounded-2xl bg-bone dark:bg-[#1a1f12] ${isTransitioning ? 'transition-transform duration-200 ease-out' : ''}`}
         style={{ transform: `translateX(${translateX}px)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}

@@ -2636,12 +2636,19 @@ const SimulatorAdmin: React.FC = () => {
                                                 return (
                                                     <SwipeableListItem
                                                         key={`upcoming-${booking.id}`}
-                                                        leftActions={isToday ? [
+                                                        leftActions={[
                                                             {
+                                                                id: 'edit',
+                                                                icon: 'edit',
+                                                                label: 'Edit',
+                                                                color: 'primary',
+                                                                onClick: () => setSelectedCalendarBooking(booking)
+                                                            },
+                                                            ...(isToday ? [{
                                                                 id: 'checkin',
                                                                 icon: 'how_to_reg',
                                                                 label: 'Check In',
-                                                                color: 'green',
+                                                                color: 'green' as const,
                                                                 onClick: async () => {
                                                                     try {
                                                                         const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
@@ -2660,15 +2667,38 @@ const SimulatorAdmin: React.FC = () => {
                                                                         console.error('Check-in failed:', err);
                                                                     }
                                                                 }
-                                                            }
-                                                        ] : []}
+                                                            }] : [])
+                                                        ]}
                                                         rightActions={[
                                                             {
-                                                                id: 'edit',
-                                                                icon: 'edit',
-                                                                label: 'Edit',
-                                                                color: 'blue',
-                                                                onClick: () => setSelectedCalendarBooking(booking)
+                                                                id: 'cancel',
+                                                                icon: 'close',
+                                                                label: 'Cancel',
+                                                                color: 'red',
+                                                                onClick: async () => {
+                                                                    if (confirm(`Cancel booking for ${booking.user_name || booking.user_email}?`)) {
+                                                                        try {
+                                                                            const res = await fetch(`/api/bookings/${booking.id}`, {
+                                                                                method: 'PUT',
+                                                                                headers: { 'Content-Type': 'application/json' },
+                                                                                credentials: 'include',
+                                                                                body: JSON.stringify({ 
+                                                                                    status: 'cancelled', 
+                                                                                    source: booking.source,
+                                                                                    cancelled_by: actualUser?.email
+                                                                                })
+                                                                            });
+                                                                            if (res.ok) {
+                                                                                setTimeout(() => handleRefresh(), 300);
+                                                                            } else {
+                                                                                const err = await res.json();
+                                                                                console.error('Cancel failed:', err.error || 'Unknown error');
+                                                                            }
+                                                                        } catch (err) {
+                                                                            console.error('Cancel failed:', err);
+                                                                        }
+                                                                    }
+                                                                }
                                                             }
                                                         ]}
                                                     >

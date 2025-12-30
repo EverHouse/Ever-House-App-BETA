@@ -6,6 +6,7 @@ import { usePageReady } from '../../contexts/PageReadyContext';
 import SwipeablePage from '../../components/SwipeablePage';
 import PullToRefresh from '../../components/PullToRefresh';
 import { MotionList, MotionListItem } from '../../components/motion';
+import { SwipeableListItem } from '../../components/SwipeableListItem';
 import { getTodayPacific, parseLocalDate } from '../../utils/dateUtils';
 
 interface UserNotification {
@@ -443,50 +444,100 @@ const MemberUpdates: React.FC = () => {
             <p className="text-sm mt-1 opacity-70">Your booking updates and alerts will appear here.</p>
           </div>
         ) : (
-          <MotionList className="space-y-3">
+          <div className="space-y-3">
             {recentNotifications.map((notif) => (
-            <MotionListItem
+            <SwipeableListItem
               key={notif.id}
-              onClick={() => handleNotificationClick(notif)}
-              className={`rounded-2xl transition-all cursor-pointer overflow-hidden ${
-                notif.is_read 
-                  ? isDark ? 'bg-white/[0.03] hover:bg-white/[0.06]' : 'bg-white hover:bg-gray-50'
-                  : isDark ? 'bg-accent/10 hover:bg-accent/15 border border-accent/20' : 'bg-accent/10 hover:bg-accent/15 border border-accent/30'
-              } ${isDark ? 'shadow-layered-dark' : 'shadow-layered'}`}
+              leftActions={!notif.is_read ? [
+                {
+                  id: 'read',
+                  icon: 'mark_email_read',
+                  label: 'Read',
+                  color: 'primary',
+                  onClick: async () => {
+                    try {
+                      await fetch(`/api/notifications/${notif.id}/read`, {
+                        method: 'PUT',
+                        credentials: 'include'
+                      });
+                      setNotifications(prev => prev.map(n => 
+                        n.id === notif.id ? { ...n, is_read: true } : n
+                      ));
+                      setUnreadCount(prev => Math.max(0, prev - 1));
+                      window.dispatchEvent(new CustomEvent('notifications-read'));
+                    } catch (err) {
+                      console.error('Failed to mark as read:', err);
+                    }
+                  }
+                }
+              ] : []}
+              rightActions={[
+                {
+                  id: 'dismiss',
+                  icon: 'close',
+                  label: 'Dismiss',
+                  color: 'gray',
+                  onClick: async () => {
+                    try {
+                      const wasUnread = !notif.is_read;
+                      await fetch(`/api/notifications/${notif.id}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                      });
+                      setNotifications(prev => prev.filter(n => n.id !== notif.id));
+                      if (wasUnread) {
+                        setUnreadCount(prev => Math.max(0, prev - 1));
+                        window.dispatchEvent(new CustomEvent('notifications-read'));
+                      }
+                    } catch (err) {
+                      console.error('Failed to dismiss notification:', err);
+                    }
+                  }
+                }
+              ]}
             >
-              <div className="flex gap-3 p-4">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                  notif.type === 'booking_approved' ? 'bg-green-500/20' :
-                  notif.type === 'booking_declined' ? 'bg-red-500/20' :
-                  isDark ? 'bg-accent/20' : 'bg-accent/20'
-                }`}>
-                  <span className={`material-symbols-outlined text-[20px] ${
-                    notif.type === 'booking_approved' ? 'text-green-500' :
-                    notif.type === 'booking_declined' ? 'text-red-500' :
-                    isDark ? 'text-white' : 'text-primary'
+              <div 
+                onClick={() => handleNotificationClick(notif)}
+                className={`rounded-2xl transition-all cursor-pointer overflow-hidden ${
+                  notif.is_read 
+                    ? isDark ? 'bg-white/[0.03] hover:bg-white/[0.06]' : 'bg-white hover:bg-gray-50'
+                    : isDark ? 'bg-accent/10 hover:bg-accent/15 border border-accent/20' : 'bg-accent/10 hover:bg-accent/15 border border-accent/30'
+                } ${isDark ? 'shadow-layered-dark' : 'shadow-layered'}`}
+              >
+                <div className="flex gap-3 p-4">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    notif.type === 'booking_approved' ? 'bg-green-500/20' :
+                    notif.type === 'booking_declined' ? 'bg-red-500/20' :
+                    isDark ? 'bg-accent/20' : 'bg-accent/20'
                   }`}>
-                    {notif.type === 'booking_approved' ? 'check_circle' :
-                     notif.type === 'booking_declined' ? 'cancel' :
-                     'notifications'}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <h4 className={`font-bold text-sm ${notif.is_read ? (isDark ? 'text-white/70' : 'text-primary/70') : (isDark ? 'text-white' : 'text-primary')}`}>
-                      {notif.title}
-                    </h4>
-                    <span className={`text-[10px] ml-2 shrink-0 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
-                      {notif.created_at ? new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now'}
+                    <span className={`material-symbols-outlined text-[20px] ${
+                      notif.type === 'booking_approved' ? 'text-green-500' :
+                      notif.type === 'booking_declined' ? 'text-red-500' :
+                      isDark ? 'text-white' : 'text-primary'
+                    }`}>
+                      {notif.type === 'booking_approved' ? 'check_circle' :
+                       notif.type === 'booking_declined' ? 'cancel' :
+                       'notifications'}
                     </span>
                   </div>
-                  <p className={`text-xs mt-0.5 ${notif.is_read ? (isDark ? 'text-white/50' : 'text-primary/50') : (isDark ? 'text-white/70' : 'text-primary/70')}`}>
-                    {notif.message}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <h4 className={`font-bold text-sm ${notif.is_read ? (isDark ? 'text-white/70' : 'text-primary/70') : (isDark ? 'text-white' : 'text-primary')}`}>
+                        {notif.title}
+                      </h4>
+                      <span className={`text-[10px] ml-2 shrink-0 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
+                        {notif.created_at ? new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now'}
+                      </span>
+                    </div>
+                    <p className={`text-xs mt-0.5 ${notif.is_read ? (isDark ? 'text-white/50' : 'text-primary/50') : (isDark ? 'text-white/70' : 'text-primary/70')}`}>
+                      {notif.message}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </MotionListItem>
+            </SwipeableListItem>
           ))}
-          </MotionList>
+          </div>
         );
       })()}
     </div>
