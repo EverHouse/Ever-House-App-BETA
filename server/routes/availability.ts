@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
+import { getCalendarBusyTimes, getCalendarIdByName, CALENDAR_CONFIG } from '../core/calendar';
 
 const router = Router();
+
+// Conference room bay ID constant
+const CONFERENCE_ROOM_BAY_ID = 11;
 
 router.get('/api/availability', async (req, res) => {
   try {
@@ -33,6 +37,39 @@ router.get('/api/availability', async (req, res) => {
        WHERE bay_id = $1 AND block_date = $2`,
       [resource_id, date]
     );
+    
+    // For conference room, also fetch busy times from Google Calendar (Mindbody bookings)
+    let calendarBusySlots: { start_time: string; end_time: string }[] = [];
+    const isConferenceRoom = resourceType === 'conference_room';
+    if (isConferenceRoom) {
+      try {
+        const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
+        if (calendarId) {
+          const busyPeriods = await getCalendarBusyTimes(calendarId, date as string);
+          // Convert busy periods to time strings with seconds for consistent comparison
+          calendarBusySlots = busyPeriods.map(period => {
+            const startStr = period.start.toLocaleTimeString('en-US', { 
+              hour12: false, 
+              hour: '2-digit', 
+              minute: '2-digit',
+              timeZone: 'America/Los_Angeles'
+            });
+            const endStr = period.end.toLocaleTimeString('en-US', { 
+              hour12: false, 
+              hour: '2-digit', 
+              minute: '2-digit',
+              timeZone: 'America/Los_Angeles'
+            });
+            return {
+              start_time: startStr + ':00',
+              end_time: endStr + ':00'
+            };
+          });
+        }
+      } catch (calError) {
+        console.error('Failed to fetch Google Calendar busy times (non-blocking):', calError);
+      }
+    }
     
     const slots = [];
     
@@ -108,10 +145,15 @@ router.get('/api/availability', async (req, res) => {
         return (startTime < blockEnd && endTime > blockStart);
       });
       
+      // Check Google Calendar busy times (for Mindbody conference room bookings)
+      const hasCalendarConflict = calendarBusySlots.some((busy) => {
+        return (startTime < busy.end_time && endTime > busy.start_time);
+      });
+      
       slots.push({
         start_time: startTime,
         end_time: endTime,
-        available: !hasBookingConflict && !hasBlockConflict
+        available: !hasBookingConflict && !hasBlockConflict && !hasCalendarConflict
       });
     }
     

@@ -93,6 +93,7 @@ interface DBBookingRequest {
   staff_notes: string | null;
   suggested_time: string | null;
   created_at: string;
+  calendar_event_id?: string | null;
 }
 
 const formatTime12 = (time24: string): string => {
@@ -119,6 +120,7 @@ const Dashboard: React.FC = () => {
   const [dbBookingRequests, setDbBookingRequests] = useState<DBBookingRequest[]>([]);
   const [dbRSVPs, setDbRSVPs] = useState<DBRSVP[]>([]);
   const [dbWellnessEnrollments, setDbWellnessEnrollments] = useState<DBWellnessEnrollment[]>([]);
+  const [dbConferenceRoomBookings, setDbConferenceRoomBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -148,7 +150,8 @@ const Dashboard: React.FC = () => {
         fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
         fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
         fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
-        fetch(`/api/booking-requests?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' })
+        fetch(`/api/booking-requests?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
+        fetch(`/api/conference-room-bookings`, { credentials: 'include' })
       ]);
 
       if (results[0].status === 'fulfilled' && results[0].value.ok) {
@@ -167,6 +170,10 @@ const Dashboard: React.FC = () => {
       
       if (results[3].status === 'fulfilled' && results[3].value.ok) {
         setDbBookingRequests(await results[3].value.json());
+      }
+      
+      if (results[4].status === 'fulfilled' && results[4].value.ok) {
+        setDbConferenceRoomBookings(await results[4].value.json());
       }
       
     } catch (err) {
@@ -267,7 +274,30 @@ const Dashboard: React.FC = () => {
       details: `${w.category} with ${w.instructor}`,
       sortKey: `${w.date}T${w.time}`,
       raw: w
-    }))
+    })),
+    // Filter out calendar bookings that already exist as DB booking requests (avoid duplicates)
+    ...dbConferenceRoomBookings
+      .filter(c => {
+        // Check if this calendar event already exists as a DB booking (by calendar_event_id)
+        const isDuplicate = dbBookingRequests.some(r => 
+          r.calendar_event_id === c.calendar_event_id && r.status === 'approved'
+        );
+        return !isDuplicate;
+      })
+      .map(c => ({
+        id: c.id,
+        dbId: c.id,
+        type: 'conference_room_calendar' as const,
+        title: 'Conference Room',
+        resourceType: 'conference_room',
+        date: formatDate(c.request_date),
+        time: formatTime12(c.start_time),
+        endTime: formatTime12(c.end_time),
+        details: `${formatTime12(c.start_time)} - ${formatTime12(c.end_time)}`,
+        sortKey: `${c.request_date}T${c.start_time}`,
+        raw: c,
+        source: 'calendar'
+      }))
   ].sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
   const todayStr = getTodayString();
@@ -282,12 +312,14 @@ const Dashboard: React.FC = () => {
       itemDate = (item.raw as DBRSVP).event_date.split('T')[0];
     } else if (item.type === 'wellness') {
       itemDate = (item.raw as DBWellnessEnrollment).date.split('T')[0];
+    } else if (item.type === 'conference_room_calendar') {
+      itemDate = (item.raw as any).request_date.split('T')[0];
     }
     return itemDate && itemDate >= todayStr;
   });
 
-  // Separate bookings from events/wellness (include both confirmed bookings and approved requests)
-  const upcomingBookings = upcomingItems.filter(item => item.type === 'booking' || item.type === 'booking_request');
+  // Separate bookings from events/wellness (include both confirmed bookings, approved requests, and calendar conference room bookings)
+  const upcomingBookings = upcomingItems.filter(item => item.type === 'booking' || item.type === 'booking_request' || item.type === 'conference_room_calendar');
   const upcomingEventsWellness = upcomingItems.filter(item => item.type === 'rsvp' || item.type === 'wellness');
 
   // Next booking card shows only golf/conference bookings

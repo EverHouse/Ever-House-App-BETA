@@ -314,6 +314,120 @@ export async function updateCalendarEvent(
   }
 }
 
+export interface ConferenceRoomBooking {
+  id: string;
+  summary: string;
+  description: string | null;
+  date: string;
+  startTime: string;
+  endTime: string;
+  memberName: string | null;
+}
+
+export async function getConferenceRoomBookingsFromCalendar(
+  memberName?: string,
+  memberEmail?: string
+): Promise<ConferenceRoomBooking[]> {
+  try {
+    const calendar = await getGoogleCalendarClient();
+    const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
+    
+    if (!calendarId) {
+      console.error(`Calendar "${CALENDAR_CONFIG.conference.name}" not found`);
+      return [];
+    }
+    
+    // Fetch events from today onwards
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const response = await calendar.events.list({
+      calendarId,
+      timeMin: now.toISOString(),
+      maxResults: 100,
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+    
+    const events = response.data.items || [];
+    const bookings: ConferenceRoomBooking[] = [];
+    
+    for (const event of events) {
+      if (!event.id || !event.summary) continue;
+      
+      // Extract member name from summary (e.g., "Booking: John Smith" or just the name)
+      const summary = event.summary;
+      let extractedName: string | null = null;
+      
+      // Check if summary matches "Booking: Name" pattern (app-created bookings)
+      const bookingMatch = summary.match(/^Booking:\s*(.+)$/i);
+      if (bookingMatch) {
+        extractedName = bookingMatch[1].trim();
+      } else {
+        // For Mindbody events, the whole summary might be the name or booking info
+        extractedName = summary.trim();
+      }
+      
+      // Filter by member name or email if provided
+      if (memberName || memberEmail) {
+        const nameMatch = memberName && extractedName && 
+          extractedName.toLowerCase().includes(memberName.toLowerCase());
+        const emailMatch = memberEmail && 
+          (summary.toLowerCase().includes(memberEmail.toLowerCase()) ||
+           (event.description && event.description.toLowerCase().includes(memberEmail.toLowerCase())));
+        
+        if (!nameMatch && !emailMatch) continue;
+      }
+      
+      // Parse date and time
+      let eventDate: string;
+      let startTime: string;
+      let endTime: string;
+      
+      if (event.start?.dateTime) {
+        const startDt = new Date(event.start.dateTime);
+        const endDt = event.end?.dateTime ? new Date(event.end.dateTime) : startDt;
+        
+        eventDate = startDt.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+        startTime = startDt.toLocaleTimeString('en-US', { 
+          hour12: false, 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'America/Los_Angeles'
+        });
+        endTime = endDt.toLocaleTimeString('en-US', { 
+          hour12: false, 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'America/Los_Angeles'
+        });
+      } else if (event.start?.date) {
+        // All-day event
+        eventDate = event.start.date;
+        startTime = '09:00';
+        endTime = '17:00';
+      } else {
+        continue;
+      }
+      
+      bookings.push({
+        id: event.id,
+        summary: event.summary,
+        description: event.description || null,
+        date: eventDate,
+        startTime,
+        endTime,
+        memberName: extractedName
+      });
+    }
+    
+    return bookings;
+  } catch (error) {
+    console.error('Error fetching conference room bookings from calendar:', error);
+    return [];
+  }
+}
+
 export async function syncGoogleCalendarEvents(): Promise<{ synced: number; created: number; updated: number; deleted: number; error?: string }> {
   try {
     const calendar = await getGoogleCalendarClient();

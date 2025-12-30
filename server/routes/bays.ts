@@ -4,7 +4,7 @@ import { bays, availabilityBlocks, bookingRequests, notifications, facilityClosu
 import { eq, and, or, gte, lte, gt, lt, desc, asc, ne, sql } from 'drizzle-orm';
 import { isProduction } from '../core/db';
 import { getGoogleCalendarClient } from '../core/integrations';
-import { CALENDAR_CONFIG, getCalendarIdByName, createCalendarEvent, createCalendarEventOnCalendar, deleteCalendarEvent } from '../core/calendar';
+import { CALENDAR_CONFIG, getCalendarIdByName, createCalendarEvent, createCalendarEventOnCalendar, deleteCalendarEvent, getConferenceRoomBookingsFromCalendar } from '../core/calendar';
 import { sendPushNotification, sendPushNotificationToStaff } from './push';
 import { checkDailyBookingLimit } from '../core/tierService';
 import { notifyAllStaff } from '../core/staffNotifications';
@@ -12,6 +12,37 @@ import { isStaffOrAdmin } from '../core/middleware';
 import { formatNotificationDateTime, formatDateDisplayWithDay, formatTime12Hour } from '../utils/dateUtils';
 
 const router = Router();
+
+// Conference room bay ID constant
+const CONFERENCE_ROOM_BAY_ID = 11;
+
+// Helper to get the correct calendar name based on bay ID
+// Uses DB lookup for bay name to check if it's a conference room
+async function getCalendarNameForBayAsync(bayId: number | null): Promise<string> {
+  if (!bayId) return CALENDAR_CONFIG.golf.name;
+  
+  try {
+    const result = await db.select({ name: bays.name }).from(bays).where(eq(bays.id, bayId));
+    const bayName = result[0]?.name?.toLowerCase() || '';
+    if (bayName.includes('conference')) {
+      return CALENDAR_CONFIG.conference.name;
+    }
+  } catch (e) {
+    // Fallback to ID check if DB lookup fails
+  }
+  
+  // Fallback: check by known conference room ID
+  return bayId === CONFERENCE_ROOM_BAY_ID 
+    ? CALENDAR_CONFIG.conference.name 
+    : CALENDAR_CONFIG.golf.name;
+}
+
+// Sync version for simple cases (uses ID check only)
+function getCalendarNameForBay(bayId: number | null): string {
+  return bayId === CONFERENCE_ROOM_BAY_ID 
+    ? CALENDAR_CONFIG.conference.name 
+    : CALENDAR_CONFIG.golf.name;
+}
 
 // Helper to dismiss all staff notifications for a booking request when it's processed
 async function dismissStaffNotificationsForBooking(bookingId: number): Promise<void> {
@@ -484,12 +515,14 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
         
         let calendarEventId: string | null = null;
         try {
-          const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-          if (golfCalendarId) {
+          const calendarName = await getCalendarNameForBayAsync(assignedBayId);
+          const calendarId = await getCalendarIdByName(calendarName);
+          if (calendarId) {
+            const isConferenceRoom = bayName.toLowerCase().includes('conference');
             const summary = `Booking: ${req_data.userName || req_data.userEmail}`;
             const description = `Area: ${bayName}\nMember: ${req_data.userEmail}\nDuration: ${req_data.durationMinutes} minutes${req_data.notes ? '\nNotes: ' + req_data.notes : ''}`;
             calendarEventId = await createCalendarEventOnCalendar(
-              golfCalendarId,
+              calendarId,
               summary,
               description,
               req_data.requestDate,
@@ -615,7 +648,8 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
           userName: bookingRequests.userName,
           requestDate: bookingRequests.requestDate,
           startTime: bookingRequests.startTime,
-          status: bookingRequests.status
+          status: bookingRequests.status,
+          bayId: bookingRequests.bayId
         })
           .from(bookingRequests)
           .where(eq(bookingRequests.id, bookingId));
@@ -686,8 +720,9 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
       
       if (bookingData?.calendarEventId) {
         try {
-          const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-          await deleteCalendarEvent(bookingData.calendarEventId, golfCalendarId || 'primary');
+          const calendarName = await getCalendarNameForBayAsync(bookingData.bayId);
+          const calendarId = await getCalendarIdByName(calendarName);
+          await deleteCalendarEvent(bookingData.calendarEventId, calendarId || 'primary');
         } catch (calError) {
           console.error('Failed to delete calendar event (non-blocking):', calError);
         }
@@ -756,7 +791,8 @@ router.put('/api/booking-requests/:id/member-cancel', async (req, res) => {
       requestDate: bookingRequests.requestDate,
       startTime: bookingRequests.startTime,
       status: bookingRequests.status,
-      calendarEventId: bookingRequests.calendarEventId
+      calendarEventId: bookingRequests.calendarEventId,
+      bayId: bookingRequests.bayId
     })
       .from(bookingRequests)
       .where(eq(bookingRequests.id, bookingId));
@@ -806,8 +842,9 @@ router.put('/api/booking-requests/:id/member-cancel', async (req, res) => {
       
       if (existing.calendarEventId) {
         try {
-          const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-          await deleteCalendarEvent(existing.calendarEventId, golfCalendarId || 'primary');
+          const calendarName = await getCalendarNameForBayAsync(existing.bayId);
+          const calendarId = await getCalendarIdByName(calendarName);
+          await deleteCalendarEvent(existing.calendarEventId, calendarId || 'primary');
         } catch (calError) {
           console.error('Failed to delete calendar event (non-blocking):', calError);
         }
@@ -887,6 +924,44 @@ router.put('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
   } catch (error: any) {
     console.error('Check-in error:', error);
     res.status(500).json({ error: 'Failed to update booking status' });
+  }
+});
+
+// Get conference room bookings from Google Calendar (Mindbody bookings)
+router.get('/api/conference-room-bookings', async (req, res) => {
+  try {
+    const { member_name, member_email } = req.query;
+    const sessionUser = (req.session as any)?.user;
+    
+    if (!sessionUser) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // If no member name/email provided, use the session user's info
+    const searchName = member_name as string || sessionUser.name || null;
+    const searchEmail = member_email as string || sessionUser.email || null;
+    
+    const bookings = await getConferenceRoomBookingsFromCalendar(searchName, searchEmail);
+    
+    // Transform to match booking format expected by frontend
+    const formattedBookings = bookings.map(booking => ({
+      id: `cal_${booking.id}`,
+      source: 'calendar',
+      bay_id: CONFERENCE_ROOM_BAY_ID,
+      bay_name: 'Conference Room',
+      request_date: booking.date,
+      start_time: booking.startTime + ':00',
+      end_time: booking.endTime + ':00',
+      user_name: booking.memberName,
+      status: 'approved',
+      notes: booking.description,
+      calendar_event_id: booking.id
+    }));
+    
+    res.json(formattedBookings);
+  } catch (error: any) {
+    console.error('Conference room bookings error:', error);
+    res.status(500).json({ error: 'Failed to fetch conference room bookings' });
   }
 });
 
