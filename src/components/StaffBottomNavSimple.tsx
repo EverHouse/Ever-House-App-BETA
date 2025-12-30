@@ -2,6 +2,7 @@ import React, { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SafeAreaBottomOverlay } from './layout/SafeAreaBottomOverlay';
 import { useNavigationLoading } from '../contexts/NavigationLoadingContext';
+import { haptic } from '../utils/haptics';
 
 interface StaffNavItem {
   path: string;
@@ -25,6 +26,7 @@ const StaffBottomNavSimple: React.FC = () => {
   
   const handleNavigation = useCallback((path: string) => {
     if (navigatingRef.current) return;
+    haptic.light();
     navigatingRef.current = true;
     startNavigation();
     navigate(path);

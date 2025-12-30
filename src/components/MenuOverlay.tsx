@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSmoothScroll } from './motion/SmoothScroll';
+import { haptic } from '../utils/haptics';
 
 interface MenuOverlayProps {
   isOpen: boolean;
@@ -36,10 +37,12 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const handleClose = () => {
+    haptic.selection();
     onClose();
   };
 
   const handleNav = (path: string) => {
+    haptic.light();
     navigate(path);
     handleClose();
   };

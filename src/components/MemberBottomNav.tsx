@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SafeAreaBottomOverlay } from './layout/SafeAreaBottomOverlay';
 import { prefetchRoute, prefetchAdjacentRoutes } from '../lib/prefetch';
 import { useNavigationLoading } from '../contexts/NavigationLoadingContext';
+import { haptic } from '../utils/haptics';
 
 interface MemberNavItem {
   path: string;
@@ -37,6 +38,7 @@ const MemberBottomNav: React.FC<MemberBottomNavProps> = ({ currentPath, isDarkTh
     if (navigatingRef.current) return;
     if (path === currentPath) return;
     
+    haptic.light();
     navigatingRef.current = true;
     startNavigation();
     if (import.meta.env.DEV) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAnnouncementBadge } from '../contexts/AnnouncementBadgeContext';
 import { Announcement } from '../contexts/DataContext';
+import { haptic } from '../utils/haptics';
 
 const AnnouncementAlert: React.FC = () => {
   const navigate = useNavigate();
@@ -18,10 +19,12 @@ const AnnouncementAlert: React.FC = () => {
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
+    haptic.light();
     markAllAsSeen();
   };
 
   const handleAnnouncementClick = (item: Announcement) => {
+    haptic.selection();
     markAllAsSeen();
     if (item.linkType) {
       switch (item.linkType) {

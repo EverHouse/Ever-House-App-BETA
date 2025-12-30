@@ -1,4 +1,5 @@
 import React from 'react';
+import { haptic } from '../utils/haptics';
 
 interface ToggleProps {
   checked: boolean;
@@ -34,6 +35,7 @@ const Toggle: React.FC<ToggleProps> = ({
 
   const handleClick = () => {
     if (!disabled) {
+      haptic.light();
       onChange(!checked);
     }
   };

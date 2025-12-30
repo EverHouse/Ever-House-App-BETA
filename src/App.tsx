@@ -23,6 +23,7 @@ import { PageReadyProvider } from './contexts/PageReadyContext';
 import WalkingGolferLoader from './components/WalkingGolferLoader';
 import NavigationLoader from './components/NavigationLoader';
 import { useNotificationSounds } from './hooks/useNotificationSounds';
+import { useEdgeSwipe } from './hooks/useEdgeSwipe';
 
 const INITIAL_LOAD_SAFETY_TIMEOUT_MS = 2000;
 
@@ -372,6 +373,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   useDebugLayout();
 
+  // Edge swipe back navigation for member pages on touch devices
+  const isRootMemberPage = location.pathname === '/dashboard';
+  const { isActive: isEdgeSwipeActive, progress: edgeSwipeProgress } = useEdgeSwipe({
+    enabled: !!user && user.role === 'member' && !isRootMemberPage && !isMenuOpen,
+    edgeWidth: 20,
+    threshold: 100
+  });
+
   useEffect(() => {
     const metaThemeColor = document.getElementById('theme-color-meta');
     const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/updates'].some(path => location.pathname.startsWith(path));
@@ -567,6 +576,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
       
+      {/* Edge swipe indicator */}
+      {isEdgeSwipeActive && (
+        <div 
+          className="fixed left-0 top-0 bottom-0 w-1 bg-accent z-[9999] pointer-events-none transition-opacity duration-75"
+          style={{ opacity: edgeSwipeProgress * 0.8 }}
+        />
+      )}
+
       {isDarkTheme ? (
         <>
             <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow"></div>
