@@ -577,13 +577,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
       
-      {/* Edge swipe indicator */}
-      {isEdgeSwipeActive && (
+      {/* Edge swipe indicator - back arrow that fades and bounces */}
+      <div 
+        className={`fixed left-0 top-1/2 -translate-y-1/2 z-[9999] pointer-events-none transition-all duration-200 ${isEdgeSwipeActive ? 'opacity-100' : 'opacity-0'}`}
+        style={{ 
+          transform: `translateY(-50%) translateX(${isEdgeSwipeActive ? Math.min(edgeSwipeProgress * 60, 50) : -40}px) scale(${0.8 + edgeSwipeProgress * 0.3})`,
+          transition: isEdgeSwipeActive ? 'none' : 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        }}
+      >
         <div 
-          className="fixed left-0 top-0 bottom-0 w-1 bg-accent z-[9999] pointer-events-none transition-opacity duration-75"
-          style={{ opacity: edgeSwipeProgress * 0.8 }}
-        />
-      )}
+          className="w-10 h-10 rounded-full bg-accent/90 backdrop-blur-sm flex items-center justify-center shadow-lg"
+          style={{ opacity: Math.min(edgeSwipeProgress * 1.5, 1) }}
+        >
+          <span className="material-symbols-outlined text-white text-xl">arrow_back</span>
+        </div>
+      </div>
 
       {isDarkTheme ? (
         <>

@@ -855,6 +855,9 @@ const EventsAdminContent: React.FC = () => {
 
     return (
         <div className="animate-pop-in">
+            <p className="text-sm text-primary/60 dark:text-white/60 mb-4">
+                Synced from Google Calendar: <span className="font-medium">Events</span>
+            </p>
             <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 {CATEGORY_TABS.map(tab => (
                     <button
@@ -4177,6 +4180,9 @@ const WellnessAdminContent: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-pop-in">
+            <p className="text-sm text-primary/60 dark:text-white/60">
+                Synced from Google Calendar: <span className="font-medium">Wellness & Classes</span>
+            </p>
             <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 {WELLNESS_CATEGORY_TABS.map(tab => (
                     <button
@@ -5761,6 +5767,9 @@ const BlocksAdmin: React.FC = () => {
     return (
         <PullToRefresh onRefresh={handlePullRefresh}>
         <div className="space-y-6 animate-pop-in">
+            <p className="text-sm text-primary/60 dark:text-white/60">
+                Synced from Google Calendar: <span className="font-medium">Internal Calendar</span>
+            </p>
             <div className="flex gap-2 mb-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
                 <button
                     onClick={() => setActiveTab('closures')}
@@ -7698,7 +7707,7 @@ const ToursAdmin: React.FC = () => {
     <PullToRefresh onRefresh={handlePullRefresh}>
       <div className="space-y-6 animate-pop-in pb-32">
         <p className="text-sm text-primary/60 dark:text-white/60">
-          Tours synced from Google Calendar
+          Synced from Google Calendar: <span className="font-medium">Tours Scheduled</span>
         </p>
 
       {syncMessage && (

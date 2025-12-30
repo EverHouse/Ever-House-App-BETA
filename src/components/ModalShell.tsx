@@ -74,7 +74,7 @@ export function ModalShell({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[10001] overflow-y-auto"
+      className={`fixed inset-0 z-[10001] overflow-y-auto ${isDark ? 'dark' : ''}`}
       style={{ overscrollBehavior: 'contain' }}
     >
       <div 

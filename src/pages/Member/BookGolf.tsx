@@ -489,7 +489,7 @@ const BookGolf: React.FC = () => {
         grouped[hour24] = { hourLabel, hour24, slots: [], totalAvailable: 0 };
       }
       grouped[hour24].slots.push(slot);
-      grouped[hour24].totalAvailable += slot.availableResourceDbIds.length;
+      grouped[hour24].totalAvailable = Math.max(grouped[hour24].totalAvailable, slot.availableResourceDbIds.length);
     });
     
     return Object.values(grouped).sort((a, b) => a.hour24.localeCompare(b.hour24));
@@ -734,7 +734,7 @@ const BookGolf: React.FC = () => {
                         )}
                         {closure.reason && (
                           <p className={`text-sm mt-1 ${isDark ? 'text-amber-300/70' : 'text-amber-600'}`}>
-                            {closure.reason}
+                            {closure.reason === 'Internal calendar event' ? 'Private event' : closure.reason}
                           </p>
                         )}
                         {isPartialDay && (
