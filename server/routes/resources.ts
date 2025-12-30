@@ -489,6 +489,70 @@ router.delete('/api/bookings/:id', isStaffOrAdmin, async (req, res) => {
   }
 });
 
+router.put('/api/bookings/:id/member-cancel', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userEmail = (req.session as any)?.user?.email;
+    
+    if (!userEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const bookingId = parseInt(id);
+    
+    const [existing] = await db.select({
+      id: bookings.id,
+      userEmail: bookings.userEmail,
+      status: bookings.status,
+      calendarEventId: bookings.calendarEventId,
+      resourceId: bookings.resourceId,
+      bookingDate: bookings.bookingDate,
+      startTime: bookings.startTime
+    })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId));
+    
+    if (!existing) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    if (existing.userEmail !== userEmail) {
+      return res.status(403).json({ error: 'You can only cancel your own bookings' });
+    }
+    
+    if (existing.status === 'cancelled') {
+      return res.status(400).json({ error: 'Booking is already cancelled' });
+    }
+    
+    await db.update(bookings)
+      .set({ status: 'cancelled' })
+      .where(eq(bookings.id, bookingId));
+    
+    if (existing.calendarEventId) {
+      try {
+        const resource = await db.select({ type: resources.type })
+          .from(resources)
+          .where(eq(resources.id, existing.resourceId));
+        
+        const calendarName = resource[0]?.type === 'conference_room' 
+          ? CALENDAR_CONFIG.conference.name 
+          : CALENDAR_CONFIG.golf.name;
+        
+        const calendarId = await getCalendarIdByName(calendarName);
+        if (calendarId) {
+          await deleteCalendarEvent(existing.calendarEventId, calendarId);
+        }
+      } catch (calError) {
+        console.error('Failed to delete calendar event (non-blocking):', calError);
+      }
+    }
+    
+    res.json({ success: true, message: 'Booking cancelled successfully' });
+  } catch (error: any) {
+    logAndRespond(req, res, 500, 'Failed to cancel booking', error, 'BOOKING_CANCEL_ERROR');
+  }
+});
+
 router.post('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;

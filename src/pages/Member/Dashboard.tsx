@@ -318,18 +318,17 @@ const Dashboard: React.FC = () => {
         try {
           let res;
           if (bookingType === 'booking') {
-            // Legacy booking table - use DELETE
-            res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE', credentials: 'include' });
+            res = await fetch(`/api/bookings/${bookingId}/member-cancel`, {
+              method: 'PUT',
+              credentials: 'include'
+            });
             if (res.ok) {
               setDbBookings(prev => prev.filter(b => b.id !== bookingId));
             }
           } else {
-            // Booking request - use PUT with status cancelled
-            res = await fetch(`/api/booking-requests/${bookingId}`, {
+            res = await fetch(`/api/booking-requests/${bookingId}/member-cancel`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ status: 'cancelled', cancelled_by: user?.email })
+              credentials: 'include'
             });
             if (res.ok) {
               setDbBookingRequests(prev => prev.map(r => 
@@ -341,7 +340,8 @@ const Dashboard: React.FC = () => {
             setSelectedBooking(null);
             showToast('Booking cancelled successfully', 'success');
           } else {
-            showToast('Failed to cancel booking', 'error');
+            const data = await res.json().catch(() => ({}));
+            showToast(data.error || 'Failed to cancel booking', 'error');
           }
         } catch (err) {
           showToast('Failed to cancel booking', 'error');
@@ -548,12 +548,12 @@ const Dashboard: React.FC = () => {
           {/* Upcoming Booking Card - Golf/Conference Room only */}
           <div className="mb-8 animate-pop-in" style={{animationDelay: '0.15s'}}>
             {nextBooking ? (
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#E7E7DC] to-[#d4d4cb] p-6 shadow-glow text-brand-green group">
+              <div className={`relative overflow-hidden rounded-3xl p-6 shadow-glow group ${isDark ? 'bg-gradient-to-br from-[#1a1f12] to-[#0f120a] text-white border border-white/10' : 'bg-gradient-to-br from-[#E7E7DC] to-[#d4d4cb] text-brand-green'}`}>
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <span className="material-symbols-outlined text-[120px]">{getIconForType(nextBooking.resourceType)}</span>
                 </div>
                 <div className="relative z-10">
-                  <span className="inline-block px-3 py-1 bg-brand-green/10 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 border border-brand-green/10">Next Booking</span>
+                  <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 border ${isDark ? 'bg-white/10 border-white/20' : 'bg-brand-green/10 border-brand-green/10'}`}>Next Booking</span>
                   <h2 className="text-2xl font-bold leading-tight mb-1">{nextBooking.title}</h2>
                   <p className="text-sm font-medium opacity-80 mb-1">{nextBooking.date}</p>
                   <p className="text-sm font-medium opacity-60 mb-6">{nextBooking.details}</p>
@@ -574,7 +574,7 @@ const Dashboard: React.FC = () => {
                           showToast('Connection error during check-in.', 'error');
                         }
                       }}
-                      className="flex-1 bg-brand-green text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none"
+                      className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none ${isDark ? 'bg-accent text-primary' : 'bg-brand-green text-white'}`}
                       aria-label="Check in to booking"
                     >
                       {checkInConfirmed ? (
@@ -586,7 +586,7 @@ const Dashboard: React.FC = () => {
                     </button>
                     <button 
                       onClick={() => handleCancelBooking(nextBooking.dbId, nextBooking.type)}
-                      className="w-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-xl transition-colors text-brand-green border border-brand-green/10 focus:ring-2 focus:ring-accent focus:outline-none"
+                      className={`w-12 flex items-center justify-center rounded-xl transition-colors focus:ring-2 focus:ring-accent focus:outline-none ${isDark ? 'bg-white/10 hover:bg-white/20 text-white/80 border border-white/20' : 'bg-white/50 hover:bg-white text-brand-green border border-brand-green/10'}`}
                       aria-label="Cancel booking"
                     >
                       <span className="material-symbols-outlined">close</span>

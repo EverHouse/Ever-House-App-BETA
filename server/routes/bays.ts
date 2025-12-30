@@ -735,6 +735,89 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
   }
 });
 
+router.put('/api/booking-requests/:id/member-cancel', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userEmail = (req.session as any)?.user?.email;
+    
+    if (!userEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const bookingId = parseInt(id);
+    
+    const [existing] = await db.select({
+      id: bookingRequests.id,
+      userEmail: bookingRequests.userEmail,
+      userName: bookingRequests.userName,
+      requestDate: bookingRequests.requestDate,
+      startTime: bookingRequests.startTime,
+      status: bookingRequests.status,
+      calendarEventId: bookingRequests.calendarEventId
+    })
+      .from(bookingRequests)
+      .where(eq(bookingRequests.id, bookingId));
+    
+    if (!existing) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    if (existing.userEmail !== userEmail) {
+      return res.status(403).json({ error: 'You can only cancel your own bookings' });
+    }
+    
+    if (existing.status === 'cancelled' || existing.status === 'declined') {
+      return res.status(400).json({ error: 'Booking is already cancelled' });
+    }
+    
+    const wasApproved = existing.status === 'approved';
+    
+    const [updated] = await db.update(bookingRequests)
+      .set({
+        status: 'cancelled',
+        updatedAt: new Date()
+      })
+      .where(eq(bookingRequests.id, bookingId))
+      .returning();
+    
+    if (wasApproved) {
+      const memberName = existing.userName || existing.userEmail;
+      const bookingDate = existing.requestDate;
+      const bookingTime = existing.startTime?.substring(0, 5) || '';
+      const staffMessage = `${memberName} has cancelled their booking for ${bookingDate} at ${bookingTime}.`;
+      
+      await db.insert(notifications).values({
+        userEmail: 'staff@evenhouse.app',
+        title: 'Booking Cancelled by Member',
+        message: staffMessage,
+        type: 'booking_cancelled',
+        relatedId: bookingId,
+        relatedType: 'booking_request'
+      });
+      
+      sendPushNotificationToStaff({
+        title: 'Booking Cancelled',
+        body: staffMessage,
+        url: '/#/staff'
+      }).catch(err => console.error('Staff push notification failed:', err));
+      
+      if (existing.calendarEventId) {
+        try {
+          const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+          await deleteCalendarEvent(existing.calendarEventId, golfCalendarId || 'primary');
+        } catch (calError) {
+          console.error('Failed to delete calendar event (non-blocking):', calError);
+        }
+      }
+    }
+    
+    res.json({ success: true, message: 'Booking cancelled successfully' });
+  } catch (error: any) {
+    console.error('Member booking cancellation error:', error);
+    res.status(500).json({ error: 'Failed to cancel booking' });
+  }
+});
+
 router.put('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;

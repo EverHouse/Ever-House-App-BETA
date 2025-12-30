@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "6.7",
+    date: "2025-12-30",
+    title: "Mobile App Fixes",
+    changes: [
+      "Members can now cancel their own bookings directly from the dashboard",
+      "Next Booking card now displays correctly in dark mode",
+      "Bottom navigation now properly hides on scroll on mobile Safari",
+      "Improved touch gesture detection for smoother navigation hiding"
+    ]
+  },
+  {
     version: "6.6",
     date: "2025-12-30",
     title: "Sync Reliability Improvements",
