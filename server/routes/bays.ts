@@ -385,173 +385,255 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
     });
     
     if (status === 'approved') {
-      const requestResult = await db.select().from(bookingRequests).where(eq(bookingRequests.id, parseInt(id)));
-      if (requestResult.length === 0) {
-        return res.status(404).json({ error: 'Request not found' });
-      }
+      const bookingId = parseInt(id);
       
-      const req_data = requestResult[0];
-      const assignedBayId = bay_id || req_data.bayId;
-      
-      if (!assignedBayId) {
-        return res.status(400).json({ error: 'Bay must be assigned before approval' });
-      }
-      
-      const conflicts = await db.select().from(bookingRequests).where(and(
-        eq(bookingRequests.bayId, assignedBayId),
-        eq(bookingRequests.requestDate, req_data.requestDate),
-        eq(bookingRequests.status, 'approved'),
-        ne(bookingRequests.id, parseInt(id)),
-        or(
-          and(lte(bookingRequests.startTime, req_data.startTime), gt(bookingRequests.endTime, req_data.startTime)),
-          and(lt(bookingRequests.startTime, req_data.endTime), gte(bookingRequests.endTime, req_data.endTime)),
-          and(gte(bookingRequests.startTime, req_data.startTime), lte(bookingRequests.endTime, req_data.endTime))
-        )
-      ));
-      
-      if (conflicts.length > 0) {
-        return res.status(409).json({ error: 'Time slot conflicts with existing booking' });
-      }
-      
-      // Check for facility closure conflicts
-      const closureCheck = await checkClosureConflict(
-        assignedBayId,
-        req_data.requestDate,
-        req_data.startTime,
-        req_data.endTime
-      );
-      
-      if (closureCheck.hasConflict) {
-        return res.status(409).json({ 
-          error: 'Cannot approve booking during closure',
-          message: `This time slot conflicts with "${closureCheck.closureTitle}". Please decline this request or wait until the closure ends.`
-        });
-      }
-      
-      const bayResult = await db.select({ name: bays.name }).from(bays).where(eq(bays.id, assignedBayId));
-      const bayName = bayResult[0]?.name || 'Simulator';
-      
-      let calendarEventId: string | null = null;
-      try {
-        const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-        if (golfCalendarId) {
-          const summary = `Booking: ${req_data.userName || req_data.userEmail}`;
-          const description = `Area: ${bayName}\nMember: ${req_data.userEmail}\nDuration: ${req_data.durationMinutes} minutes${req_data.notes ? '\nNotes: ' + req_data.notes : ''}`;
-          calendarEventId = await createCalendarEventOnCalendar(
-            golfCalendarId,
-            summary,
-            description,
-            req_data.requestDate,
-            req_data.startTime,
-            req_data.endTime
-          );
-        } else {
-          calendarEventId = await createCalendarEvent(req_data, bayName);
+      const { updated, bayName, approvalMessage } = await db.transaction(async (tx) => {
+        const [req_data] = await tx.select().from(bookingRequests).where(eq(bookingRequests.id, bookingId));
+        
+        if (!req_data) {
+          throw { statusCode: 404, error: 'Request not found' };
         }
-      } catch (calError) {
-        console.error('Calendar sync failed (non-blocking):', calError);
-      }
-      
-      const result = await db.update(bookingRequests)
-        .set({
-          status: status,
-          staffNotes: staff_notes,
-          suggestedTime: suggested_time,
-          reviewedBy: reviewed_by,
-          reviewedAt: new Date(),
-          bayId: assignedBayId,
-          calendarEventId: calendarEventId,
-          updatedAt: new Date()
-        })
-        .where(eq(bookingRequests.id, parseInt(id)))
-        .returning();
-      
-      const updated = result[0];
-      const approvalMessage = `Your simulator booking for ${updated.requestDate} at ${updated.startTime.substring(0, 5)} has been approved.`;
-      
-      await db.insert(notifications).values({
-        userEmail: updated.userEmail,
-        title: 'Booking Request Approved',
-        message: approvalMessage,
-        type: 'booking_approved',
-        relatedId: updated.id,
-        relatedType: 'booking_request'
+        
+        const assignedBayId = bay_id || req_data.bayId;
+        
+        if (!assignedBayId) {
+          throw { statusCode: 400, error: 'Bay must be assigned before approval' };
+        }
+        
+        const conflicts = await tx.select().from(bookingRequests).where(and(
+          eq(bookingRequests.bayId, assignedBayId),
+          eq(bookingRequests.requestDate, req_data.requestDate),
+          eq(bookingRequests.status, 'approved'),
+          ne(bookingRequests.id, bookingId),
+          or(
+            and(lte(bookingRequests.startTime, req_data.startTime), gt(bookingRequests.endTime, req_data.startTime)),
+            and(lt(bookingRequests.startTime, req_data.endTime), gte(bookingRequests.endTime, req_data.endTime)),
+            and(gte(bookingRequests.startTime, req_data.startTime), lte(bookingRequests.endTime, req_data.endTime))
+          )
+        ));
+        
+        if (conflicts.length > 0) {
+          throw { statusCode: 409, error: 'Time slot conflicts with existing booking' };
+        }
+        
+        const closureCheck = await checkClosureConflict(
+          assignedBayId,
+          req_data.requestDate,
+          req_data.startTime,
+          req_data.endTime
+        );
+        
+        if (closureCheck.hasConflict) {
+          throw { 
+            statusCode: 409, 
+            error: 'Cannot approve booking during closure',
+            message: `This time slot conflicts with "${closureCheck.closureTitle}". Please decline this request or wait until the closure ends.`
+          };
+        }
+        
+        const bayResult = await tx.select({ name: bays.name }).from(bays).where(eq(bays.id, assignedBayId));
+        const bayName = bayResult[0]?.name || 'Simulator';
+        
+        let calendarEventId: string | null = null;
+        try {
+          const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+          if (golfCalendarId) {
+            const summary = `Booking: ${req_data.userName || req_data.userEmail}`;
+            const description = `Area: ${bayName}\nMember: ${req_data.userEmail}\nDuration: ${req_data.durationMinutes} minutes${req_data.notes ? '\nNotes: ' + req_data.notes : ''}`;
+            calendarEventId = await createCalendarEventOnCalendar(
+              golfCalendarId,
+              summary,
+              description,
+              req_data.requestDate,
+              req_data.startTime,
+              req_data.endTime
+            );
+          } else {
+            calendarEventId = await createCalendarEvent(req_data, bayName);
+          }
+        } catch (calError) {
+          console.error('Calendar sync failed (non-blocking):', calError);
+        }
+        
+        const [updatedRow] = await tx.update(bookingRequests)
+          .set({
+            status: status,
+            staffNotes: staff_notes,
+            suggestedTime: suggested_time,
+            reviewedBy: reviewed_by,
+            reviewedAt: new Date(),
+            bayId: assignedBayId,
+            calendarEventId: calendarEventId,
+            updatedAt: new Date()
+          })
+          .where(eq(bookingRequests.id, bookingId))
+          .returning();
+        
+        const approvalMessage = `Your simulator booking for ${updatedRow.requestDate} at ${updatedRow.startTime.substring(0, 5)} has been approved.`;
+        
+        await tx.insert(notifications).values({
+          userEmail: updatedRow.userEmail,
+          title: 'Booking Request Approved',
+          message: approvalMessage,
+          type: 'booking_approved',
+          relatedId: updatedRow.id,
+          relatedType: 'booking_request'
+        });
+        
+        await tx.update(notifications)
+          .set({ isRead: true })
+          .where(and(
+            eq(notifications.relatedId, bookingId),
+            eq(notifications.relatedType, 'booking_request'),
+            eq(notifications.type, 'booking')
+          ));
+        
+        return { updated: updatedRow, bayName, approvalMessage };
       });
       
-      await sendPushNotification(updated.userEmail, {
+      sendPushNotification(updated.userEmail, {
         title: 'Booking Approved!',
         body: approvalMessage,
         url: '/#/sims'
-      });
+      }).catch(err => console.error('Push notification failed:', err));
       
-      // Dismiss all staff notifications for this booking request
-      await dismissStaffNotificationsForBooking(updated.id);
-      
-      return res.json(formatRow(result[0]));
+      return res.json(formatRow(updated));
     }
     
     if (status === 'declined') {
-      const result = await db.update(bookingRequests)
-        .set({
-          status: status,
-          staffNotes: staff_notes,
-          suggestedTime: suggested_time,
-          reviewedBy: reviewed_by,
-          reviewedAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(bookingRequests.id, parseInt(id)))
-        .returning();
+      const bookingId = parseInt(id);
       
-      if (result.length === 0) {
-        return res.status(404).json({ error: 'Booking request not found' });
-      }
-      
-      const updated = result[0];
-      const declineMessage = suggested_time 
-        ? `Your simulator booking request for ${updated.requestDate} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
-        : `Your simulator booking request for ${updated.requestDate} was declined.${staff_notes ? ' Note: ' + staff_notes : ''}`;
-      
-      await db.insert(notifications).values({
-        userEmail: updated.userEmail,
-        title: 'Booking Request Declined',
-        message: declineMessage,
-        type: 'booking_declined',
-        relatedId: updated.id,
-        relatedType: 'booking_request'
+      const { updated, declineMessage } = await db.transaction(async (tx) => {
+        const [existing] = await tx.select().from(bookingRequests).where(eq(bookingRequests.id, bookingId));
+        
+        if (!existing) {
+          throw { statusCode: 404, error: 'Booking request not found' };
+        }
+        
+        const [updatedRow] = await tx.update(bookingRequests)
+          .set({
+            status: status,
+            staffNotes: staff_notes,
+            suggestedTime: suggested_time,
+            reviewedBy: reviewed_by,
+            reviewedAt: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(bookingRequests.id, bookingId))
+          .returning();
+        
+        const declineMessage = suggested_time 
+          ? `Your simulator booking request for ${updatedRow.requestDate} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
+          : `Your simulator booking request for ${updatedRow.requestDate} was declined.${staff_notes ? ' Note: ' + staff_notes : ''}`;
+        
+        await tx.insert(notifications).values({
+          userEmail: updatedRow.userEmail,
+          title: 'Booking Request Declined',
+          message: declineMessage,
+          type: 'booking_declined',
+          relatedId: updatedRow.id,
+          relatedType: 'booking_request'
+        });
+        
+        await tx.update(notifications)
+          .set({ isRead: true })
+          .where(and(
+            eq(notifications.relatedId, bookingId),
+            eq(notifications.relatedType, 'booking_request'),
+            eq(notifications.type, 'booking')
+          ));
+        
+        return { updated: updatedRow, declineMessage };
       });
       
-      await sendPushNotification(updated.userEmail, {
+      sendPushNotification(updated.userEmail, {
         title: 'Booking Request Update',
         body: declineMessage,
         url: '/#/sims'
-      });
+      }).catch(err => console.error('Push notification failed:', err));
       
-      // Dismiss all staff notifications for this booking request
-      await dismissStaffNotificationsForBooking(updated.id);
-      
-      return res.json(formatRow(result[0]));
+      return res.json(formatRow(updated));
     }
     
     if (status === 'cancelled') {
-      const existing = await db.select({
-        calendarEventId: bookingRequests.calendarEventId,
-        userEmail: bookingRequests.userEmail,
-        userName: bookingRequests.userName,
-        requestDate: bookingRequests.requestDate,
-        startTime: bookingRequests.startTime,
-        status: bookingRequests.status
-      })
-        .from(bookingRequests)
-        .where(eq(bookingRequests.id, parseInt(id)));
+      const bookingId = parseInt(id);
+      const { cancelled_by } = req.body;
       
-      if (existing.length === 0) {
-        return res.status(404).json({ error: 'Booking request not found' });
-      }
+      const { updated, bookingData, pushInfo } = await db.transaction(async (tx) => {
+        const [existing] = await tx.select({
+          id: bookingRequests.id,
+          calendarEventId: bookingRequests.calendarEventId,
+          userEmail: bookingRequests.userEmail,
+          userName: bookingRequests.userName,
+          requestDate: bookingRequests.requestDate,
+          startTime: bookingRequests.startTime,
+          status: bookingRequests.status
+        })
+          .from(bookingRequests)
+          .where(eq(bookingRequests.id, bookingId));
+        
+        if (!existing) {
+          throw { statusCode: 404, error: 'Booking request not found' };
+        }
+        
+        const [updatedRow] = await tx.update(bookingRequests)
+          .set({
+            status: status,
+            staffNotes: staff_notes || undefined,
+            updatedAt: new Date()
+          })
+          .where(eq(bookingRequests.id, bookingId))
+          .returning();
+        
+        let pushInfo: { type: 'staff' | 'member'; email?: string; message: string } | null = null;
+        
+        if (existing.status === 'approved') {
+          const memberEmail = existing.userEmail;
+          const memberName = existing.userName || memberEmail;
+          const bookingDate = existing.requestDate;
+          const bookingTime = existing.startTime?.substring(0, 5) || '';
+          const memberCancelled = cancelled_by === memberEmail;
+          
+          if (memberCancelled) {
+            const staffMessage = `${memberName} has cancelled their booking for ${bookingDate} at ${bookingTime}.`;
+            
+            await tx.insert(notifications).values({
+              userEmail: 'staff@evenhouse.app',
+              title: 'Booking Cancelled by Member',
+              message: staffMessage,
+              type: 'booking_cancelled',
+              relatedId: bookingId,
+              relatedType: 'booking_request'
+            });
+            
+            pushInfo = { type: 'staff', message: staffMessage };
+          } else {
+            const memberMessage = `Your booking for ${bookingDate} at ${bookingTime} has been cancelled by staff.${staff_notes ? ' Note: ' + staff_notes : ''}`;
+            
+            await tx.insert(notifications).values({
+              userEmail: memberEmail,
+              title: 'Booking Cancelled',
+              message: memberMessage,
+              type: 'booking_cancelled',
+              relatedId: bookingId,
+              relatedType: 'booking_request'
+            });
+            
+            pushInfo = { type: 'member', email: memberEmail, message: memberMessage };
+          }
+        }
+        
+        await tx.update(notifications)
+          .set({ isRead: true })
+          .where(and(
+            eq(notifications.relatedId, bookingId),
+            eq(notifications.relatedType, 'booking_request'),
+            eq(notifications.type, 'booking')
+          ));
+        
+        return { updated: updatedRow, bookingData: existing, pushInfo };
+      });
       
-      const bookingData = existing[0];
-      
-      // Delete calendar event if exists
       if (bookingData?.calendarEventId) {
         try {
           const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
@@ -561,66 +643,23 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
         }
       }
       
-      // Only send cancellation notifications if booking was previously approved
-      if (bookingData && bookingData.status === 'approved') {
-        const { cancelled_by } = req.body;
-        const memberEmail = bookingData.userEmail;
-        const memberName = bookingData.userName || memberEmail;
-        const bookingDate = bookingData.requestDate;
-        const bookingTime = bookingData.startTime?.substring(0, 5) || '';
-        
-        // Determine if member cancelled (cancelled_by matches member email) or staff cancelled
-        const memberCancelled = cancelled_by === memberEmail;
-        
-        if (memberCancelled) {
-          // Member cancelled - notify all staff
-          const staffMessage = `${memberName} has cancelled their booking for ${bookingDate} at ${bookingTime}.`;
-          
-          // In-app notification is REQUIRED - if this fails, cancellation fails
-          await db.insert(notifications).values({
-            userEmail: 'staff@evenhouse.app', // Generic staff notification marker
-            title: 'Booking Cancelled by Member',
-            message: staffMessage,
-            type: 'booking_cancelled',
-            relatedId: parseInt(id),
-            relatedType: 'booking_request'
-          });
-          
-          // Push notification is optional (user may not have enabled it)
-          await sendPushNotificationToStaff({
+      if (pushInfo) {
+        if (pushInfo.type === 'staff') {
+          sendPushNotificationToStaff({
             title: 'Booking Cancelled',
-            body: staffMessage,
+            body: pushInfo.message,
             url: '/#/staff'
           }).catch(err => console.error('Staff push notification failed:', err));
-        } else {
-          // Staff cancelled - notify the member
-          const memberMessage = `Your booking for ${bookingDate} at ${bookingTime} has been cancelled by staff.${staff_notes ? ' Note: ' + staff_notes : ''}`;
-          
-          // In-app notification is REQUIRED - if this fails, cancellation fails
-          await db.insert(notifications).values({
-            userEmail: memberEmail,
+        } else if (pushInfo.email) {
+          sendPushNotification(pushInfo.email, {
             title: 'Booking Cancelled',
-            message: memberMessage,
-            type: 'booking_cancelled',
-            relatedId: parseInt(id),
-            relatedType: 'booking_request'
-          });
-          
-          // Push notification is optional (user may not have enabled it)
-          await sendPushNotification(memberEmail, {
-            title: 'Booking Cancelled',
-            body: memberMessage,
+            body: pushInfo.message,
             url: '/#/sims'
           }).catch(err => console.error('Member push notification failed:', err));
         }
       }
       
-      // Always dismiss staff notifications for cancelled bookings
-      try {
-        await dismissStaffNotificationsForBooking(parseInt(id));
-      } catch (dismissErr) {
-        console.error('Failed to dismiss staff notifications (non-blocking):', dismissErr);
-      }
+      return res.json(formatRow(updated));
     }
     
     const result = await db.update(bookingRequests)
@@ -638,6 +677,12 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
     
     res.json(formatRow(result[0]));
   } catch (error: any) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ 
+        error: error.error, 
+        message: error.message 
+      });
+    }
     console.error('Booking request update error:', error);
     res.status(500).json({ error: 'Failed to update booking request' });
   }

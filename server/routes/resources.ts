@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { eq, and, or, sql, desc, asc } from 'drizzle-orm';
+import { eq, and, or, sql, desc, asc, ne } from 'drizzle-orm';
 import { db } from '../db';
 import { bookings, resources, users, facilityClosures, bays, notifications, bookingRequests } from '../../shared/schema';
 import { isAuthorizedForMemberBooking } from '../core/trackman';
@@ -254,48 +254,67 @@ router.put('/api/bookings/:id/approve', isStaffOrAdmin, async (req, res) => {
     const { id } = req.params;
     const bookingId = parseInt(id);
     
-    const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
+    const result = await db.transaction(async (tx) => {
+      const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId));
+      
+      if (!booking) {
+        throw { statusCode: 404, error: 'Booking not found' };
+      }
+      
+      const closureCheck = await checkClosureConflict(
+        booking.resourceId,
+        booking.bookingDate,
+        booking.startTime,
+        booking.endTime
+      );
+      
+      if (closureCheck.hasConflict) {
+        throw { 
+          statusCode: 409, 
+          error: 'Cannot approve booking during closure',
+          message: `This time slot conflicts with "${closureCheck.closureTitle}". Please decline this request or wait until the closure ends.`
+        };
+      }
+      
+      const existingConflicts = await tx.select()
+        .from(bookings)
+        .where(and(
+          eq(bookings.resourceId, booking.resourceId),
+          sql`${bookings.bookingDate} = ${booking.bookingDate}`,
+          eq(bookings.status, 'confirmed'),
+          ne(bookings.id, bookingId),
+          or(
+            and(
+              sql`${bookings.startTime} < ${booking.endTime}`,
+              sql`${bookings.endTime} > ${booking.startTime}`
+            )
+          )
+        ));
+      
+      if (existingConflicts.length > 0) {
+        throw { 
+          statusCode: 409, 
+          error: 'Time slot already booked',
+          message: 'Another booking has already been approved for this time slot. Please decline this request or suggest an alternative time.'
+        };
+      }
+      
+      const [updated] = await tx.update(bookings)
+        .set({ status: 'confirmed' })
+        .where(eq(bookings.id, bookingId))
+        .returning();
+      
+      return updated;
+    });
     
-    if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' });
-    }
-    
-    const closureCheck = await checkClosureConflict(
-      booking.resourceId,
-      booking.bookingDate,
-      booking.startTime,
-      booking.endTime
-    );
-    
-    if (closureCheck.hasConflict) {
-      return res.status(409).json({ 
-        error: 'Cannot approve booking during closure',
-        message: `This time slot conflicts with "${closureCheck.closureTitle}". Please decline this request or wait until the closure ends.`
-      });
-    }
-    
-    const bookingCheck = await checkBookingConflict(
-      booking.resourceId,
-      booking.bookingDate,
-      booking.startTime,
-      booking.endTime,
-      bookingId
-    );
-    
-    if (bookingCheck.hasConflict) {
-      return res.status(409).json({ 
-        error: 'Time slot already booked',
-        message: 'Another booking has already been approved for this time slot. Please decline this request or suggest an alternative time.'
-      });
-    }
-    
-    const result = await db.update(bookings)
-      .set({ status: 'confirmed' })
-      .where(eq(bookings.id, bookingId))
-      .returning();
-    
-    res.json(result[0]);
+    res.json(result);
   } catch (error: any) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ 
+        error: error.error, 
+        message: error.message 
+      });
+    }
     logAndRespond(req, res, 500, 'Failed to approve booking', error, 'APPROVE_BOOKING_ERROR');
   }
 });
@@ -303,16 +322,28 @@ router.put('/api/bookings/:id/approve', isStaffOrAdmin, async (req, res) => {
 router.put('/api/bookings/:id/decline', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await db.update(bookings)
-      .set({ status: 'declined' })
-      .where(eq(bookings.id, parseInt(id)))
-      .returning();
+    const bookingId = parseInt(id);
     
-    if (result.length === 0) {
-      return res.status(404).json({ error: 'Booking not found' });
-    }
-    res.json(result[0]);
+    const result = await db.transaction(async (tx) => {
+      const [existing] = await tx.select().from(bookings).where(eq(bookings.id, bookingId));
+      
+      if (!existing) {
+        throw { statusCode: 404, error: 'Booking not found' };
+      }
+      
+      const [updated] = await tx.update(bookings)
+        .set({ status: 'declined' })
+        .where(eq(bookings.id, bookingId))
+        .returning();
+      
+      return updated;
+    });
+    
+    res.json(result);
   } catch (error: any) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.error });
+    }
     logAndRespond(req, res, 500, 'Failed to decline booking', error, 'DECLINE_BOOKING_ERROR');
   }
 });
