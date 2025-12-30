@@ -4375,7 +4375,7 @@ const WellnessAdminContent: React.FC = () => {
             />
 
             <ModalShell isOpen={isEditing} onClose={() => { setIsEditing(false); setError(null); }} title={editId ? 'Edit Class' : 'Add Class'} showCloseButton={false}>
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-4 overflow-hidden">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
                         <input
@@ -4388,7 +4388,7 @@ const WellnessAdminContent: React.FC = () => {
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
+                        <div className="min-w-0">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date *</label>
                             <input
                                 type="date"
@@ -4397,7 +4397,7 @@ const WellnessAdminContent: React.FC = () => {
                                 className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                             />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time *</label>
                             <input
                                 type="time"
@@ -4420,7 +4420,7 @@ const WellnessAdminContent: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
+                        <div className="min-w-0">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                             <select
                                 value={formData.category || 'Yoga'}
@@ -4432,7 +4432,7 @@ const WellnessAdminContent: React.FC = () => {
                                 ))}
                             </select>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration</label>
                             <input
                                 type="text"
@@ -5970,7 +5970,7 @@ const BlocksAdmin: React.FC = () => {
             )}
 
             <ModalShell isOpen={isClosureModalOpen} onClose={() => { setIsClosureModalOpen(false); resetClosureForm(); }} title={editingClosureId ? 'Edit Closure' : 'Add Closure'} showCloseButton={false}>
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-4 overflow-hidden">
                     <div className="space-y-3 mb-5">
                         <div>
                             <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Title</label>
@@ -5983,7 +5983,7 @@ const BlocksAdmin: React.FC = () => {
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <div>
+                            <div className="min-w-0">
                                 <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Date *</label>
                                 <input 
                                     type="date" 
@@ -5992,7 +5992,7 @@ const BlocksAdmin: React.FC = () => {
                                     onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
                                 />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Time</label>
                                 <input 
                                     type="time" 
@@ -6003,7 +6003,7 @@ const BlocksAdmin: React.FC = () => {
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <div>
+                            <div className="min-w-0">
                                 <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Date</label>
                                 <input 
                                     type="date" 
@@ -6012,7 +6012,7 @@ const BlocksAdmin: React.FC = () => {
                                     onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
                                 />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Time</label>
                                 <input 
                                     type="time" 
@@ -6076,13 +6076,13 @@ const BlocksAdmin: React.FC = () => {
             </ModalShell>
 
             <ModalShell isOpen={isEditing && !!selectedBlock} onClose={() => { setIsEditing(false); setSelectedBlock(null); }} title="Edit Block" showCloseButton={false}>
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-4 overflow-hidden">
                     <div>
-                        <label className="text-white/70 text-sm mb-1 block">Resource</label>
+                        <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">Resource</label>
                         <select
                             value={selectedBlock?.bay_id}
                             onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, bay_id: parseInt(e.target.value)})}
-                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                         >
                             {resources.map(r => (
                                 <option key={r.id} value={r.id}>{r.name}</option>
@@ -6091,42 +6091,42 @@ const BlocksAdmin: React.FC = () => {
                     </div>
                     
                     <div>
-                        <label className="text-white/70 text-sm mb-1 block">Date</label>
+                        <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">Date</label>
                         <input
                             type="date"
                             value={selectedBlock?.block_date}
                             onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, block_date: e.target.value})}
-                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                         />
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="text-white/70 text-sm mb-1 block">Start Time</label>
+                        <div className="min-w-0">
+                            <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">Start Time</label>
                             <input
                                 type="time"
                                 value={selectedBlock?.start_time.substring(0, 5)}
                                 onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, start_time: e.target.value + ':00'})}
-                                className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                                className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                             />
                         </div>
-                        <div>
-                            <label className="text-white/70 text-sm mb-1 block">End Time</label>
+                        <div className="min-w-0">
+                            <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">End Time</label>
                             <input
                                 type="time"
                                 value={selectedBlock?.end_time.substring(0, 5)}
                                 onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, end_time: e.target.value + ':00'})}
-                                className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                                className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                             />
                         </div>
                     </div>
                     
                     <div>
-                        <label className="text-white/70 text-sm mb-1 block">Block Type</label>
+                        <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">Block Type</label>
                         <select
                             value={selectedBlock?.block_type}
                             onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, block_type: e.target.value})}
-                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
                         >
                             <option value="blocked">Blocked</option>
                             <option value="maintenance">Maintenance</option>
@@ -6136,12 +6136,12 @@ const BlocksAdmin: React.FC = () => {
                     </div>
                     
                     <div>
-                        <label className="text-white/70 text-sm mb-1 block">Notes</label>
+                        <label className="text-gray-600 dark:text-white/70 text-sm mb-1 block">Notes</label>
                         <textarea
                             value={selectedBlock?.notes || ''}
                             onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, notes: e.target.value})}
                             rows={2}
-                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white resize-none"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 text-primary dark:text-white resize-none"
                             placeholder="Optional notes..."
                         />
                     </div>
@@ -6152,7 +6152,7 @@ const BlocksAdmin: React.FC = () => {
                                 setIsEditing(false);
                                 setSelectedBlock(null);
                             }}
-                            className="flex-1 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-all"
+                            className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white font-medium hover:bg-gray-100 dark:hover:bg-white/10 transition-all"
                         >
                             Cancel
                         </button>
