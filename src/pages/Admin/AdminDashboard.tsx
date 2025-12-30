@@ -2511,7 +2511,7 @@ const SimulatorAdmin: React.FC = () => {
                         </h3>
                         {pendingRequests.length === 0 ? (
                             <div className="py-8 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
-                                <p className="text-gray-400">No pending requests</p>
+                                <p className="text-gray-400 dark:text-white/40">No pending requests</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -7102,6 +7102,7 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
     return (
         <ModalShell isOpen={isOpen} onClose={onClose} title={section ? 'Edit Training Section' : 'Add Training Section'} showCloseButton={true} size="full">
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                <div className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-primary dark:text-white mb-2">Title</label>
                         <input
