@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "6.5",
+    date: "2025-12-30",
+    title: "Staff Bookings Reorganized",
+    changes: [
+      "Staff bookings dashboard now organized into 4 clear sections: Action Needed, Scheduled, Completed, and Cancellations",
+      "Scheduled section shows upcoming bookings with Today, Tomorrow, and This Week filters",
+      "Completed section shows attended and no-show bookings from the last 7 days",
+      "Cancellations section shows declined and cancelled bookings from the last 30 days"
+    ]
+  },
+  {
     version: "6.4",
     date: "2025-12-29",
     title: "Formatting Polish",

@@ -2009,7 +2009,8 @@ const SimulatorAdmin: React.FC = () => {
     const [rescheduleBookingId, setRescheduleBookingId] = useState<number | null>(null);
     const [selectedCalendarBooking, setSelectedCalendarBooking] = useState<BookingRequest | null>(null);
     const [isCancellingFromModal, setIsCancellingFromModal] = useState(false);
-    const [processedFilter, setProcessedFilter] = useState<'all' | 'approved' | 'attended' | 'no_show'>('all');
+    const [processedFilter, setProcessedFilter] = useState<'all' | 'attended' | 'no_show'>('all');
+    const [scheduledFilter, setScheduledFilter] = useState<'all' | 'today' | 'tomorrow' | 'week'>('all');
     const [markStatusModal, setMarkStatusModal] = useState<{ booking: BookingRequest | null; confirmNoShow: boolean }>({ booking: null, confirmNoShow: false });
     
     const [calendarDate, setCalendarDate] = useState(() => getTodayPacific());
@@ -2297,37 +2298,35 @@ const SimulatorAdmin: React.FC = () => {
 
     const pendingRequests = requests.filter(r => r.status === 'pending' || r.status === 'pending_approval');
     
-    // Recent Processed: attended/no-show bookings sorted chronologically by date
-    // Only show items from the last 14 days
+    // Completed: attended/no-show bookings from the last 7 days
     const today = getTodayPacific();
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    const processedRequests = requests.filter(r => {
-      // Only include attended or no_show, plus past approved that need marking
-      if (!['attended', 'no_show', 'approved', 'confirmed'].includes(r.status)) return false;
+    const completedBookings = requests.filter(r => {
+      // Only include attended or no_show
+      if (!['attended', 'no_show'].includes(r.status)) return false;
       // Exclude manual bookings
       if (r.source === 'booking') return false;
-      // Filter out items older than 14 days
-      if (r.created_at && new Date(r.created_at) < fourteenDaysAgo) return false;
-      // For approved/confirmed, only show past ones (future ones are in Upcoming Bookings)
-      if (r.status === 'approved' || r.status === 'confirmed') {
-        return r.request_date < today;
-      }
+      // Filter to last 7 days
+      if (r.request_date < sevenDaysAgo.toISOString().split('T')[0]) return false;
       return true;
     }).sort((a, b) => {
-      // Sort chronologically by date then time
+      // Sort by most recent first
       if (a.request_date !== b.request_date) {
-        return b.request_date.localeCompare(a.request_date); // Most recent first
+        return b.request_date.localeCompare(a.request_date);
       }
       return b.start_time.localeCompare(a.start_time);
     });
     
-    // Cancelled/Declined bookings - separate section at bottom
-    const cancelledRequests = requests.filter(r => {
+    // Cancellations: declined + cancelled bookings from the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const cancellations = requests.filter(r => {
       if (!['cancelled', 'declined'].includes(r.status)) return false;
       if (r.source === 'booking') return false;
-      if (r.created_at && new Date(r.created_at) < fourteenDaysAgo) return false;
+      if (r.request_date < thirtyDaysAgo.toISOString().split('T')[0]) return false;
       return true;
     }).sort((a, b) => {
       // Sort by most recent first
@@ -2337,18 +2336,36 @@ const SimulatorAdmin: React.FC = () => {
       return b.start_time.localeCompare(a.start_time);
     });
 
-    const upcomingBookings = useMemo(() => {
+    const scheduledBookings = useMemo(() => {
         const today = getTodayPacific();
+        const tomorrow = (() => {
+            const d = new Date(today);
+            d.setDate(d.getDate() + 1);
+            return d.toISOString().split('T')[0];
+        })();
+        const weekEnd = (() => {
+            const d = new Date(today);
+            d.setDate(d.getDate() + 7);
+            return d.toISOString().split('T')[0];
+        })();
+        
         return approvedBookings
-            .filter(b => (b.status === 'approved' || b.status === 'confirmed') && b.request_date >= today)
+            .filter(b => {
+                if (!(b.status === 'approved' || b.status === 'confirmed') || b.request_date < today) return false;
+                
+                // Apply date filter
+                if (scheduledFilter === 'today') return b.request_date === today;
+                if (scheduledFilter === 'tomorrow') return b.request_date === tomorrow;
+                if (scheduledFilter === 'week') return b.request_date >= today && b.request_date <= weekEnd;
+                return true; // 'all'
+            })
             .sort((a, b) => {
                 if (a.request_date !== b.request_date) {
                     return a.request_date.localeCompare(b.request_date);
                 }
                 return a.start_time.localeCompare(b.start_time);
-            })
-            .slice(0, 10);
-    }, [approvedBookings]);
+            });
+    }, [approvedBookings, scheduledFilter]);
 
     const initiateApproval = () => {
         if (!selectedRequest) return;
@@ -2700,15 +2717,37 @@ const SimulatorAdmin: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Upcoming Bookings Section - Grouped by Date */}
-                    {upcomingBookings.length > 0 && (
-                        <div className="animate-pop-in" style={{animationDelay: '0.15s'}}>
-                            <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary dark:text-accent">calendar_today</span>
-                                Upcoming Bookings ({upcomingBookings.length})
-                            </h3>
+                    {/* Scheduled Section - Approved future bookings with date filters */}
+                    <div className="animate-pop-in" style={{animationDelay: '0.15s'}}>
+                        <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-primary dark:text-accent">calendar_today</span>
+                            Scheduled ({scheduledBookings.length})
+                        </h3>
+                        
+                        {/* Date Filter Tabs */}
+                        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide -mx-1 px-1 mb-3">
+                            {(['all', 'today', 'tomorrow', 'week'] as const).map(filter => (
+                                <button
+                                    key={filter}
+                                    onClick={() => setScheduledFilter(filter)}
+                                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                                        scheduledFilter === filter 
+                                            ? 'bg-primary text-white shadow-md' 
+                                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+                                    }`}
+                                >
+                                    {filter === 'all' ? 'All' : filter === 'week' ? 'This Week' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        {scheduledBookings.length === 0 ? (
+                            <div className="py-8 text-center border-2 border-dashed border-primary/10 dark:border-white/10 rounded-xl">
+                                <p className="text-primary/40 dark:text-white/40">No scheduled bookings {scheduledFilter !== 'all' ? `for ${scheduledFilter === 'week' ? 'this week' : scheduledFilter}` : ''}</p>
+                            </div>
+                        ) : (
                             <div className="space-y-4">
-                                {Array.from(groupBookingsByDate(upcomingBookings)).map(([date, bookings]) => (
+                                {Array.from(groupBookingsByDate(scheduledBookings)).map(([date, bookings]) => (
                                     <div key={date}>
                                         <div className="flex items-center gap-2 mb-2">
                                             <span className="text-xs font-bold text-primary/70 dark:text-white/70 uppercase tracking-wide">
@@ -2788,19 +2827,19 @@ const SimulatorAdmin: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                     
-                    {/* Recent Processed Section with Filter Tabs */}
+                    {/* Completed Section - attended/no_show bookings with Filter Tabs */}
                     <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-primary/60 dark:text-white/60">history</span>
-                            Recent Processed ({processedRequests.length})
+                            <span className="material-symbols-outlined text-green-500">check_circle</span>
+                            Completed ({completedBookings.length})
                         </h3>
                         
                         {/* Filter Tabs */}
                         <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide -mx-1 px-1 mb-3">
-                            {(['all', 'approved', 'attended', 'no_show'] as const).map(filter => (
+                            {(['all', 'attended', 'no_show'] as const).map(filter => (
                                 <button
                                     key={filter}
                                     onClick={() => setProcessedFilter(filter)}
@@ -2810,88 +2849,58 @@ const SimulatorAdmin: React.FC = () => {
                                             : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
                                     }`}
                                 >
-                                    {filter === 'all' ? 'All' : filter === 'no_show' ? 'No Show' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                    {filter === 'all' ? 'All' : filter === 'no_show' ? 'No Show' : 'Attended'}
                                 </button>
                             ))}
                         </div>
                         
                         {(() => {
-                            const filteredProcessed = processedFilter === 'all' 
-                                ? processedRequests 
-                                : processedRequests.filter(r => r.status === processedFilter);
+                            const filteredCompleted = processedFilter === 'all' 
+                                ? completedBookings 
+                                : completedBookings.filter(r => r.status === processedFilter);
                             
-                            return filteredProcessed.length === 0 ? (
+                            return filteredCompleted.length === 0 ? (
                                 <div className="py-8 text-center border-2 border-dashed border-primary/10 dark:border-white/10 rounded-xl">
-                                    <p className="text-primary/40 dark:text-white/40">No {processedFilter === 'all' ? 'processed requests' : processedFilter.replace('_', ' ') + ' bookings'} yet</p>
+                                    <p className="text-primary/40 dark:text-white/40">No {processedFilter === 'all' ? 'completed bookings' : processedFilter.replace('_', ' ') + ' bookings'} in the last 7 days</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {filteredProcessed.slice(0, 20).map(req => (
-                                        <SwipeableListItem
-                                            key={`processed-${req.id}`}
-                                            leftActions={req.status === 'approved' ? [
-                                                {
-                                                    id: 'attended',
-                                                    icon: 'check_circle',
-                                                    label: 'Attended',
-                                                    color: 'green',
-                                                    onClick: () => updateBookingStatusOptimistic(req, 'attended')
-                                                }
-                                            ] : []}
-                                            rightActions={req.status === 'approved' ? [
-                                                {
-                                                    id: 'noshow',
-                                                    icon: 'person_off',
-                                                    label: 'No Show',
-                                                    color: 'red',
-                                                    onClick: () => updateBookingStatusOptimistic(req, 'no_show')
-                                                }
-                                            ] : []}
+                                    {filteredCompleted.slice(0, 20).map(req => (
+                                        <div 
+                                            key={`completed-${req.id}`}
+                                            className="glass-card p-3 border border-primary/10 dark:border-white/10 flex justify-between items-center"
                                         >
-                                            <div className="glass-card p-3 border border-primary/10 dark:border-white/10 flex justify-between items-center">
-                                                <div>
-                                                    <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
-                                                    <p className="text-xs text-primary/60 dark:text-white/60">
-                                                        {formatDateShort(req.request_date)}
-                                                    </p>
-                                                    <p className="text-xs text-primary/60 dark:text-white/60">
-                                                        {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
-                                                    </p>
-                                                    {req.bay_name && (
-                                                        <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
-                                                        {formatStatusLabel(req.status)}
-                                                    </span>
-                                                    {req.status === 'approved' && (
-                                                        <button
-                                                            onClick={() => setMarkStatusModal({ booking: req, confirmNoShow: false })}
-                                                            className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
-                                                        >
-                                                            <span className="material-symbols-outlined text-xs">task_alt</span>
-                                                            Mark Status
-                                                        </button>
-                                                    )}
-                                                </div>
+                                            <div>
+                                                <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                                <p className="text-xs text-primary/60 dark:text-white/60">
+                                                    {formatDateShort(req.request_date)}
+                                                </p>
+                                                <p className="text-xs text-primary/60 dark:text-white/60">
+                                                    {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                </p>
+                                                {req.bay_name && (
+                                                    <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
+                                                )}
                                             </div>
-                                        </SwipeableListItem>
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                {formatStatusLabel(req.status)}
+                                            </span>
+                                        </div>
                                     ))}
                                 </div>
                             );
                         })()}
                     </div>
                     
-                    {/* Cancelled/Declined Section */}
-                    {cancelledRequests.length > 0 && (
+                    {/* Cancellations Section */}
+                    {cancellations.length > 0 && (
                         <div className="animate-pop-in" style={{animationDelay: '0.25s'}}>
                             <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-red-400">block</span>
-                                Cancelled ({cancelledRequests.length})
+                                Cancellations ({cancellations.length})
                             </h3>
                             <div className="space-y-2">
-                                {cancelledRequests.slice(0, 10).map(req => (
+                                {cancellations.slice(0, 10).map(req => (
                                     <div 
                                         key={`cancelled-${req.id}`}
                                         className="glass-card p-3 border border-red-200/30 dark:border-red-500/20 bg-red-50/50 dark:bg-red-900/10 flex justify-between items-center"
