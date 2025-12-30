@@ -597,6 +597,34 @@ router.post('/api/auth/logout', (req, res) => {
   });
 });
 
+router.get('/api/auth/session', (req, res) => {
+  const sessionUser = (req.session as any)?.user;
+  
+  if (!sessionUser?.email) {
+    return res.status(401).json({ error: 'No active session', authenticated: false });
+  }
+  
+  if (sessionUser.expires_at && Date.now() > sessionUser.expires_at) {
+    return res.status(401).json({ error: 'Session expired', authenticated: false });
+  }
+  
+  res.json({
+    authenticated: true,
+    member: {
+      id: sessionUser.id,
+      firstName: sessionUser.firstName || '',
+      lastName: sessionUser.lastName || '',
+      email: sessionUser.email,
+      phone: sessionUser.phone || '',
+      tier: sessionUser.tier || 'Social',
+      tags: sessionUser.tags || [],
+      mindbodyClientId: sessionUser.mindbodyClientId || '',
+      status: sessionUser.status || 'Active',
+      role: sessionUser.role || 'member'
+    }
+  });
+});
+
 router.get('/api/auth/check-staff-admin', async (req, res) => {
   try {
     const { email } = req.query;

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { formatDateShort } from '../utils/dateUtils';
 import { useUserStore } from '../stores/userStore';
@@ -330,6 +330,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [actualUser, setActualUser] = useState<MemberProfile | null>(null);
   const [viewAsUser, setViewAsUserState] = useState<MemberProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const sessionCheckDone = useRef(false);
   const [cafeMenuLoaded, setCafeMenuLoaded] = useState(false);
   const [eventsLoaded, setEventsLoaded] = useState(false);
   const [announcementsLoaded, setAnnouncementsLoaded] = useState(false);
@@ -352,9 +353,67 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   }, [storeUser, actualUser]);
 
   useEffect(() => {
+    if (sessionCheckDone.current) return;
+    sessionCheckDone.current = true;
+    
     const initializeUser = async () => {
-      if (storeUser) {
-        setActualUser(storeUser as MemberProfile);
+      try {
+        const sessionRes = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
+        
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          
+          if (sessionData.authenticated && sessionData.member) {
+            const sessionEmail = sessionData.member.email?.toLowerCase();
+            const savedMember = localStorage.getItem('eh_member');
+            const cachedEmail = savedMember ? JSON.parse(savedMember)?.email?.toLowerCase() : null;
+            const currentStoreUser = useUserStore.getState().user;
+            const storeEmail = currentStoreUser?.email?.toLowerCase();
+            
+            if ((cachedEmail && cachedEmail !== sessionEmail) || (storeEmail && storeEmail !== sessionEmail)) {
+              localStorage.removeItem('eh_member');
+              useUserStore.getState().clearUser();
+            }
+            
+            const sessionProfile: MemberProfile = {
+              id: sessionData.member.id,
+              name: [sessionData.member.firstName, sessionData.member.lastName].filter(Boolean).join(' ') || sessionData.member.email || 'Member',
+              tier: sessionData.member.tier || 'Social',
+              tags: sessionData.member.tags || [],
+              status: 'Active' as const,
+              email: sessionData.member.email,
+              phone: sessionData.member.phone || '',
+              jobTitle: sessionData.member.jobTitle || '',
+              role: sessionData.member.role || 'member',
+              mindbodyClientId: sessionData.member.mindbodyClientId || '',
+              lifetimeVisits: 0,
+              lastBookingDate: undefined
+            };
+            
+            localStorage.setItem('eh_member', JSON.stringify(sessionProfile));
+            setActualUser(sessionProfile);
+            useUserStore.getState().setUser(sessionProfile);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        if (sessionRes.status === 401 || sessionRes.status === 403) {
+          localStorage.removeItem('eh_member');
+          useUserStore.getState().clearUser();
+          setActualUser(null);
+          setIsLoading(false);
+          return;
+        }
+      } catch (sessionErr) {
+        console.error('Failed to verify session:', sessionErr);
+      }
+      
+      const currentStoreUser = useUserStore.getState().user;
+      if (currentStoreUser) {
+        setActualUser(currentStoreUser as MemberProfile);
         setIsLoading(false);
         return;
       }
@@ -364,40 +423,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
         try {
           const member = JSON.parse(savedMember);
           setActualUser(member);
-          setStoreUser(member);
-          
-          if (!member.tier && member.email) {
-            try {
-              const res = await fetch('/api/auth/verify-member', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: member.email })
-              });
-              
-              if (res.ok) {
-                const { member: freshMember } = await res.json();
-                const updatedProfile: MemberProfile = {
-                  id: freshMember.id,
-                  name: [freshMember.firstName, freshMember.lastName].filter(Boolean).join(' ') || freshMember.email || 'Member',
-                  tier: freshMember.tier || 'Core',
-                  tags: freshMember.tags || [],
-                  status: 'Active' as const,
-                  email: freshMember.email,
-                  phone: freshMember.phone || '',
-                  jobTitle: freshMember.jobTitle || '',
-                  role: freshMember.role || 'member',
-                  mindbodyClientId: freshMember.mindbodyClientId || '',
-                  lifetimeVisits: freshMember.lifetimeVisits || 0,
-                  lastBookingDate: freshMember.lastBookingDate || undefined
-                };
-                localStorage.setItem('eh_member', JSON.stringify(updatedProfile));
-                setActualUser(updatedProfile);
-                setStoreUser(updatedProfile);
-              }
-            } catch (refreshErr) {
-              console.error('Failed to refresh user data:', refreshErr);
-            }
-          }
+          useUserStore.getState().setUser(member);
         } catch (err) {
           localStorage.removeItem('eh_member');
         }
@@ -406,7 +432,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     };
     
     initializeUser();
-  }, [storeUser, setStoreUser]);
+  }, []);
   
   // View As Functions - only for admins (not staff)
   // Uses flushSync to ensure state updates are synchronous before navigation
@@ -673,6 +699,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('eh_member');
+    useUserStore.getState().clearUser();
     setActualUser(null);
     setViewAsUserState(null);
   };
