@@ -60,6 +60,11 @@ export const fetchAndCache = async <T>(
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timeoutId);
     
+    if (res.status === 304) {
+      failedFetches[key] = 0;
+      return getCached<T>(key);
+    }
+    
     if (res.ok) {
       const contentType = res.headers.get('content-type');
       if (contentType?.includes('application/json')) {

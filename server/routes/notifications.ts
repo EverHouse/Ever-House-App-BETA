@@ -6,11 +6,13 @@ const router = Router();
 
 router.get('/api/notifications', async (req, res) => {
   try {
-    const { user_email, unread_only } = req.query;
+    const { user_email: rawEmail, unread_only } = req.query;
     
-    if (!user_email) {
+    if (!rawEmail) {
       return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
     }
+    
+    const user_email = decodeURIComponent(rawEmail as string);
     
     let query = 'SELECT * FROM notifications WHERE user_email = $1';
     const params: any[] = [user_email];
@@ -30,11 +32,13 @@ router.get('/api/notifications', async (req, res) => {
 
 router.get('/api/notifications/count', async (req, res) => {
   try {
-    const { user_email } = req.query;
+    const { user_email: rawEmail } = req.query;
     
-    if (!user_email) {
+    if (!rawEmail) {
       return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
     }
+    
+    const user_email = decodeURIComponent(rawEmail as string);
     
     const result = await queryWithRetry(
       'SELECT COUNT(*) as count FROM notifications WHERE user_email = $1 AND is_read = false',

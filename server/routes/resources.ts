@@ -62,14 +62,16 @@ router.get('/api/bookings/check-existing', isStaffOrAdmin, async (req, res) => {
 
 router.get('/api/bookings', async (req, res) => {
   try {
-    const { user_email, date, resource_id, status } = req.query;
+    const { user_email: rawEmail, date, resource_id, status } = req.query;
+    
+    const user_email = rawEmail ? decodeURIComponent(rawEmail as string) : null;
     
     const conditions = [
       eq(bookings.status, (status as string) || 'confirmed')
     ];
     
     if (user_email) {
-      conditions.push(eq(bookings.userEmail, user_email as string));
+      conditions.push(eq(bookings.userEmail, user_email));
     }
     if (date) {
       conditions.push(sql`${bookings.bookingDate} = ${date}`);

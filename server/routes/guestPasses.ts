@@ -11,7 +11,7 @@ const router = Router();
 
 router.get('/api/guest-passes/:email', async (req, res) => {
   try {
-    const { email } = req.params;
+    const email = decodeURIComponent(req.params.email);
     const { tier } = req.query;
     
     const tierLimits = tier ? await getTierLimits(tier as string) : null;
@@ -59,7 +59,7 @@ router.get('/api/guest-passes/:email', async (req, res) => {
 
 router.post('/api/guest-passes/:email/use', async (req, res) => {
   try {
-    const { email } = req.params;
+    const email = decodeURIComponent(req.params.email);
     const { guest_name } = req.body;
     
     const result = await db.update(guestPasses)
@@ -106,7 +106,7 @@ router.post('/api/guest-passes/:email/use', async (req, res) => {
 
 router.put('/api/guest-passes/:email', async (req, res) => {
   try {
-    const { email } = req.params;
+    const email = decodeURIComponent(req.params.email);
     const { passes_total } = req.body;
     
     const result = await db.update(guestPasses)
