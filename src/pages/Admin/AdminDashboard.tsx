@@ -26,6 +26,7 @@ import { formatPhoneNumber } from '../../utils/formatting';
 import { useNotificationSounds } from '../../hooks/useNotificationSounds';
 import FloatingActionButton from '../../components/FloatingActionButton';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
+import { SwipeableListItem } from '../../components/SwipeableListItem';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -2633,57 +2634,96 @@ const SimulatorAdmin: React.FC = () => {
                                             {bookings.map((booking, index) => {
                                                 const isToday = booking.request_date === getTodayPacific();
                                                 return (
-                                                    <div key={`upcoming-${booking.id}`} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.2 + index * 0.03}s`}}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
-                                                                    {(booking as any).tier && <TierBadge tier={(booking as any).tier} size="sm" />}
+                                                    <SwipeableListItem
+                                                        key={`upcoming-${booking.id}`}
+                                                        leftActions={isToday ? [
+                                                            {
+                                                                id: 'checkin',
+                                                                icon: 'how_to_reg',
+                                                                label: 'Check In',
+                                                                color: 'green',
+                                                                onClick: async () => {
+                                                                    try {
+                                                                        const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
+                                                                            method: 'PUT',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            credentials: 'include',
+                                                                            body: JSON.stringify({ status: 'attended', source: booking.source })
+                                                                        });
+                                                                        if (res.ok) {
+                                                                            setTimeout(() => handleRefresh(), 300);
+                                                                        } else {
+                                                                            const err = await res.json();
+                                                                            console.error('Check-in failed:', err.error || 'Unknown error');
+                                                                        }
+                                                                    } catch (err) {
+                                                                        console.error('Check-in failed:', err);
+                                                                    }
+                                                                }
+                                                            }
+                                                        ] : []}
+                                                        rightActions={[
+                                                            {
+                                                                id: 'edit',
+                                                                icon: 'edit',
+                                                                label: 'Edit',
+                                                                color: 'blue',
+                                                                onClick: () => setSelectedCalendarBooking(booking)
+                                                            }
+                                                        ]}
+                                                    >
+                                                        <div className="glass-card p-3 border border-primary/10 dark:border-white/10 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.2 + index * 0.03}s`}}>
+                                                            <div className="flex items-center gap-3">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
+                                                                        {(booking as any).tier && <TierBadge tier={(booking as any).tier} size="sm" />}
+                                                                    </div>
+                                                                    <p className="text-xs text-primary/60 dark:text-white/60">
+                                                                        {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
+                                                                    </p>
+                                                                    {booking.bay_name && (
+                                                                        <p className="text-xs text-primary/60 dark:text-white/60">{booking.bay_name}</p>
+                                                                    )}
                                                                 </div>
-                                                                <p className="text-xs text-primary/60 dark:text-white/60">
-                                                                    {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
-                                                                </p>
-                                                                {booking.bay_name && (
-                                                                    <p className="text-xs text-primary/60 dark:text-white/60">{booking.bay_name}</p>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                {isToday && (
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
+                                                                                    method: 'PUT',
+                                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                                    credentials: 'include',
+                                                                                    body: JSON.stringify({ status: 'attended', source: booking.source })
+                                                                                });
+                                                                                if (res.ok) {
+                                                                                    setTimeout(() => handleRefresh(), 300);
+                                                                                } else {
+                                                                                    const err = await res.json();
+                                                                                    console.error('Check-in failed:', err.error || 'Unknown error');
+                                                                                }
+                                                                            } catch (err) {
+                                                                                console.error('Check-in failed:', err);
+                                                                            }
+                                                                        }}
+                                                                        className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-xs">how_to_reg</span>
+                                                                        Check In
+                                                                    </button>
                                                                 )}
+                                                                <button
+                                                                    onClick={() => setSelectedCalendarBooking(booking)}
+                                                                    className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-xs">edit</span>
+                                                                    Edit
+                                                                </button>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            {isToday && (
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        try {
-                                                                            const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
-                                                                                method: 'PUT',
-                                                                                headers: { 'Content-Type': 'application/json' },
-                                                                                credentials: 'include',
-                                                                                body: JSON.stringify({ status: 'attended', source: booking.source })
-                                                                            });
-                                                                            if (res.ok) {
-                                                                                setTimeout(() => handleRefresh(), 300);
-                                                                            } else {
-                                                                                const err = await res.json();
-                                                                                console.error('Check-in failed:', err.error || 'Unknown error');
-                                                                            }
-                                                                        } catch (err) {
-                                                                            console.error('Check-in failed:', err);
-                                                                        }
-                                                                    }}
-                                                                    className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
-                                                                >
-                                                                    <span className="material-symbols-outlined text-xs">how_to_reg</span>
-                                                                    Check In
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => setSelectedCalendarBooking(booking)}
-                                                                className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
-                                                            >
-                                                                <span className="material-symbols-outlined text-xs">edit</span>
-                                                                Edit
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                                    </SwipeableListItem>
                                                 );
                                             })}
                                         </div>
@@ -2729,34 +2769,90 @@ const SimulatorAdmin: React.FC = () => {
                             ) : (
                                 <div className="space-y-2">
                                     {filteredProcessed.slice(0, 20).map(req => (
-                                        <div key={`processed-${req.id}`} className="glass-card p-3 rounded-xl border border-primary/10 dark:border-white/10 flex justify-between items-center">
-                                            <div>
-                                                <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
-                                                <p className="text-xs text-primary/60 dark:text-white/60">
-                                                    {formatDateShort(req.request_date)}
-                                                </p>
-                                                <p className="text-xs text-primary/60 dark:text-white/60">
-                                                    {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
-                                                </p>
-                                                {req.bay_name && (
-                                                    <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
-                                                )}
+                                        <SwipeableListItem
+                                            key={`processed-${req.id}`}
+                                            leftActions={req.status === 'approved' ? [
+                                                {
+                                                    id: 'attended',
+                                                    icon: 'check_circle',
+                                                    label: 'Attended',
+                                                    color: 'green',
+                                                    onClick: async () => {
+                                                        try {
+                                                            const res = await fetch(`/api/bookings/${req.id}/checkin`, {
+                                                                method: 'PUT',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                credentials: 'include',
+                                                                body: JSON.stringify({ status: 'attended', source: req.source })
+                                                            });
+                                                            if (res.ok) {
+                                                                setTimeout(() => handleRefresh(), 300);
+                                                            } else {
+                                                                const err = await res.json();
+                                                                console.error('Mark attended failed:', err.error || 'Unknown error');
+                                                            }
+                                                        } catch (err) {
+                                                            console.error('Mark attended failed:', err);
+                                                        }
+                                                    }
+                                                }
+                                            ] : []}
+                                            rightActions={req.status === 'approved' ? [
+                                                {
+                                                    id: 'noshow',
+                                                    icon: 'person_off',
+                                                    label: 'No Show',
+                                                    color: 'red',
+                                                    onClick: async () => {
+                                                        try {
+                                                            const res = await fetch(`/api/bookings/${req.id}/checkin`, {
+                                                                method: 'PUT',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                credentials: 'include',
+                                                                body: JSON.stringify({ status: 'no_show', source: req.source })
+                                                            });
+                                                            if (res.ok) {
+                                                                setTimeout(() => handleRefresh(), 300);
+                                                            } else {
+                                                                const err = await res.json();
+                                                                console.error('Mark no_show failed:', err.error || 'Unknown error');
+                                                            }
+                                                        } catch (err) {
+                                                            console.error('Mark no_show failed:', err);
+                                                        }
+                                                    }
+                                                }
+                                            ] : []}
+                                        >
+                                            <div className="glass-card p-3 border border-primary/10 dark:border-white/10 flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                                    <p className="text-xs text-primary/60 dark:text-white/60">
+                                                        {formatDateShort(req.request_date)}
+                                                    </p>
+                                                    <p className="text-xs text-primary/60 dark:text-white/60">
+                                                        {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                    </p>
+                                                    {req.bay_name && (
+                                                        <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                        {formatStatusLabel(req.status)}
+                                                    </span>
+                                                    {req.status === 'approved' && (
+                                                        <button
+                                                            onClick={() => setMarkStatusModal({ booking: req, confirmNoShow: false })}
+                                                            className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">task_alt</span>
+                                                            Mark Status
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
-                                                    {formatStatusLabel(req.status)}
-                                                </span>
-                                                {req.status === 'approved' && (
-                                                    <button
-                                                        onClick={() => setMarkStatusModal({ booking: req, confirmNoShow: false })}
-                                                        className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xs">task_alt</span>
-                                                        Mark Status
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
+                                        </SwipeableListItem>
                                     ))}
                                 </div>
                             );

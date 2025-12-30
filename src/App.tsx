@@ -373,10 +373,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   useDebugLayout();
 
-  // Edge swipe back navigation for member pages on touch devices
-  const isRootMemberPage = location.pathname === '/dashboard';
+  // Edge swipe back navigation for member and staff pages on touch devices
+  const isRootPage = location.pathname === '/dashboard' || location.pathname === '/admin';
+  const isMemberOrStaff = !!user && (user.role === 'member' || user.role === 'staff' || user.role === 'admin');
   const { isActive: isEdgeSwipeActive, progress: edgeSwipeProgress } = useEdgeSwipe({
-    enabled: !!user && user.role === 'member' && !isRootMemberPage && !isMenuOpen,
+    enabled: isMemberOrStaff && !isRootPage && !isMenuOpen,
     edgeWidth: 20,
     threshold: 100
   });
