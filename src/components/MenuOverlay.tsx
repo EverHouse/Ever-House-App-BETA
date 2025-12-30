@@ -22,14 +22,14 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
     if (isOpen) {
       setIsVisible(true);
       setIsClosing(false);
-      document.body.style.overflow = 'hidden';
+      document.documentElement.classList.add('overflow-hidden');
       stop();
     } else if (isVisible) {
       setIsClosing(true);
       const timer = setTimeout(() => {
         setIsVisible(false);
         setIsClosing(false);
-        document.body.style.overflow = '';
+        document.documentElement.classList.remove('overflow-hidden');
         start();
       }, 250);
       return () => clearTimeout(timer);

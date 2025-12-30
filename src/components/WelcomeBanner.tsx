@@ -134,78 +134,91 @@ const WelcomeBanner: React.FC = () => {
       </div>
 
       {showIOSModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className={`w-full max-w-sm p-6 rounded-3xl ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'} shadow-2xl`}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-brand-green'}`}>
-                Add to Home Screen
-              </h3>
-              <button 
-                onClick={() => setShowIOSModal(false)}
-                className={`p-1 rounded-full ${isDark ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            
-            <div className={`${isDark ? 'text-white/80' : 'text-gray-600'}`}>
-              <p className="text-sm mb-4">
-                Use your browser's menu to add this app to your home screen to receive push notifications regarding your bookings.
-              </p>
-              
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                    <span className="text-xs font-bold">1</span>
-                  </div>
-                  <p className="text-sm pt-0.5">
-                    Tap the <strong>Share</strong> button at the bottom of the screen.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                    <span className="text-xs font-bold">2</span>
-                  </div>
-                  <p className="text-sm pt-0.5">
-                    Scroll down and tap <strong>"Add to Home Screen"</strong>.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                    <span className="text-xs font-bold">3</span>
-                  </div>
-                  <p className="text-sm pt-0.5">
-                    Turn on the <strong>"Open as Web App"</strong> toggle.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                    <span className="text-xs font-bold">4</span>
-                  </div>
-                  <p className="text-sm pt-0.5">
-                    Tap <strong>"Add"</strong> to place the icon on your Home Screen.
-                  </p>
-                </div>
-              </div>
-              
-              <p className={`text-sm mt-4 ${isDark ? 'text-accent' : 'text-brand-green'}`}>
-                Don't forget to enable push notifications in your profile settings (top right icon)!
-              </p>
-            </div>
-            
-            <a
-              href="https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setShowIOSModal(false)}
-              className={`w-full mt-6 py-3 rounded-xl font-bold text-center block ${isDark ? 'bg-accent text-brand-green' : 'bg-brand-green text-white'}`}
-            >
-              View Full Instructions
-            </a>
-          </div>
-        </div>
+        <IOSModal isDark={isDark} onClose={() => setShowIOSModal(false)} />
       )}
     </>
+  );
+};
+
+const IOSModal: React.FC<{ isDark: boolean; onClose: () => void }> = ({ isDark, onClose }) => {
+  useEffect(() => {
+    document.documentElement.classList.add('overflow-hidden');
+    return () => {
+      document.documentElement.classList.remove('overflow-hidden');
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className={`w-full max-w-sm p-6 rounded-3xl ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'} shadow-2xl`}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-brand-green'}`}>
+            Add to Home Screen
+          </h3>
+          <button 
+            onClick={onClose}
+            className={`p-1 rounded-full ${isDark ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        
+        <div className={`${isDark ? 'text-white/80' : 'text-gray-600'}`}>
+          <p className="text-sm mb-4">
+            Use your browser's menu to add this app to your home screen to receive push notifications regarding your bookings.
+          </p>
+          
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                <span className="text-xs font-bold">1</span>
+              </div>
+              <p className="text-sm pt-0.5">
+                Tap the <strong>Share</strong> button at the bottom of the screen.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                <span className="text-xs font-bold">2</span>
+              </div>
+              <p className="text-sm pt-0.5">
+                Scroll down and tap <strong>"Add to Home Screen"</strong>.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                <span className="text-xs font-bold">3</span>
+              </div>
+              <p className="text-sm pt-0.5">
+                Turn on the <strong>"Open as Web App"</strong> toggle.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                <span className="text-xs font-bold">4</span>
+              </div>
+              <p className="text-sm pt-0.5">
+                Tap <strong>"Add"</strong> to place the icon on your Home Screen.
+              </p>
+            </div>
+          </div>
+          
+          <p className={`text-sm mt-4 ${isDark ? 'text-accent' : 'text-brand-green'}`}>
+            Don't forget to enable push notifications in your profile settings (top right icon)!
+          </p>
+        </div>
+        
+        <a
+          href="https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClose}
+          className={`w-full mt-6 py-3 rounded-xl font-bold text-center block ${isDark ? 'bg-accent text-brand-green' : 'bg-brand-green text-white'}`}
+        >
+          View Full Instructions
+        </a>
+      </div>
+    </div>
   );
 };
 
