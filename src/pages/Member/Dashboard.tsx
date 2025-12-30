@@ -146,12 +146,18 @@ const Dashboard: React.FC = () => {
     setError(null);
     
     try {
+      // Build conference room bookings URL with member name and email for proper filtering
+      const conferenceRoomParams = new URLSearchParams();
+      if (user.name) conferenceRoomParams.set('member_name', user.name);
+      if (user.email) conferenceRoomParams.set('member_email', user.email);
+      const conferenceRoomUrl = `/api/conference-room-bookings${conferenceRoomParams.toString() ? '?' + conferenceRoomParams.toString() : ''}`;
+      
       const results = await Promise.allSettled([
         fetch(`/api/bookings?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
         fetch(`/api/rsvps?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
         fetch(`/api/wellness-enrollments?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
         fetch(`/api/booking-requests?user_email=${encodeURIComponent(user.email)}`, { credentials: 'include' }),
-        fetch(`/api/conference-room-bookings`, { credentials: 'include' })
+        fetch(conferenceRoomUrl, { credentials: 'include' })
       ]);
 
       if (results[0].status === 'fulfilled' && results[0].value.ok) {
