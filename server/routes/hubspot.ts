@@ -11,8 +11,18 @@ import * as path from 'path';
 
 const router = Router();
 
+let contactsCache: { data: any[] | null; timestamp: number } = { data: null, timestamp: 0 };
+const CONTACTS_CACHE_TTL = 60 * 1000;
+
 router.get('/api/hubspot/contacts', isStaffOrAdmin, async (req, res) => {
   try {
+    const now = Date.now();
+    const forceRefresh = req.query.refresh === 'true';
+    
+    if (!forceRefresh && contactsCache.data && (now - contactsCache.timestamp) < CONTACTS_CACHE_TTL) {
+      return res.json(contactsCache.data);
+    }
+    
     const hubspot = await getHubSpotClient();
     
     const properties = [
@@ -52,9 +62,14 @@ router.get('/api/hubspot/contacts', isStaffOrAdmin, async (req, res) => {
       }))
       .filter((contact: any) => contact.status.toLowerCase() === 'active');
     
+    contactsCache = { data: contacts, timestamp: now };
+    
     res.json(contacts);
   } catch (error: any) {
     if (!isProduction) console.error('HubSpot error:', error);
+    if (contactsCache.data) {
+      return res.json(contactsCache.data);
+    }
     res.status(500).json({ error: 'Failed to fetch contacts' });
   }
 });

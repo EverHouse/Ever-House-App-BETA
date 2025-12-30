@@ -222,9 +222,54 @@ router.get('/api/bays/:bayId/availability', async (req, res) => {
   }
 });
 
-router.get('/api/booking-requests', isStaffOrAdmin, async (req, res) => {
+async function isStaffOrAdminCheck(email: string): Promise<boolean> {
+  const { isAdminEmail, getAuthPool, queryWithRetry } = await import('../replit_integrations/auth/replitAuth');
+  const isAdmin = await isAdminEmail(email);
+  if (isAdmin) return true;
+  
+  const pool = getAuthPool();
+  if (!pool) return false;
+  
+  try {
+    const result = await queryWithRetry(
+      pool,
+      'SELECT id FROM staff_users WHERE LOWER(email) = LOWER($1) AND is_active = true',
+      [email]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Error checking staff status:', error);
+    return false;
+  }
+}
+
+router.get('/api/booking-requests', async (req, res) => {
   try {
     const { user_email, status, include_all } = req.query;
+    const sessionUser = (req.session as any)?.user;
+    
+    if (!sessionUser) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const sessionEmail = sessionUser.email?.toLowerCase() || '';
+    const requestedEmail = (user_email as string)?.toLowerCase();
+    
+    if (include_all === 'true') {
+      const hasStaffAccess = await isStaffOrAdminCheck(sessionEmail);
+      if (!hasStaffAccess) {
+        return res.status(403).json({ error: 'Staff access required to view all requests' });
+      }
+    } else if (user_email) {
+      if (requestedEmail !== sessionEmail) {
+        const hasStaffAccess = await isStaffOrAdminCheck(sessionEmail);
+        if (!hasStaffAccess) {
+          return res.status(403).json({ error: 'You can only view your own booking requests' });
+        }
+      }
+    } else {
+      return res.status(400).json({ error: 'user_email or include_all parameter required' });
+    }
     
     const conditions: any[] = [];
     

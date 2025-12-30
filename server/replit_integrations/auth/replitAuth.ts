@@ -5,7 +5,7 @@ import { Pool } from "pg";
 
 let authPool: Pool | null = null;
 
-function getAuthPool(): Pool | null {
+export function getAuthPool(): Pool | null {
   if (authPool) return authPool;
   
   if (!process.env.DATABASE_URL) {
@@ -96,7 +96,7 @@ export function getSession() {
   }
 }
 
-async function queryWithRetry(pool: Pool, query: string, params: any[]): Promise<any> {
+export async function queryWithRetry(pool: Pool, query: string, params: any[]): Promise<any> {
   try {
     return await pool.query(query, params);
   } catch (error: any) {
