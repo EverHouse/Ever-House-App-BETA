@@ -1,36 +1,50 @@
+const prefersReducedMotion = () => 
+  typeof window !== 'undefined' && 
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const canVibrate = () => 
+  typeof navigator !== 'undefined' && 'vibrate' in navigator;
+
 export const haptic = {
   light: () => {
-    if ('vibrate' in navigator) {
+    if (canVibrate() && !prefersReducedMotion()) {
       navigator.vibrate(10);
     }
   },
   medium: () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(20);
+    if (canVibrate() && !prefersReducedMotion()) {
+      navigator.vibrate(15);
     }
   },
   heavy: () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(30);
+    if (canVibrate() && !prefersReducedMotion()) {
+      navigator.vibrate(25);
     }
   },
   success: () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate([10, 50, 20]);
+    if (canVibrate() && !prefersReducedMotion()) {
+      navigator.vibrate([10, 50, 10]);
+    }
+  },
+  warning: () => {
+    if (canVibrate() && !prefersReducedMotion()) {
+      navigator.vibrate([15, 30, 15, 30, 15]);
     }
   },
   error: () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate([30, 50, 30, 50, 30]);
+    if (canVibrate() && !prefersReducedMotion()) {
+      navigator.vibrate([30, 50, 30]);
     }
   },
   selection: () => {
-    if ('vibrate' in navigator) {
+    if (canVibrate() && !prefersReducedMotion()) {
       navigator.vibrate(5);
     }
   }
 };
 
-export const triggerHaptic = (type: 'light' | 'medium' | 'heavy' | 'success' | 'error' | 'selection') => {
+export type HapticType = keyof typeof haptic;
+
+export const triggerHaptic = (type: HapticType) => {
   haptic[type]?.();
 };
