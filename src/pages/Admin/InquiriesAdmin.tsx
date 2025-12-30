@@ -330,7 +330,7 @@ const InquiriesAdmin: React.FC = () => {
 
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                    <span className="material-symbols-outlined animate-spin text-3xl text-gray-400">progress_activity</span>
+                    <span className="material-symbols-outlined animate-spin text-3xl text-gray-400 dark:text-gray-500">progress_activity</span>
                 </div>
             ) : inquiries.length === 0 ? (
                 <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-white/5">

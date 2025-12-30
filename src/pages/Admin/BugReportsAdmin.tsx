@@ -202,8 +202,8 @@ const BugReportsAdmin: React.FC = () => {
                         ))}
                     </div>
                 ) : reports.length === 0 ? (
-                    <div className={`text-center py-16 rounded-3xl overflow-hidden ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-black/5'}`}>
-                        <span className={`material-symbols-outlined text-4xl mb-3 ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
+                    <div className="text-center py-16">
+                        <span className={`material-symbols-outlined text-4xl mb-3 block ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
                         <p className={`font-medium ${isDark ? 'text-white/60' : 'text-primary/60'}`}>No bug reports found</p>
                     </div>
                 ) : (

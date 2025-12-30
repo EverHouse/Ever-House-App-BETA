@@ -904,7 +904,7 @@ const EventsAdminContent: React.FC = () => {
                     <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="External Link URL (optional)" value={newItem.external_url || ''} onChange={e => setNewItem({...newItem, external_url: e.target.value})} />
                     <textarea className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                     <div className="flex gap-3 justify-end pt-2">
-                        <button onClick={() => { setIsEditing(false); setError(null); }} className="px-4 py-2 text-gray-500 font-bold" disabled={isSaving}>Cancel</button>
+                        <button onClick={() => { setIsEditing(false); setError(null); }} className="px-4 py-2 text-gray-500 dark:text-gray-400 font-bold" disabled={isSaving}>Cancel</button>
                         <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md disabled:opacity-50 flex items-center gap-2">
                             {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
                             {isSaving ? 'Saving...' : 'Save'}
@@ -915,10 +915,10 @@ const EventsAdminContent: React.FC = () => {
 
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                    <span className="material-symbols-outlined animate-spin text-2xl text-gray-400">progress_activity</span>
+                    <span className="material-symbols-outlined animate-spin text-2xl text-gray-400 dark:text-gray-500">progress_activity</span>
                 </div>
             ) : filteredEvents.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
+                <div className="text-center py-12 text-gray-400 dark:text-gray-500">
                     <span className="material-symbols-outlined text-4xl mb-2 block">event_busy</span>
                     <p>No {activeCategory === 'all' ? 'events' : activeCategory.toLowerCase()} found</p>
                 </div>
@@ -955,7 +955,7 @@ const EventsAdminContent: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
-                                            <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
+                                            <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
                                             <div className="flex items-center gap-2">
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleViewRsvps(event); }} 
@@ -986,7 +986,7 @@ const EventsAdminContent: React.FC = () => {
                     {pastEvents.length > 0 && (
                         <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
                             <div className="flex items-center gap-2 mb-3">
-                                <span className="material-symbols-outlined text-gray-400">history</span>
+                                <span className="material-symbols-outlined text-gray-400 dark:text-gray-500">history</span>
                                 <h3 className="font-bold text-gray-500 dark:text-gray-400">Past ({pastEvents.length})</h3>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-70">
@@ -1014,7 +1014,7 @@ const EventsAdminContent: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
-                                            <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
+                                            <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pin_drop</span> {event.location}</span>
                                             <div className="flex items-center gap-2">
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleViewRsvps(event); }} 
@@ -1183,16 +1183,16 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
                         onClick={onClose}
                         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                     >
-                        <span className="material-symbols-outlined text-gray-500">close</span>
+                        <span className="material-symbols-outlined text-gray-500 dark:text-gray-400">close</span>
                     </button>
                 </div>
 
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
-                        <span className="material-symbols-outlined animate-spin text-2xl text-gray-400">progress_activity</span>
+                        <span className="material-symbols-outlined animate-spin text-2xl text-gray-400 dark:text-gray-500">progress_activity</span>
                     </div>
                 ) : participants.length === 0 ? (
-                    <div className="text-center py-12 text-gray-400">
+                    <div className="text-center py-12 text-gray-400 dark:text-gray-500">
                         <span className="material-symbols-outlined text-4xl mb-2 block">
                             {type === 'rsvp' ? 'event_busy' : 'person_off'}
                         </span>
@@ -1200,7 +1200,7 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
+                        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
                             {participants.length} {type === 'rsvp' ? 'RSVP' : 'Enrolled'}{participants.length !== 1 ? 's' : ''}
                         </div>
                         {participants.map((p) => (
@@ -1222,7 +1222,7 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
                                             <p className="text-xs text-gray-500 dark:text-gray-400">{p.userEmail}</p>
                                         )}
                                         {p.phone && (
-                                            <p className="text-xs text-gray-400">{formatPhoneNumber(p.phone)}</p>
+                                            <p className="text-xs text-gray-400 dark:text-gray-500">{formatPhoneNumber(p.phone)}</p>
                                         )}
                                     </div>
                                 </div>
@@ -1230,7 +1230,7 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
                                     <span className="text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded">
                                         {p.status}
                                     </span>
-                                    <p className="text-[10px] text-gray-400 mt-1">{formatDate(p.createdAt)}</p>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{formatDate(p.createdAt)}</p>
                                 </div>
                             </div>
                         ))}
@@ -3735,13 +3735,13 @@ const ManualBookingModal: React.FC<{
                                         }}
                                         className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
                                     >
-                                        <span className="material-symbols-outlined text-gray-500 text-sm">close</span>
+                                        <span className="material-symbols-outlined text-gray-500 dark:text-gray-400 text-sm">close</span>
                                     </button>
                                 </div>
                             ) : (
                                 <>
                                     <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg">search</span>
                                         <input
                                             ref={inputRef}
                                             type="text"
@@ -3752,7 +3752,7 @@ const ManualBookingModal: React.FC<{
                                             className="w-full p-3 pl-10 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-primary dark:text-white"
                                         />
                                         {isSearching && (
-                                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg animate-spin">progress_activity</span>
+                                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg animate-spin">progress_activity</span>
                                         )}
                                     </div>
                                     {showDropdown && searchResults.length > 0 && (
@@ -3790,7 +3790,7 @@ const ManualBookingModal: React.FC<{
                                 </>
                             )}
                             {memberLookupStatus === 'checking' && (
-                                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
                                     <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
                                     Looking up member...
                                 </p>
@@ -4210,7 +4210,7 @@ const WellnessAdminContent: React.FC = () => {
                 {isLoading ? (
                     <div className="py-8 flex flex-col items-center gap-2">
                       <WalkingGolferSpinner size="md" variant="dark" />
-                      <p className="text-sm text-gray-500">Loading classes...</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Loading classes...</p>
                     </div>
                 ) : filteredClasses.length === 0 ? (
                     <div className="py-8 text-center text-gray-500 dark:text-gray-400">
@@ -4246,7 +4246,7 @@ const WellnessAdminContent: React.FC = () => {
                                                     </p>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-xs px-2 py-0.5 rounded bg-primary/10 dark:bg-white/10 text-primary dark:text-white">{cls.category}</span>
-                                                        <span className="text-xs text-gray-400">{cls.duration} • {cls.spots}</span>
+                                                        <span className="text-xs text-gray-400 dark:text-gray-500">{cls.duration} • {cls.spots}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -4282,7 +4282,7 @@ const WellnessAdminContent: React.FC = () => {
                         {pastClasses.length > 0 && (
                             <div>
                                 <div className="flex items-center gap-2 mb-3">
-                                    <span className="material-symbols-outlined text-gray-400">history</span>
+                                    <span className="material-symbols-outlined text-gray-400 dark:text-gray-500">history</span>
                                     <h3 className="font-bold text-gray-500 dark:text-gray-400">Past ({pastClasses.length})</h3>
                                 </div>
                                 <div className="space-y-3 opacity-70">
@@ -4307,7 +4307,7 @@ const WellnessAdminContent: React.FC = () => {
                                                     </p>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-xs px-2 py-0.5 rounded bg-primary/10 dark:bg-white/10 text-primary dark:text-white">{cls.category}</span>
-                                                        <span className="text-xs text-gray-400">{cls.duration} • {cls.spots}</span>
+                                                        <span className="text-xs text-gray-400 dark:text-gray-500">{cls.duration} • {cls.spots}</span>
                                                     </div>
                                                 </div>
                                             </div>
