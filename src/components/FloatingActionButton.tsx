@@ -8,6 +8,7 @@ interface FloatingActionButtonProps {
   onClick: () => void;
   color?: FABColor;
   icon?: string;
+  secondaryIcon?: string;
   label?: string;
 }
 
@@ -23,6 +24,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onClick,
   color = 'brand',
   icon = 'add',
+  secondaryIcon,
   label,
 }) => {
   const { isAtBottom } = useBottomNav();
@@ -30,7 +32,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   const fabContent = (
     <button
       onClick={onClick}
-      className={`fixed right-5 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out hover:scale-110 active:scale-95 ${colorClasses[color]}`}
+      className={`fixed right-5 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center gap-0.5 transition-all duration-300 ease-out hover:scale-110 active:scale-95 ${colorClasses[color]}`}
       style={{ 
         bottom: isAtBottom 
           ? 'calc(24px + env(safe-area-inset-bottom, 0px))' 
@@ -38,7 +40,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       }}
       aria-label={label || 'Add new item'}
     >
-      <span className="material-symbols-outlined text-2xl">{icon}</span>
+      <span className={`material-symbols-outlined ${secondaryIcon ? 'text-xl' : 'text-2xl'}`}>{icon}</span>
+      {secondaryIcon && <span className="material-symbols-outlined text-lg">{secondaryIcon}</span>}
     </button>
   );
   

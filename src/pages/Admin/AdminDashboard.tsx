@@ -1520,7 +1520,7 @@ const StaffUpdatesAdmin: React.FC = () => {
                 </div>
 
                 {activeSubTab === 'activity' ? renderActivityTab() : <AnnouncementsAdmin triggerCreate={triggerCreateAnnouncement} />}
-                <FloatingActionButton onClick={handleCreateAnnouncement} color="amber" label="Add announcement" />
+                <FloatingActionButton onClick={handleCreateAnnouncement} color="amber" secondaryIcon="campaign" label="Add announcement" />
             </div>
         </PullToRefresh>
     );
