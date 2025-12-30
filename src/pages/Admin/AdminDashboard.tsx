@@ -4151,11 +4151,30 @@ const WellnessAdminContent: React.FC = () => {
         }
     };
 
+    const convertTo24Hour = (timeStr: string): string => {
+        if (!timeStr) return '';
+        const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (match12h) {
+            let hours = parseInt(match12h[1]);
+            const minutes = match12h[2];
+            const period = match12h[3].toUpperCase();
+            if (period === 'PM' && hours !== 12) hours += 12;
+            if (period === 'AM' && hours === 12) hours = 0;
+            return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+        const match24h = timeStr.match(/^(\d{1,2}):(\d{2})/);
+        if (match24h) {
+            return `${match24h[1].padStart(2, '0')}:${match24h[2]}`;
+        }
+        return timeStr;
+    };
+
     const calculateEndTime = (startTime: string, durationStr: string): string => {
         if (!startTime) return '';
+        const time24 = convertTo24Hour(startTime);
         const match = durationStr?.match(/(\d+)/);
         const durationMinutes = match ? parseInt(match[1]) : 60;
-        const [hours, mins] = startTime.split(':').map(Number);
+        const [hours, mins] = time24.split(':').map(Number);
         const totalMins = hours * 60 + mins + durationMinutes;
         const endHours = Math.floor(totalMins / 60) % 24;
         const endMins = totalMins % 60;
@@ -4163,9 +4182,11 @@ const WellnessAdminContent: React.FC = () => {
     };
 
     const openEdit = (cls: WellnessClass) => {
+        const startTime24 = convertTo24Hour(cls.time);
         const endTime = calculateEndTime(cls.time, cls.duration);
         setFormData({
             ...cls,
+            time: startTime24,
             date: cls.date.split('T')[0],
             endTime
         });

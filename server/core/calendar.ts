@@ -602,8 +602,7 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
       if (event.start?.dateTime) {
         const startDt = new Date(event.start.dateTime);
         eventDate = startDt.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-        const pacificTime = startDt.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hour12: true });
-        startTime = pacificTime;
+        startTime = startDt.toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hour12: false });
         
         if (event.end?.dateTime) {
           const endDt = new Date(event.end.dateTime);
@@ -611,7 +610,7 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
         }
       } else if (event.start?.date) {
         eventDate = event.start.date;
-        startTime = '09:00 AM';
+        startTime = '09:00';
       } else {
         continue;
       }
