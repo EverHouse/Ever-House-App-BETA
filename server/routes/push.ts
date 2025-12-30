@@ -4,6 +4,7 @@ import { pool, isProduction } from '../core/db';
 import { db } from '../db';
 import { pushSubscriptions, users, notifications, events, eventRsvps, bookingRequests, wellnessClasses, wellnessEnrollments } from '../../shared/schema';
 import { eq, inArray, and, sql } from 'drizzle-orm';
+import { formatTime12Hour } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -179,7 +180,7 @@ export async function sendDailyReminders() {
       const eventNotifications = eventReminders.map(evt => ({
         userEmail: evt.userEmail,
         title: 'Event Tomorrow',
-        message: `Reminder: ${evt.title} is tomorrow${evt.startTime ? ` at ${evt.startTime.substring(0, 5)}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`,
+        message: `Reminder: ${evt.title} is tomorrow${evt.startTime ? ` at ${formatTime12Hour(evt.startTime)}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`,
         type: 'event_reminder' as const,
         relatedId: evt.eventId,
         relatedType: 'event' as const
@@ -193,7 +194,7 @@ export async function sendDailyReminders() {
       }
       
       for (const evt of eventReminders) {
-        const message = `Reminder: ${evt.title} is tomorrow${evt.startTime ? ` at ${evt.startTime.substring(0, 5)}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`;
+        const message = `Reminder: ${evt.title} is tomorrow${evt.startTime ? ` at ${formatTime12Hour(evt.startTime)}` : ''}${evt.location ? ` - ${evt.location}` : ''}.`;
         sendPushNotification(evt.userEmail, { title: 'Event Tomorrow', body: message, url: '/#/member-events' })
           .catch(() => { results.pushFailed++; });
       }
@@ -216,7 +217,7 @@ export async function sendDailyReminders() {
       const bookingNotifications = bookingReminders.map(booking => ({
         userEmail: booking.userEmail,
         title: 'Booking Tomorrow',
-        message: `Reminder: Your simulator booking is tomorrow at ${booking.startTime.substring(0, 5)}${booking.bayId ? ` on Bay ${booking.bayId}` : ''}.`,
+        message: `Reminder: Your simulator booking is tomorrow at ${formatTime12Hour(booking.startTime)}${booking.bayId ? ` on Bay ${booking.bayId}` : ''}.`,
         type: 'booking_reminder' as const,
         relatedId: booking.id,
         relatedType: 'booking_request' as const
@@ -230,7 +231,7 @@ export async function sendDailyReminders() {
       }
       
       for (const booking of bookingReminders) {
-        const message = `Reminder: Your simulator booking is tomorrow at ${booking.startTime.substring(0, 5)}${booking.bayId ? ` on Bay ${booking.bayId}` : ''}.`;
+        const message = `Reminder: Your simulator booking is tomorrow at ${formatTime12Hour(booking.startTime)}${booking.bayId ? ` on Bay ${booking.bayId}` : ''}.`;
         sendPushNotification(booking.userEmail, { title: 'Booking Tomorrow', body: message, url: '/#/sims' })
           .catch(() => { results.pushFailed++; });
       }

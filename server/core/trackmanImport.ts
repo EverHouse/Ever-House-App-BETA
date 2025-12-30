@@ -3,7 +3,7 @@ import { users, bookingRequests, trackmanUnmatchedBookings, trackmanImportRuns, 
 import { eq, or, ilike, sql } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getTodayPacific, getPacificDateParts } from '../utils/dateUtils';
+import { getTodayPacific, getPacificDateParts, formatNotificationDateTime } from '../utils/dateUtils';
 import { sendPushNotification } from '../routes/push';
 
 interface TrackmanRow {
@@ -360,7 +360,7 @@ export async function importTrackmanBookings(csvPath: string, importedBy?: strin
 
           // Send notification for upcoming approved bookings
           if (normalizedStatus === 'approved' && isUpcoming && insertResult[0]) {
-            const approvalMessage = `Your simulator booking for ${bookingDate} at ${startTime.substring(0, 5)} has been approved.`;
+            const approvalMessage = `Your simulator booking for ${formatNotificationDateTime(bookingDate, startTime)} has been approved.`;
             
             await db.insert(notifications).values({
               userEmail: matchedEmail,

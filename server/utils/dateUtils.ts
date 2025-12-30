@@ -168,3 +168,21 @@ export function formatDateDisplayWithDay(dateStr: string): string {
 export function getTomorrowPacific(): string {
   return addDaysToPacificDate(getTodayPacific(), 1);
 }
+
+/**
+ * Format a time string (HH:MM or HH:MM:SS) to 12-hour format (e.g., "1:00 PM")
+ */
+export function formatTime12Hour(timeStr: string): string {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
+
+/**
+ * Format a date and time for user-friendly notification display
+ * e.g., "Tue, Dec 30 at 1:00 PM"
+ */
+export function formatNotificationDateTime(dateStr: string, timeStr: string): string {
+  return `${formatDateDisplayWithDay(dateStr)} at ${formatTime12Hour(timeStr)}`;
+}

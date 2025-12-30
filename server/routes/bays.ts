@@ -9,6 +9,7 @@ import { sendPushNotification, sendPushNotificationToStaff } from './push';
 import { checkDailyBookingLimit } from '../core/tierService';
 import { notifyAllStaff } from '../core/staffNotifications';
 import { isStaffOrAdmin } from '../core/middleware';
+import { formatNotificationDateTime, formatDateDisplayWithDay, formatTime12Hour } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -516,7 +517,7 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
           .where(eq(bookingRequests.id, bookingId))
           .returning();
         
-        const approvalMessage = `Your simulator booking for ${updatedRow.requestDate} at ${updatedRow.startTime.substring(0, 5)} has been approved.`;
+        const approvalMessage = `Your simulator booking for ${formatNotificationDateTime(updatedRow.requestDate, updatedRow.startTime)} has been approved.`;
         
         await tx.insert(notifications).values({
           userEmail: updatedRow.userEmail,
@@ -570,8 +571,8 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
           .returning();
         
         const declineMessage = suggested_time 
-          ? `Your simulator booking request for ${updatedRow.requestDate} was declined. Suggested alternative: ${suggested_time.substring(0, 5)}`
-          : `Your simulator booking request for ${updatedRow.requestDate} was declined.${staff_notes ? ' Note: ' + staff_notes : ''}`;
+          ? `Your simulator booking request for ${formatDateDisplayWithDay(updatedRow.requestDate)} was declined. Suggested alternative: ${formatTime12Hour(suggested_time)}`
+          : `Your simulator booking request for ${formatDateDisplayWithDay(updatedRow.requestDate)} was declined.`;
         
         await tx.insert(notifications).values({
           userEmail: updatedRow.userEmail,
@@ -641,8 +642,10 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
           const bookingTime = existing.startTime?.substring(0, 5) || '';
           const memberCancelled = cancelled_by === memberEmail;
           
+          const friendlyDateTime = formatNotificationDateTime(bookingDate, existing.startTime || '00:00');
+          
           if (memberCancelled) {
-            const staffMessage = `${memberName} has cancelled their booking for ${bookingDate} at ${bookingTime}.`;
+            const staffMessage = `${memberName} has cancelled their booking for ${friendlyDateTime}.`;
             
             await tx.insert(notifications).values({
               userEmail: 'staff@evenhouse.app',
@@ -655,7 +658,7 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
             
             pushInfo = { type: 'staff', message: staffMessage };
           } else {
-            const memberMessage = `Your booking for ${bookingDate} at ${bookingTime} has been cancelled by staff.${staff_notes ? ' Note: ' + staff_notes : ''}`;
+            const memberMessage = `Your booking for ${friendlyDateTime} has been cancelled by staff.`;
             
             await tx.insert(notifications).values({
               userEmail: memberEmail,

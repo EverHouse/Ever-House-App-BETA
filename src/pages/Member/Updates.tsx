@@ -72,16 +72,43 @@ const isActiveAnnouncement = (item: Announcement): boolean => {
 };
 
 const getNotificationRoute = (notif: UserNotification, isStaffOrAdmin: boolean): string | null => {
+  // Booking notifications
   if (notif.type === 'booking_approved' || notif.type === 'booking_declined') {
     return '/book';
   }
-  if (notif.type === 'event_reminder') {
-    return '/member-events';
+  if (notif.type === 'booking' || notif.type === 'booking_request') {
+    return isStaffOrAdmin ? '/admin?tab=simulator' : '/book';
   }
-  // Tour notifications - navigate staff/admin to tours admin page
-  if ((notif.type === 'tour_scheduled' || notif.type === 'tour_reminder') && isStaffOrAdmin) {
-    return '/admin?tab=tours';
+  if (notif.type === 'booking_cancelled' || notif.type === 'booking_reminder') {
+    return isStaffOrAdmin ? '/admin?tab=simulator' : '/book';
   }
+  
+  // Event notifications
+  if (notif.type === 'event_reminder' || notif.type === 'event_rsvp') {
+    return isStaffOrAdmin ? '/admin?tab=events' : '/member-events';
+  }
+  
+  // Tour notifications
+  if (notif.type === 'tour_scheduled' || notif.type === 'tour_reminder') {
+    return isStaffOrAdmin ? '/admin?tab=tours' : null;
+  }
+  
+  // Wellness notifications
+  if (notif.type === 'wellness_booking' || notif.type === 'wellness_enrollment' || 
+      notif.type === 'wellness_cancellation' || notif.type === 'wellness_reminder') {
+    return isStaffOrAdmin ? '/admin?tab=events' : '/member-wellness';
+  }
+  
+  // Closure notifications
+  if (notif.type === 'closure') {
+    return isStaffOrAdmin ? '/admin?tab=blocks' : null;
+  }
+  
+  // Guest pass notifications
+  if (notif.type === 'guest_pass') {
+    return '/profile';
+  }
+  
   return null;
 };
 
