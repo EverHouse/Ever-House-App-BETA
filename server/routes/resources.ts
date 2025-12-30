@@ -572,7 +572,8 @@ router.delete('/api/bookings/:id', isStaffOrAdmin, async (req, res) => {
 router.put('/api/bookings/:id/member-cancel', async (req, res) => {
   try {
     const { id } = req.params;
-    const userEmail = (req.session as any)?.user?.email;
+    const rawSessionEmail = (req.session as any)?.user?.email;
+    const userEmail = rawSessionEmail?.toLowerCase();
     
     if (!userEmail) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -596,7 +597,16 @@ router.put('/api/bookings/:id/member-cancel', async (req, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
     
-    if (existing.userEmail !== userEmail) {
+    const bookingEmail = existing.userEmail?.toLowerCase();
+    if (bookingEmail !== userEmail) {
+      logger.warn('Member cancel email mismatch', { 
+        bookingId, 
+        bookingEmail: existing.userEmail, 
+        sessionEmail: rawSessionEmail,
+        normalizedBookingEmail: bookingEmail,
+        normalizedSessionEmail: userEmail,
+        requestId: req.requestId 
+      });
       return res.status(403).json({ error: 'You can only cancel your own bookings' });
     }
     
