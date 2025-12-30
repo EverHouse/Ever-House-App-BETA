@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { usePageReady } from '../../contexts/PageReadyContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import ModalShell from '../../components/ModalShell';
 
 interface BugReport {
@@ -29,8 +28,6 @@ const STATUS_TABS = [
 
 const BugReportsAdmin: React.FC = () => {
     const { setPageReady } = usePageReady();
-    const { effectiveTheme } = useTheme();
-    const isDark = effectiveTheme === 'dark';
     const [reports, setReports] = useState<BugReport[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeStatus, setActiveStatus] = useState('open');
@@ -168,13 +165,13 @@ const BugReportsAdmin: React.FC = () => {
             <div className="">
                 <div className="flex items-center justify-between mb-6 animate-pop-in">
                     <div>
-                        <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-primary'}`}>Bug Reports</h1>
-                        <p className={`text-sm mt-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>
+                        <h1 className="text-2xl font-bold text-primary dark:text-white">Bug Reports</h1>
+                        <p className="text-sm mt-1 text-primary/60 dark:text-white/60">
                             {openCount} open {openCount === 1 ? 'report' : 'reports'}
                         </p>
                     </div>
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'glass-button' : 'bg-white border border-black/10'}`}>
-                        <span className={`material-symbols-outlined ${isDark ? 'text-white' : 'text-primary'}`}>bug_report</span>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white border border-black/10 dark:glass-button dark:border-0">
+                        <span className="material-symbols-outlined text-primary dark:text-white">bug_report</span>
                     </div>
                 </div>
 
@@ -185,8 +182,8 @@ const BugReportsAdmin: React.FC = () => {
                             onClick={() => setActiveStatus(tab.id)}
                             className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                                 activeStatus === tab.id
-                                    ? isDark ? 'bg-accent text-primary' : 'bg-primary text-white'
-                                    : isDark ? 'glass-button text-white/70' : 'bg-white border border-black/10 text-primary/70'
+                                    ? 'bg-primary text-white dark:bg-accent dark:text-primary'
+                                    : 'bg-white border border-black/10 text-primary/70 dark:glass-button dark:border-0 dark:text-white/70'
                             }`}
                         >
                             <span className="material-symbols-outlined text-sm">{tab.icon}</span>
@@ -198,13 +195,13 @@ const BugReportsAdmin: React.FC = () => {
                 {isLoading ? (
                     <div className="space-y-3">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className={`h-24 rounded-2xl animate-pulse ${isDark ? 'bg-white/5' : 'bg-black/5'}`} />
+                            <div key={i} className="h-24 rounded-2xl animate-pulse bg-black/5 dark:bg-white/5" />
                         ))}
                     </div>
                 ) : reports.length === 0 ? (
                     <div className="text-center py-16">
-                        <span className={`material-symbols-outlined text-4xl mb-3 block ${isDark ? 'text-white/30' : 'text-primary/30'}`}>inbox</span>
-                        <p className={`font-medium ${isDark ? 'text-white/60' : 'text-primary/60'}`}>No bug reports found</p>
+                        <span className="material-symbols-outlined text-4xl mb-3 block text-primary/30 dark:text-white/30">inbox</span>
+                        <p className="font-medium text-primary/60 dark:text-white/60">No bug reports found</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
@@ -212,35 +209,35 @@ const BugReportsAdmin: React.FC = () => {
                             <button
                                 key={report.id}
                                 onClick={() => openDetail(report)}
-                                className={`w-full text-left p-4 rounded-2xl transition-all animate-pop-in ${isDark ? 'glass-card hover:bg-white/5' : 'bg-white border border-black/5 hover:shadow-md'}`}
+                                className="w-full text-left p-4 rounded-2xl transition-all animate-pop-in bg-white border border-black/5 hover:shadow-md dark:glass-card dark:border-0 dark:hover:bg-white/5"
                                 style={{animationDelay: `${0.1 + idx * 0.05}s`}}
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className={`text-sm font-semibold truncate ${isDark ? 'text-white' : 'text-primary'}`}>
+                                            <span className="text-sm font-semibold truncate text-primary dark:text-white">
                                                 {report.userName || report.userEmail}
                                             </span>
                                             <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${getRoleColor(report.userRole)}`}>
                                                 {report.userRole || 'member'}
                                             </span>
                                         </div>
-                                        <p className={`text-sm line-clamp-2 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>
+                                        <p className="text-sm line-clamp-2 text-primary/70 dark:text-white/70">
                                             {report.description}
                                         </p>
                                         <div className="flex items-center gap-2 mt-2">
                                             <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${getStatusColor(report.status)}`}>
                                                 {report.status.replace('_', ' ')}
                                             </span>
-                                            <span className={`text-xs ${isDark ? 'text-white/40' : 'text-primary/40'}`}>
+                                            <span className="text-xs text-primary/40 dark:text-white/40">
                                                 {formatDate(report.createdAt)}
                                             </span>
                                             {report.screenshotUrl && (
-                                                <span className={`material-symbols-outlined text-sm ${isDark ? 'text-white/40' : 'text-primary/40'}`}>image</span>
+                                                <span className="material-symbols-outlined text-sm text-primary/40 dark:text-white/40">image</span>
                                             )}
                                         </div>
                                     </div>
-                                    <span className={`material-symbols-outlined text-sm ${isDark ? 'text-white/30' : 'text-primary/30'}`}>chevron_right</span>
+                                    <span className="material-symbols-outlined text-sm text-primary/30 dark:text-white/30">chevron_right</span>
                                 </div>
                             </button>
                         ))}
@@ -257,53 +254,53 @@ const BugReportsAdmin: React.FC = () => {
                 {selectedReport && (
                     <div className="p-4 space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
-                                <span className={`material-symbols-outlined ${isDark ? 'text-white/70' : 'text-primary/70'}`}>person</span>
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-black/5 dark:bg-white/10">
+                                <span className="material-symbols-outlined text-primary/70 dark:text-white/70">person</span>
                             </div>
                             <div>
-                                <p className={`font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>
+                                <p className="font-semibold text-primary dark:text-white">
                                     {selectedReport.userName || 'Unknown User'}
                                 </p>
-                                <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{selectedReport.userEmail}</p>
+                                <p className="text-sm text-primary/60 dark:text-white/60">{selectedReport.userEmail}</p>
                             </div>
                             <span className={`ml-auto px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${getRoleColor(selectedReport.userRole)}`}>
                                 {selectedReport.userRole || 'member'}
                             </span>
                         </div>
 
-                        <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                            <p className={`text-sm font-medium mb-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Description</p>
-                            <p className={`${isDark ? 'text-white' : 'text-primary'}`}>{selectedReport.description}</p>
+                        <div className="p-4 rounded-xl bg-black/5 dark:bg-white/5">
+                            <p className="text-sm font-medium mb-1 text-primary/60 dark:text-white/60">Description</p>
+                            <p className="text-primary dark:text-white">{selectedReport.description}</p>
                         </div>
 
                         {selectedReport.screenshotUrl && (
                             <div>
-                                <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Screenshot</p>
+                                <p className="text-sm font-medium mb-2 text-primary/60 dark:text-white/60">Screenshot</p>
                                 <a href={selectedReport.screenshotUrl} target="_blank" rel="noopener noreferrer">
                                     <img 
                                         src={selectedReport.screenshotUrl} 
                                         alt="Bug screenshot" 
-                                        className="w-full rounded-xl border border-black/10"
+                                        className="w-full rounded-xl border border-black/10 dark:border-white/10"
                                     />
                                 </a>
                             </div>
                         )}
 
                         <div className="grid grid-cols-2 gap-3">
-                            <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                                <p className={`text-xs font-medium mb-1 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Submitted</p>
-                                <p className={`text-sm ${isDark ? 'text-white' : 'text-primary'}`}>{formatDate(selectedReport.createdAt)}</p>
+                            <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
+                                <p className="text-xs font-medium mb-1 text-primary/50 dark:text-white/50">Submitted</p>
+                                <p className="text-sm text-primary dark:text-white">{formatDate(selectedReport.createdAt)}</p>
                             </div>
                             {selectedReport.pageUrl && (
-                                <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                                    <p className={`text-xs font-medium mb-1 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Page</p>
-                                    <p className={`text-sm truncate ${isDark ? 'text-white' : 'text-primary'}`}>{selectedReport.pageUrl}</p>
+                                <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
+                                    <p className="text-xs font-medium mb-1 text-primary/50 dark:text-white/50">Page</p>
+                                    <p className="text-sm truncate text-primary dark:text-white">{selectedReport.pageUrl}</p>
                                 </div>
                             )}
                         </div>
 
                         <div>
-                            <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Status</p>
+                            <p className="text-sm font-medium mb-2 text-primary/60 dark:text-white/60">Status</p>
                             <div className="flex gap-2">
                                 {['open', 'in_progress', 'resolved'].map(status => (
                                     <button
@@ -313,7 +310,7 @@ const BugReportsAdmin: React.FC = () => {
                                         className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all ${
                                             selectedReport.status === status
                                                 ? getStatusColor(status)
-                                                : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-black/5 text-primary/60 hover:bg-black/10'
+                                                : 'bg-black/5 text-primary/60 hover:bg-black/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
                                         }`}
                                     >
                                         {status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}
@@ -323,32 +320,26 @@ const BugReportsAdmin: React.FC = () => {
                         </div>
 
                         {selectedReport.resolvedBy && (
-                            <div className={`p-3 rounded-xl ${isDark ? 'bg-green-900/20' : 'bg-green-50'}`}>
-                                <p className={`text-xs font-medium ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+                            <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20">
+                                <p className="text-xs font-medium text-green-700 dark:text-green-400">
                                     Resolved by {selectedReport.resolvedBy} on {selectedReport.resolvedAt ? formatDate(selectedReport.resolvedAt) : 'N/A'}
                                 </p>
                             </div>
                         )}
 
                         <div>
-                            <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Staff Notes</p>
+                            <p className="text-sm font-medium mb-2 text-primary/60 dark:text-white/60">Staff Notes</p>
                             <textarea
                                 value={staffNotes}
                                 onChange={(e) => setStaffNotes(e.target.value)}
                                 placeholder="Add internal notes..."
                                 rows={3}
-                                className={`w-full rounded-xl px-4 py-3 text-sm resize-none ${
-                                    isDark 
-                                        ? 'bg-white/5 border border-white/10 text-white placeholder:text-white/40' 
-                                        : 'bg-black/5 border border-black/10 text-primary placeholder:text-primary/40'
-                                }`}
+                                className="w-full rounded-xl px-4 py-3 text-sm resize-none bg-black/5 border border-black/10 text-primary placeholder:text-primary/40 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-white/40"
                             />
                             <button
                                 onClick={handleSaveNotes}
                                 disabled={isSaving || staffNotes === (selectedReport.staffNotes || '')}
-                                className={`mt-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
-                                    isDark ? 'bg-accent text-primary' : 'bg-primary text-white'
-                                }`}
+                                className="mt-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 bg-primary text-white dark:bg-accent dark:text-primary"
                             >
                                 Save Notes
                             </button>
@@ -357,9 +348,7 @@ const BugReportsAdmin: React.FC = () => {
                         <button
                             onClick={handleDelete}
                             disabled={isSaving}
-                            className={`w-full py-3 rounded-xl text-red-500 font-medium text-sm transition-colors ${
-                                isDark ? 'hover:bg-red-500/10' : 'hover:bg-red-50'
-                            }`}
+                            className="w-full py-3 rounded-xl text-red-500 font-medium text-sm transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                         >
                             Delete Report
                         </button>
