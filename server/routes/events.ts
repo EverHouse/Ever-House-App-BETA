@@ -320,7 +320,12 @@ router.post('/api/eventbrite/sync', async (req, res) => {
   try {
     const eventbriteToken = process.env.EVENTBRITE_PRIVATE_TOKEN;
     if (!eventbriteToken) {
-      return res.status(400).json({ error: 'Eventbrite token not configured' });
+      return res.json({ 
+        success: true, 
+        skipped: true, 
+        synced: 0, 
+        message: 'Eventbrite not configured - skipping sync' 
+      });
     }
 
     const meResponse = await fetch('https://www.eventbriteapi.com/v3/users/me/organizations/', {

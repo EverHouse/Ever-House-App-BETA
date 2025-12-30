@@ -1095,10 +1095,23 @@ const EventsWellnessAdmin: React.FC = () => {
     
     const handlePullRefresh = async () => {
         setSyncMessage(null);
+        const maxRetries = 3;
+        const retryFetch = async (url: string, attempt = 1): Promise<Response> => {
+            try {
+                return await fetch(url, { method: 'POST', credentials: 'include' });
+            } catch (err: any) {
+                if (attempt < maxRetries && (err.message?.includes('fetch') || err.message?.includes('network'))) {
+                    await new Promise(r => setTimeout(r, 500 * attempt));
+                    return retryFetch(url, attempt + 1);
+                }
+                throw err;
+            }
+        };
+        
         try {
             const [calRes, ebRes] = await Promise.all([
-                fetch('/api/calendars/sync-all', { method: 'POST', credentials: 'include' }),
-                fetch('/api/eventbrite/sync', { method: 'POST', credentials: 'include' })
+                retryFetch('/api/calendars/sync-all'),
+                retryFetch('/api/eventbrite/sync')
             ]);
             
             const calData = await calRes.json();
@@ -1107,14 +1120,21 @@ const EventsWellnessAdmin: React.FC = () => {
             window.dispatchEvent(new CustomEvent('refreshEventsData'));
             window.dispatchEvent(new CustomEvent('refreshWellnessData'));
             
-            if (calRes.ok && ebRes.ok) {
-                setSyncMessage('All calendars synced successfully');
+            const errors: string[] = [];
+            if (!calRes.ok) errors.push('Google Calendar');
+            if (!ebRes.ok && !ebData.skipped) errors.push('Eventbrite');
+            
+            if (errors.length === 0) {
+                const parts: string[] = [];
+                if (calData.events?.synced) parts.push(`${calData.events.synced} events`);
+                if (calData.wellness?.synced) parts.push(`${calData.wellness.synced} wellness`);
+                setSyncMessage(parts.length > 0 ? `Synced ${parts.join(', ')}` : 'Sync complete');
             } else {
-                setSyncMessage('Some syncs may have failed. Check the data.');
+                setSyncMessage(`Sync failed for: ${errors.join(', ')}`);
             }
         } catch (err) {
             console.error('Sync failed:', err);
-            setSyncMessage('Failed to sync calendars');
+            setSyncMessage('Network error - please try again');
         }
         setTimeout(() => setSyncMessage(null), 5000);
     };
@@ -7632,16 +7652,31 @@ const ToursAdmin: React.FC = () => {
 
   const handlePullRefresh = useCallback(async () => {
     setSyncMessage(null);
+    const maxRetries = 3;
+    
+    const attemptSync = async (attempt = 1): Promise<{ ok: boolean; data: any }> => {
+      try {
+        const res = await fetch('/api/tours/sync', { method: 'POST', credentials: 'include' });
+        const data = await res.json();
+        return { ok: res.ok, data };
+      } catch (err: any) {
+        if (attempt < maxRetries && (err.message?.includes('fetch') || err.message?.includes('network'))) {
+          await new Promise(r => setTimeout(r, 500 * attempt));
+          return attemptSync(attempt + 1);
+        }
+        throw err;
+      }
+    };
+    
     try {
-      const res = await fetch('/api/tours/sync', { method: 'POST', credentials: 'include' });
-      const data = await res.json();
-      if (res.ok) {
+      const { ok, data } = await attemptSync();
+      if (ok) {
         setSyncMessage(`Synced ${data.synced} tours (${data.created} new, ${data.updated} updated)`);
       } else {
         setSyncMessage(data.error || 'Sync failed');
       }
     } catch (err) {
-      setSyncMessage('Network error during sync');
+      setSyncMessage('Network error - please try again');
     }
     await fetchTours();
   }, [fetchTours]);
