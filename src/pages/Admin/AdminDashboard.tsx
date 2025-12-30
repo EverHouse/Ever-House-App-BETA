@@ -8026,7 +8026,7 @@ const TrackmanAdmin: React.FC = () => {
 
   const filteredMembers = members.filter(m => {
     const query = searchQuery.toLowerCase();
-    const name = `${m.firstname || ''} ${m.lastname || ''}`.toLowerCase();
+    const name = `${m.firstName || m.firstname || ''} ${m.lastName || m.lastname || ''}`.toLowerCase();
     const email = (m.email || '').toLowerCase();
     return name.includes(query) || email.includes(query);
   });
@@ -8149,18 +8149,24 @@ const TrackmanAdmin: React.FC = () => {
         ) : (
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
             {unmatchedBookings.map((booking: any) => (
-              <div key={booking.id} className="p-4 bg-white/50 dark:bg-white/5 rounded-xl flex justify-between items-start">
-                <div>
-                  <p className="font-bold text-primary dark:text-white">{booking.user_name || 'Unknown'}</p>
-                  <p className="text-xs text-primary/60 dark:text-white/60">{booking.original_email}</p>
-                  <p className="text-xs text-primary/60 dark:text-white/60 mt-1">
-                    {booking.booking_date} • {booking.start_time?.substring(0, 5)} - {booking.end_time?.substring(0, 5)} • Bay {booking.bay_number}
+              <div key={booking.id} className="p-4 bg-white/50 dark:bg-white/5 rounded-xl flex justify-between items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-primary dark:text-white truncate">
+                    {booking.userName || booking.user_name || 'Unknown'}
                   </p>
-                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">{booking.match_attempt_reason}</p>
+                  <p className="text-xs text-primary/60 dark:text-white/60 truncate">
+                    {booking.originalEmail || booking.original_email || 'No email'}
+                  </p>
+                  <p className="text-xs text-primary/60 dark:text-white/60 mt-1">
+                    {booking.bookingDate || booking.booking_date} • {(booking.startTime || booking.start_time)?.substring(0, 5)} - {(booking.endTime || booking.end_time)?.substring(0, 5)} • Bay {booking.bayNumber || booking.bay_number}
+                  </p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                    {booking.matchAttemptReason || booking.match_attempt_reason}
+                  </p>
                 </div>
                 <button
                   onClick={() => setResolveModal({ booking, memberEmail: '' })}
-                  className="px-3 py-1.5 bg-accent text-primary rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"
+                  className="px-3 py-1.5 bg-accent text-primary rounded-lg text-xs font-bold hover:opacity-90 transition-opacity shrink-0"
                 >
                   Resolve
                 </button>
@@ -8170,60 +8176,92 @@ const TrackmanAdmin: React.FC = () => {
         )}
       </div>
 
-      {resolveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setResolveModal(null)}></div>
-          <div className="relative w-full max-w-md bg-bone dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-primary/10 dark:border-white/10">
-              <h2 className="text-xl font-bold text-primary dark:text-white">Resolve Booking</h2>
-              <p className="text-sm text-primary/60 dark:text-white/60 mt-1">
-                Assign this booking to: {resolveModal.booking.user_name}
-              </p>
-            </div>
-            <div className="p-6 space-y-4">
-              <input
-                type="text"
-                placeholder="Search members..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-white/10 border border-primary/20 dark:border-white/20 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40"
-              />
-              <div className="max-h-60 overflow-y-auto space-y-1">
-                {filteredMembers.slice(0, 20).map((member: any) => (
+      {resolveModal && createPortal(
+        <div className="fixed inset-0 z-[99999] overflow-y-auto" onClick={() => setResolveModal(null)}>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div 
+              className="relative w-full max-w-md bg-bone dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-primary/10 dark:border-white/10 bg-primary/5 dark:bg-white/5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-primary dark:text-white">Resolve Booking</h2>
+                    <div className="mt-2 p-3 rounded-xl bg-white/80 dark:bg-white/10">
+                      <p className="font-semibold text-primary dark:text-white">
+                        {resolveModal.booking.userName || resolveModal.booking.user_name || 'Unknown'}
+                      </p>
+                      <p className="text-xs text-primary/70 dark:text-white/70 mt-0.5">
+                        {resolveModal.booking.originalEmail || resolveModal.booking.original_email || 'No email'}
+                      </p>
+                      <p className="text-xs text-primary/60 dark:text-white/60 mt-1">
+                        {resolveModal.booking.bookingDate || resolveModal.booking.booking_date} • Bay {resolveModal.booking.bayNumber || resolveModal.booking.bay_number}
+                      </p>
+                    </div>
+                  </div>
                   <button
-                    key={member.email}
-                    onClick={() => setResolveModal({ ...resolveModal, memberEmail: member.email })}
-                    className={`w-full p-3 text-left rounded-xl transition-colors ${
-                      resolveModal.memberEmail === member.email
-                        ? 'bg-accent/20 border-2 border-accent'
-                        : 'bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10'
-                    }`}
+                    onClick={() => setResolveModal(null)}
+                    className="p-2 rounded-full hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
                   >
-                    <p className="font-medium text-primary dark:text-white text-sm">
-                      {member.firstname} {member.lastname}
-                    </p>
-                    <p className="text-xs text-primary/60 dark:text-white/60">{member.email}</p>
+                    <span className="material-symbols-outlined text-primary/60 dark:text-white/60">close</span>
                   </button>
-                ))}
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-primary dark:text-white mb-2">
+                    Select member to assign this booking:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-white dark:bg-white/10 border border-primary/20 dark:border-white/20 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 text-base"
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto space-y-2 -mx-2 px-2">
+                  {filteredMembers.slice(0, 20).map((member: any) => (
+                    <button
+                      key={member.email}
+                      onClick={() => setResolveModal({ ...resolveModal, memberEmail: member.email })}
+                      className={`w-full p-4 text-left rounded-xl transition-all ${
+                        resolveModal.memberEmail === member.email
+                          ? 'bg-accent/30 border-2 border-accent shadow-md'
+                          : 'bg-white/70 dark:bg-white/5 border border-primary/10 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 hover:border-primary/20 dark:hover:border-white/20'
+                      }`}
+                    >
+                      <p className="font-semibold text-primary dark:text-white text-base">
+                        {member.firstName || member.firstname || ''} {member.lastName || member.lastname || ''}
+                      </p>
+                      <p className="text-sm text-primary/60 dark:text-white/60 mt-0.5">{member.email}</p>
+                    </button>
+                  ))}
+                  {filteredMembers.length === 0 && searchQuery && (
+                    <p className="text-center py-4 text-primary/50 dark:text-white/50">No members found</p>
+                  )}
+                </div>
+              </div>
+              <div className="p-5 border-t border-primary/10 dark:border-white/10 bg-primary/5 dark:bg-white/5 flex justify-end gap-3">
+                <button
+                  onClick={() => setResolveModal(null)}
+                  className="px-5 py-2.5 rounded-full text-sm font-medium text-primary/70 dark:text-white/70 hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleResolve}
+                  disabled={!resolveModal.memberEmail}
+                  className="px-6 py-2.5 rounded-full bg-accent text-primary text-sm font-bold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                >
+                  Assign & Resolve
+                </button>
               </div>
             </div>
-            <div className="p-4 border-t border-primary/10 dark:border-white/10 flex justify-end gap-3">
-              <button
-                onClick={() => setResolveModal(null)}
-                className="px-4 py-2 rounded-full text-sm font-medium text-primary/70 dark:text-white/70 hover:bg-primary/10 dark:hover:bg-white/10"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleResolve}
-                disabled={!resolveModal.memberEmail}
-                className="px-6 py-2 rounded-full bg-accent text-primary text-sm font-bold hover:opacity-90 disabled:opacity-50"
-              >
-                Assign & Resolve
-              </button>
-            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
