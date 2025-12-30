@@ -1,4 +1,5 @@
-import { getBaseTier, type BaseTier } from './permissions';
+import { getBaseTier, type BaseTier, DEFAULT_TIER } from './permissions';
+import { normalizeTierName, extractTierTags } from '../../shared/constants/tiers';
 
 export type { BaseTier };
 
@@ -27,22 +28,10 @@ export const TAG_COLORS: Record<string, TierColor> = {
 export const AVAILABLE_TAGS = ['Founding Member', 'Investor', 'VIP Guest', 'Referral'];
 
 export function parseTierString(tierString: string): { tier: BaseTier; tags: string[] } {
-  if (!tierString) {
-    return { tier: 'Social', tags: [] };
-  }
-
-  const normalizedTier = tierString.trim().toLowerCase();
-  const tags: string[] = [];
-
-  if (normalizedTier.includes('founding')) {
-    tags.push('Founding Member');
-  }
-
-  if (normalizedTier.includes('investor')) {
-    tags.push('Investor');
-  }
-
-  return { tier: getBaseTier(tierString), tags };
+  return { 
+    tier: normalizeTierName(tierString), 
+    tags: extractTierTags(tierString) 
+  };
 }
 
 export function getTierColor(tier: string): TierColor {

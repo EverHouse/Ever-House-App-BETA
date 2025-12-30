@@ -1,4 +1,5 @@
 import { pool } from './db';
+import { normalizeTierName, DEFAULT_TIER } from '../../shared/constants/tiers';
 
 export interface TierLimits {
   daily_sim_minutes: number;
@@ -40,7 +41,8 @@ export async function getTierLimits(tierName: string): Promise<TierLimits> {
     return DEFAULT_TIER_LIMITS;
   }
   
-  const cacheKey = tierName.toLowerCase();
+  const normalizedTier = normalizeTierName(tierName);
+  const cacheKey = normalizedTier.toLowerCase();
   const cached = tierCache.get(cacheKey);
   
   if (cached && cached.expiry > Date.now()) {
@@ -57,11 +59,11 @@ export async function getTierLimits(tierName: string): Promise<TierLimits> {
        FROM membership_tiers 
        WHERE LOWER(name) = LOWER($1) OR LOWER(slug) = LOWER($1)
        LIMIT 1`,
-      [tierName]
+      [normalizedTier]
     );
     
     if (result.rows.length === 0) {
-      console.warn(`[getTierLimits] No tier found for "${tierName}", using defaults`);
+      console.warn(`[getTierLimits] No tier found for "${normalizedTier}" (original: "${tierName}"), using defaults`);
       return DEFAULT_TIER_LIMITS;
     }
     

@@ -1,4 +1,5 @@
 import { apiRequest } from '../lib/apiRequest';
+import { normalizeTierName } from '../../shared/constants/tiers';
 
 export interface TierLimits {
   name: string;
@@ -75,18 +76,7 @@ function transformToPermissions(limits: TierLimits): TierPermissions {
 }
 
 function getBaseTierName(tierString: string): string {
-  if (!tierString) return 'social';
-  
-  const normalized = tierString.toLowerCase().trim();
-  const baseTiers = ['social', 'core', 'premium', 'corporate', 'vip'];
-  
-  for (const tier of baseTiers) {
-    if (normalized.includes(tier)) {
-      return tier;
-    }
-  }
-  
-  return 'social';
+  return normalizeTierName(tierString).toLowerCase();
 }
 
 export async function fetchTierPermissions(tierName: string): Promise<TierPermissions> {

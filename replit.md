@@ -33,7 +33,8 @@ The application is built with a React 19 frontend utilizing Vite, styled with Ta
 - **Database**: PostgreSQL.
 - **Styling**: Tailwind CSS with PostCSS.
 - **Error Handling**: Generic error messages with structured JSON logging and request IDs.
-- **Member Tiers & Tags**: Database-driven system for managing access, booking limits, and guest passes based on membership tiers (Social, Core, Premium, Corporate, VIP) and custom JSONB tags. Tier configuration is cached with automatic invalidation.
+- **Member Tiers & Tags**: Database-driven system for managing access, booking limits, and guest passes based on membership tiers (Social, Core, Premium, Corporate, VIP) and custom JSONB tags. Tier configuration is cached with automatic invalidation. **Centralized Constants**: All tier normalization, status values, and tag extraction are defined in `shared/constants/tiers.ts` and `shared/constants/statuses.ts` - both frontend and backend import from these shared modules to ensure consistency. The default tier is 'Social'. HubSpot tier strings (e.g., "Founding Core Member") are normalized via `normalizeTierName()` with tag extraction via `extractTierTags()`.
+- **Security Middleware**: All admin endpoints (`/api/admin/*`) require `isAdmin` middleware. Staff operations require `isStaffOrAdmin`. Booking approvals, declines, and cancellations are protected. HubSpot contact listing is staff-only.
 - **Booking System**: Supports "Request & Hold" (staff approval required for some tiers), simulator and conference room booking requests with conflict detection, and staff-initiated manual bookings. Includes calendar management for staff to reschedule or cancel bookings.
 - **Facility Closures**: Automated integration between facility closures and announcements. Closure events sync to Google Calendar with full lifecycle management. Booking approval validation prevents conflicts with closures.
 - **Notifications**: In-app, real-time notification system.

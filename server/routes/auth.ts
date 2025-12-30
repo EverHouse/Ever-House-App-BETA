@@ -8,6 +8,7 @@ import { users, magicLinks, adminUsers, staffUsers, membershipTiers } from '../.
 import { isProduction } from '../core/db';
 import { getHubSpotClient } from '../core/integrations';
 import { isAdminEmail } from '../core/middleware';
+import { normalizeTierName, extractTierTags, DEFAULT_TIER } from '../../shared/constants/tiers';
 
 async function isStaffEmail(email: string): Promise<boolean> {
   if (!email) return false;
@@ -109,7 +110,7 @@ async function upsertUserWithTier(data: UpsertUserData): Promise<void> {
     const isStaffOrAdmin = data.role === 'admin' || data.role === 'staff';
     
     // Staff/admin users don't have membership tiers
-    const normalizedTier = isStaffOrAdmin ? null : (data.tierName || 'Core');
+    const normalizedTier = isStaffOrAdmin ? null : normalizeTierName(data.tierName);
     let tierId: number | null = null;
     
     if (!isStaffOrAdmin && normalizedTier) {
@@ -245,27 +246,6 @@ const clearOtpVerifyAttempts = (email: string): void => {
   otpVerifyAttempts.delete(email);
 };
 
-const parseDiscountReasonToTags = (reason: string | undefined): string[] => {
-  if (!reason) return [];
-  const tags: string[] = [];
-  const lowerReason = reason.toLowerCase();
-  if (lowerReason.includes('founding')) tags.push('Founding Member');
-  if (lowerReason.includes('investor')) tags.push('Investor');
-  if (lowerReason.includes('vip') || lowerReason.includes('guest')) tags.push('VIP Guest');
-  if (lowerReason.includes('referral')) tags.push('Referral');
-  return tags;
-};
-
-const normalizeMembershipTier = (tier: string | undefined): string => {
-  if (!tier) return 'Core';
-  const tierLower = tier.toLowerCase();
-  if (tierLower.includes('vip')) return 'VIP';
-  if (tierLower.includes('premium')) return 'Premium';
-  if (tierLower.includes('corporate')) return 'Corporate';
-  if (tierLower.includes('core')) return 'Core';
-  if (tierLower.includes('social')) return 'Social';
-  return 'Core';
-};
 
 router.post('/api/auth/verify-member', async (req, res) => {
   try {
@@ -341,8 +321,8 @@ router.post('/api/auth/verify-member', async (req, res) => {
       email: contact.properties.email || email,
       phone,
       jobTitle,
-      tier: normalizeMembershipTier(contact.properties.membership_tier),
-      tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+      tier: normalizeTierName(contact.properties.membership_tier),
+      tags: extractTierTags(contact.properties.membership_tier, contact.properties.membership_discount_reason),
       mindbodyClientId: contact.properties.mindbody_client_id || '',
       status: 'Active',
       role
@@ -563,14 +543,14 @@ router.post('/api/auth/verify-otp', async (req, res) => {
     }
 
     const sessionTtl = 7 * 24 * 60 * 60 * 1000;
-    const tags = parseDiscountReasonToTags(contact.properties.membership_discount_reason);
+    const tags = extractTierTags(contact.properties.membership_tier, contact.properties.membership_discount_reason);
     const member = {
       id: contact.id,
       firstName: contact.properties.firstname || '',
       lastName: contact.properties.lastname || '',
       email: contact.properties.email || normalizedEmail,
       phone: contact.properties.phone || '',
-      tier: normalizeMembershipTier(contact.properties.membership_tier),
+      tier: normalizeTierName(contact.properties.membership_tier),
       tags,
       mindbodyClientId: contact.properties.mindbody_client_id || '',
       membershipStartDate: contact.properties.membership_start_date || '',
@@ -755,8 +735,8 @@ router.post('/api/auth/password-login', async (req, res) => {
           lastName: contact.properties.lastname || userRecord.name?.split(' ').slice(1).join(' ') || '',
           email: normalizedEmail,
           phone: contact.properties.phone || '',
-          tier: normalizeMembershipTier(contact.properties.membership_tier),
-          tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+          tier: normalizeTierName(contact.properties.membership_tier),
+          tags: extractTierTags(contact.properties.membership_tier, contact.properties.membership_discount_reason),
           mindbodyClientId: contact.properties.mindbody_client_id || '',
           membershipStartDate: contact.properties.membership_start_date || '',
         };
@@ -772,7 +752,7 @@ router.post('/api/auth/password-login', async (req, res) => {
       lastName: memberData?.lastName || userRecord.name?.split(' ').slice(1).join(' ') || '',
       email: normalizedEmail,
       phone: memberData?.phone || '',
-      tier: memberData?.tier || 'Core',
+      tier: memberData?.tier || DEFAULT_TIER,
       tags: memberData?.tags || [],
       mindbodyClientId: memberData?.mindbodyClientId || '',
       membershipStartDate: memberData?.membershipStartDate || '',

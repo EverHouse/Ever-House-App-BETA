@@ -5,32 +5,11 @@ import { db } from '../db';
 import { formSubmissions } from '../../shared/schema';
 import { notifyAllStaff } from '../core/staffNotifications';
 import { isStaffOrAdmin } from '../core/middleware';
+import { normalizeTierName, extractTierTags } from '../../shared/constants/tiers';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const router = Router();
-
-const parseDiscountReasonToTags = (reason: string | undefined): string[] => {
-  if (!reason) return [];
-  const tags: string[] = [];
-  const lowerReason = reason.toLowerCase();
-  if (lowerReason.includes('founding')) tags.push('Founding Member');
-  if (lowerReason.includes('investor')) tags.push('Investor');
-  if (lowerReason.includes('vip') || lowerReason.includes('guest')) tags.push('VIP Guest');
-  if (lowerReason.includes('referral')) tags.push('Referral');
-  return tags;
-};
-
-const normalizeMembershipTier = (tier: string | undefined): string => {
-  if (!tier) return 'Core';
-  const tierLower = tier.toLowerCase();
-  if (tierLower.includes('vip')) return 'VIP';
-  if (tierLower.includes('premium')) return 'Premium';
-  if (tierLower.includes('corporate')) return 'Corporate';
-  if (tierLower.includes('core')) return 'Core';
-  if (tierLower.includes('social')) return 'Social';
-  return 'Core';
-};
 
 router.get('/api/hubspot/contacts', isStaffOrAdmin, async (req, res) => {
   try {
@@ -67,8 +46,8 @@ router.get('/api/hubspot/contacts', isStaffOrAdmin, async (req, res) => {
         phone: contact.properties.phone || '',
         company: contact.properties.company || '',
         status: contact.properties.membership_status || contact.properties.hs_lead_status || '',
-        tier: normalizeMembershipTier(contact.properties.membership_tier),
-        tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+        tier: normalizeTierName(contact.properties.membership_tier),
+        tags: extractTierTags(contact.properties.membership_tier, contact.properties.membership_discount_reason),
         createdAt: contact.properties.createdate
       }))
       .filter((contact: any) => contact.status.toLowerCase() === 'active');
@@ -106,8 +85,8 @@ router.get('/api/hubspot/contacts/:id', isStaffOrAdmin, async (req, res) => {
       phone: contact.properties.phone || '',
       company: contact.properties.company || '',
       status: contact.properties.membership_status || contact.properties.hs_lead_status || 'Active',
-      tier: normalizeMembershipTier(contact.properties.membership_tier),
-      tags: parseDiscountReasonToTags(contact.properties.membership_discount_reason),
+      tier: normalizeTierName(contact.properties.membership_tier),
+      tags: extractTierTags(contact.properties.membership_tier, contact.properties.membership_discount_reason),
       createdAt: contact.properties.createdate
     });
   } catch (error: any) {

@@ -7,6 +7,7 @@ import { isStaffOrAdmin } from '../core/middleware';
 import { createCalendarEventOnCalendar, getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
 import { logAndRespond, logger } from '../core/logger';
 import { sendPushNotification } from './push';
+import { DEFAULT_TIER } from '../../shared/constants/tiers';
 
 const router = Router();
 
@@ -329,7 +330,7 @@ router.post('/api/bookings', async (req, res) => {
       .where(eq(users.email, user_email));
     
     const user = userResult[0];
-    const userTier = user?.tier || 'Social';
+    const userTier = user?.tier || DEFAULT_TIER;
     let userTags: string[] = [];
     try {
       if (user?.tags) {
@@ -519,7 +520,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
     const allowedDurations = isPremiumTier ? [30, 60, 90, 120] : [30, 60];
     
     if (!allowedDurations.includes(duration_minutes)) {
-      const tierName = member.tier || 'Core';
+      const tierName = member.tier || DEFAULT_TIER;
       const maxDuration = allowedDurations[allowedDurations.length - 1];
       return res.status(400).json({ 
         error: 'Duration not allowed for membership tier',
