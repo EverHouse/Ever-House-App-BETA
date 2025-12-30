@@ -4317,9 +4317,23 @@ const WellnessAdminContent: React.FC = () => {
         }
     };
 
+    const getCategoryIcon = (category: string) => {
+        switch (category) {
+            case 'Classes': return 'fitness_center';
+            case 'MedSpa': return 'spa';
+            case 'Recovery': return 'ac_unit';
+            case 'Therapy': return 'healing';
+            case 'Nutrition': return 'nutrition';
+            case 'Personal Training': return 'sports';
+            case 'Mindfulness': return 'self_improvement';
+            case 'Outdoors': return 'hiking';
+            default: return 'category';
+        }
+    };
+
     return (
-        <div className="space-y-6 animate-pop-in">
-            <p className="text-sm text-primary/60 dark:text-white/60">
+        <div className="animate-pop-in">
+            <p className="text-sm text-primary/60 dark:text-white/60 mb-4">
                 Synced from Google Calendar: <span className="font-medium">Wellness & Classes</span>
             </p>
             <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide -mx-4 px-4 animate-pop-in" style={{animationDelay: '0.05s'}}>
@@ -4339,154 +4353,116 @@ const WellnessAdminContent: React.FC = () => {
                 ))}
             </div>
 
-            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-white/10 animate-pop-in" style={{animationDelay: '0.1s'}}>
-                {success && (
-                    <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
-                        {success}
-                    </div>
-                )}
+            {success && (
+                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400 text-sm">
+                    {success}
+                </div>
+            )}
 
-                {error && !isEditing && (
-                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                        {error}
-                    </div>
-                )}
+            {error && !isEditing && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                    {error}
+                </div>
+            )}
 
-                {isLoading ? (
-                    <div className="py-8 flex flex-col items-center gap-2">
-                      <WalkingGolferSpinner size="md" variant="dark" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Loading classes...</p>
-                    </div>
-                ) : filteredClasses.length === 0 ? (
-                    <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No {activeCategory === 'all' ? 'wellness classes' : activeCategory.toLowerCase()} scheduled. Add your first!
-                    </div>
-                ) : (
-                    <div className="space-y-6">
-                        {upcomingClasses.length > 0 && (
-                            <div>
-                                <div className="flex items-center gap-2 mb-3">
-                                    <span className="material-symbols-outlined text-green-500">schedule</span>
-                                    <h3 className="font-bold text-primary dark:text-white">Upcoming ({upcomingClasses.length})</h3>
-                                </div>
-                                <div className="space-y-3">
-                                    {upcomingClasses.map((cls, index) => (
-                                        <div 
-                                            key={cls.id}
-                                            className={`flex items-center justify-between p-4 rounded-xl border animate-pop-in ${
-                                                cls.is_active 
-                                                    ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
-                                                    : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
-                                            }`}
-                                            style={{animationDelay: `${0.15 + index * 0.03}s`}}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-brand-green">
-                                                    <span className="material-symbols-outlined">spa</span>
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-primary dark:text-white">{cls.title}</p>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {formatDate(cls.date)} at {cls.time} • {cls.instructor}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 dark:bg-white/10 text-primary dark:text-white">{cls.category}</span>
-                                                        <span className="text-xs text-gray-400 dark:text-gray-500">{cls.duration} • {cls.spots}</span>
-                                                    </div>
-                                                </div>
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                    <span className="material-symbols-outlined animate-spin text-2xl text-gray-400 dark:text-gray-500">progress_activity</span>
+                </div>
+            ) : filteredClasses.length === 0 ? (
+                <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+                    <span className="material-symbols-outlined text-4xl mb-2 block">spa</span>
+                    <p>No {activeCategory === 'all' ? 'wellness classes' : activeCategory.toLowerCase()} found</p>
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {upcomingClasses.length > 0 && (
+                        <div className="animate-pop-in" style={{animationDelay: '0.1s'}}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-green-500">schedule</span>
+                                <h3 className="font-bold text-primary dark:text-white">Upcoming ({upcomingClasses.length})</h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {upcomingClasses.map((cls, index) => (
+                                    <div key={cls.id} onClick={() => openEdit(cls)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.15 + index * 0.03}s`}}>
+                                        <div className="flex gap-4">
+                                            <div className="w-20 h-20 rounded-lg bg-[#CCB8E4]/20 dark:bg-[#CCB8E4]/10 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                                {cls.image_url ? (
+                                                    <img src={cls.image_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="material-symbols-outlined text-3xl text-[#CCB8E4]">
+                                                        {getCategoryIcon(cls.category)}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleViewEnrollments(cls)}
-                                                    className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                                    title="View Enrollments"
-                                                >
-                                                    <span className="material-symbols-outlined text-xl">group</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => openEdit(cls)}
-                                                    className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <span className="material-symbols-outlined text-xl">edit</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(cls)}
-                                                    className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <span className="material-symbols-outlined text-xl">delete</span>
-                                                </button>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-lg text-primary dark:text-white leading-tight mb-1 truncate">{cls.title}</h4>
+                                                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-[#CCB8E4]/20 text-[#293515] dark:text-[#CCB8E4] px-1.5 py-0.5 rounded mb-2">{cls.category}</span>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(cls.date)} • {cls.time}</p>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        
-                        {pastClasses.length > 0 && (
-                            <div>
-                                <div className="flex items-center gap-2 mb-3">
-                                    <span className="material-symbols-outlined text-gray-400 dark:text-gray-500">history</span>
-                                    <h3 className="font-bold text-gray-500 dark:text-gray-400">Past ({pastClasses.length})</h3>
-                                </div>
-                                <div className="space-y-3 opacity-70">
-                                    {pastClasses.map((cls, index) => (
-                                        <div 
-                                            key={cls.id}
-                                            className={`flex items-center justify-between p-4 rounded-xl border animate-pop-in ${
-                                                cls.is_active 
-                                                    ? 'bg-white dark:bg-surface-dark border-gray-100 dark:border-white/10' 
-                                                    : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-white/5 opacity-60'
-                                            }`}
-                                            style={{animationDelay: `${0.25 + index * 0.03}s`}}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-brand-green">
-                                                    <span className="material-symbols-outlined">spa</span>
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-primary dark:text-white">{cls.title}</p>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {formatDate(cls.date)} at {cls.time} • {cls.instructor}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 dark:bg-white/10 text-primary dark:text-white">{cls.category}</span>
-                                                        <span className="text-xs text-gray-400 dark:text-gray-500">{cls.duration} • {cls.spots}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
+                                            <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">person</span> {cls.instructor}</span>
                                             <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleViewEnrollments(cls)}
-                                                    className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                                    title="View Enrollments"
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleViewEnrollments(cls); }} 
+                                                    className="text-primary/70 dark:text-white/70 text-xs font-bold uppercase tracking-wider hover:bg-primary/5 dark:hover:bg-white/10 px-2 py-1 rounded flex items-center gap-1"
                                                 >
-                                                    <span className="material-symbols-outlined text-xl">group</span>
+                                                    <span className="material-symbols-outlined text-[14px]">group</span> Enrolled
                                                 </button>
-                                                <button
-                                                    onClick={() => openEdit(cls)}
-                                                    className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <span className="material-symbols-outlined text-xl">edit</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(cls)}
-                                                    className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <span className="material-symbols-outlined text-xl">delete</span>
-                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(cls); }} className="text-primary/50 dark:text-white/50 text-xs font-bold uppercase tracking-wider hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors">Delete</button>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
-                        )}
-                    </div>
-                )}
-            </div>
+                        </div>
+                    )}
+                    
+                    {pastClasses.length > 0 && (
+                        <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-gray-400 dark:text-gray-500">history</span>
+                                <h3 className="font-bold text-gray-500 dark:text-gray-400">Past ({pastClasses.length})</h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-70">
+                                {pastClasses.map((cls, index) => (
+                                    <div key={cls.id} onClick={() => openEdit(cls)} className="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative overflow-hidden cursor-pointer hover:border-primary/30 transition-all animate-pop-in" style={{animationDelay: `${0.25 + index * 0.03}s`}}>
+                                        <div className="flex gap-4">
+                                            <div className="w-20 h-20 rounded-lg bg-[#CCB8E4]/20 dark:bg-[#CCB8E4]/10 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                                {cls.image_url ? (
+                                                    <img src={cls.image_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="material-symbols-outlined text-3xl text-[#CCB8E4]">
+                                                        {getCategoryIcon(cls.category)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-lg text-primary dark:text-white leading-tight mb-1 truncate">{cls.title}</h4>
+                                                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-[#CCB8E4]/20 text-[#293515] dark:text-[#CCB8E4] px-1.5 py-0.5 rounded mb-2">{cls.category}</span>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(cls.date)} • {cls.time}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-white/5 mt-auto">
+                                            <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">person</span> {cls.instructor}</span>
+                                            <div className="flex items-center gap-2">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleViewEnrollments(cls); }} 
+                                                    className="text-primary/70 dark:text-white/70 text-xs font-bold uppercase tracking-wider hover:bg-primary/5 dark:hover:bg-white/10 px-2 py-1 rounded flex items-center gap-1"
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">group</span> Enrolled
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(cls); }} className="text-primary/50 dark:text-white/50 text-xs font-bold uppercase tracking-wider hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors">Delete</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <ParticipantDetailsModal
                 isOpen={isViewingEnrollments}
