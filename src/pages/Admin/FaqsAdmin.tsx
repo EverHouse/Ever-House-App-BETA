@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import Toggle from '../../components/Toggle';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import FloatingActionButton from '../../components/FloatingActionButton';
+import ModalShell from '../../components/ModalShell';
 
 interface FAQ {
     id: number;
@@ -222,119 +222,103 @@ const FaqsAdmin: React.FC = () => {
                 </div>
             )}
 
-            {isEditing && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
-                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white">
-                                {editId ? 'Edit FAQ' : 'Add FAQ'}
-                            </h3>
-                            <div className="space-y-4 mb-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Question</label>
-                                    <input
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                        placeholder="Enter the question"
-                                        value={newItem.question || ''}
-                                        onChange={e => setNewItem({ ...newItem, question: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Answer</label>
-                                    <textarea
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
-                                        placeholder="Enter the answer"
-                                        rows={4}
-                                        value={newItem.answer || ''}
-                                        onChange={e => setNewItem({ ...newItem, answer: e.target.value })}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                                        <select
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                            value={newItem.category || 'General'}
-                                            onChange={e => setNewItem({ ...newItem, category: e.target.value })}
-                                        >
-                                            <option>General</option>
-                                            <option>Membership</option>
-                                            <option>Booking</option>
-                                            <option>Amenities</option>
-                                            <option>Events</option>
-                                            <option>Policies</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort Order</label>
-                                        <input
-                                            type="number"
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                            value={newItem.sortOrder ?? 0}
-                                            onChange={e => setNewItem({ ...newItem, sortOrder: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
-                                    <span className="text-sm text-gray-700 dark:text-gray-300">Active (visible on public FAQ page)</span>
-                                    <Toggle
-                                        checked={newItem.isActive ?? true}
-                                        onChange={(val) => setNewItem({ ...newItem, isActive: val })}
-                                        label="Toggle FAQ active status"
-                                    />
-                                </div>
+            <ModalShell isOpen={isEditing} onClose={() => setIsEditing(false)} title={editId ? 'Edit FAQ' : 'Add FAQ'} size="lg">
+                <div className="p-6">
+                    <div className="space-y-4 mb-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Question</label>
+                            <input
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                placeholder="Enter the question"
+                                value={newItem.question || ''}
+                                onChange={e => setNewItem({ ...newItem, question: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Answer</label>
+                            <textarea
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
+                                placeholder="Enter the answer"
+                                rows={4}
+                                value={newItem.answer || ''}
+                                onChange={e => setNewItem({ ...newItem, answer: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                                <select
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    value={newItem.category || 'General'}
+                                    onChange={e => setNewItem({ ...newItem, category: e.target.value })}
+                                >
+                                    <option>General</option>
+                                    <option>Membership</option>
+                                    <option>Booking</option>
+                                    <option>Amenities</option>
+                                    <option>Events</option>
+                                    <option>Policies</option>
+                                </select>
                             </div>
-                            <div className="flex gap-3 justify-end">
-                                <button
-                                    onClick={() => setIsEditing(false)}
-                                    className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSave}
-                                    disabled={isSaving}
-                                    className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
-                                    Save
-                                </button>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort Order</label>
+                                <input
+                                    type="number"
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    value={newItem.sortOrder ?? 0}
+                                    onChange={e => setNewItem({ ...newItem, sortOrder: parseInt(e.target.value) || 0 })}
+                                />
                             </div>
                         </div>
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Active (visible on public FAQ page)</span>
+                            <Toggle
+                                checked={newItem.isActive ?? true}
+                                onChange={(val) => setNewItem({ ...newItem, isActive: val })}
+                                label="Toggle FAQ active status"
+                            />
+                        </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                    <div className="flex gap-3 justify-end">
+                        <button
+                            onClick={() => setIsEditing(false)}
+                            className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
 
-            {deleteConfirm !== null && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-sm animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
-                            <h3 className="font-bold text-lg mb-3 text-primary dark:text-white">Delete FAQ?</h3>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-                                This action cannot be undone. Are you sure you want to delete this FAQ?
-                            </p>
-                            <div className="flex gap-3 justify-end">
-                                <button
-                                    onClick={() => setDeleteConfirm(null)}
-                                    className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(deleteConfirm)}
-                                    className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold shadow-md hover:bg-red-700 transition-colors"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
+            <ModalShell isOpen={deleteConfirm !== null} onClose={() => setDeleteConfirm(null)} title="Delete FAQ?" size="sm">
+                <div className="p-6">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+                        This action cannot be undone. Are you sure you want to delete this FAQ?
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                        <button
+                            onClick={() => setDeleteConfirm(null)}
+                            className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => deleteConfirm !== null && handleDelete(deleteConfirm)}
+                            className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold shadow-md hover:bg-red-700 transition-colors"
+                        >
+                            Delete
+                        </button>
                     </div>
-                </div>,
-                document.body
-            )}
+                </div>
+            </ModalShell>
 
             {faqs.length === 0 ? (
                 <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-white/5">

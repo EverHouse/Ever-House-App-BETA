@@ -13,6 +13,7 @@ import { EmptyEvents } from '../../components/EmptyState';
 import { downloadICalFile } from '../../utils/icalUtils';
 import { getTodayPacific } from '../../utils/dateUtils';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
+import ModalShell from '../../components/ModalShell';
 
 interface UserRsvp {
   event_id: number;
@@ -309,18 +310,19 @@ const MemberEvents: React.FC = () => {
         </div>
       </section>
 
-      {showViewAsConfirm && viewAsUser && pendingEvent && (
-        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowViewAsConfirm(false); setPendingEvent(null); }} />
-          <div className={`relative w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 border glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+      <ModalShell 
+        isOpen={showViewAsConfirm && !!viewAsUser && !!pendingEvent} 
+        onClose={() => { setShowViewAsConfirm(false); setPendingEvent(null); }}
+        title={pendingEvent && hasRsvp(pendingEvent.id) ? 'Cancel RSVP on Behalf' : 'RSVP on Behalf'}
+        size="sm"
+      >
+        {viewAsUser && pendingEvent && (
+          <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
                 <span className="material-symbols-outlined text-2xl text-amber-500">warning</span>
               </div>
               <div>
-                <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-primary'}`}>
-                  {hasRsvp(pendingEvent.id) ? 'Cancel RSVP' : 'RSVP'} on Behalf
-                </h3>
                 <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>View As Mode Active</p>
               </div>
             </div>
@@ -344,8 +346,8 @@ const MemberEvents: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </ModalShell>
     </SwipeablePage>
     </PullToRefresh>
   );

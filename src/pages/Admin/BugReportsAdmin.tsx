@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import ModalShell from '../../components/ModalShell';
 
 interface BugReport {
     id: number;
@@ -248,136 +248,124 @@ const BugReportsAdmin: React.FC = () => {
                 )}
             </div>
 
-            {isDetailOpen && selectedReport && createPortal(
-                <div className="fixed inset-0 z-[15000] flex items-end sm:items-center justify-center">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
-                    
-                    <div className={`relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl shadow-2xl animate-slide-in-up ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'}`}>
-                        <div className={`sticky top-0 p-4 border-b ${isDark ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-black/5'}`}>
-                            <div className="flex items-center justify-between">
-                                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-primary'}`}>Bug Report #{selectedReport.id}</h2>
-                                <button
-                                    onClick={() => setIsDetailOpen(false)}
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'hover:bg-white/10 text-white/60' : 'hover:bg-black/5 text-primary/60'}`}
-                                >
-                                    <span className="material-symbols-outlined">close</span>
-                                </button>
+            <ModalShell 
+                isOpen={isDetailOpen && selectedReport !== null} 
+                onClose={() => setIsDetailOpen(false)} 
+                title={selectedReport ? `Bug Report #${selectedReport.id}` : 'Bug Report'}
+                size="lg"
+            >
+                {selectedReport && (
+                    <div className="p-4 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
+                                <span className={`material-symbols-outlined ${isDark ? 'text-white/70' : 'text-primary/70'}`}>person</span>
+                            </div>
+                            <div>
+                                <p className={`font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>
+                                    {selectedReport.userName || 'Unknown User'}
+                                </p>
+                                <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{selectedReport.userEmail}</p>
+                            </div>
+                            <span className={`ml-auto px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${getRoleColor(selectedReport.userRole)}`}>
+                                {selectedReport.userRole || 'member'}
+                            </span>
+                        </div>
+
+                        <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                            <p className={`text-sm font-medium mb-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Description</p>
+                            <p className={`${isDark ? 'text-white' : 'text-primary'}`}>{selectedReport.description}</p>
+                        </div>
+
+                        {selectedReport.screenshotUrl && (
+                            <div>
+                                <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Screenshot</p>
+                                <a href={selectedReport.screenshotUrl} target="_blank" rel="noopener noreferrer">
+                                    <img 
+                                        src={selectedReport.screenshotUrl} 
+                                        alt="Bug screenshot" 
+                                        className="w-full rounded-xl border border-black/10"
+                                    />
+                                </a>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                                <p className={`text-xs font-medium mb-1 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Submitted</p>
+                                <p className={`text-sm ${isDark ? 'text-white' : 'text-primary'}`}>{formatDate(selectedReport.createdAt)}</p>
+                            </div>
+                            {selectedReport.pageUrl && (
+                                <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                                    <p className={`text-xs font-medium mb-1 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Page</p>
+                                    <p className={`text-sm truncate ${isDark ? 'text-white' : 'text-primary'}`}>{selectedReport.pageUrl}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Status</p>
+                            <div className="flex gap-2">
+                                {['open', 'in_progress', 'resolved'].map(status => (
+                                    <button
+                                        key={status}
+                                        onClick={() => handleUpdateStatus(status)}
+                                        disabled={isSaving}
+                                        className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all ${
+                                            selectedReport.status === status
+                                                ? getStatusColor(status)
+                                                : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-black/5 text-primary/60 hover:bg-black/10'
+                                        }`}
+                                    >
+                                        {status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        <div className="p-4 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
-                                    <span className={`material-symbols-outlined ${isDark ? 'text-white/70' : 'text-primary/70'}`}>person</span>
-                                </div>
-                                <div>
-                                    <p className={`font-semibold ${isDark ? 'text-white' : 'text-primary'}`}>
-                                        {selectedReport.userName || 'Unknown User'}
-                                    </p>
-                                    <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>{selectedReport.userEmail}</p>
-                                </div>
-                                <span className={`ml-auto px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${getRoleColor(selectedReport.userRole)}`}>
-                                    {selectedReport.userRole || 'member'}
-                                </span>
+                        {selectedReport.resolvedBy && (
+                            <div className={`p-3 rounded-xl ${isDark ? 'bg-green-900/20' : 'bg-green-50'}`}>
+                                <p className={`text-xs font-medium ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+                                    Resolved by {selectedReport.resolvedBy} on {selectedReport.resolvedAt ? formatDate(selectedReport.resolvedAt) : 'N/A'}
+                                </p>
                             </div>
+                        )}
 
-                            <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                                <p className={`text-sm font-medium mb-1 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Description</p>
-                                <p className={`${isDark ? 'text-white' : 'text-primary'}`}>{selectedReport.description}</p>
-                            </div>
-
-                            {selectedReport.screenshotUrl && (
-                                <div>
-                                    <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Screenshot</p>
-                                    <a href={selectedReport.screenshotUrl} target="_blank" rel="noopener noreferrer">
-                                        <img 
-                                            src={selectedReport.screenshotUrl} 
-                                            alt="Bug screenshot" 
-                                            className="w-full rounded-xl border border-black/10"
-                                        />
-                                    </a>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                                    <p className={`text-xs font-medium mb-1 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Submitted</p>
-                                    <p className={`text-sm ${isDark ? 'text-white' : 'text-primary'}`}>{formatDate(selectedReport.createdAt)}</p>
-                                </div>
-                                {selectedReport.pageUrl && (
-                                    <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                                        <p className={`text-xs font-medium mb-1 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>Page</p>
-                                        <p className={`text-sm truncate ${isDark ? 'text-white' : 'text-primary'}`}>{selectedReport.pageUrl}</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div>
-                                <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Status</p>
-                                <div className="flex gap-2">
-                                    {['open', 'in_progress', 'resolved'].map(status => (
-                                        <button
-                                            key={status}
-                                            onClick={() => handleUpdateStatus(status)}
-                                            disabled={isSaving}
-                                            className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all ${
-                                                selectedReport.status === status
-                                                    ? getStatusColor(status)
-                                                    : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-black/5 text-primary/60 hover:bg-black/10'
-                                            }`}
-                                        >
-                                            {status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {selectedReport.resolvedBy && (
-                                <div className={`p-3 rounded-xl ${isDark ? 'bg-green-900/20' : 'bg-green-50'}`}>
-                                    <p className={`text-xs font-medium ${isDark ? 'text-green-400' : 'text-green-700'}`}>
-                                        Resolved by {selectedReport.resolvedBy} on {selectedReport.resolvedAt ? formatDate(selectedReport.resolvedAt) : 'N/A'}
-                                    </p>
-                                </div>
-                            )}
-
-                            <div>
-                                <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Staff Notes</p>
-                                <textarea
-                                    value={staffNotes}
-                                    onChange={(e) => setStaffNotes(e.target.value)}
-                                    placeholder="Add internal notes..."
-                                    rows={3}
-                                    className={`w-full rounded-xl px-4 py-3 text-sm resize-none ${
-                                        isDark 
-                                            ? 'bg-white/5 border border-white/10 text-white placeholder:text-white/40' 
-                                            : 'bg-black/5 border border-black/10 text-primary placeholder:text-primary/40'
-                                    }`}
-                                />
-                                <button
-                                    onClick={handleSaveNotes}
-                                    disabled={isSaving || staffNotes === (selectedReport.staffNotes || '')}
-                                    className={`mt-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
-                                        isDark ? 'bg-accent text-primary' : 'bg-primary text-white'
-                                    }`}
-                                >
-                                    Save Notes
-                                </button>
-                            </div>
-
+                        <div>
+                            <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Staff Notes</p>
+                            <textarea
+                                value={staffNotes}
+                                onChange={(e) => setStaffNotes(e.target.value)}
+                                placeholder="Add internal notes..."
+                                rows={3}
+                                className={`w-full rounded-xl px-4 py-3 text-sm resize-none ${
+                                    isDark 
+                                        ? 'bg-white/5 border border-white/10 text-white placeholder:text-white/40' 
+                                        : 'bg-black/5 border border-black/10 text-primary placeholder:text-primary/40'
+                                }`}
+                            />
                             <button
-                                onClick={handleDelete}
-                                disabled={isSaving}
-                                className={`w-full py-3 rounded-xl text-red-500 font-medium text-sm transition-colors ${
-                                    isDark ? 'hover:bg-red-500/10' : 'hover:bg-red-50'
+                                onClick={handleSaveNotes}
+                                disabled={isSaving || staffNotes === (selectedReport.staffNotes || '')}
+                                className={`mt-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
+                                    isDark ? 'bg-accent text-primary' : 'bg-primary text-white'
                                 }`}
                             >
-                                Delete Report
+                                Save Notes
                             </button>
                         </div>
+
+                        <button
+                            onClick={handleDelete}
+                            disabled={isSaving}
+                            className={`w-full py-3 rounded-xl text-red-500 font-medium text-sm transition-colors ${
+                                isDark ? 'hover:bg-red-500/10' : 'hover:bg-red-50'
+                            }`}
+                        >
+                            Delete Report
+                        </button>
                     </div>
-                </div>,
-                document.body
-            )}
+                )}
+            </ModalShell>
         </div>
     );
 };

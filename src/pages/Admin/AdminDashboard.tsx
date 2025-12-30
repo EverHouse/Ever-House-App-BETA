@@ -536,84 +536,75 @@ const CafeAdmin: React.FC = () => {
                 ))}
             </div>
 
-            {isEditing && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
-                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white">{editId ? 'Edit Item' : 'Add Item'}</h3>
-                            <div className="space-y-4 mb-6">
-                                <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Item Name" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} />
-                                <div className="grid grid-cols-2 gap-3">
-                                    <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="number" placeholder="Price" value={newItem.price || ''} onChange={e => setNewItem({...newItem, price: Number(e.target.value)})} />
-                                    <select className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
-                                        <option>Coffee & Drinks</option>
-                                        <option>Breakfast</option>
-                                        <option>Lunch</option>
-                                        <option>Sides</option>
-                                        <option>Kids</option>
-                                        <option>Dessert</option>
-                                        <option>Shareables</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-white/70">Image (Optional)</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={e => {
-                                                const file = e.target.files?.[0];
-                                                if (file) handleImageUpload(file);
-                                            }}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={isUploading}
-                                            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-white/20 transition-colors disabled:opacity-50"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">{isUploading ? 'sync' : 'upload'}</span>
-                                            {isUploading ? 'Uploading...' : 'Upload'}
-                                        </button>
-                                        <input
-                                            className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
-                                            placeholder="Or paste image URL"
-                                            value={newItem.image || ''}
-                                            onChange={e => setNewItem({...newItem, image: e.target.value})}
-                                        />
-                                    </div>
-                                    {uploadResult && (
-                                        <p className="text-xs text-green-600 dark:text-green-400">
-                                            Optimized: {(uploadResult.originalSize / 1024).toFixed(0)}KB → {(uploadResult.optimizedSize / 1024).toFixed(0)}KB
-                                        </p>
-                                    )}
-                                    {newItem.image && (
-                                        <div className="mt-2 relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5">
-                                            <img src={newItem.image} alt="Preview" className="w-full h-full object-cover" />
-                                            <button
-                                                type="button"
-                                                onClick={() => { setNewItem({...newItem, image: ''}); setUploadResult(null); }}
-                                                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">close</span>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                                <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
-                            </div>
-                            <div className="flex gap-3 justify-end">
-                                <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
-                                <button onClick={handleSave} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors">Save</button>
-                            </div>
-                        </div>
+            <ModalShell isOpen={isEditing} onClose={() => setIsEditing(false)} title={editId ? 'Edit Item' : 'Add Item'} showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Item Name" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} />
+                    <div className="grid grid-cols-2 gap-3">
+                        <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="number" placeholder="Price" value={newItem.price || ''} onChange={e => setNewItem({...newItem, price: Number(e.target.value)})} />
+                        <select className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
+                            <option>Coffee & Drinks</option>
+                            <option>Breakfast</option>
+                            <option>Lunch</option>
+                            <option>Sides</option>
+                            <option>Kids</option>
+                            <option>Dessert</option>
+                            <option>Shareables</option>
+                        </select>
                     </div>
-                </div>,
-                document.body
-            )}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-white/70">Image (Optional)</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleImageUpload(file);
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-white/20 transition-colors disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-lg">{isUploading ? 'sync' : 'upload'}</span>
+                                {isUploading ? 'Uploading...' : 'Upload'}
+                            </button>
+                            <input
+                                className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                                placeholder="Or paste image URL"
+                                value={newItem.image || ''}
+                                onChange={e => setNewItem({...newItem, image: e.target.value})}
+                            />
+                        </div>
+                        {uploadResult && (
+                            <p className="text-xs text-green-600 dark:text-green-400">
+                                Optimized: {(uploadResult.originalSize / 1024).toFixed(0)}KB → {(uploadResult.optimizedSize / 1024).toFixed(0)}KB
+                            </p>
+                        )}
+                        {newItem.image && (
+                            <div className="mt-2 relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5">
+                                <img src={newItem.image} alt="Preview" className="w-full h-full object-cover" />
+                                <button
+                                    type="button"
+                                    onClick={() => { setNewItem({...newItem, image: ''}); setUploadResult(null); }}
+                                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
+                                >
+                                    <span className="material-symbols-outlined text-sm">close</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
+                    <div className="flex gap-3 justify-end pt-2">
+                        <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                        <button onClick={handleSave} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors">Save</button>
+                    </div>
+                </div>
+            </ModalShell>
 
             <div className="space-y-3 animate-pop-in" style={{animationDelay: '0.15s'}}>
                 {filteredMenu.map((item, index) => (
@@ -881,55 +872,46 @@ const EventsAdminContent: React.FC = () => {
                 ))}
             </div>
 
-            {isEditing && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setError(null); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
-                            <h3 className="font-bold text-lg mb-4 text-primary dark:text-white">{editId ? 'Edit Event' : 'Create Event'}</h3>
-                            {error && (
-                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg text-sm mb-4">
-                                    {error}
-                                </div>
-                            )}
-                            <div className="space-y-3 mb-6">
-                                <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
-                                <select className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
-                                    <option value="Social">Social</option>
-                                    <option value="Golf">Golf</option>
-                                    <option value="Tournaments">Tournaments</option>
-                                    <option value="Dining">Dining</option>
-                                    <option value="Networking">Networking</option>
-                                    <option value="Workshops">Workshops</option>
-                                    <option value="Family">Family</option>
-                                    <option value="Entertainment">Entertainment</option>
-                                    <option value="Charity">Charity</option>
-                                </select>
-                                <div className="grid grid-cols-1 gap-3">
-                                    <input type="date" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.event_date || ''} onChange={e => setNewItem({...newItem, event_date: e.target.value})} />
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <input type="time" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" placeholder="Start Time" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} />
-                                        <input type="time" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" placeholder="End Time" value={newItem.end_time || ''} onChange={e => setNewItem({...newItem, end_time: e.target.value})} />
-                                    </div>
-                                </div>
-                                <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Location" value={newItem.location || ''} onChange={e => setNewItem({...newItem, location: e.target.value})} />
-                                <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Image URL (optional)" value={newItem.image_url || ''} onChange={e => setNewItem({...newItem, image_url: e.target.value})} />
-                                <input type="number" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Max Attendees (optional)" value={newItem.max_attendees || ''} onChange={e => setNewItem({...newItem, max_attendees: parseInt(e.target.value) || null})} />
-                                <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="External Link URL (optional)" value={newItem.external_url || ''} onChange={e => setNewItem({...newItem, external_url: e.target.value})} />
-                                <textarea className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
-                            </div>
-                            <div className="flex gap-3 justify-end">
-                                <button onClick={() => { setIsEditing(false); setError(null); }} className="px-4 py-2 text-gray-500 font-bold" disabled={isSaving}>Cancel</button>
-                                <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md disabled:opacity-50 flex items-center gap-2">
-                                    {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
-                                    {isSaving ? 'Saving...' : 'Save'}
-                                </button>
-                            </div>
+            <ModalShell isOpen={isEditing} onClose={() => { setIsEditing(false); setError(null); }} title={editId ? 'Edit Event' : 'Create Event'} showCloseButton={false}>
+                <div className="p-6 space-y-3">
+                    {error && (
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
+                    <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
+                    <select className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
+                        <option value="Social">Social</option>
+                        <option value="Golf">Golf</option>
+                        <option value="Tournaments">Tournaments</option>
+                        <option value="Dining">Dining</option>
+                        <option value="Networking">Networking</option>
+                        <option value="Workshops">Workshops</option>
+                        <option value="Family">Family</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Charity">Charity</option>
+                    </select>
+                    <div className="grid grid-cols-1 gap-3">
+                        <input type="date" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.event_date || ''} onChange={e => setNewItem({...newItem, event_date: e.target.value})} />
+                        <div className="grid grid-cols-2 gap-3">
+                            <input type="time" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" placeholder="Start Time" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} />
+                            <input type="time" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" placeholder="End Time" value={newItem.end_time || ''} onChange={e => setNewItem({...newItem, end_time: e.target.value})} />
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                    <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Location" value={newItem.location || ''} onChange={e => setNewItem({...newItem, location: e.target.value})} />
+                    <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Image URL (optional)" value={newItem.image_url || ''} onChange={e => setNewItem({...newItem, image_url: e.target.value})} />
+                    <input type="number" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Max Attendees (optional)" value={newItem.max_attendees || ''} onChange={e => setNewItem({...newItem, max_attendees: parseInt(e.target.value) || null})} />
+                    <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="External Link URL (optional)" value={newItem.external_url || ''} onChange={e => setNewItem({...newItem, external_url: e.target.value})} />
+                    <textarea className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                    <div className="flex gap-3 justify-end pt-2">
+                        <button onClick={() => { setIsEditing(false); setError(null); }} className="px-4 py-2 text-gray-500 font-bold" disabled={isSaving}>Cancel</button>
+                        <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md disabled:opacity-50 flex items-center gap-2">
+                            {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
 
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
@@ -1184,84 +1166,78 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
     isLoading,
     type
 }) => {
-    if (!isOpen) return null;
-
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
-    return createPortal(
-        <div className="fixed inset-0 z-[10001] overflow-y-auto">
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md animate-in zoom-in-95 modal-safe-height overflow-y-auto pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="font-bold text-lg text-primary dark:text-white">{title}</h3>
-                            {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
-                        </div>
-                        <button 
-                            onClick={onClose}
-                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-gray-500">close</span>
-                        </button>
+    return (
+        <ModalShell isOpen={isOpen} onClose={onClose} showCloseButton={false}>
+            <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="font-bold text-lg text-primary dark:text-white">{title}</h3>
+                        {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
                     </div>
+                    <button 
+                        onClick={onClose}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-gray-500">close</span>
+                    </button>
+                </div>
 
-                    {isLoading ? (
-                        <div className="flex items-center justify-center py-12">
-                            <span className="material-symbols-outlined animate-spin text-2xl text-gray-400">progress_activity</span>
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <span className="material-symbols-outlined animate-spin text-2xl text-gray-400">progress_activity</span>
+                    </div>
+                ) : participants.length === 0 ? (
+                    <div className="text-center py-12 text-gray-400">
+                        <span className="material-symbols-outlined text-4xl mb-2 block">
+                            {type === 'rsvp' ? 'event_busy' : 'person_off'}
+                        </span>
+                        <p>No {type === 'rsvp' ? 'RSVPs' : 'enrollments'} yet</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
+                            {participants.length} {type === 'rsvp' ? 'RSVP' : 'Enrolled'}{participants.length !== 1 ? 's' : ''}
                         </div>
-                    ) : participants.length === 0 ? (
-                        <div className="text-center py-12 text-gray-400">
-                            <span className="material-symbols-outlined text-4xl mb-2 block">
-                                {type === 'rsvp' ? 'event_busy' : 'person_off'}
-                            </span>
-                            <p>No {type === 'rsvp' ? 'RSVPs' : 'enrollments'} yet</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-                                {participants.length} {type === 'rsvp' ? 'RSVP' : 'Enrolled'}{participants.length !== 1 ? 's' : ''}
-                            </div>
-                            {participants.map((p) => (
-                                <div 
-                                    key={p.id}
-                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-100 dark:border-white/10"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-brand-green font-bold">
-                                            {(p.firstName?.[0] || p.userEmail[0]).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-primary dark:text-white text-sm">
-                                                {p.firstName && p.lastName 
-                                                    ? `${p.firstName} ${p.lastName}` 
-                                                    : p.userEmail}
-                                            </p>
-                                            {p.firstName && p.lastName && (
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">{p.userEmail}</p>
-                                            )}
-                                            {p.phone && (
-                                                <p className="text-xs text-gray-400">{formatPhoneNumber(p.phone)}</p>
-                                            )}
-                                        </div>
+                        {participants.map((p) => (
+                            <div 
+                                key={p.id}
+                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-100 dark:border-white/10"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-brand-green font-bold">
+                                        {(p.firstName?.[0] || p.userEmail[0]).toUpperCase()}
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded">
-                                            {p.status}
-                                        </span>
-                                        <p className="text-[10px] text-gray-400 mt-1">{formatDate(p.createdAt)}</p>
+                                    <div>
+                                        <p className="font-medium text-primary dark:text-white text-sm">
+                                            {p.firstName && p.lastName 
+                                                ? `${p.firstName} ${p.lastName}` 
+                                                : p.userEmail}
+                                        </p>
+                                        {p.firstName && p.lastName && (
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{p.userEmail}</p>
+                                        )}
+                                        {p.phone && (
+                                            <p className="text-xs text-gray-400">{formatPhoneNumber(p.phone)}</p>
+                                        )}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded">
+                                        {p.status}
+                                    </span>
+                                    <p className="text-[10px] text-gray-400 mt-1">{formatDate(p.createdAt)}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
-        </div>,
-        document.body
+        </ModalShell>
     );
 };
 
@@ -1532,71 +1508,60 @@ const AnnouncementsAdmin: React.FC<{ triggerCreate?: number }> = ({ triggerCreat
 
     return (
         <div className="animate-pop-in">
-            {isEditing && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
-                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-                                {editId ? 'Edit Announcement' : 'New Announcement'}
-                            </h3>
-                            <div className="space-y-4 mb-6">
-                                <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
-                                <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
-                                
-                                {/* Priority Level */}
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Priority Level</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <button type="button" onClick={() => setNewItem({...newItem, priority: 'normal'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${(!newItem.priority || newItem.priority === 'normal') ? 'bg-gray-200 dark:bg-white/20 text-gray-700 dark:text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Normal</button>
-                                        <button type="button" onClick={() => setNewItem({...newItem, priority: 'high'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.priority === 'high' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>High</button>
-                                        <button type="button" onClick={() => setNewItem({...newItem, priority: 'urgent'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.priority === 'urgent' ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Urgent</button>
-                                    </div>
-                                </div>
-                                
-                                {/* Date Durations */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Start Date</label>
-                                        <input type="date" className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.startDate || ''} onChange={e => setNewItem({...newItem, startDate: e.target.value})} />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">End Date</label>
-                                        <input type="date" className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.endDate || ''} onChange={e => setNewItem({...newItem, endDate: e.target.value})} />
-                                    </div>
-                                </div>
-                                
-                                {/* Link Destination */}
-                                <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-white/10">
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block">Link Destination</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: undefined, linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${!newItem.linkType ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>None</button>
-                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: 'events', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'events' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Events</button>
-                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: 'wellness', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'wellness' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Wellness</button>
-                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: 'golf', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'golf' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Book Golf</button>
-                                        <button type="button" onClick={() => setNewItem({...newItem, linkType: 'external', linkTarget: newItem.linkTarget || ''})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors col-span-2 ${newItem.linkType === 'external' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>External URL</button>
-                                    </div>
-                                    {newItem.linkType === 'external' && (
-                                        <input 
-                                            type="url" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                            placeholder="https://example.com" 
-                                            value={newItem.linkTarget || ''} 
-                                            onChange={e => setNewItem({...newItem, linkTarget: e.target.value})} 
-                                        />
-                                    )}
-                                </div>
-                            </div>
-                            <div className="flex gap-3 justify-end">
-                                <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
-                                <button onClick={handleSave} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors">Post</button>
-                            </div>
+            <ModalShell isOpen={isEditing} onClose={() => setIsEditing(false)} showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <h3 className="font-bold text-lg text-primary dark:text-white flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-accent" />
+                        {editId ? 'Edit Announcement' : 'New Announcement'}
+                    </h3>
+                    <input className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
+                    <textarea className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" placeholder="Description" rows={3} value={newItem.desc || ''} onChange={e => setNewItem({...newItem, desc: e.target.value})} />
+                    
+                    <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Priority Level</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button type="button" onClick={() => setNewItem({...newItem, priority: 'normal'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${(!newItem.priority || newItem.priority === 'normal') ? 'bg-gray-200 dark:bg-white/20 text-gray-700 dark:text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Normal</button>
+                            <button type="button" onClick={() => setNewItem({...newItem, priority: 'high'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.priority === 'high' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>High</button>
+                            <button type="button" onClick={() => setNewItem({...newItem, priority: 'urgent'})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.priority === 'urgent' ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Urgent</button>
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">Start Date</label>
+                            <input type="date" className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.startDate || ''} onChange={e => setNewItem({...newItem, startDate: e.target.value})} />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1.5 block">End Date</label>
+                            <input type="date" className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" value={newItem.endDate || ''} onChange={e => setNewItem({...newItem, endDate: e.target.value})} />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-white/10">
+                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block">Link Destination</label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => setNewItem({...newItem, linkType: undefined, linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${!newItem.linkType ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>None</button>
+                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'events', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'events' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Events</button>
+                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'wellness', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'wellness' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Wellness</button>
+                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'golf', linkTarget: undefined})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${newItem.linkType === 'golf' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>Book Golf</button>
+                            <button type="button" onClick={() => setNewItem({...newItem, linkType: 'external', linkTarget: newItem.linkTarget || ''})} className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors col-span-2 ${newItem.linkType === 'external' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'}`}>External URL</button>
+                        </div>
+                        {newItem.linkType === 'external' && (
+                            <input 
+                                type="url" 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                placeholder="https://example.com" 
+                                value={newItem.linkTarget || ''} 
+                                onChange={e => setNewItem({...newItem, linkTarget: e.target.value})} 
+                            />
+                        )}
+                    </div>
+                    <div className="flex gap-3 justify-end pt-2">
+                        <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                        <button onClick={handleSave} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors">Post</button>
+                    </div>
+                </div>
+            </ModalShell>
 
             {/* Announcements Section */}
             <div className="space-y-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
@@ -1862,67 +1827,50 @@ const MembersAdmin: React.FC = () => {
             </div>
             )}
 
-            {isViewingDetails && selectedMember && createPortal(
-                <div className="fixed inset-0 z-[10001] animate-fade-in">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-                    <div className="fixed inset-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }} onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl animate-pop-in" onClick={(e) => e.stopPropagation()}>
-                            <button
-                                onClick={() => { setIsViewingDetails(false); setSelectedMember(null); }}
-                                className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                            >
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-                            
-                            <h3 className="text-2xl font-bold text-primary dark:text-white mb-4">{selectedMember.name}</h3>
-                            
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-gray-400">email</span>
-                                    <span className="text-gray-700 dark:text-gray-300">{selectedMember.email}</span>
-                                </div>
-                                {selectedMember.phone && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-gray-400">phone</span>
-                                        <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedMember.phone)}</span>
-                                    </div>
-                                )}
-                                {selectedMember.tier && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-gray-400">card_membership</span>
-                                        <TierBadge tier={selectedMember.tier} size="md" />
-                                    </div>
-                                )}
-                                {selectedMember.tags && selectedMember.tags.length > 0 && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-gray-400">label</span>
-                                        <div className="flex flex-wrap gap-1">
-                                            {selectedMember.tags.map(tag => (
-                                                <TagBadge key={tag} tag={tag} size="sm" />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {isAdmin && (
-                                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setIsViewingDetails(false); setSelectedMember(null); handleViewAs(selectedMember); }}
-                                        className="w-full py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">visibility</span>
-                                        View As This Member
-                                    </button>
-                                </div>
-                            )}
+            <ModalShell isOpen={isViewingDetails && !!selectedMember} onClose={() => { setIsViewingDetails(false); setSelectedMember(null); }} title={selectedMember?.name || ''}>
+                <div className="p-6">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">email</span>
+                            <span className="text-gray-700 dark:text-gray-300">{selectedMember?.email}</span>
                         </div>
-                      </div>
+                        {selectedMember?.phone && (
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-gray-400">phone</span>
+                                <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedMember.phone)}</span>
+                            </div>
+                        )}
+                        {selectedMember?.tier && (
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-gray-400">card_membership</span>
+                                <TierBadge tier={selectedMember.tier} size="md" />
+                            </div>
+                        )}
+                        {selectedMember?.tags && selectedMember.tags.length > 0 && (
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-gray-400">label</span>
+                                <div className="flex flex-wrap gap-1">
+                                    {selectedMember.tags.map(tag => (
+                                        <TagBadge key={tag} tag={tag} size="sm" />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </div>,
-                document.body
-            )}
+
+                    {isAdmin && selectedMember && (
+                        <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setIsViewingDetails(false); setSelectedMember(null); handleViewAs(selectedMember); }}
+                                className="w-full py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-lg">visibility</span>
+                                View As This Member
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </ModalShell>
         </div>
     );
 };
@@ -3010,184 +2958,166 @@ const SimulatorAdmin: React.FC = () => {
                 </div>
             )}
 
-            {actionModal && selectedRequest && createPortal(
-                <div className="fixed inset-0 z-[10001]">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-                    <div className="fixed inset-0 overflow-y-auto" onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
-                                {actionModal === 'approve' ? 'Approve Request' : 'Decline Request'}
-                            </h3>
-                            
-                            <div className="mb-4 p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                <p className="font-medium text-primary dark:text-white">{selectedRequest.user_name || selectedRequest.user_email}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {formatDateShort(selectedRequest.request_date)} • {formatTime12(selectedRequest.start_time)} - {formatTime12(selectedRequest.end_time)}
-                                </p>
-                            </div>
-                            
-                            {error && (
-                                <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
-                                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                                </div>
-                            )}
-                            
-                            {actionModal === 'approve' && (
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign Resource *</label>
-                                    <select
-                                        value={selectedBayId || ''}
-                                        onChange={(e) => setSelectedBayId(Number(e.target.value))}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    >
-                                        <option value="">Select a resource...</option>
-                                        {resources.map(resource => (
-                                            <option key={resource.id} value={resource.id}>
-                                                {resource.type === 'conference_room' ? 'Conference Room' : resource.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    
-                                    {selectedBayId && availabilityStatus && (
-                                        <div className={`mt-2 p-2 rounded-lg flex items-center gap-2 text-sm ${
-                                            availabilityStatus === 'checking' 
-                                                ? 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400'
-                                                : availabilityStatus === 'available'
-                                                    ? 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
-                                                    : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400'
-                                        }`}>
-                                            <span className={`material-symbols-outlined text-base ${availabilityStatus === 'checking' ? 'animate-spin' : ''}`}>
-                                                {availabilityStatus === 'checking' ? 'progress_activity' : availabilityStatus === 'available' ? 'check_circle' : 'warning'}
-                                            </span>
-                                            <span>
-                                                {availabilityStatus === 'checking' && 'Checking availability...'}
-                                                {availabilityStatus === 'available' && 'This time slot is available'}
-                                                {availabilityStatus === 'conflict' && (conflictDetails || 'Conflict detected')}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            
-                            {actionModal === 'decline' && selectedRequest?.status !== 'approved' && (
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Suggest Alternative Time (Optional)</label>
-                                    <input
-                                        type="time"
-                                        value={suggestedTime}
-                                        onChange={(e) => setSuggestedTime(e.target.value)}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-                            )}
-                            
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Staff Notes (Optional)</label>
-                                <textarea
-                                    value={staffNotes}
-                                    onChange={(e) => setStaffNotes(e.target.value)}
-                                    placeholder="Add a note for the member..."
-                                    rows={2}
-                                    className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white resize-none"
-                                />
-                            </div>
-                            
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }}
-                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                                    disabled={isProcessing}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={actionModal === 'approve' ? initiateApproval : handleDecline}
-                                    disabled={isProcessing || (actionModal === 'approve' && (!selectedBayId || availabilityStatus === 'conflict' || availabilityStatus === 'checking'))}
-                                    className={`flex-1 py-3 px-4 rounded-lg text-white font-medium flex items-center justify-center gap-2 ${
-                                        actionModal === 'approve' 
-                                            ? 'bg-green-500 hover:bg-green-600' 
-                                            : 'bg-red-500 hover:bg-red-600'
-                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    {isProcessing ? (
-                                        <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-sm">
-                                            {actionModal === 'approve' ? 'check' : 'close'}
-                                        </span>
-                                    )}
-                                    {actionModal === 'approve' ? 'Approve' : (selectedRequest?.status === 'approved' ? 'Cancel Booking' : 'Decline')}
-                                </button>
-                            </div>
-                        </div>
-                      </div>
+            <ModalShell isOpen={!!actionModal && !!selectedRequest} onClose={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }} title={actionModal === 'approve' ? 'Approve Request' : 'Decline Request'} showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                        <p className="font-medium text-primary dark:text-white">{selectedRequest?.user_name || selectedRequest?.user_email}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {selectedRequest && formatDateShort(selectedRequest.request_date)} • {selectedRequest && formatTime12(selectedRequest.start_time)} - {selectedRequest && formatTime12(selectedRequest.end_time)}
+                        </p>
                     </div>
-                </div>,
-                document.body
-            )}
-
-            {showTrackmanConfirm && selectedRequest && createPortal(
-                <div className="fixed inset-0 z-[10002] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowTrackmanConfirm(false)} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-sm w-full pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
-                            <div className="text-center mb-4">
-                                <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mx-auto mb-3">
-                                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-2xl">sports_golf</span>
-                                </div>
-                                <h3 className="text-lg font-bold text-primary dark:text-white mb-2">Trackman Confirmation</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    Have you created this booking in Trackman?
-                                </p>
-                            </div>
+                    
+                    {error && (
+                        <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
+                            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                        </div>
+                    )}
+                    
+                    {actionModal === 'approve' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign Resource *</label>
+                            <select
+                                value={selectedBayId || ''}
+                                onChange={(e) => setSelectedBayId(Number(e.target.value))}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            >
+                                <option value="">Select a resource...</option>
+                                {resources.map(resource => (
+                                    <option key={resource.id} value={resource.id}>
+                                        {resource.type === 'conference_room' ? 'Conference Room' : resource.name}
+                                    </option>
+                                ))}
+                            </select>
                             
-                            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg mb-4 text-sm">
-                                <p className="font-medium text-primary dark:text-white">{selectedRequest.user_name || selectedRequest.user_email}</p>
-                                <p className="text-gray-500 dark:text-gray-400">
-                                    {formatDateShort(selectedRequest.request_date)} • {formatTime12(selectedRequest.start_time)} - {formatTime12(selectedRequest.end_time)}
-                                </p>
-                                {selectedBayId && (
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        {resources.find(r => r.id === selectedBayId)?.name || `Bay ${selectedBayId}`}
-                                    </p>
-                                )}
-                            </div>
-
-                            {error && (
-                                <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
-                                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                            {selectedBayId && availabilityStatus && (
+                                <div className={`mt-2 p-2 rounded-lg flex items-center gap-2 text-sm ${
+                                    availabilityStatus === 'checking' 
+                                        ? 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400'
+                                        : availabilityStatus === 'available'
+                                            ? 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
+                                            : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400'
+                                }`}>
+                                    <span className={`material-symbols-outlined text-base ${availabilityStatus === 'checking' ? 'animate-spin' : ''}`}>
+                                        {availabilityStatus === 'checking' ? 'progress_activity' : availabilityStatus === 'available' ? 'check_circle' : 'warning'}
+                                    </span>
+                                    <span>
+                                        {availabilityStatus === 'checking' && 'Checking availability...'}
+                                        {availabilityStatus === 'available' && 'This time slot is available'}
+                                        {availabilityStatus === 'conflict' && (conflictDetails || 'Conflict detected')}
+                                    </span>
                                 </div>
                             )}
-                            
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setShowTrackmanConfirm(false)}
-                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                                    disabled={isProcessing}
-                                >
-                                    Go Back
-                                </button>
-                                <button
-                                    onClick={handleApprove}
-                                    disabled={isProcessing}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isProcessing ? (
-                                        <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-sm">check</span>
-                                    )}
-                                    Yes, Approve
-                                </button>
-                            </div>
                         </div>
+                    )}
+                    
+                    {actionModal === 'decline' && selectedRequest?.status !== 'approved' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Suggest Alternative Time (Optional)</label>
+                            <input
+                                type="time"
+                                value={suggestedTime}
+                                onChange={(e) => setSuggestedTime(e.target.value)}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
+                        </div>
+                    )}
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Staff Notes (Optional)</label>
+                        <textarea
+                            value={staffNotes}
+                            onChange={(e) => setStaffNotes(e.target.value)}
+                            placeholder="Add a note for the member..."
+                            rows={2}
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white resize-none"
+                        />
                     </div>
-                </div>,
-                document.body
-            )}
+                    
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => { setActionModal(null); setSelectedRequest(null); setError(null); setShowTrackmanConfirm(false); }}
+                            className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                            disabled={isProcessing}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={actionModal === 'approve' ? initiateApproval : handleDecline}
+                            disabled={isProcessing || (actionModal === 'approve' && (!selectedBayId || availabilityStatus === 'conflict' || availabilityStatus === 'checking'))}
+                            className={`flex-1 py-3 px-4 rounded-lg text-white font-medium flex items-center justify-center gap-2 ${
+                                actionModal === 'approve' 
+                                    ? 'bg-green-500 hover:bg-green-600' 
+                                    : 'bg-red-500 hover:bg-red-600'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                            {isProcessing ? (
+                                <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                            ) : (
+                                <span className="material-symbols-outlined text-sm">
+                                    {actionModal === 'approve' ? 'check' : 'close'}
+                                </span>
+                            )}
+                            {actionModal === 'approve' ? 'Approve' : (selectedRequest?.status === 'approved' ? 'Cancel Booking' : 'Decline')}
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
 
-            {showManualBooking && createPortal(
+            <ModalShell isOpen={showTrackmanConfirm && !!selectedRequest} onClose={() => setShowTrackmanConfirm(false)} showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div className="text-center">
+                        <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mx-auto mb-3">
+                            <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-2xl">sports_golf</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-primary dark:text-white mb-2">Trackman Confirmation</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Have you created this booking in Trackman?
+                        </p>
+                    </div>
+                    
+                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg text-sm">
+                        <p className="font-medium text-primary dark:text-white">{selectedRequest?.user_name || selectedRequest?.user_email}</p>
+                        <p className="text-gray-500 dark:text-gray-400">
+                            {selectedRequest && formatDateShort(selectedRequest.request_date)} • {selectedRequest && formatTime12(selectedRequest.start_time)} - {selectedRequest && formatTime12(selectedRequest.end_time)}
+                        </p>
+                        {selectedBayId && (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                {resources.find(r => r.id === selectedBayId)?.name || `Bay ${selectedBayId}`}
+                            </p>
+                        )}
+                    </div>
+
+                    {error && (
+                        <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
+                            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                        </div>
+                    )}
+                    
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => setShowTrackmanConfirm(false)}
+                            className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                            disabled={isProcessing}
+                        >
+                            Go Back
+                        </button>
+                        <button
+                            onClick={handleApprove}
+                            disabled={isProcessing}
+                            className="flex-1 py-3 px-4 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isProcessing ? (
+                                <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                            ) : (
+                                <span className="material-symbols-outlined text-sm">check</span>
+                            )}
+                            Yes, Approve
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
+
+            {showManualBooking && (
                 <ManualBookingModal 
                     resources={resources}
                     defaultMemberEmail={rescheduleEmail || undefined}
@@ -3238,300 +3168,272 @@ const SimulatorAdmin: React.FC = () => {
                         };
                         fetchUpdatedData();
                     }}
-                />,
-                document.body
+                />
             )}
 
-            {selectedCalendarBooking && createPortal(
-                <div className="fixed inset-0 z-[10001] animate-fade-in">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-                    <div className="fixed inset-0 overflow-y-auto" onClick={() => setSelectedCalendarBooking(null)}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-md w-full animate-pop-in" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xl font-bold text-primary dark:text-white">
-                                    Booking Details
-                                </h3>
-                                <button
-                                    onClick={() => setSelectedCalendarBooking(null)}
-                                    className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-gray-500 dark:text-gray-400">close</span>
-                                </button>
-                            </div>
-                            
-                            <div className="space-y-3">
-                                <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="material-symbols-outlined text-primary dark:text-white text-lg">person</span>
-                                        <div>
-                                            <p className="font-bold text-primary dark:text-white">{selectedCalendarBooking.user_name || 'Unknown'}</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">{selectedCalendarBooking.user_email}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Date</p>
-                                        <p className="font-medium text-primary dark:text-white text-sm">{formatDateShort(selectedCalendarBooking.request_date)}</p>
-                                    </div>
-                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Time</p>
-                                        <p className="font-medium text-primary dark:text-white text-sm">
-                                            {formatTime12(selectedCalendarBooking.start_time)} - {formatTime12(selectedCalendarBooking.end_time)}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Duration</p>
-                                        <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking.duration_minutes} min</p>
-                                    </div>
-                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bay/Resource</p>
-                                        <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking.bay_name || selectedCalendarBooking.resource_name || '-'}</p>
-                                    </div>
-                                </div>
-
-                                {((selectedCalendarBooking as any).booking_source || (selectedCalendarBooking as any).guest_count) && (
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {(selectedCalendarBooking as any).booking_source && (
-                                            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Booking Source</p>
-                                                <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).booking_source}</p>
-                                            </div>
-                                        )}
-                                        {(selectedCalendarBooking as any).guest_count !== undefined && (selectedCalendarBooking as any).guest_count > 0 && (
-                                            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Guest Count</p>
-                                                <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).guest_count}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {selectedCalendarBooking.notes && (
-                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Notes</p>
-                                        <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking.notes}</p>
-                                    </div>
-                                )}
-
-                                {(selectedCalendarBooking as any).created_by_staff_id && (
-                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Created by Staff</p>
-                                        <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).created_by_staff_id}</p>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="flex flex-col gap-2 mt-6">
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setRescheduleEmail(selectedCalendarBooking.user_email);
-                                            setRescheduleBookingId(selectedCalendarBooking.id);
-                                            setSelectedCalendarBooking(null);
-                                            setShowManualBooking(true);
-                                        }}
-                                        className="flex-1 py-3 px-4 rounded-lg bg-accent text-primary font-medium flex items-center justify-center gap-2"
-                                        disabled={isCancellingFromModal}
-                                    >
-                                        <span className="material-symbols-outlined text-sm">schedule</span>
-                                        Reschedule
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            if (!selectedCalendarBooking) return;
-                                            
-                                            setIsCancellingFromModal(true);
-                                            try {
-                                                const res = await fetch(`/api/booking-requests/${selectedCalendarBooking.id}`, {
-                                                    method: 'PUT',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    credentials: 'include',
-                                                    body: JSON.stringify({
-                                                        status: 'cancelled',
-                                                        staff_notes: 'Cancelled from calendar view',
-                                                        cancelled_by: actualUser?.email || user?.email
-                                                    })
-                                                });
-                                                
-                                                if (!res.ok) {
-                                                    const errData = await res.json();
-                                                    throw new Error(errData.error || 'Failed to cancel booking');
-                                                }
-                                                
-                                                try {
-                                                    await fetch('/api/notifications', {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({
-                                                            user_email: selectedCalendarBooking.user_email,
-                                                            title: 'Booking Cancelled',
-                                                            message: `Your booking for ${formatDateShort(selectedCalendarBooking.request_date)} at ${formatTime12(selectedCalendarBooking.start_time)} has been cancelled by staff.`,
-                                                            type: 'booking_cancelled',
-                                                            related_id: selectedCalendarBooking.id,
-                                                            related_type: 'booking'
-                                                        })
-                                                    });
-                                                } catch (notifErr) {
-                                                    console.error('Failed to create cancellation notification:', notifErr);
-                                                }
-                                                
-                                                setApprovedBookings(prev => prev.filter(b => b.id !== selectedCalendarBooking.id));
-                                                setSelectedCalendarBooking(null);
-                                            } catch (err: any) {
-                                                console.error('Failed to cancel booking:', err);
-                                                alert(err.message || 'Failed to cancel booking');
-                                            } finally {
-                                                setIsCancellingFromModal(false);
-                                            }
-                                        }}
-                                        disabled={isCancellingFromModal}
-                                        className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {isCancellingFromModal ? (
-                                            <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-                                        ) : (
-                                            <span className="material-symbols-outlined text-sm">close</span>
-                                        )}
-                                        Cancel
-                                    </button>
-                                </div>
-                                <button
-                                    onClick={() => setSelectedCalendarBooking(null)}
-                                    className="w-full py-2 px-4 rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                                    disabled={isCancellingFromModal}
-                                >
-                                    Close
-                                </button>
+            <ModalShell isOpen={!!selectedCalendarBooking} onClose={() => setSelectedCalendarBooking(null)} title="Booking Details">
+                <div className="p-6 space-y-3">
+                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="material-symbols-outlined text-primary dark:text-white text-lg">person</span>
+                            <div>
+                                <p className="font-bold text-primary dark:text-white">{selectedCalendarBooking?.user_name || 'Unknown'}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{selectedCalendarBooking?.user_email}</p>
                             </div>
                         </div>
-                      </div>
                     </div>
-                </div>,
-                document.body
-            )}
 
-            {/* Mark Status Modal */}
-            {markStatusModal.booking && createPortal(
-                <div className="fixed inset-0 z-[10002] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMarkStatusModal({ booking: null, confirmNoShow: false })} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl max-w-sm w-full pointer-events-auto animate-pop-in" style={{ overscrollBehavior: 'contain' }}>
-                            <div className="text-center mb-4">
-                                <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-3">
-                                    <span className="material-symbols-outlined text-primary dark:text-accent text-2xl">task_alt</span>
-                                </div>
-                                <h3 className="text-lg font-bold text-primary dark:text-white mb-2">
-                                    {markStatusModal.confirmNoShow ? 'Confirm No Show' : 'Mark Booking Status'}
-                                </h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {markStatusModal.confirmNoShow 
-                                        ? 'Are you sure you want to mark this booking as a no show?' 
-                                        : 'Did the member attend their booking?'}
-                                </p>
-                            </div>
-                            
-                            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg mb-4 text-sm">
-                                <p className="font-medium text-primary dark:text-white">{markStatusModal.booking.user_name || markStatusModal.booking.user_email}</p>
-                                <p className="text-gray-500 dark:text-gray-400">
-                                    {formatDateShort(markStatusModal.booking.request_date)} • {formatTime12(markStatusModal.booking.start_time)} - {formatTime12(markStatusModal.booking.end_time)}
-                                </p>
-                                {markStatusModal.booking.bay_name && (
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        {markStatusModal.booking.bay_name}
-                                    </p>
-                                )}
-                            </div>
-                            
-                            {markStatusModal.confirmNoShow ? (
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setMarkStatusModal({ ...markStatusModal, confirmNoShow: false })}
-                                        className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                                    >
-                                        Go Back
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            if (!markStatusModal.booking) return;
-                                            try {
-                                                const res = await fetch(`/api/bookings/${markStatusModal.booking.id}/checkin`, {
-                                                    method: 'PUT',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    credentials: 'include',
-                                                    body: JSON.stringify({ status: 'no_show', source: markStatusModal.booking.source })
-                                                });
-                                                if (res.ok) {
-                                                    setMarkStatusModal({ booking: null, confirmNoShow: false });
-                                                    setTimeout(() => handleRefresh(), 300);
-                                                } else {
-                                                    const err = await res.json();
-                                                    console.error('Mark no show failed:', err.error || 'Unknown error');
-                                                }
-                                            } catch (err) {
-                                                console.error('Mark no show failed:', err);
-                                            }
-                                        }}
-                                        className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">person_off</span>
-                                        Confirm No Show
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={async () => {
-                                            if (!markStatusModal.booking) return;
-                                            try {
-                                                const res = await fetch(`/api/bookings/${markStatusModal.booking.id}/checkin`, {
-                                                    method: 'PUT',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    credentials: 'include',
-                                                    body: JSON.stringify({ status: 'attended', source: markStatusModal.booking.source })
-                                                });
-                                                if (res.ok) {
-                                                    setMarkStatusModal({ booking: null, confirmNoShow: false });
-                                                    setTimeout(() => handleRefresh(), 300);
-                                                } else {
-                                                    const err = await res.json();
-                                                    console.error('Mark attended failed:', err.error || 'Unknown error');
-                                                }
-                                            } catch (err) {
-                                                console.error('Mark attended failed:', err);
-                                            }
-                                        }}
-                                        className="flex-1 py-3 px-4 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">check_circle</span>
-                                        Attended
-                                    </button>
-                                    <button
-                                        onClick={() => setMarkStatusModal({ ...markStatusModal, confirmNoShow: true })}
-                                        className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">person_off</span>
-                                        No Show
-                                    </button>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Date</p>
+                            <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking && formatDateShort(selectedCalendarBooking.request_date)}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Time</p>
+                            <p className="font-medium text-primary dark:text-white text-sm">
+                                {selectedCalendarBooking && formatTime12(selectedCalendarBooking.start_time)} - {selectedCalendarBooking && formatTime12(selectedCalendarBooking.end_time)}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Duration</p>
+                            <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking?.duration_minutes} min</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bay/Resource</p>
+                            <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking?.bay_name || selectedCalendarBooking?.resource_name || '-'}</p>
+                        </div>
+                    </div>
+
+                    {((selectedCalendarBooking as any)?.booking_source || (selectedCalendarBooking as any)?.guest_count) && (
+                        <div className="grid grid-cols-2 gap-3">
+                            {(selectedCalendarBooking as any)?.booking_source && (
+                                <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Booking Source</p>
+                                    <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).booking_source}</p>
                                 </div>
                             )}
-                            
+                            {(selectedCalendarBooking as any)?.guest_count !== undefined && (selectedCalendarBooking as any).guest_count > 0 && (
+                                <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Guest Count</p>
+                                    <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).guest_count}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {selectedCalendarBooking?.notes && (
+                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Notes</p>
+                            <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking.notes}</p>
+                        </div>
+                    )}
+
+                    {(selectedCalendarBooking as any)?.created_by_staff_id && (
+                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Created by Staff</p>
+                            <p className="font-medium text-primary dark:text-white text-sm">{(selectedCalendarBooking as any).created_by_staff_id}</p>
+                        </div>
+                    )}
+                    
+                    <div className="flex flex-col gap-2 pt-3">
+                        <div className="flex gap-3">
                             <button
-                                onClick={() => setMarkStatusModal({ booking: null, confirmNoShow: false })}
-                                className="w-full mt-3 py-2 px-4 rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                                onClick={() => {
+                                    if (!selectedCalendarBooking) return;
+                                    setRescheduleEmail(selectedCalendarBooking.user_email);
+                                    setRescheduleBookingId(selectedCalendarBooking.id);
+                                    setSelectedCalendarBooking(null);
+                                    setShowManualBooking(true);
+                                }}
+                                className="flex-1 py-3 px-4 rounded-lg bg-accent text-primary font-medium flex items-center justify-center gap-2"
+                                disabled={isCancellingFromModal}
                             >
+                                <span className="material-symbols-outlined text-sm">schedule</span>
+                                Reschedule
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (!selectedCalendarBooking) return;
+                                    
+                                    setIsCancellingFromModal(true);
+                                    try {
+                                        const res = await fetch(`/api/booking-requests/${selectedCalendarBooking.id}`, {
+                                            method: 'PUT',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            credentials: 'include',
+                                            body: JSON.stringify({
+                                                status: 'cancelled',
+                                                staff_notes: 'Cancelled from calendar view',
+                                                cancelled_by: actualUser?.email || user?.email
+                                            })
+                                        });
+                                        
+                                        if (!res.ok) {
+                                            const errData = await res.json();
+                                            throw new Error(errData.error || 'Failed to cancel booking');
+                                        }
+                                        
+                                        try {
+                                            await fetch('/api/notifications', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    user_email: selectedCalendarBooking.user_email,
+                                                    title: 'Booking Cancelled',
+                                                    message: `Your booking for ${formatDateShort(selectedCalendarBooking.request_date)} at ${formatTime12(selectedCalendarBooking.start_time)} has been cancelled by staff.`,
+                                                    type: 'booking_cancelled',
+                                                    related_id: selectedCalendarBooking.id,
+                                                    related_type: 'booking'
+                                                })
+                                            });
+                                        } catch (notifErr) {
+                                            console.error('Failed to create cancellation notification:', notifErr);
+                                        }
+                                        
+                                        setApprovedBookings(prev => prev.filter(b => b.id !== selectedCalendarBooking.id));
+                                        setSelectedCalendarBooking(null);
+                                    } catch (err: any) {
+                                        console.error('Failed to cancel booking:', err);
+                                        alert(err.message || 'Failed to cancel booking');
+                                    } finally {
+                                        setIsCancellingFromModal(false);
+                                    }
+                                }}
+                                disabled={isCancellingFromModal}
+                                className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isCancellingFromModal ? (
+                                    <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                                ) : (
+                                    <span className="material-symbols-outlined text-sm">close</span>
+                                )}
                                 Cancel
                             </button>
                         </div>
+                        <button
+                            onClick={() => setSelectedCalendarBooking(null)}
+                            className="w-full py-2 px-4 rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                            disabled={isCancellingFromModal}
+                        >
+                            Close
+                        </button>
                     </div>
-                </div>,
-                document.body
-            )}
+                </div>
+            </ModalShell>
+
+            {/* Mark Status Modal */}
+            <ModalShell isOpen={!!markStatusModal.booking} onClose={() => setMarkStatusModal({ booking: null, confirmNoShow: false })} showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div className="text-center">
+                        <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-3">
+                            <span className="material-symbols-outlined text-primary dark:text-accent text-2xl">task_alt</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-primary dark:text-white mb-2">
+                            {markStatusModal.confirmNoShow ? 'Confirm No Show' : 'Mark Booking Status'}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {markStatusModal.confirmNoShow 
+                                ? 'Are you sure you want to mark this booking as a no show?' 
+                                : 'Did the member attend their booking?'}
+                        </p>
+                    </div>
+                    
+                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg text-sm">
+                        <p className="font-medium text-primary dark:text-white">{markStatusModal.booking?.user_name || markStatusModal.booking?.user_email}</p>
+                        <p className="text-gray-500 dark:text-gray-400">
+                            {markStatusModal.booking && formatDateShort(markStatusModal.booking.request_date)} • {markStatusModal.booking && formatTime12(markStatusModal.booking.start_time)} - {markStatusModal.booking && formatTime12(markStatusModal.booking.end_time)}
+                        </p>
+                        {markStatusModal.booking?.bay_name && (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                {markStatusModal.booking.bay_name}
+                            </p>
+                        )}
+                    </div>
+                    
+                    {markStatusModal.confirmNoShow ? (
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setMarkStatusModal({ ...markStatusModal, confirmNoShow: false })}
+                                className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                            >
+                                Go Back
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (!markStatusModal.booking) return;
+                                    try {
+                                        const res = await fetch(`/api/bookings/${markStatusModal.booking.id}/checkin`, {
+                                            method: 'PUT',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            credentials: 'include',
+                                            body: JSON.stringify({ status: 'no_show', source: markStatusModal.booking.source })
+                                        });
+                                        if (res.ok) {
+                                            setMarkStatusModal({ booking: null, confirmNoShow: false });
+                                            setTimeout(() => handleRefresh(), 300);
+                                        } else {
+                                            const err = await res.json();
+                                            console.error('Mark no show failed:', err.error || 'Unknown error');
+                                        }
+                                    } catch (err) {
+                                        console.error('Mark no show failed:', err);
+                                    }
+                                }}
+                                className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">person_off</span>
+                                Confirm No Show
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-3">
+                            <button
+                                onClick={async () => {
+                                    if (!markStatusModal.booking) return;
+                                    try {
+                                        const res = await fetch(`/api/bookings/${markStatusModal.booking.id}/checkin`, {
+                                            method: 'PUT',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            credentials: 'include',
+                                            body: JSON.stringify({ status: 'attended', source: markStatusModal.booking.source })
+                                        });
+                                        if (res.ok) {
+                                            setMarkStatusModal({ booking: null, confirmNoShow: false });
+                                            setTimeout(() => handleRefresh(), 300);
+                                        } else {
+                                            const err = await res.json();
+                                            console.error('Mark attended failed:', err.error || 'Unknown error');
+                                        }
+                                    } catch (err) {
+                                        console.error('Mark attended failed:', err);
+                                    }
+                                }}
+                                className="flex-1 py-3 px-4 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">check_circle</span>
+                                Attended
+                            </button>
+                            <button
+                                onClick={() => setMarkStatusModal({ ...markStatusModal, confirmNoShow: true })}
+                                className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">person_off</span>
+                                No Show
+                            </button>
+                        </div>
+                    )}
+                    
+                    <button
+                        onClick={() => setMarkStatusModal({ booking: null, confirmNoShow: false })}
+                        className="w-full py-2 px-4 rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </ModalShell>
                 </div>
                 <FloatingActionButton onClick={() => setShowManualBooking(true)} color="brand" label="Create manual booking" />
             </div>
@@ -3803,29 +3705,10 @@ const ManualBookingModal: React.FC<{
 
     const bookingSources = ['Trackman', 'YGB', 'Mindbody', 'Texted Concierge', 'Called', 'Other'];
 
-    useEffect(() => {
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, []);
-
     return (
-        <div className="fixed inset-0 z-[10001] overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-white/10">
-                    <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-xl font-bold text-primary dark:text-white">{rescheduleFromId ? 'Reschedule Booking' : 'Manual Booking'}</h3>
-                        <button 
-                            onClick={onClose}
-                            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-gray-500 dark:text-gray-400">close</span>
-                        </button>
-                    </div>
-
-                    {error && (
+        <ModalShell isOpen={true} onClose={onClose} title={rescheduleFromId ? 'Reschedule Booking' : 'Manual Booking'} showCloseButton={true}>
+            <div className="p-6 space-y-4">
+                {error && (
                         <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
                             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                         </div>
@@ -4027,30 +3910,29 @@ const ManualBookingModal: React.FC<{
                         </div>
                     </div>
 
-                    <div className="flex gap-3 mt-6">
-                        <button
-                            onClick={onClose}
-                            className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                            disabled={isSubmitting}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleSubmit}
-                            disabled={isSubmitting || memberLookupStatus !== 'found' || !resourceId}
-                            className="flex-1 py-3 px-4 rounded-lg bg-primary text-white font-medium flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isSubmitting ? (
-                                <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-                            ) : (
-                                <span className="material-symbols-outlined text-sm">add</span>
-                            )}
-                            Create Booking
-                        </button>
-                    </div>
+                <div className="flex gap-3 mt-6">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                        disabled={isSubmitting}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || memberLookupStatus !== 'found' || !resourceId}
+                        className="flex-1 py-3 px-4 rounded-lg bg-primary text-white font-medium flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isSubmitting ? (
+                            <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                        ) : (
+                            <span className="material-symbols-outlined text-sm">add</span>
+                        )}
+                        Create Booking
+                    </button>
                 </div>
             </div>
-        </div>
+        </ModalShell>
     );
 };
 
@@ -4471,172 +4353,160 @@ const WellnessAdminContent: React.FC = () => {
                 type="enrollment"
             />
 
-            {isEditing && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setError(null); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md modal-safe-height overflow-y-auto pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
-                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">
-                                {editId ? 'Edit Class' : 'Add Class'}
-                            </h3>
-                            
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
-                                    <input
-                                        type="text"
-                                        value={formData.title || ''}
-                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                        placeholder="Morning Yoga Flow"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date *</label>
-                                        <input
-                                            type="date"
-                                            value={formData.date || ''}
-                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time *</label>
-                                        <input
-                                            type="time"
-                                            value={formData.time || ''}
-                                            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instructor *</label>
-                                    <input
-                                        type="text"
-                                        value={formData.instructor || ''}
-                                        onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                                        placeholder="Jane Smith"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                                        <select
-                                            value={formData.category || 'Yoga'}
-                                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        >
-                                            {categories.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration</label>
-                                        <input
-                                            type="text"
-                                            value={formData.duration || ''}
-                                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                            placeholder="60 min"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Spots *</label>
-                                    <input
-                                        type="text"
-                                        value={formData.spots || ''}
-                                        onChange={(e) => setFormData({ ...formData, spots: e.target.value })}
-                                        placeholder="12 spots"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                                    <textarea
-                                        value={formData.description || ''}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        placeholder="A restorative session designed to improve flexibility..."
-                                        rows={3}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white resize-none"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image (optional)</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0] || null;
-                                            setFormData({ ...formData, imageFile: file });
-                                        }}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary dark:file:bg-white/10 dark:file:text-white file:font-medium file:cursor-pointer"
-                                    />
-                                    {(formData.imageFile || formData.image_url) && (
-                                        <div className="mt-2 relative">
-                                            <img
-                                                src={formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.image_url || ''}
-                                                alt="Preview"
-                                                className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-white/10"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, imageFile: null, image_url: null })}
-                                                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">close</span>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">External URL (optional)</label>
-                                    <input
-                                        type="url"
-                                        value={formData.external_url || ''}
-                                        onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
-                                        placeholder="https://example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                {error && (
-                                    <p className="text-red-600 text-sm">{error}</p>
-                                )}
-                            </div>
-
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={() => { setIsEditing(false); setError(null); }}
-                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSave}
-                                    disabled={isUploading}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    {isUploading && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
-                                    {isUploading ? 'Saving...' : editId ? 'Save Changes' : 'Add Class'}
-                                </button>
-                            </div>
+            <ModalShell isOpen={isEditing} onClose={() => { setIsEditing(false); setError(null); }} title={editId ? 'Edit Class' : 'Add Class'} showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
+                        <input
+                            type="text"
+                            value={formData.title || ''}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            placeholder="Morning Yoga Flow"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date *</label>
+                            <input
+                                type="date"
+                                value={formData.date || ''}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time *</label>
+                            <input
+                                type="time"
+                                value={formData.time || ''}
+                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instructor *</label>
+                        <input
+                            type="text"
+                            value={formData.instructor || ''}
+                            onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
+                            placeholder="Jane Smith"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                            <select
+                                value={formData.category || 'Yoga'}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            >
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration</label>
+                            <input
+                                type="text"
+                                value={formData.duration || ''}
+                                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                placeholder="60 min"
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Spots *</label>
+                        <input
+                            type="text"
+                            value={formData.spots || ''}
+                            onChange={(e) => setFormData({ ...formData, spots: e.target.value })}
+                            placeholder="12 spots"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <textarea
+                            value={formData.description || ''}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="A restorative session designed to improve flexibility..."
+                            rows={3}
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white resize-none"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image (optional)</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setFormData({ ...formData, imageFile: file });
+                            }}
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary dark:file:bg-white/10 dark:file:text-white file:font-medium file:cursor-pointer"
+                        />
+                        {(formData.imageFile || formData.image_url) && (
+                            <div className="mt-2 relative">
+                                <img
+                                    src={formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.image_url || ''}
+                                    alt="Preview"
+                                    className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-white/10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, imageFile: null, image_url: null })}
+                                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-sm">close</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">External URL (optional)</label>
+                        <input
+                            type="url"
+                            value={formData.external_url || ''}
+                            onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
+                            placeholder="https://example.com"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    {error && (
+                        <p className="text-red-600 text-sm">{error}</p>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => { setIsEditing(false); setError(null); }}
+                            className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={isUploading}
+                            className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isUploading && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                            {isUploading ? 'Saving...' : editId ? 'Save Changes' : 'Add Class'}
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
         </div>
     );
 };
@@ -4755,105 +4625,95 @@ const TeamAdmin: React.FC = () => {
             {subTab === 'admins' && isAdmin && <AdminsAdmin refreshKey={refreshKey} />}
 
             {/* Add Person Modal */}
-            {isAddingPerson && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsAddingPerson(false); setAddError(null); setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' }); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
-                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Add Team Member</h3>
-                            
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            First Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={newPerson.firstName}
-                                            onChange={(e) => setNewPerson({...newPerson, firstName: e.target.value})}
-                                            placeholder="Jane"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Last Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={newPerson.lastName}
-                                            onChange={(e) => setNewPerson({...newPerson, lastName: e.target.value})}
-                                            placeholder="Doe"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Email Address *
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={newPerson.email}
-                                        onChange={(e) => setNewPerson({...newPerson, email: e.target.value})}
-                                        placeholder="email@example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Phone
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={newPerson.phone}
-                                        onChange={(e) => setNewPerson({...newPerson, phone: e.target.value})}
-                                        placeholder="+1 (555) 123-4567"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Role *
-                                    </label>
-                                    <select
-                                        value={newPerson.role}
-                                        onChange={(e) => setNewPerson({...newPerson, role: e.target.value as 'staff' | 'admin'})}
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    >
-                                        <option value="staff">Staff</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                </div>
-
-                                {addError && (
-                                    <p className="text-red-600 text-sm">{addError}</p>
-                                )}
-                            </div>
-
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={() => { setIsAddingPerson(false); setAddError(null); setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' }); }}
-                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleAddPerson}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
-                                >
-                                    Add {newPerson.role === 'staff' ? 'Staff' : 'Admin'}
-                                </button>
-                            </div>
+            <ModalShell isOpen={isAddingPerson} onClose={() => { setIsAddingPerson(false); setAddError(null); setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' }); }} title="Add Team Member" showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                First Name
+                            </label>
+                            <input
+                                type="text"
+                                value={newPerson.firstName}
+                                onChange={(e) => setNewPerson({...newPerson, firstName: e.target.value})}
+                                placeholder="Jane"
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Last Name
+                            </label>
+                            <input
+                                type="text"
+                                value={newPerson.lastName}
+                                onChange={(e) => setNewPerson({...newPerson, lastName: e.target.value})}
+                                placeholder="Doe"
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Email Address *
+                        </label>
+                        <input
+                            type="email"
+                            value={newPerson.email}
+                            onChange={(e) => setNewPerson({...newPerson, email: e.target.value})}
+                            placeholder="email@example.com"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Phone
+                        </label>
+                        <input
+                            type="tel"
+                            value={newPerson.phone}
+                            onChange={(e) => setNewPerson({...newPerson, phone: e.target.value})}
+                            placeholder="+1 (555) 123-4567"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Role *
+                        </label>
+                        <select
+                            value={newPerson.role}
+                            onChange={(e) => setNewPerson({...newPerson, role: e.target.value as 'staff' | 'admin'})}
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        >
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+
+                    {addError && (
+                        <p className="text-red-600 text-sm">{addError}</p>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => { setIsAddingPerson(false); setAddError(null); setNewPerson({ firstName: '', lastName: '', email: '', phone: '', role: 'staff' }); }}
+                            className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleAddPerson}
+                            className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                        >
+                            Add {newPerson.role === 'staff' ? 'Staff' : 'Admin'}
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
             <FloatingActionButton onClick={() => setIsAddingPerson(true)} color="brand" label="Add team member" />
         </div>
     );
@@ -5060,169 +4920,140 @@ const StaffAdmin: React.FC<{ isAdmin?: boolean; refreshKey?: number }> = ({ isAd
                 )}
             </div>
 
-            {isViewingDetails && selectedStaff && createPortal(
-                <div className="fixed inset-0 z-[10001] animate-fade-in">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-                    <div className="fixed inset-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }} onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}>
-                      <div className="flex min-h-full items-center justify-center p-4">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl animate-pop-in" onClick={(e) => e.stopPropagation()}>
+            <ModalShell isOpen={isViewingDetails && !!selectedStaff} onClose={() => { setIsViewingDetails(false); setSelectedStaff(null); }} title={selectedStaff?.name || selectedStaff?.email || 'Staff Details'}>
+                <div className="p-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-gray-400">email</span>
+                        <span className="text-gray-700 dark:text-gray-300">{selectedStaff?.email}</span>
+                    </div>
+                    {selectedStaff?.phone && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">phone</span>
+                            <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedStaff.phone)}</span>
+                        </div>
+                    )}
+                    {selectedStaff?.job_title && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">work</span>
+                            <span className="text-gray-700 dark:text-gray-300">{selectedStaff.job_title}</span>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-gray-400">toggle_on</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${selectedStaff?.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+                            {selectedStaff?.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+
+                    {isAdmin && selectedStaff && (
+                        <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-white/10">
                             <button
-                                onClick={() => { setIsViewingDetails(false); setSelectedStaff(null); }}
-                                className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                onClick={() => { setIsViewingDetails(false); openEditModal(selectedStaff); }}
+                                className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
                             >
-                                <span className="material-symbols-outlined">close</span>
+                                <span className="material-symbols-outlined text-lg">edit</span>
+                                Edit
                             </button>
-                            
-                            <h3 className="text-2xl font-bold text-primary dark:text-white mb-4">{selectedStaff.name || selectedStaff.email}</h3>
-                            
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-gray-400">email</span>
-                                    <span className="text-gray-700 dark:text-gray-300">{selectedStaff.email}</span>
-                                </div>
-                                {selectedStaff.phone && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-gray-400">phone</span>
-                                        <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedStaff.phone)}</span>
-                                    </div>
-                                )}
-                                {selectedStaff.job_title && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-gray-400">work</span>
-                                        <span className="text-gray-700 dark:text-gray-300">{selectedStaff.job_title}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-gray-400">toggle_on</span>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${selectedStaff.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
-                                        {selectedStaff.is_active ? 'Active' : 'Inactive'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {isAdmin && (
-                                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
-                                    <button
-                                        onClick={() => { setIsViewingDetails(false); openEditModal(selectedStaff); }}
-                                        className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">edit</span>
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => { setIsViewingDetails(false); handleRemoveStaff(selectedStaff); }}
-                                        className="flex-1 py-3 px-4 rounded-lg bg-red-500 text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">delete</span>
-                                        Delete
-                                    </button>
-                                </div>
-                            )}
+                            <button
+                                onClick={() => { setIsViewingDetails(false); handleRemoveStaff(selectedStaff); }}
+                                className="flex-1 py-3 px-4 rounded-lg bg-red-500 text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-lg">delete</span>
+                                Delete
+                            </button>
                         </div>
-                      </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+                    )}
+                </div>
+            </ModalShell>
 
-            {isAdmin && isEditing && selectedStaff && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto animate-fade-in" style={{ overscrollBehavior: 'contain' }}>
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/10 shadow-2xl pointer-events-auto animate-pop-in">
-                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Staff Member</h3>
-                            
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            First Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={selectedStaff.first_name || ''}
-                                            onChange={(e) => setSelectedStaff({...selectedStaff, first_name: e.target.value || null})}
-                                            placeholder="Jane"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Last Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={selectedStaff.last_name || ''}
-                                            onChange={(e) => setSelectedStaff({...selectedStaff, last_name: e.target.value || null})}
-                                            placeholder="Doe"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={selectedStaff.email}
-                                        onChange={(e) => setSelectedStaff({...selectedStaff, email: e.target.value})}
-                                        placeholder="staff@example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Phone
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={selectedStaff.phone || ''}
-                                        onChange={(e) => setSelectedStaff({...selectedStaff, phone: e.target.value || null})}
-                                        placeholder="+1 (555) 123-4567"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Job Title
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={selectedStaff.job_title || ''}
-                                        onChange={(e) => setSelectedStaff({...selectedStaff, job_title: e.target.value || null})}
-                                        placeholder="Manager"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                {error && (
-                                    <p className="text-red-600 text-sm">{error}</p>
-                                )}
-                            </div>
-
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }}
-                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleEditSave}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
-                                >
-                                    Save
-                                </button>
-                            </div>
+            {isAdmin && <ModalShell isOpen={isEditing && !!selectedStaff} onClose={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }} title="Edit Staff Member" showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                First Name
+                            </label>
+                            <input
+                                type="text"
+                                value={selectedStaff?.first_name || ''}
+                                onChange={(e) => selectedStaff && setSelectedStaff({...selectedStaff, first_name: e.target.value || null})}
+                                placeholder="Jane"
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Last Name
+                            </label>
+                            <input
+                                type="text"
+                                value={selectedStaff?.last_name || ''}
+                                onChange={(e) => selectedStaff && setSelectedStaff({...selectedStaff, last_name: e.target.value || null})}
+                                placeholder="Doe"
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            value={selectedStaff?.email || ''}
+                            onChange={(e) => selectedStaff && setSelectedStaff({...selectedStaff, email: e.target.value})}
+                            placeholder="staff@example.com"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Phone
+                        </label>
+                        <input
+                            type="tel"
+                            value={selectedStaff?.phone || ''}
+                            onChange={(e) => selectedStaff && setSelectedStaff({...selectedStaff, phone: e.target.value || null})}
+                            placeholder="+1 (555) 123-4567"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Job Title
+                        </label>
+                        <input
+                            type="text"
+                            value={selectedStaff?.job_title || ''}
+                            onChange={(e) => selectedStaff && setSelectedStaff({...selectedStaff, job_title: e.target.value || null})}
+                            placeholder="Manager"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    {error && (
+                        <p className="text-red-600 text-sm">{error}</p>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => { setIsEditing(false); setSelectedStaff(null); setError(null); }}
+                            className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleEditSave}
+                            className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>}
         </div>
     );
 };
@@ -5441,165 +5272,140 @@ const AdminsAdmin: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
                 )}
             </div>
 
-            {isViewingDetails && selectedAdmin && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto animate-fade-in">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto animate-pop-in" style={{ overscrollBehavior: 'contain' }}>
+            <ModalShell isOpen={isViewingDetails && !!selectedAdmin} onClose={() => { setIsViewingDetails(false); setSelectedAdmin(null); }} title={selectedAdmin?.name || selectedAdmin?.email || 'Admin Details'}>
+                <div className="p-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-gray-400">email</span>
+                        <span className="text-gray-700 dark:text-gray-300">{selectedAdmin?.email}</span>
+                    </div>
+                    {selectedAdmin?.phone && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">phone</span>
+                            <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedAdmin.phone)}</span>
+                        </div>
+                    )}
+                    {selectedAdmin?.job_title && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">work</span>
+                            <span className="text-gray-700 dark:text-gray-300">{selectedAdmin.job_title}</span>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-gray-400">toggle_on</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${selectedAdmin?.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+                            {selectedAdmin?.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+
+                    {selectedAdmin && (
+                        <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-white/10">
                             <button
-                                onClick={() => { setIsViewingDetails(false); setSelectedAdmin(null); }}
-                                className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                onClick={() => { setIsViewingDetails(false); openEditModal(selectedAdmin); }}
+                                className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
                             >
-                                <span className="material-symbols-outlined">close</span>
+                                <span className="material-symbols-outlined text-lg">edit</span>
+                                Edit
                             </button>
-                            
-                            <h3 className="text-2xl font-bold text-primary dark:text-white mb-4">{selectedAdmin.name || selectedAdmin.email}</h3>
-                            
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-gray-400">email</span>
-                                    <span className="text-gray-700 dark:text-gray-300">{selectedAdmin.email}</span>
-                                </div>
-                                {selectedAdmin.phone && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-gray-400">phone</span>
-                                        <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedAdmin.phone)}</span>
-                                    </div>
-                                )}
-                                {selectedAdmin.job_title && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-gray-400">work</span>
-                                        <span className="text-gray-700 dark:text-gray-300">{selectedAdmin.job_title}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-gray-400">toggle_on</span>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${selectedAdmin.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
-                                        {selectedAdmin.is_active ? 'Active' : 'Inactive'}
-                                    </span>
-                                </div>
-                            </div>
+                            <button
+                                onClick={() => { setIsViewingDetails(false); handleRemoveAdmin(selectedAdmin); }}
+                                className="flex-1 py-3 px-4 rounded-lg bg-red-500 text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-lg">delete</span>
+                                Delete
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </ModalShell>
 
-                            <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
-                                <button
-                                    onClick={() => { setIsViewingDetails(false); openEditModal(selectedAdmin); }}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-lg">edit</span>
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => { setIsViewingDetails(false); handleRemoveAdmin(selectedAdmin); }}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-red-500 text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-lg">delete</span>
-                                    Delete
-                                </button>
-                            </div>
+            <ModalShell isOpen={isEditing && !!selectedAdmin} onClose={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }} title="Edit Admin" showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                First Name
+                            </label>
+                            <input
+                                type="text"
+                                value={selectedAdmin?.first_name || ''}
+                                onChange={(e) => selectedAdmin && setSelectedAdmin({...selectedAdmin, first_name: e.target.value || null})}
+                                placeholder="Jane"
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Last Name
+                            </label>
+                            <input
+                                type="text"
+                                value={selectedAdmin?.last_name || ''}
+                                onChange={(e) => selectedAdmin && setSelectedAdmin({...selectedAdmin, last_name: e.target.value || null})}
+                                placeholder="Doe"
+                                className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                            />
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
-
-            {isEditing && selectedAdmin && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto animate-fade-in">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-md pointer-events-auto animate-pop-in" style={{ overscrollBehavior: 'contain' }}>
-                            <h3 className="text-xl font-bold text-primary dark:text-white mb-4">Edit Admin</h3>
-                            
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            First Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={selectedAdmin.first_name || ''}
-                                            onChange={(e) => setSelectedAdmin({...selectedAdmin, first_name: e.target.value || null})}
-                                            placeholder="Jane"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Last Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={selectedAdmin.last_name || ''}
-                                            onChange={(e) => setSelectedAdmin({...selectedAdmin, last_name: e.target.value || null})}
-                                            placeholder="Doe"
-                                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={selectedAdmin.email}
-                                        onChange={(e) => setSelectedAdmin({...selectedAdmin, email: e.target.value})}
-                                        placeholder="admin@example.com"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Phone
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={selectedAdmin.phone || ''}
-                                        onChange={(e) => setSelectedAdmin({...selectedAdmin, phone: e.target.value || null})}
-                                        placeholder="+1 (555) 123-4567"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Job Title
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={selectedAdmin.job_title || ''}
-                                        onChange={(e) => setSelectedAdmin({...selectedAdmin, job_title: e.target.value || null})}
-                                        placeholder="Director"
-                                        className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
-                                    />
-                                </div>
-
-                                {error && (
-                                    <p className="text-red-600 text-sm">{error}</p>
-                                )}
-                            </div>
-
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }}
-                                    className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleEditSave}
-                                    className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
-                                >
-                                    Save
-                                </button>
-                            </div>
-                        </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            value={selectedAdmin?.email || ''}
+                            onChange={(e) => selectedAdmin && setSelectedAdmin({...selectedAdmin, email: e.target.value})}
+                            placeholder="admin@example.com"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
                     </div>
-                </div>,
-                document.body
-            )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Phone
+                        </label>
+                        <input
+                            type="tel"
+                            value={selectedAdmin?.phone || ''}
+                            onChange={(e) => selectedAdmin && setSelectedAdmin({...selectedAdmin, phone: e.target.value || null})}
+                            placeholder="+1 (555) 123-4567"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Job Title
+                        </label>
+                        <input
+                            type="text"
+                            value={selectedAdmin?.job_title || ''}
+                            onChange={(e) => selectedAdmin && setSelectedAdmin({...selectedAdmin, job_title: e.target.value || null})}
+                            placeholder="Director"
+                            className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/30 text-primary dark:text-white"
+                        />
+                    </div>
+
+                    {error && (
+                        <p className="text-red-600 text-sm">{error}</p>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => { setIsEditing(false); setSelectedAdmin(null); setError(null); }}
+                            className="flex-1 py-3 px-4 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleEditSave}
+                            className="flex-1 py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
         </div>
     );
 };
@@ -6550,321 +6356,306 @@ const TiersAdmin: React.FC = () => {
                 </p>
             </div>
 
-            {/* Edit Modal - Native sheet style for reliable mobile scrolling */}
-            {isEditing && selectedTier && createPortal(
-                <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsEditing(false); setIsCreating(false); }} />
-                    <div className="relative flex flex-col max-w-2xl w-full bg-white dark:bg-[#1a1d15] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 modal-safe-height min-h-0 overflow-hidden">
-                            {/* Header - Fixed */}
-                            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1d15] flex-shrink-0">
-                                <h3 className="font-bold text-lg text-primary dark:text-white">{isCreating ? 'New Tier' : `Edit Tier: ${selectedTier.name}`}</h3>
-                                <button onClick={() => { setIsEditing(false); setIsCreating(false); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
-                                    <span className="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
+            {/* Edit Modal */}
+            <ModalShell isOpen={isEditing && !!selectedTier} onClose={() => { setIsEditing(false); setIsCreating(false); }} title={isCreating ? 'New Tier' : `Edit Tier: ${selectedTier?.name || ''}`} size="full">
+                <div className="p-6 pt-4 space-y-6">
+                    {error && (
+                        <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
 
-                            {/* Scrollable Content */}
-                            <div className="flex-1 min-h-0 overflow-y-auto p-6 pt-4" style={{ touchAction: 'pan-y', overscrollBehavior: 'contain' }}>
-                            {error && (
-                                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
-                                    {error}
+                    {successMessage && (
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-sm">
+                            {successMessage}
+                        </div>
+                    )}
+
+                    {/* Display Fields */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Display Fields</h4>
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Name</label>
+                                    <input 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                        value={selectedTier?.name || ''} 
+                                        onChange={e => selectedTier && setSelectedTier({...selectedTier, name: e.target.value})} 
+                                    />
                                 </div>
-                            )}
-
-                            {successMessage && (
-                                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-sm">
-                                    {successMessage}
-                                </div>
-                            )}
-
-                            {/* Display Fields */}
-                            <div className="mb-6">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Display Fields</h4>
-                                <div className="space-y-3">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Name</label>
-                                            <input 
-                                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                                value={selectedTier.name} 
-                                                onChange={e => setSelectedTier({...selectedTier, name: e.target.value})} 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Price String</label>
-                                            <input 
-                                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                                value={selectedTier.price_string} 
-                                                onChange={e => setSelectedTier({...selectedTier, price_string: e.target.value})} 
-                                                placeholder="e.g., $199/mo"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Description</label>
-                                        <textarea 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" 
-                                            rows={2}
-                                            value={selectedTier.description || ''} 
-                                            onChange={e => setSelectedTier({...selectedTier, description: e.target.value})} 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Button Text</label>
-                                        <input 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                            value={selectedTier.button_text} 
-                                            onChange={e => setSelectedTier({...selectedTier, button_text: e.target.value})} 
-                                        />
-                                    </div>
-                                    <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors mt-2">
-                                        <span className="text-sm text-primary dark:text-white">Show in Compare Table</span>
-                                        <Toggle
-                                            checked={selectedTier.show_in_comparison}
-                                            onChange={(val) => setSelectedTier({...selectedTier, show_in_comparison: val})}
-                                            label="Show in Compare Table"
-                                        />
-                                    </label>
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Price String</label>
+                                    <input 
+                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                        value={selectedTier?.price_string || ''} 
+                                        onChange={e => selectedTier && setSelectedTier({...selectedTier, price_string: e.target.value})} 
+                                        placeholder="e.g., $199/mo"
+                                    />
                                 </div>
                             </div>
-
-                            {/* Logic Fields */}
-                            <div className="mb-6">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Limits & Quotas</h4>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Daily Sim Minutes</label>
-                                        <input 
-                                            type="number"
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                            value={selectedTier.daily_sim_minutes} 
-                                            onChange={e => setSelectedTier({...selectedTier, daily_sim_minutes: parseInt(e.target.value) || 0})} 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Guest Passes / Month</label>
-                                        <input 
-                                            type="number"
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                            value={selectedTier.guest_passes_per_month} 
-                                            onChange={e => setSelectedTier({...selectedTier, guest_passes_per_month: parseInt(e.target.value) || 0})} 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Booking Window (Days)</label>
-                                        <input 
-                                            type="number"
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                            value={selectedTier.booking_window_days} 
-                                            onChange={e => setSelectedTier({...selectedTier, booking_window_days: parseInt(e.target.value) || 0})} 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Daily Conf Room Minutes</label>
-                                        <input 
-                                            type="number"
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                            value={selectedTier.daily_conf_room_minutes} 
-                                            onChange={e => setSelectedTier({...selectedTier, daily_conf_room_minutes: parseInt(e.target.value) || 0})} 
-                                        />
-                                    </div>
-                                </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Description</label>
+                                <textarea 
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none" 
+                                    rows={2}
+                                    value={selectedTier?.description || ''} 
+                                    onChange={e => selectedTier && setSelectedTier({...selectedTier, description: e.target.value})} 
+                                />
                             </div>
-
-                            {/* Boolean Toggles - iOS Style */}
-                            <div className="mb-6">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Permissions</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {BOOLEAN_FIELDS.map(({ key, label }) => (
-                                        <label key={key} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
-                                            <span className="text-sm text-primary dark:text-white pr-2">{label}</span>
-                                            <Toggle
-                                                checked={!!selectedTier[key as keyof MembershipTier]}
-                                                onChange={(val) => setSelectedTier({...selectedTier, [key]: val})}
-                                                label={label}
-                                            />
-                                        </label>
-                                    ))}
-                                </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Button Text</label>
+                                <input 
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                    value={selectedTier?.button_text || ''} 
+                                    onChange={e => selectedTier && setSelectedTier({...selectedTier, button_text: e.target.value})} 
+                                />
                             </div>
+                            <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors mt-2">
+                                <span className="text-sm text-primary dark:text-white">Show in Compare Table</span>
+                                <Toggle
+                                    checked={selectedTier?.show_in_comparison || false}
+                                    onChange={(val) => selectedTier && setSelectedTier({...selectedTier, show_in_comparison: val})}
+                                    label="Show in Compare Table"
+                                />
+                            </label>
+                        </div>
+                    </div>
 
-                            {/* All Features (JSON Editor) */}
-                            <div className="mb-6">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">All Features</h4>
-                                <div className="space-y-2 mb-3">
-                                    {Object.entries(selectedTier.all_features || {}).map(([key, enabled]) => (
-                                        <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    type="button"
-                                                    role="checkbox"
-                                                    aria-checked={enabled}
-                                                    aria-label={`Toggle ${key}`}
-                                                    onClick={() => handleToggleFeature(key)}
-                                                    className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                                                        enabled 
-                                                            ? 'bg-primary text-white shadow-sm' 
-                                                            : 'bg-white dark:bg-[#39393D] border-2 border-gray-300 dark:border-gray-600'
-                                                    }`}
-                                                >
-                                                    {enabled && <span className="material-symbols-outlined text-base font-bold">check</span>}
-                                                </button>
-                                                <span className={`text-sm ${enabled ? 'text-primary dark:text-white font-medium' : 'text-gray-400 line-through'}`}>{key}</span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                aria-label={`Remove ${key}`}
-                                                onClick={() => handleRemoveFeature(key)}
-                                                className="text-gray-400 hover:text-red-500 transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded"
-                                            >
-                                                <span className="material-symbols-outlined text-lg">close</span>
-                                            </button>
-                                        </div>
-                                    ))}
+                    {/* Logic Fields */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Limits & Quotas</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Daily Sim Minutes</label>
+                                <input 
+                                    type="number"
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                    value={selectedTier?.daily_sim_minutes || 0} 
+                                    onChange={e => selectedTier && setSelectedTier({...selectedTier, daily_sim_minutes: parseInt(e.target.value) || 0})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Guest Passes / Month</label>
+                                <input 
+                                    type="number"
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                    value={selectedTier?.guest_passes_per_month || 0} 
+                                    onChange={e => selectedTier && setSelectedTier({...selectedTier, guest_passes_per_month: parseInt(e.target.value) || 0})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Booking Window (Days)</label>
+                                <input 
+                                    type="number"
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                    value={selectedTier?.booking_window_days || 0} 
+                                    onChange={e => selectedTier && setSelectedTier({...selectedTier, booking_window_days: parseInt(e.target.value) || 0})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Daily Conf Room Minutes</label>
+                                <input 
+                                    type="number"
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                    value={selectedTier?.daily_conf_room_minutes || 0} 
+                                    onChange={e => selectedTier && setSelectedTier({...selectedTier, daily_conf_room_minutes: parseInt(e.target.value) || 0})} 
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Boolean Toggles - iOS Style */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Permissions</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                            {selectedTier && BOOLEAN_FIELDS.map(({ key, label }) => (
+                                <label key={key} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
+                                    <span className="text-sm text-primary dark:text-white pr-2">{label}</span>
+                                    <Toggle
+                                        checked={!!selectedTier[key as keyof MembershipTier]}
+                                        onChange={(val) => setSelectedTier({...selectedTier, [key]: val})}
+                                        label={label}
+                                    />
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* All Features (JSON Editor) */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">All Features</h4>
+                        <div className="space-y-2 mb-3">
+                            {selectedTier && Object.entries(selectedTier.all_features || {}).map(([key, enabled]) => (
+                                <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            role="checkbox"
+                                            aria-checked={enabled}
+                                            aria-label={`Toggle ${key}`}
+                                            onClick={() => handleToggleFeature(key)}
+                                            className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                                                enabled 
+                                                    ? 'bg-primary text-white shadow-sm' 
+                                                    : 'bg-white dark:bg-[#39393D] border-2 border-gray-300 dark:border-gray-600'
+                                            }`}
+                                        >
+                                            {enabled && <span className="material-symbols-outlined text-base font-bold">check</span>}
+                                        </button>
+                                        <span className={`text-sm ${enabled ? 'text-primary dark:text-white font-medium' : 'text-gray-400 line-through'}`}>{key}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        aria-label={`Remove ${key}`}
+                                        onClick={() => handleRemoveFeature(key)}
+                                        className="text-gray-400 hover:text-red-500 transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">close</span>
+                                    </button>
                                 </div>
-                                <div className="flex gap-2">
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                                placeholder="Add new feature..."
+                                value={newFeatureKey}
+                                onChange={e => setNewFeatureKey(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleAddFeature()}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleAddFeature}
+                                className="px-3 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-sm">add</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Highlights Selector */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                            Highlighted Features 
+                            <span className="text-gray-400 font-normal ml-1">({selectedTier?.highlighted_features?.length || 0}/4)</span>
+                        </h4>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">These appear as bullet points on the membership cards</p>
+                        
+                        {/* Current highlights - editable */}
+                        <div className="space-y-2 mb-4">
+                            {selectedTier && (selectedTier.highlighted_features || []).map((highlight, idx) => (
+                                <div key={idx} className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 dark:bg-primary/20 border border-primary">
+                                    <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0 text-xs font-bold">{idx + 1}</span>
                                     <input
                                         type="text"
-                                        className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
-                                        placeholder="Add new feature..."
-                                        value={newFeatureKey}
-                                        onChange={e => setNewFeatureKey(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && handleAddFeature()}
+                                        value={highlight}
+                                        onChange={e => {
+                                            const newHighlights = [...(selectedTier.highlighted_features || [])];
+                                            newHighlights[idx] = e.target.value;
+                                            setSelectedTier({...selectedTier, highlighted_features: newHighlights});
+                                        }}
+                                        className="flex-1 bg-transparent border-none text-sm text-primary dark:text-white font-medium focus:outline-none focus:ring-0"
                                     />
                                     <button
                                         type="button"
-                                        onClick={handleAddFeature}
-                                        className="px-3 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                                        onClick={() => {
+                                            const newHighlights = (selectedTier.highlighted_features || []).filter((_, i) => i !== idx);
+                                            setSelectedTier({...selectedTier, highlighted_features: newHighlights});
+                                        }}
+                                        className="text-primary/60 hover:text-red-500 transition-colors"
                                     >
-                                        <span className="material-symbols-outlined text-sm">add</span>
+                                        <span className="material-symbols-outlined text-lg">close</span>
                                     </button>
                                 </div>
-                            </div>
+                            ))}
+                        </div>
 
-                            {/* Highlights Selector */}
-                            <div className="mb-6">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-                                    Highlighted Features 
-                                    <span className="text-gray-400 font-normal ml-1">({selectedTier.highlighted_features?.length || 0}/4)</span>
-                                </h4>
-                                <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">These appear as bullet points on the membership cards</p>
-                                
-                                {/* Current highlights - editable */}
-                                <div className="space-y-2 mb-4">
-                                    {(selectedTier.highlighted_features || []).map((highlight, idx) => (
-                                        <div key={idx} className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 dark:bg-primary/20 border border-primary">
-                                            <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0 text-xs font-bold">{idx + 1}</span>
-                                            <input
-                                                type="text"
-                                                value={highlight}
-                                                onChange={e => {
-                                                    const newHighlights = [...(selectedTier.highlighted_features || [])];
-                                                    newHighlights[idx] = e.target.value;
-                                                    setSelectedTier({...selectedTier, highlighted_features: newHighlights});
-                                                }}
-                                                className="flex-1 bg-transparent border-none text-sm text-primary dark:text-white font-medium focus:outline-none focus:ring-0"
-                                            />
-                                            <button
+                        {/* Add new highlight */}
+                        {selectedTier && (selectedTier.highlighted_features?.length || 0) < 4 && (
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                                    placeholder="Add highlight (e.g., '60 min Daily Golf')..."
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
+                                            const val = (e.target as HTMLInputElement).value.trim();
+                                            setSelectedTier({
+                                                ...selectedTier, 
+                                                highlighted_features: [...(selectedTier.highlighted_features || []), val]
+                                            });
+                                            (e.target as HTMLInputElement).value = '';
+                                        }
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={e => {
+                                        const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
+                                        if (input.value.trim()) {
+                                            setSelectedTier({
+                                                ...selectedTier, 
+                                                highlighted_features: [...(selectedTier.highlighted_features || []), input.value.trim()]
+                                            });
+                                            input.value = '';
+                                        }
+                                    }}
+                                    className="px-3 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-sm">add</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Quick-add from all_features */}
+                        {selectedTier && (selectedTier.highlighted_features?.length || 0) < 4 && Object.keys(selectedTier.all_features || {}).length > 0 && (
+                            <div className="mt-3">
+                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2">Quick add from features:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {Object.entries(selectedTier.all_features || {}).map(([key, featureData]) => {
+                                        let label = key;
+                                        if (typeof featureData === 'object' && featureData !== null && 'label' in (featureData as object)) {
+                                            label = String((featureData as Record<string, unknown>).label);
+                                        }
+                                        const isAlreadyHighlighted = selectedTier.highlighted_features?.includes(label);
+                                        if (isAlreadyHighlighted) return null;
+                                        return (
+                                            <button 
+                                                key={key}
                                                 type="button"
-                                                onClick={() => {
-                                                    const newHighlights = (selectedTier.highlighted_features || []).filter((_, i) => i !== idx);
-                                                    setSelectedTier({...selectedTier, highlighted_features: newHighlights});
-                                                }}
-                                                className="text-primary/60 hover:text-red-500 transition-colors"
+                                                onClick={() => handleHighlightToggle(label)}
+                                                className="px-2.5 py-1 text-xs rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-primary/10 hover:text-primary dark:hover:text-white transition-colors"
                                             >
-                                                <span className="material-symbols-outlined text-lg">close</span>
+                                                + {label}
                                             </button>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
-
-                                {/* Add new highlight */}
-                                {(selectedTier.highlighted_features?.length || 0) < 4 && (
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
-                                            placeholder="Add highlight (e.g., '60 min Daily Golf')..."
-                                            onKeyDown={e => {
-                                                if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
-                                                    const val = (e.target as HTMLInputElement).value.trim();
-                                                    setSelectedTier({
-                                                        ...selectedTier, 
-                                                        highlighted_features: [...(selectedTier.highlighted_features || []), val]
-                                                    });
-                                                    (e.target as HTMLInputElement).value = '';
-                                                }
-                                            }}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={e => {
-                                                const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
-                                                if (input.value.trim()) {
-                                                    setSelectedTier({
-                                                        ...selectedTier, 
-                                                        highlighted_features: [...(selectedTier.highlighted_features || []), input.value.trim()]
-                                                    });
-                                                    input.value = '';
-                                                }
-                                            }}
-                                            className="px-3 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">add</span>
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Quick-add from all_features */}
-                                {(selectedTier.highlighted_features?.length || 0) < 4 && Object.keys(selectedTier.all_features || {}).length > 0 && (
-                                    <div className="mt-3">
-                                        <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2">Quick add from features:</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {Object.entries(selectedTier.all_features || {}).map(([key, featureData]) => {
-                                                let label = key;
-                                                if (typeof featureData === 'object' && featureData !== null && 'label' in (featureData as object)) {
-                                                    label = String((featureData as Record<string, unknown>).label);
-                                                }
-                                                const isAlreadyHighlighted = selectedTier.highlighted_features?.includes(label);
-                                                if (isAlreadyHighlighted) return null;
-                                                return (
-                                                    <button 
-                                                        key={key}
-                                                        type="button"
-                                                        onClick={() => handleHighlightToggle(label)}
-                                                        className="px-2.5 py-1 text-xs rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-primary/10 hover:text-primary dark:hover:text-white transition-colors"
-                                                    >
-                                                        + {label}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
-                            </div>
-
-                            {/* Footer - Fixed at bottom */}
-                            <div className="flex gap-3 justify-end p-6 pt-4 border-t border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1d15] flex-shrink-0">
-                                <button 
-                                    onClick={() => setIsEditing(false)} 
-                                    className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    onClick={handleSave} 
-                                    disabled={isSaving}
-                                    className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
-                                    {isSaving ? 'Saving...' : 'Save Changes'}
-                                </button>
-                            </div>
+                        )}
                     </div>
-                </div>,
-                document.body
-            )}
+
+                    {/* Footer */}
+                    <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-white/10">
+                        <button 
+                            onClick={() => setIsEditing(false)} 
+                            className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleSave} 
+                            disabled={isSaving}
+                            className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {isSaving && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
 
             {/* Tiers List */}
             {tiers.length === 0 ? (
@@ -7308,21 +7099,9 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-start justify-center pt-20 pb-4 px-4 print:hidden overflow-y-auto">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl w-full max-w-2xl max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col shadow-2xl">
-                <div className="p-6 border-b border-primary/10 dark:border-white/10 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-primary dark:text-white">
-                        {section ? 'Edit Training Section' : 'Add Training Section'}
-                    </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-primary/10 dark:hover:bg-white/10 rounded-full">
-                        <span className="material-symbols-outlined text-primary dark:text-white">close</span>
-                    </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <ModalShell isOpen={isOpen} onClose={onClose} title={section ? 'Edit Training Section' : 'Add Training Section'} showCloseButton={true} size="full">
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
                     <div>
                         <label className="block text-sm font-medium text-primary dark:text-white mb-2">Title</label>
                         <input
@@ -7464,7 +7243,7 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-primary/10 dark:border-white/10 flex gap-3 justify-end">
+                <div className="flex gap-3 justify-end pt-4 border-t border-primary/10 dark:border-white/10">
                     <button onClick={onClose} className="px-5 py-2.5 rounded-full text-primary dark:text-white hover:bg-primary/10 dark:hover:bg-white/10">
                         Cancel
                     </button>
@@ -7477,7 +7256,7 @@ const TrainingSectionModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, s
                     </button>
                 </div>
             </div>
-        </div>
+        </ModalShell>
     );
 };
 
@@ -7986,41 +7765,27 @@ const ToursAdmin: React.FC = () => {
         </div>
       )}
 
-      {checkInModalOpen && selectedTour && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setCheckInModalOpen(false)}></div>
-          <div className="relative w-full max-w-2xl bg-bone dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-primary/10 dark:border-white/10">
-              <div>
-                <h2 className="text-xl font-bold text-primary dark:text-white">Check In: {selectedTour.guestName || selectedTour.title}</h2>
-                <p className="text-sm text-primary/60 dark:text-white/60 mt-1">Complete the check-in form below</p>
-              </div>
-              <button 
-                onClick={() => setCheckInModalOpen(false)} 
-                className="w-10 h-10 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center hover:bg-primary/20 dark:hover:bg-white/20 transition-colors"
-              >
-                <span className="material-symbols-outlined text-primary dark:text-white">close</span>
-              </button>
-            </div>
-            <div ref={typeformContainerRef} className="flex-1 min-h-[500px] overflow-y-auto"></div>
-            <div className="p-4 border-t border-primary/10 dark:border-white/10 flex justify-end gap-3">
-              <button
-                onClick={() => setCheckInModalOpen(false)}
-                className="px-4 py-2 rounded-full text-sm font-medium text-primary/70 dark:text-white/70 hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCheckIn}
-                className="px-6 py-2 rounded-full bg-accent text-primary text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-sm">check_circle</span>
-                Mark as Checked In
-              </button>
-            </div>
+      <ModalShell isOpen={checkInModalOpen && !!selectedTour} onClose={() => setCheckInModalOpen(false)} title={`Check In: ${selectedTour?.guestName || selectedTour?.title || ''}`} showCloseButton={true} size="full">
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-primary/60 dark:text-white/60">Complete the check-in form below</p>
+          <div ref={typeformContainerRef} className="min-h-[500px]"></div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-primary/10 dark:border-white/10">
+            <button
+              onClick={() => setCheckInModalOpen(false)}
+              className="px-4 py-2 rounded-full text-sm font-medium text-primary/70 dark:text-white/70 hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCheckIn}
+              className="px-6 py-2 rounded-full bg-accent text-primary text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-sm">check_circle</span>
+              Mark as Checked In
+            </button>
           </div>
         </div>
-      )}
+      </ModalShell>
       </div>
     </PullToRefresh>
   );
@@ -8291,93 +8056,73 @@ const TrackmanAdmin: React.FC = () => {
         )}
       </div>
 
-      {resolveModal && createPortal(
-        <div className="fixed inset-0 z-[99999] overflow-y-auto" onClick={() => setResolveModal(null)}>
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div 
-              className="relative w-full max-w-md bg-bone dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6 border-b border-primary/10 dark:border-white/10 bg-primary/5 dark:bg-white/5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-primary dark:text-white">Resolve Booking</h2>
-                    <div className="mt-2 p-3 rounded-xl bg-white/80 dark:bg-white/10">
-                      <p className="font-semibold text-primary dark:text-white">
-                        {resolveModal.booking.userName || resolveModal.booking.user_name || 'Unknown'}
-                      </p>
-                      <p className="text-xs text-primary/70 dark:text-white/70 mt-0.5">
-                        {resolveModal.booking.originalEmail || resolveModal.booking.original_email || 'No email'}
-                      </p>
-                      <p className="text-xs text-primary/60 dark:text-white/60 mt-1">
-                        {resolveModal.booking.bookingDate || resolveModal.booking.booking_date} • Bay {resolveModal.booking.bayNumber || resolveModal.booking.bay_number}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setResolveModal(null)}
-                    className="p-2 rounded-full hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-primary/60 dark:text-white/60">close</span>
-                  </button>
-                </div>
-              </div>
-              <div className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-primary dark:text-white mb-2">
-                    Select member to assign this booking:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Search by name or email..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-white dark:bg-white/10 border border-primary/20 dark:border-white/20 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 text-base"
-                  />
-                </div>
-                <div className="max-h-64 overflow-y-auto space-y-2 -mx-2 px-2">
-                  {filteredMembers.slice(0, 20).map((member: any) => (
-                    <button
-                      key={member.email}
-                      onClick={() => setResolveModal({ ...resolveModal, memberEmail: member.email })}
-                      className={`w-full p-4 text-left rounded-xl transition-all ${
-                        resolveModal.memberEmail === member.email
-                          ? 'bg-accent/30 border-2 border-accent shadow-md'
-                          : 'bg-white/70 dark:bg-white/5 border border-primary/10 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 hover:border-primary/20 dark:hover:border-white/20'
-                      }`}
-                    >
-                      <p className="font-semibold text-primary dark:text-white text-base">
-                        {member.firstName || member.firstname || ''} {member.lastName || member.lastname || ''}
-                      </p>
-                      <p className="text-sm text-primary/60 dark:text-white/60 mt-0.5">{member.email}</p>
-                    </button>
-                  ))}
-                  {filteredMembers.length === 0 && searchQuery && (
-                    <p className="text-center py-4 text-primary/50 dark:text-white/50">No members found</p>
-                  )}
-                </div>
-              </div>
-              <div className="p-5 border-t border-primary/10 dark:border-white/10 bg-primary/5 dark:bg-white/5 flex justify-end gap-3">
-                <button
-                  onClick={() => setResolveModal(null)}
-                  className="px-5 py-2.5 rounded-full text-sm font-medium text-primary/70 dark:text-white/70 hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleResolve}
-                  disabled={!resolveModal.memberEmail}
-                  className="px-6 py-2.5 rounded-full bg-accent text-primary text-sm font-bold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                >
-                  Assign & Resolve
-                </button>
-              </div>
+      <ModalShell isOpen={!!resolveModal} onClose={() => setResolveModal(null)} title="Resolve Booking" showCloseButton={false}>
+        <div className="space-y-4">
+          <div className="p-4 border-b border-primary/10 dark:border-white/10 bg-primary/5 dark:bg-white/5 -mt-4 -mx-0">
+            <div className="p-3 rounded-xl bg-white/80 dark:bg-white/10">
+              <p className="font-semibold text-primary dark:text-white">
+                {resolveModal?.booking?.userName || resolveModal?.booking?.user_name || 'Unknown'}
+              </p>
+              <p className="text-xs text-primary/70 dark:text-white/70 mt-0.5">
+                {resolveModal?.booking?.originalEmail || resolveModal?.booking?.original_email || 'No email'}
+              </p>
+              <p className="text-xs text-primary/60 dark:text-white/60 mt-1">
+                {resolveModal?.booking?.bookingDate || resolveModal?.booking?.booking_date} • Bay {resolveModal?.booking?.bayNumber || resolveModal?.booking?.bay_number}
+              </p>
             </div>
           </div>
-        </div>,
-        document.body
-      )}
+          <div className="p-6 pt-0 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-primary dark:text-white mb-2">
+                Select member to assign this booking:
+              </label>
+              <input
+                type="text"
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-white/10 border border-primary/20 dark:border-white/20 text-primary dark:text-white placeholder:text-primary/40 dark:placeholder:text-white/40 text-base"
+              />
+            </div>
+            <div className="max-h-64 overflow-y-auto space-y-2 -mx-2 px-2">
+              {filteredMembers.slice(0, 20).map((member: any) => (
+                <button
+                  key={member.email}
+                  onClick={() => resolveModal && setResolveModal({ ...resolveModal, memberEmail: member.email })}
+                  className={`w-full p-4 text-left rounded-xl transition-all ${
+                    resolveModal?.memberEmail === member.email
+                      ? 'bg-accent/30 border-2 border-accent shadow-md'
+                      : 'bg-white/70 dark:bg-white/5 border border-primary/10 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 hover:border-primary/20 dark:hover:border-white/20'
+                  }`}
+                >
+                  <p className="font-semibold text-primary dark:text-white text-base">
+                    {member.firstName || member.firstname || ''} {member.lastName || member.lastname || ''}
+                  </p>
+                  <p className="text-sm text-primary/60 dark:text-white/60 mt-0.5">{member.email}</p>
+                </button>
+              ))}
+              {filteredMembers.length === 0 && searchQuery && (
+                <p className="text-center py-4 text-primary/50 dark:text-white/50">No members found</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-primary/10 dark:border-white/10">
+              <button
+                onClick={() => setResolveModal(null)}
+                className="px-5 py-2.5 rounded-full text-sm font-medium text-primary/70 dark:text-white/70 hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResolve}
+                disabled={!resolveModal?.memberEmail}
+                className="px-6 py-2.5 rounded-full bg-accent text-primary text-sm font-bold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+              >
+                Assign & Resolve
+              </button>
+            </div>
+          </div>
+        </div>
+      </ModalShell>
     </div>
   );
 };

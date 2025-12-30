@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData, Booking } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -20,6 +19,7 @@ import { useTierPermissions } from '../../hooks/useTierPermissions';
 import AnnouncementAlert from '../../components/AnnouncementAlert';
 import ClosureAlert from '../../components/ClosureAlert';
 import ErrorState from '../../components/ErrorState';
+import ModalShell from '../../components/ModalShell';
 
 const GUEST_CHECKIN_FIELDS = [
   { name: 'guest_firstname', label: 'Guest First Name', type: 'text' as const, required: true, placeholder: 'John' },
@@ -670,11 +670,14 @@ const Dashboard: React.FC = () => {
       </div>
     </PullToRefresh>
 
-    {confirmModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
-        <div className={`relative w-full max-w-sm p-6 rounded-2xl shadow-2xl animate-pop-in ${isDark ? 'bg-[#1e2810] border border-white/10 text-white' : 'bg-white text-primary'}`}>
-          <h3 className="text-xl font-bold mb-2">{confirmModal.title}</h3>
+    <ModalShell 
+      isOpen={!!confirmModal} 
+      onClose={() => setConfirmModal(null)}
+      title={confirmModal?.title || ''}
+      size="sm"
+    >
+      {confirmModal && (
+        <div className="p-6">
           <p className={`mb-6 text-sm ${isDark ? 'opacity-70' : 'opacity-70'}`}>{confirmModal.message}</p>
           <div className="flex gap-3">
             <button 
@@ -691,8 +694,8 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
-    )}
+      )}
+    </ModalShell>
 
     {/* Guest Check-In Modal */}
     <HubSpotFormModal
@@ -720,17 +723,22 @@ const Dashboard: React.FC = () => {
     />
 
     {/* Membership Details Modal */}
-    {isCardOpen && user && createPortal((() => {
-      const tierColors = getTierColor(user.tier || 'Social');
-      const cardBgColor = isStaffOrAdminProfile ? '#293515' : tierColors.bg;
-      const cardTextColor = isStaffOrAdminProfile ? '#F2F2EC' : tierColors.text;
-      const baseTier = getBaseTier(user.tier || 'Social');
-      const useDarkLogo = !isStaffOrAdminProfile && ['Social', 'Premium', 'VIP'].includes(baseTier);
-      return (
-        <div className="fixed inset-0 z-[10001] overflow-y-auto">
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200" onClick={() => setIsCardOpen(false)} />
-          <div className="flex min-h-full flex-col items-center justify-center p-6 pointer-events-none">
-            <div className="w-full max-w-sm rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500 pointer-events-auto" style={{ backgroundColor: cardBgColor }}>
+    <ModalShell 
+      isOpen={isCardOpen && !!user} 
+      onClose={() => setIsCardOpen(false)}
+      showCloseButton={false}
+      size="sm"
+      className="!bg-transparent !border-0 !shadow-none"
+    >
+      {user && (() => {
+        const tierColors = getTierColor(user.tier || 'Social');
+        const cardBgColor = isStaffOrAdminProfile ? '#293515' : tierColors.bg;
+        const cardTextColor = isStaffOrAdminProfile ? '#F2F2EC' : tierColors.text;
+        const baseTier = getBaseTier(user.tier || 'Social');
+        const useDarkLogo = !isStaffOrAdminProfile && ['Social', 'Premium', 'VIP'].includes(baseTier);
+        return (
+          <div className="flex flex-col items-center">
+            <div className="w-full rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col" style={{ backgroundColor: cardBgColor }}>
               
               {/* Close Button */}
               <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: `${cardTextColor}33`, color: cardTextColor }}>
@@ -834,13 +842,13 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Wallet Button */}
-            <button className="mt-6 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow pointer-events-auto" onClick={() => alert("Added to Wallet")}>
+            <button className="mt-6 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow" onClick={() => alert("Added to Wallet")}>
               Add to Apple Wallet
             </button>
           </div>
-        </div>
-      );
-    })(), document.body)}
+        );
+      })()}
+    </ModalShell>
   </>
   );
 };

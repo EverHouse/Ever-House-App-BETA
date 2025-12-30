@@ -15,6 +15,7 @@ import { useTierPermissions } from '../../hooks/useTierPermissions';
 import { canAccessResource } from '../../services/tierService';
 import { getDateString, formatDateShort, getPacificDateParts } from '../../utils/dateUtils';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
+import ModalShell from '../../components/ModalShell';
 
 
 interface APIResource {
@@ -899,16 +900,19 @@ const BookGolf: React.FC = () => {
       )}
 
       {/* View As Confirmation Modal */}
-      {showViewAsConfirm && viewAsUser && (
-        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowViewAsConfirm(false)} />
-          <div className={`relative w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 border ${isDark ? 'bg-[#1a1d15] border-white/10' : 'bg-white border-black/10'}`}>
+      <ModalShell 
+        isOpen={showViewAsConfirm && !!viewAsUser} 
+        onClose={() => setShowViewAsConfirm(false)}
+        title="Booking on Behalf"
+        size="sm"
+      >
+        {viewAsUser && (
+          <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
                 <span className="material-symbols-outlined text-2xl text-amber-500">warning</span>
               </div>
               <div>
-                <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-primary'}`}>Booking on Behalf</h3>
                 <p className={`text-sm ${isDark ? 'text-white/60' : 'text-primary/60'}`}>View As Mode Active</p>
               </div>
             </div>
@@ -933,8 +937,8 @@ const BookGolf: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </ModalShell>
     </SwipeablePage>
     </PullToRefresh>
   );

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -17,6 +16,7 @@ import MemberBottomNav from '../../components/MemberBottomNav';
 import StaffBottomNavSimple from '../../components/StaffBottomNavSimple';
 import { BottomSentinel } from '../../components/layout/BottomSentinel';
 import BugReportModal from '../../components/BugReportModal';
+import ModalShell from '../../components/ModalShell';
 
 
 const GUEST_CHECKIN_FIELDS = [
@@ -436,146 +436,151 @@ const Profile: React.FC = () => {
       )}
 
       {/* Full Screen Card Modal */}
-      {isCardOpen && createPortal((() => {
-         const tierColors = getTierColor(user.tier || 'Social');
-         const cardBgColor = isStaffOrAdminProfile ? '#293515' : tierColors.bg;
-         const cardTextColor = isStaffOrAdminProfile ? '#F2F2EC' : tierColors.text;
-         const baseTier = getBaseTier(user.tier || 'Social');
-         const useDarkLogo = !isStaffOrAdminProfile && ['Social', 'Premium', 'VIP'].includes(baseTier);
-         return (
-            <div className="fixed inset-0 z-[10001] overflow-y-auto">
-               <div className="fixed inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200" onClick={() => setIsCardOpen(false)} />
-               <div className="flex min-h-full flex-col items-center justify-center p-6 pointer-events-none">
-                  <div className="w-full max-w-sm rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500 pointer-events-auto" style={{ backgroundColor: cardBgColor }}>
-                   
-                   {/* Close Button */}
-                   <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: `${cardTextColor}33`, color: cardTextColor }}>
-                       <span className="material-symbols-outlined text-sm">close</span>
-                   </button>
+      <ModalShell 
+        isOpen={isCardOpen} 
+        onClose={() => setIsCardOpen(false)}
+        showCloseButton={false}
+        size="sm"
+        className="!bg-transparent !border-0 !shadow-none"
+      >
+        {(() => {
+          const tierColors = getTierColor(user.tier || 'Social');
+          const cardBgColor = isStaffOrAdminProfile ? '#293515' : tierColors.bg;
+          const cardTextColor = isStaffOrAdminProfile ? '#F2F2EC' : tierColors.text;
+          const baseTier = getBaseTier(user.tier || 'Social');
+          const useDarkLogo = !isStaffOrAdminProfile && ['Social', 'Premium', 'VIP'].includes(baseTier);
+          return (
+            <div className="flex flex-col items-center">
+              <div className="w-full rounded-[2rem] relative overflow-hidden shadow-2xl flex flex-col" style={{ backgroundColor: cardBgColor }}>
+               
+               {/* Close Button */}
+               <button onClick={() => setIsCardOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: `${cardTextColor}33`, color: cardTextColor }}>
+                   <span className="material-symbols-outlined text-sm">close</span>
+               </button>
 
-                   {/* Header with Logo */}
-                   <div className="pt-6 pb-4 px-6 flex justify-center" style={{ backgroundColor: cardBgColor }}>
-                       <img src={useDarkLogo ? "/assets/logos/monogram-dark.webp" : "/assets/logos/monogram-white.webp"} className="w-12 h-12" alt="" />
-                   </div>
-                   
-                   {/* Member Info */}
-                   <div className="px-6 pb-6 text-center" style={{ backgroundColor: cardBgColor }}>
-                       <h2 className="text-2xl font-bold mb-3" style={{ color: cardTextColor }}>{user.name}</h2>
-                       
-                       {isStaffOrAdminProfile ? (
-                         <>
-                           <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
-                              <span className="px-3 py-1 rounded-full bg-white/20 text-sm font-bold" style={{ color: cardTextColor }}>
-                                 {user.role === 'admin' ? 'Administrator' : 'Staff'}
-                              </span>
-                           </div>
-                           {user.jobTitle && (
-                             <p className="text-sm opacity-80" style={{ color: cardTextColor }}>{user.jobTitle}</p>
-                           )}
-                         </>
-                       ) : (
-                         <>
-                           <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
-                              <TierBadge tier={user.tier || 'Social'} size="md" />
-                           </div>
-                           {((user.tags || []).length > 0 || isFoundingMember(user.tier || '', user.isFounding)) && (
-                             <div className="flex items-center justify-center gap-2 flex-wrap">
-                                {(user.tags || []).map((tag) => (
-                                   <TagBadge key={tag} tag={tag} size="sm" />
-                                ))}
-                                {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
-                                   <TagBadge tag="Founding Member" size="sm" />
-                                )}
-                             </div>
-                           )}
-                         </>
-                       )}
-                   </div>
-
-                   {/* Benefits Section - Members Only */}
-                   {!isStaffOrAdminProfile && (
-                     <div className="px-6 pb-6" style={{ backgroundColor: cardBgColor }}>
-                       <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: `${cardTextColor}10` }}>
-                         <h3 className="text-xs font-bold uppercase tracking-wider opacity-60 mb-3" style={{ color: cardTextColor }}>Membership Benefits</h3>
-                         
-                         {user.joinDate && (
-                           <div className="flex items-center justify-between">
-                             <div className="flex items-center gap-3">
-                               <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>event</span>
-                               <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Member Since</span>
-                             </div>
-                             <span className="text-sm font-semibold" style={{ color: cardTextColor }}>{user.joinDate}</span>
-                           </div>
-                         )}
-                         
-                         <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-3">
-                             <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>calendar_month</span>
-                             <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Advance Booking</span>
-                           </div>
-                           <span className="text-sm font-semibold" style={{ color: cardTextColor }}>
-                             {tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.advanceBookingDays} days`}
-                           </span>
-                         </div>
-                         
-                         {tierPermissions.canBookSimulators && (
-                           <div className="flex items-center justify-between">
-                             <div className="flex items-center gap-3">
-                               <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>sports_golf</span>
-                               <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Daily Sim Time</span>
-                             </div>
-                             <span className="text-sm font-semibold" style={{ color: cardTextColor }}>
-                               {tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.dailySimulatorMinutes} min`}
-                             </span>
-                           </div>
-                         )}
-                         
-                         {guestPasses && (
-                           <div className="flex items-center justify-between">
-                             <div className="flex items-center gap-3">
-                               <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>group_add</span>
-                               <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Guest Passes</span>
-                             </div>
-                             <span className="text-sm font-semibold" style={{ color: cardTextColor }}>
-                               {guestPasses.passes_remaining} / {guestPasses.passes_total}
-                             </span>
-                           </div>
-                         )}
-
-                         {user.mindbodyClientId && (
-                           <div className="flex items-center justify-between pt-2 mt-2" style={{ borderTop: `1px solid ${cardTextColor}20` }}>
-                             <div className="flex items-center gap-3">
-                               <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>badge</span>
-                               <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Mindbody ID</span>
-                             </div>
-                             <span className="text-sm font-mono font-semibold" style={{ color: cardTextColor }}>{user.mindbodyClientId}</span>
-                           </div>
-                         )}
-                       </div>
-                     </div>
-                   )}
-
-                   {/* Staff Portal Access */}
-                   {isStaffOrAdminProfile && (
-                     <div className="px-6 pb-6" style={{ backgroundColor: cardBgColor }}>
-                       <div className="rounded-xl p-4 text-center" style={{ backgroundColor: `${cardTextColor}10` }}>
-                         <span className="text-xs font-bold uppercase tracking-wider opacity-60" style={{ color: cardTextColor }}>Portal Access</span>
-                         <p className="text-lg font-bold mt-1" style={{ color: cardTextColor }}>Staff Portal</p>
-                       </div>
-                     </div>
-                   )}
-                  </div>
-
-                  {/* Wallet Button - Members Only */}
-                  {!isStaffOrAdminProfile && (
-                    <button className="mt-6 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow pointer-events-auto" onClick={() => alert("Added to Wallet")}>
-                        Add to Apple Wallet
-                    </button>
-                  )}
+               {/* Header with Logo */}
+               <div className="pt-6 pb-4 px-6 flex justify-center" style={{ backgroundColor: cardBgColor }}>
+                   <img src={useDarkLogo ? "/assets/logos/monogram-dark.webp" : "/assets/logos/monogram-white.webp"} className="w-12 h-12" alt="" />
                </div>
+               
+               {/* Member Info */}
+               <div className="px-6 pb-6 text-center" style={{ backgroundColor: cardBgColor }}>
+                   <h2 className="text-2xl font-bold mb-3" style={{ color: cardTextColor }}>{user.name}</h2>
+                   
+                   {isStaffOrAdminProfile ? (
+                     <>
+                       <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
+                          <span className="px-3 py-1 rounded-full bg-white/20 text-sm font-bold" style={{ color: cardTextColor }}>
+                             {user.role === 'admin' ? 'Administrator' : 'Staff'}
+                          </span>
+                       </div>
+                       {user.jobTitle && (
+                         <p className="text-sm opacity-80" style={{ color: cardTextColor }}>{user.jobTitle}</p>
+                       )}
+                     </>
+                   ) : (
+                     <>
+                       <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
+                          <TierBadge tier={user.tier || 'Social'} size="md" />
+                       </div>
+                       {((user.tags || []).length > 0 || isFoundingMember(user.tier || '', user.isFounding)) && (
+                         <div className="flex items-center justify-center gap-2 flex-wrap">
+                            {(user.tags || []).map((tag) => (
+                               <TagBadge key={tag} tag={tag} size="sm" />
+                            ))}
+                            {!user.tags?.length && isFoundingMember(user.tier || '', user.isFounding) && (
+                               <TagBadge tag="Founding Member" size="sm" />
+                            )}
+                         </div>
+                       )}
+                     </>
+                   )}
+               </div>
+
+               {/* Benefits Section - Members Only */}
+               {!isStaffOrAdminProfile && (
+                 <div className="px-6 pb-6" style={{ backgroundColor: cardBgColor }}>
+                   <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: `${cardTextColor}10` }}>
+                     <h3 className="text-xs font-bold uppercase tracking-wider opacity-60 mb-3" style={{ color: cardTextColor }}>Membership Benefits</h3>
+                     
+                     {user.joinDate && (
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                           <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>event</span>
+                           <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Member Since</span>
+                         </div>
+                         <span className="text-sm font-semibold" style={{ color: cardTextColor }}>{user.joinDate}</span>
+                       </div>
+                     )}
+                     
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>calendar_month</span>
+                         <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Advance Booking</span>
+                       </div>
+                       <span className="text-sm font-semibold" style={{ color: cardTextColor }}>
+                         {tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.advanceBookingDays} days`}
+                       </span>
+                     </div>
+                     
+                     {tierPermissions.canBookSimulators && (
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                           <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>sports_golf</span>
+                           <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Daily Sim Time</span>
+                         </div>
+                         <span className="text-sm font-semibold" style={{ color: cardTextColor }}>
+                           {tierPermissions.unlimitedAccess ? 'Unlimited' : `${tierPermissions.dailySimulatorMinutes} min`}
+                         </span>
+                       </div>
+                     )}
+                     
+                     {guestPasses && (
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                           <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>group_add</span>
+                           <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Guest Passes</span>
+                         </div>
+                         <span className="text-sm font-semibold" style={{ color: cardTextColor }}>
+                           {guestPasses.passes_remaining} / {guestPasses.passes_total}
+                         </span>
+                       </div>
+                     )}
+
+                     {user.mindbodyClientId && (
+                       <div className="flex items-center justify-between pt-2 mt-2" style={{ borderTop: `1px solid ${cardTextColor}20` }}>
+                         <div className="flex items-center gap-3">
+                           <span className="material-symbols-outlined text-base opacity-70" style={{ color: cardTextColor }}>badge</span>
+                           <span className="text-sm opacity-80" style={{ color: cardTextColor }}>Mindbody ID</span>
+                         </div>
+                         <span className="text-sm font-mono font-semibold" style={{ color: cardTextColor }}>{user.mindbodyClientId}</span>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               )}
+
+               {/* Staff Portal Access */}
+               {isStaffOrAdminProfile && (
+                 <div className="px-6 pb-6" style={{ backgroundColor: cardBgColor }}>
+                   <div className="rounded-xl p-4 text-center" style={{ backgroundColor: `${cardTextColor}10` }}>
+                     <span className="text-xs font-bold uppercase tracking-wider opacity-60" style={{ color: cardTextColor }}>Portal Access</span>
+                     <p className="text-lg font-bold mt-1" style={{ color: cardTextColor }}>Staff Portal</p>
+                   </div>
+                 </div>
+               )}
+              </div>
+
+              {/* Wallet Button - Members Only */}
+              {!isStaffOrAdminProfile && (
+                <button className="mt-6 px-8 py-3 bg-white text-black rounded-full font-bold shadow-glow" onClick={() => alert("Added to Wallet")}>
+                    Add to Apple Wallet
+                </button>
+              )}
             </div>
-         );
-      })(), document.body)}
+          );
+        })()}
+      </ModalShell>
     </div>
   );
 };

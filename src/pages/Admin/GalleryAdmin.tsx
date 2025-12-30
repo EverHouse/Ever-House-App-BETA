@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import Toggle from '../../components/Toggle';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import FloatingActionButton from '../../components/FloatingActionButton';
+import ModalShell from '../../components/ModalShell';
 
 interface GalleryImage {
     id: number;
@@ -177,127 +177,113 @@ const GalleryAdmin: React.FC = () => {
                 <h2 className="text-xl font-bold text-primary dark:text-white">Gallery Images</h2>
             </div>
 
-            {isEditing && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
-                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white">{editId ? 'Edit Image' : 'Add Image'}</h3>
-                            {error && (
-                                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
-                                    {error}
-                                </div>
-                            )}
-                            <div className="space-y-4 mb-6">
+            <ModalShell isOpen={isEditing} onClose={() => setIsEditing(false)} title={editId ? 'Edit Image' : 'Add Image'}>
+                <div className="p-6">
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
+                    <div className="space-y-4 mb-6">
+                        <input 
+                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                            placeholder="Title (Optional)" 
+                            value={newItem.title || ''} 
+                            onChange={e => setNewItem({...newItem, title: e.target.value})} 
+                        />
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Image</label>
+                            <div className="flex gap-2">
                                 <input 
-                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                    placeholder="Title (Optional)" 
-                                    value={newItem.title || ''} 
-                                    onChange={e => setNewItem({...newItem, title: e.target.value})} 
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 file:cursor-pointer"
+                                    disabled={uploading}
                                 />
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Image</label>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="image/*"
-                                            className="flex-1 border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-primary dark:text-white text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 file:cursor-pointer"
-                                            disabled={uploading}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const file = fileInputRef.current?.files?.[0];
-                                                if (file) handleFileUpload(file);
-                                            }}
-                                            disabled={uploading}
-                                            className="px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap"
-                                        >
-                                            {uploading ? 'Uploading...' : 'Upload'}
-                                        </button>
-                                    </div>
-                                    {uploadProgress && (
-                                        <p className={`text-sm ${uploadProgress.includes('failed') ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
-                                            {uploadProgress}
-                                        </p>
-                                    )}
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Images are automatically optimized to WebP format</p>
-                                </div>
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-gray-200 dark:border-white/10"></div>
-                                    </div>
-                                    <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-white dark:bg-[#1a1d15] px-2 text-gray-500 dark:text-gray-400">or paste URL</span>
-                                    </div>
-                                </div>
-                                <input 
-                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                    placeholder="Image URL *" 
-                                    value={newItem.imageUrl || ''} 
-                                    onChange={e => setNewItem({...newItem, imageUrl: e.target.value})} 
-                                />
-                                {newItem.imageUrl && (
-                                    <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5">
-                                        <img src={newItem.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                    </div>
-                                )}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <select 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                        value={newItem.category || 'venue'} 
-                                        onChange={e => setNewItem({...newItem, category: e.target.value})}
-                                    >
-                                        {categories.map(cat => (
-                                            <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                                        ))}
-                                    </select>
-                                    <input 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                                        type="number" 
-                                        placeholder="Sort Order" 
-                                        value={newItem.sortOrder || 0} 
-                                        onChange={e => setNewItem({...newItem, sortOrder: parseInt(e.target.value) || 0})} 
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
-                                    <span className="text-primary dark:text-white font-medium">Active (visible on public gallery)</span>
-                                    <Toggle
-                                        checked={newItem.isActive !== false}
-                                        onChange={(val) => setNewItem({...newItem, isActive: val})}
-                                        label="Toggle image active status"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex gap-3 justify-end">
-                                <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
-                                <button onClick={handleSave} disabled={isSaving} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50">
-                                    {isSaving ? 'Saving...' : 'Save'}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const file = fileInputRef.current?.files?.[0];
+                                        if (file) handleFileUpload(file);
+                                    }}
+                                    disabled={uploading}
+                                    className="px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                >
+                                    {uploading ? 'Uploading...' : 'Upload'}
                                 </button>
                             </div>
+                            {uploadProgress && (
+                                <p className={`text-sm ${uploadProgress.includes('failed') ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+                                    {uploadProgress}
+                                </p>
+                            )}
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Images are automatically optimized to WebP format</p>
                         </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {deleteConfirm !== null && createPortal(
-                <div className="fixed inset-0 z-[10002] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-sm animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto">
-                            <h3 className="font-bold text-lg mb-3 text-primary dark:text-white">Delete Image?</h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
-                            <div className="flex gap-3 justify-end">
-                                <button onClick={() => setDeleteConfirm(null)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
-                                <button onClick={() => handleDelete(deleteConfirm)} className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold shadow-md hover:bg-red-700 transition-colors">Delete</button>
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-200 dark:border-white/10"></div>
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white dark:bg-[#1a1d15] px-2 text-gray-500 dark:text-gray-400">or paste URL</span>
                             </div>
                         </div>
+                        <input 
+                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                            placeholder="Image URL *" 
+                            value={newItem.imageUrl || ''} 
+                            onChange={e => setNewItem({...newItem, imageUrl: e.target.value})} 
+                        />
+                        {newItem.imageUrl && (
+                            <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5">
+                                <img src={newItem.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-3">
+                            <select 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                value={newItem.category || 'venue'} 
+                                onChange={e => setNewItem({...newItem, category: e.target.value})}
+                            >
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                                ))}
+                            </select>
+                            <input 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3.5 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
+                                type="number" 
+                                placeholder="Sort Order" 
+                                value={newItem.sortOrder || 0} 
+                                onChange={e => setNewItem({...newItem, sortOrder: parseInt(e.target.value) || 0})} 
+                            />
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10">
+                            <span className="text-primary dark:text-white font-medium">Active (visible on public gallery)</span>
+                            <Toggle
+                                checked={newItem.isActive !== false}
+                                onChange={(val) => setNewItem({...newItem, isActive: val})}
+                                label="Toggle image active status"
+                            />
+                        </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                    <div className="flex gap-3 justify-end">
+                        <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                        <button onClick={handleSave} disabled={isSaving} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50">
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
+
+            <ModalShell isOpen={deleteConfirm !== null} onClose={() => setDeleteConfirm(null)} title="Delete Image?" size="sm">
+                <div className="p-6">
+                    <p className="text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+                    <div className="flex gap-3 justify-end">
+                        <button onClick={() => setDeleteConfirm(null)} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                        <button onClick={() => deleteConfirm !== null && handleDelete(deleteConfirm)} className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold shadow-md hover:bg-red-700 transition-colors">Delete</button>
+                    </div>
+                </div>
+            </ModalShell>
 
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">

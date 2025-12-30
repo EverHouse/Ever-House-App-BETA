@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../../components/Footer';
 import BackToTop from '../../components/BackToTop';
 import { usePageReady } from '../../contexts/PageReadyContext';
 import { useParallax } from '../../hooks/useParallax';
 import { playSound } from '../../utils/sounds';
+import ModalShell from '../../components/ModalShell';
 
 interface MembershipTier {
   id: number;
@@ -112,27 +112,15 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
     }
   };
 
-  if (!isOpen) return null;
+  const subtitle = step === 'form' ? 'Tell us a bit about yourself.' : bookingConfirmed ? 'Your tour is confirmed!' : 'Select a time that works for you.';
 
-  const modalContent = (
-    <div className="fixed inset-0 z-[10001] animate-fade-in">
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
-      <div className="fixed inset-0 overflow-y-auto" onClick={onClose}>
-        <div className="flex min-h-full items-center justify-center p-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))', paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-          <div className="relative w-full max-w-2xl bg-[#F2F2EC] dark:bg-[#1a1f12] rounded-3xl shadow-2xl overflow-hidden animate-pop-in max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-6 border-b border-primary/10 dark:border-white/10">
-          <div>
-            <h2 className="text-xl font-bold text-[#293515] dark:text-white">Book a Tour</h2>
-            <p className="text-sm text-[#293515]/60 dark:text-white/60 mt-1">
-              {step === 'form' ? 'Tell us a bit about yourself.' : bookingConfirmed ? 'Your tour is confirmed!' : 'Select a time that works for you.'}
-            </p>
-          </div>
-          <button onClick={onClose} className="w-10 h-10 rounded-full bg-[#293515]/10 dark:bg-white/10 flex items-center justify-center hover:bg-[#293515]/20 dark:hover:bg-white/20 transition-colors">
-            <span className="material-symbols-outlined text-[#293515] dark:text-white">close</span>
-          </button>
-        </div>
-        
-        {step === 'form' ? (
+  return (
+    <ModalShell isOpen={isOpen} onClose={onClose} title="Book a Tour" size="lg" className="bg-[#F2F2EC] dark:bg-[#1a1f12]">
+      <div className="px-6 pb-2">
+        <p className="text-sm text-[#293515]/60 dark:text-white/60">{subtitle}</p>
+      </div>
+      
+      {step === 'form' ? (
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -216,16 +204,11 @@ const HubSpotMeetingModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
               Done
             </button>
           </div>
-        ) : (
-          <div ref={containerRef} className="p-4 overflow-y-auto flex-1 min-h-[500px]"></div>
-        )}
-          </div>
-        </div>
-      </div>
-    </div>
+      ) : (
+        <div ref={containerRef} className="p-4 overflow-y-auto flex-1 min-h-[500px]"></div>
+      )}
+    </ModalShell>
   );
-
-  return createPortal(modalContent, document.body);
 };
 
 const Landing: React.FC = () => {

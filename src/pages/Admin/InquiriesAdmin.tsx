@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { usePageReady } from '../../contexts/PageReadyContext';
+import ModalShell from '../../components/ModalShell';
 
 interface Inquiry {
     id: number;
@@ -212,128 +212,121 @@ const InquiriesAdmin: React.FC = () => {
                 ))}
             </div>
 
-            {isDetailOpen && selectedInquiry && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
-                    <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto modal-safe-height overflow-y-auto">
-                            <div className="flex items-start justify-between mb-4">
+            <ModalShell 
+                isOpen={isDetailOpen && selectedInquiry !== null} 
+                onClose={() => setIsDetailOpen(false)} 
+                title={selectedInquiry ? `${selectedInquiry.firstName || ''} ${selectedInquiry.lastName || ''}`.trim() || 'Inquiry Details' : 'Inquiry Details'}
+                size="lg"
+            >
+                {selectedInquiry && (
+                    <div className="p-6">
+                        <div className="mb-4">
+                            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${getStatusColor(selectedInquiry.status)}`}>
+                                {selectedInquiry.status}
+                            </span>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <h3 className="font-bold text-lg text-primary dark:text-white">
-                                        {selectedInquiry.firstName || ''} {selectedInquiry.lastName || ''}
-                                    </h3>
-                                    <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded mt-1 ${getStatusColor(selectedInquiry.status)}`}>
-                                        {selectedInquiry.status}
-                                    </span>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Email</label>
+                                    <a href={`mailto:${selectedInquiry.email}`} className="text-sm text-primary dark:text-accent hover:underline">{selectedInquiry.email}</a>
                                 </div>
-                                <button onClick={() => setIsDetailOpen(false)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-                                    <span className="material-symbols-outlined">close</span>
-                                </button>
+                                {selectedInquiry.phone && (
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Phone</label>
+                                        <a href={`tel:${selectedInquiry.phone}`} className="text-sm text-primary dark:text-accent hover:underline">{selectedInquiry.phone}</a>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="space-y-4 mb-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Email</label>
-                                        <a href={`mailto:${selectedInquiry.email}`} className="text-sm text-primary dark:text-accent hover:underline">{selectedInquiry.email}</a>
-                                    </div>
-                                    {selectedInquiry.phone && (
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Phone</label>
-                                            <a href={`tel:${selectedInquiry.phone}`} className="text-sm text-primary dark:text-accent hover:underline">{selectedInquiry.phone}</a>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Form Type</label>
-                                        <span className="text-sm text-gray-700 dark:text-gray-300">{getFormTypeLabel(selectedInquiry.formType)}</span>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Submitted</label>
-                                        <span className="text-sm text-gray-700 dark:text-gray-300">{formatDate(selectedInquiry.createdAt)}</span>
-                                    </div>
-                                </div>
-
-                                {selectedInquiry.message && (
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Message</label>
-                                        <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-black/20 p-3 rounded-lg whitespace-pre-wrap">{selectedInquiry.message}</p>
-                                    </div>
-                                )}
-
-                                {selectedInquiry.metadata && Object.keys(selectedInquiry.metadata).length > 0 && (
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Additional Details</label>
-                                        <div className="bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-sm">
-                                            {Object.entries(selectedInquiry.metadata).map(([key, value]) => (
-                                                <div key={key} className="flex gap-2 py-1 border-b border-gray-100 dark:border-white/5 last:border-0">
-                                                    <span className="text-gray-500 dark:text-gray-400 capitalize">{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:</span>
-                                                    <span className="text-gray-700 dark:text-gray-300">{String(value)}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Update Status</label>
-                                    <div className="flex gap-2 flex-wrap">
-                                        {['read', 'replied', 'archived'].map(status => (
-                                            <button
-                                                key={status}
-                                                onClick={() => handleUpdateStatus(status)}
-                                                disabled={isSaving || selectedInquiry.status === status}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 ${
-                                                    selectedInquiry.status === status 
-                                                        ? 'bg-primary text-white' 
-                                                        : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
-                                                }`}
-                                            >
-                                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                                            </button>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Form Type</label>
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">{getFormTypeLabel(selectedInquiry.formType)}</span>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Submitted</label>
+                                    <span className="text-sm text-gray-700 dark:text-gray-300">{formatDate(selectedInquiry.createdAt)}</span>
+                                </div>
+                            </div>
+
+                            {selectedInquiry.message && (
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Message</label>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-black/20 p-3 rounded-lg whitespace-pre-wrap">{selectedInquiry.message}</p>
+                                </div>
+                            )}
+
+                            {selectedInquiry.metadata && Object.keys(selectedInquiry.metadata).length > 0 && (
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Additional Details</label>
+                                    <div className="bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-sm">
+                                        {Object.entries(selectedInquiry.metadata).map(([key, value]) => (
+                                            <div key={key} className="flex gap-2 py-1 border-b border-gray-100 dark:border-white/5 last:border-0">
+                                                <span className="text-gray-500 dark:text-gray-400 capitalize">{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:</span>
+                                                <span className="text-gray-700 dark:text-gray-300">{String(value)}</span>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
+                            )}
 
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Staff Notes</label>
-                                    <textarea
-                                        value={notes}
-                                        onChange={(e) => setNotes(e.target.value)}
-                                        placeholder="Add internal notes about this inquiry..."
-                                        rows={3}
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none text-sm"
-                                    />
-                                    <button
-                                        onClick={handleSaveNotes}
-                                        disabled={isSaving}
-                                        className="mt-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
-                                    >
-                                        {isSaving ? 'Saving...' : 'Save Notes'}
-                                    </button>
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Update Status</label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {['read', 'replied', 'archived'].map(status => (
+                                        <button
+                                            key={status}
+                                            onClick={() => handleUpdateStatus(status)}
+                                            disabled={isSaving || selectedInquiry.status === status}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 ${
+                                                selectedInquiry.status === status 
+                                                    ? 'bg-primary text-white' 
+                                                    : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                                            }`}
+                                        >
+                                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 justify-between border-t border-gray-100 dark:border-white/10 pt-4">
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-1">Staff Notes</label>
+                                <textarea
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Add internal notes about this inquiry..."
+                                    rows={3}
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-3 rounded-xl text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none text-sm"
+                                />
                                 <button
-                                    onClick={handleArchive}
-                                    disabled={isSaving || selectedInquiry.status === 'archived'}
-                                    className="px-4 py-2 text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm disabled:opacity-50"
+                                    onClick={handleSaveNotes}
+                                    disabled={isSaving}
+                                    className="mt-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
                                 >
-                                    <span className="material-symbols-outlined text-sm align-middle mr-1">archive</span>
-                                    Archive
-                                </button>
-                                <button onClick={() => setIsDetailOpen(false)} className="px-5 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-bold rounded-lg hover:bg-gray-200 dark:hover:bg-white/20 transition-colors text-sm">
-                                    Close
+                                    {isSaving ? 'Saving...' : 'Save Notes'}
                                 </button>
                             </div>
                         </div>
+
+                        <div className="flex gap-3 justify-between border-t border-gray-100 dark:border-white/10 pt-4">
+                            <button
+                                onClick={handleArchive}
+                                disabled={isSaving || selectedInquiry.status === 'archived'}
+                                className="px-4 py-2 text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-sm align-middle mr-1">archive</span>
+                                Archive
+                            </button>
+                            <button onClick={() => setIsDetailOpen(false)} className="px-5 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-bold rounded-lg hover:bg-gray-200 dark:hover:bg-white/20 transition-colors text-sm">
+                                Close
+                            </button>
+                        </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                )}
+            </ModalShell>
 
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
