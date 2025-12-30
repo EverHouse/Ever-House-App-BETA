@@ -1511,7 +1511,7 @@ const StaffUpdatesAdmin: React.FC = () => {
                         onClick={() => setActiveSubTab('announcements')}
                         className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
                             activeSubTab === 'announcements'
-                                ? 'bg-accent text-primary'
+                                ? 'bg-amber-500 text-white'
                                 : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
                         }`}
                     >
@@ -1645,7 +1645,11 @@ const AnnouncementsAdmin: React.FC<{ triggerCreate?: number }> = ({ triggerCreat
                         Announcements ({announcements.length})
                     </h3>
                 )}
-                {announcements.map((item, index) => {
+                {[...announcements].sort((a, b) => {
+                    const idA = parseInt(a.id) || 0;
+                    const idB = parseInt(b.id) || 0;
+                    return idB - idA;
+                }).map((item, index) => {
                     const priorityDotClass = item.priority === 'urgent'
                         ? 'bg-red-500'
                         : item.priority === 'high'

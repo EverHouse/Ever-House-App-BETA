@@ -228,7 +228,7 @@ const Contact: React.FC = () => {
                     Open in Google Maps
                  </a>
                  <a 
-                   href="https://maps.apple.com/?address=15771%20Red%20Hill%20Ave,%20Ste%20500,%20Tustin,%20CA%20%2092780,%20United%20States&auid=9660897230606498227&ll=33.709036,-117.826817&lsp=9902&q=Even%20House" 
+                   href="https://maps.apple.com/?auid=9660897230606498227&lsp=9902" 
                    target="_blank" 
                    rel="noreferrer" 
                    className="bg-zinc-700 text-white px-4 py-2 rounded-lg shadow-md font-bold text-xs flex items-center gap-2 hover:shadow-lg transition-shadow"
