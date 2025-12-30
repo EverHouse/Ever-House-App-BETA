@@ -877,36 +877,62 @@ const EventsAdminContent: React.FC = () => {
             </div>
 
             <ModalShell isOpen={isEditing} onClose={() => { setIsEditing(false); setError(null); }} title={editId ? 'Edit Event' : 'Create Event'} showCloseButton={false}>
-                <div className="p-6 space-y-3">
+                <div className="p-6 space-y-4 overflow-hidden">
                     {error && (
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg text-sm">
                             {error}
                         </div>
                     )}
-                    <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
-                    <select className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
-                        <option value="Social">Social</option>
-                        <option value="Golf">Golf</option>
-                        <option value="Tournaments">Tournaments</option>
-                        <option value="Dining">Dining</option>
-                        <option value="Networking">Networking</option>
-                        <option value="Workshops">Workshops</option>
-                        <option value="Family">Family</option>
-                        <option value="Entertainment">Entertainment</option>
-                        <option value="Charity">Charity</option>
-                    </select>
-                    <div className="grid grid-cols-1 gap-3">
-                        <input type="date" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.event_date || ''} onChange={e => setNewItem({...newItem, event_date: e.target.value})} />
-                        <div className="grid grid-cols-2 gap-3">
-                            <input type="time" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" placeholder="Start Time" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} />
-                            <input type="time" className="border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" placeholder="End Time" value={newItem.end_time || ''} onChange={e => setNewItem({...newItem, end_time: e.target.value})} />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Title *</label>
+                        <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Event title" value={newItem.title || ''} onChange={e => setNewItem({...newItem, title: e.target.value})} />
                     </div>
-                    <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Location" value={newItem.location || ''} onChange={e => setNewItem({...newItem, location: e.target.value})} />
-                    <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Image URL (optional)" value={newItem.image_url || ''} onChange={e => setNewItem({...newItem, image_url: e.target.value})} />
-                    <input type="number" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Max Attendees (optional)" value={newItem.max_attendees || ''} onChange={e => setNewItem({...newItem, max_attendees: parseInt(e.target.value) || null})} />
-                    <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="External Link URL (optional)" value={newItem.external_url || ''} onChange={e => setNewItem({...newItem, external_url: e.target.value})} />
-                    <textarea className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Category</label>
+                        <select className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})}>
+                            <option value="Social">Social</option>
+                            <option value="Golf">Golf</option>
+                            <option value="Tournaments">Tournaments</option>
+                            <option value="Dining">Dining</option>
+                            <option value="Networking">Networking</option>
+                            <option value="Workshops">Workshops</option>
+                            <option value="Family">Family</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Charity">Charity</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Date *</label>
+                        <input type="date" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.event_date || ''} onChange={e => setNewItem({...newItem, event_date: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Start Time</label>
+                        <input type="time" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">End Time</label>
+                        <input type="time" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white" value={newItem.end_time || ''} onChange={e => setNewItem({...newItem, end_time: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Location</label>
+                        <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="Event location" value={newItem.location || ''} onChange={e => setNewItem({...newItem, location: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Image URL (optional)</label>
+                        <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="https://..." value={newItem.image_url || ''} onChange={e => setNewItem({...newItem, image_url: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Max Attendees (optional)</label>
+                        <input type="number" className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="e.g., 50" value={newItem.max_attendees || ''} onChange={e => setNewItem({...newItem, max_attendees: parseInt(e.target.value) || null})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">External Link (optional)</label>
+                        <input className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40" placeholder="https://..." value={newItem.external_url || ''} onChange={e => setNewItem({...newItem, external_url: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Description</label>
+                        <textarea className="w-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3 rounded-lg text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 resize-none" placeholder="Event description" rows={3} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                    </div>
                     <div className="flex gap-3 justify-end pt-2">
                         <button onClick={() => { setIsEditing(false); setError(null); }} className="px-4 py-2 text-gray-500 dark:text-gray-400 font-bold" disabled={isSaving}>Cancel</button>
                         <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md disabled:opacity-50 flex items-center gap-2">
