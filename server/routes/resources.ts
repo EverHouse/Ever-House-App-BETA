@@ -176,7 +176,9 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
       }
       return ids;
     }
-  } catch {}
+  } catch (parseError) {
+    console.warn('[getAffectedBayIds] Failed to parse JSON affectedAreas:', affectedAreas, parseError);
+  }
   
   return [];
 }
@@ -367,7 +369,10 @@ router.post('/api/bookings', async (req, res) => {
       if (user?.tags) {
         userTags = typeof user.tags === 'string' ? JSON.parse(user.tags) : (Array.isArray(user.tags) ? user.tags : []);
       }
-    } catch { userTags = []; }
+    } catch (parseError) {
+      console.warn('[POST /api/bookings] Failed to parse user tags for', user_email, parseError);
+      userTags = [];
+    }
     
     const isMemberAuthorized = await isAuthorizedForMemberBooking(userTier, userTags);
     

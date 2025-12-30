@@ -91,7 +91,9 @@ async function getAffectedBayIdsFromClosure(affectedAreas: string): Promise<numb
       }
       return ids;
     }
-  } catch {}
+  } catch (parseError) {
+    console.warn('[getAffectedBayIdsFromClosure] Failed to parse JSON affectedAreas:', affectedAreas, parseError);
+  }
   
   return [];
 }

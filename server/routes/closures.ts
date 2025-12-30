@@ -88,7 +88,9 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
       }
       if (ids.length > 0) return ids;
     }
-  } catch {}
+  } catch (parseError) {
+    console.warn('[getAffectedBayIds] Failed to parse JSON affectedAreas:', affectedAreas, parseError);
+  }
   
   const bayIds: number[] = [];
   const parts = affectedAreas.split(',').map(s => s.trim());
