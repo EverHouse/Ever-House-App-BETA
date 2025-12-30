@@ -28,6 +28,7 @@ import FloatingActionButton from '../../components/FloatingActionButton';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 import { SwipeableListItem } from '../../components/SwipeableListItem';
 import ModalShell from '../../components/ModalShell';
+import { useOptimisticBookings, BookingRequest as OptimisticBookingRequest } from '../../hooks/useOptimisticBookings';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -1959,6 +1960,7 @@ interface CalendarClosure {
 const SimulatorAdmin: React.FC = () => {
     const { setPageReady } = usePageReady();
     const { user, actualUser } = useData();
+    const { showToast } = useToast();
     const [activeView, setActiveView] = useState<'requests' | 'calendar'>('requests');
     const [requests, setRequests] = useState<BookingRequest[]>([]);
     const [bays, setBays] = useState<Bay[]>([]);
@@ -1981,7 +1983,7 @@ const SimulatorAdmin: React.FC = () => {
     const [rescheduleBookingId, setRescheduleBookingId] = useState<number | null>(null);
     const [selectedCalendarBooking, setSelectedCalendarBooking] = useState<BookingRequest | null>(null);
     const [isCancellingFromModal, setIsCancellingFromModal] = useState(false);
-    const [processedFilter, setProcessedFilter] = useState<'all' | 'approved' | 'attended' | 'no_show' | 'cancelled'>('all');
+    const [processedFilter, setProcessedFilter] = useState<'all' | 'approved' | 'attended' | 'no_show'>('all');
     const [markStatusModal, setMarkStatusModal] = useState<{ booking: BookingRequest | null; confirmNoShow: boolean }>({ booking: null, confirmNoShow: false });
     
     const [calendarDate, setCalendarDate] = useState(() => getTodayPacific());
@@ -2101,6 +2103,95 @@ const SimulatorAdmin: React.FC = () => {
         await Promise.all([fetchData(), fetchCalendarData()]);
     }, [fetchData, fetchCalendarData]);
 
+    const updateBookingStatusOptimistic = useCallback(async (
+        booking: BookingRequest,
+        newStatus: 'attended' | 'no_show' | 'cancelled'
+    ): Promise<boolean> => {
+        const previousRequests = [...requests];
+        const previousApproved = [...approvedBookings];
+        
+        setRequests(prev => prev.map(r => 
+            r.id === booking.id && r.source === booking.source 
+                ? { ...r, status: newStatus } 
+                : r
+        ));
+        setApprovedBookings(prev => prev.map(b => 
+            b.id === booking.id && b.source === booking.source 
+                ? { ...b, status: newStatus } 
+                : b
+        ));
+        
+        try {
+            const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ status: newStatus, source: booking.source })
+            });
+            
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to update status');
+            }
+            
+            const statusLabel = newStatus === 'attended' ? 'checked in' : 
+                              newStatus === 'no_show' ? 'marked as no show' : 'cancelled';
+            showToast(`Booking ${statusLabel}`, 'success');
+            return true;
+        } catch (err: any) {
+            setRequests(previousRequests);
+            setApprovedBookings(previousApproved);
+            showToast(err.message || 'Failed to update booking', 'error');
+            return false;
+        }
+    }, [requests, approvedBookings, showToast]);
+
+    const cancelBookingOptimistic = useCallback(async (
+        booking: BookingRequest
+    ): Promise<boolean> => {
+        if (!confirm(`Cancel booking for ${booking.user_name || booking.user_email}?`)) {
+            return false;
+        }
+        
+        const previousRequests = [...requests];
+        const previousApproved = [...approvedBookings];
+        
+        setRequests(prev => prev.map(r => 
+            r.id === booking.id && r.source === booking.source 
+                ? { ...r, status: 'cancelled' } 
+                : r
+        ));
+        setApprovedBookings(prev => prev.filter(b => 
+            !(b.id === booking.id && b.source === booking.source)
+        ));
+        
+        try {
+            const res = await fetch(`/api/bookings/${booking.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ 
+                    status: 'cancelled', 
+                    source: booking.source,
+                    cancelled_by: actualUser?.email
+                })
+            });
+            
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to cancel booking');
+            }
+            
+            showToast('Booking cancelled', 'success');
+            return true;
+        } catch (err: any) {
+            setRequests(previousRequests);
+            setApprovedBookings(previousApproved);
+            showToast(err.message || 'Failed to cancel booking', 'error');
+            return false;
+        }
+    }, [requests, approvedBookings, actualUser?.email, showToast]);
+
     useEffect(() => {
         const checkAvailability = async () => {
             if (!selectedBayId || !selectedRequest || actionModal !== 'approve') {
@@ -2180,16 +2271,16 @@ const SimulatorAdmin: React.FC = () => {
 
     const pendingRequests = requests.filter(r => r.status === 'pending' || r.status === 'pending_approval');
     
-    // Recent Processed: show declined/cancelled member requests only
-    // Exclude future approved/confirmed (they're in Upcoming Bookings) and manual bookings
-    // Only show items from the last 14 days (frontend filter - data stays in DB for tracking)
+    // Recent Processed: attended/no-show bookings sorted chronologically by date
+    // Only show items from the last 14 days
     const today = getTodayPacific();
     const fourteenDaysAgo = new Date();
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    
     const processedRequests = requests.filter(r => {
-      // Only include non-pending requests
-      if (r.status === 'pending' || r.status === 'pending_approval') return false;
-      // Exclude manual bookings (source === 'booking' means it came from approved bookings, not member requests)
+      // Only include attended or no_show, plus past approved that need marking
+      if (!['attended', 'no_show', 'approved', 'confirmed'].includes(r.status)) return false;
+      // Exclude manual bookings
       if (r.source === 'booking') return false;
       // Filter out items older than 14 days
       if (r.created_at && new Date(r.created_at) < fourteenDaysAgo) return false;
@@ -2197,8 +2288,27 @@ const SimulatorAdmin: React.FC = () => {
       if (r.status === 'approved' || r.status === 'confirmed') {
         return r.request_date < today;
       }
-      // Show declined and cancelled
       return true;
+    }).sort((a, b) => {
+      // Sort chronologically by date then time
+      if (a.request_date !== b.request_date) {
+        return b.request_date.localeCompare(a.request_date); // Most recent first
+      }
+      return b.start_time.localeCompare(a.start_time);
+    });
+    
+    // Cancelled/Declined bookings - separate section at bottom
+    const cancelledRequests = requests.filter(r => {
+      if (!['cancelled', 'declined'].includes(r.status)) return false;
+      if (r.source === 'booking') return false;
+      if (r.created_at && new Date(r.created_at) < fourteenDaysAgo) return false;
+      return true;
+    }).sort((a, b) => {
+      // Sort by most recent first
+      if (a.request_date !== b.request_date) {
+        return b.request_date.localeCompare(a.request_date);
+      }
+      return b.start_time.localeCompare(a.start_time);
     });
 
     const upcomingBookings = useMemo(() => {
@@ -2599,31 +2709,7 @@ const SimulatorAdmin: React.FC = () => {
                                                                     setRescheduleBookingId(booking.id);
                                                                     setShowManualBooking(true);
                                                                 }
-                                                            },
-                                                            ...(isToday ? [{
-                                                                id: 'checkin',
-                                                                icon: 'how_to_reg',
-                                                                label: 'Check In',
-                                                                color: 'green' as const,
-                                                                onClick: async () => {
-                                                                    try {
-                                                                        const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
-                                                                            method: 'PUT',
-                                                                            headers: { 'Content-Type': 'application/json' },
-                                                                            credentials: 'include',
-                                                                            body: JSON.stringify({ status: 'attended', source: booking.source })
-                                                                        });
-                                                                        if (res.ok) {
-                                                                            setTimeout(() => handleRefresh(), 300);
-                                                                        } else {
-                                                                            const err = await res.json();
-                                                                            console.error('Check-in failed:', err.error || 'Unknown error');
-                                                                        }
-                                                                    } catch (err) {
-                                                                        console.error('Check-in failed:', err);
-                                                                    }
-                                                                }
-                                                            }] : [])
+                                                            }
                                                         ]}
                                                         rightActions={[
                                                             {
@@ -2631,30 +2717,7 @@ const SimulatorAdmin: React.FC = () => {
                                                                 icon: 'close',
                                                                 label: 'Cancel',
                                                                 color: 'red',
-                                                                onClick: async () => {
-                                                                    if (confirm(`Cancel booking for ${booking.user_name || booking.user_email}?`)) {
-                                                                        try {
-                                                                            const res = await fetch(`/api/bookings/${booking.id}`, {
-                                                                                method: 'PUT',
-                                                                                headers: { 'Content-Type': 'application/json' },
-                                                                                credentials: 'include',
-                                                                                body: JSON.stringify({ 
-                                                                                    status: 'cancelled', 
-                                                                                    source: booking.source,
-                                                                                    cancelled_by: actualUser?.email
-                                                                                })
-                                                                            });
-                                                                            if (res.ok) {
-                                                                                setTimeout(() => handleRefresh(), 300);
-                                                                            } else {
-                                                                                const err = await res.json();
-                                                                                console.error('Cancel failed:', err.error || 'Unknown error');
-                                                                            }
-                                                                        } catch (err) {
-                                                                            console.error('Cancel failed:', err);
-                                                                        }
-                                                                    }
-                                                                }
+                                                                onClick: () => cancelBookingOptimistic(booking)
                                                             }
                                                         ]}
                                                     >
@@ -2676,24 +2739,7 @@ const SimulatorAdmin: React.FC = () => {
                                                             <div className="flex items-center gap-2">
                                                                 {isToday && (
                                                                     <button
-                                                                        onClick={async () => {
-                                                                            try {
-                                                                                const res = await fetch(`/api/bookings/${booking.id}/checkin`, {
-                                                                                    method: 'PUT',
-                                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                                    credentials: 'include',
-                                                                                    body: JSON.stringify({ status: 'attended', source: booking.source })
-                                                                                });
-                                                                                if (res.ok) {
-                                                                                    setTimeout(() => handleRefresh(), 300);
-                                                                                } else {
-                                                                                    const err = await res.json();
-                                                                                    console.error('Check-in failed:', err.error || 'Unknown error');
-                                                                                }
-                                                                            } catch (err) {
-                                                                                console.error('Check-in failed:', err);
-                                                                            }
-                                                                        }}
+                                                                        onClick={() => updateBookingStatusOptimistic(booking, 'attended')}
                                                                         className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
                                                                     >
                                                                         <span className="material-symbols-outlined text-xs">how_to_reg</span>
@@ -2728,7 +2774,7 @@ const SimulatorAdmin: React.FC = () => {
                         
                         {/* Filter Tabs */}
                         <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide -mx-1 px-1 mb-3">
-                            {(['all', 'approved', 'attended', 'no_show', 'cancelled'] as const).map(filter => (
+                            {(['all', 'approved', 'attended', 'no_show'] as const).map(filter => (
                                 <button
                                     key={filter}
                                     onClick={() => setProcessedFilter(filter)}
@@ -2763,24 +2809,7 @@ const SimulatorAdmin: React.FC = () => {
                                                     icon: 'check_circle',
                                                     label: 'Attended',
                                                     color: 'green',
-                                                    onClick: async () => {
-                                                        try {
-                                                            const res = await fetch(`/api/bookings/${req.id}/checkin`, {
-                                                                method: 'PUT',
-                                                                headers: { 'Content-Type': 'application/json' },
-                                                                credentials: 'include',
-                                                                body: JSON.stringify({ status: 'attended', source: req.source })
-                                                            });
-                                                            if (res.ok) {
-                                                                setTimeout(() => handleRefresh(), 300);
-                                                            } else {
-                                                                const err = await res.json();
-                                                                console.error('Mark attended failed:', err.error || 'Unknown error');
-                                                            }
-                                                        } catch (err) {
-                                                            console.error('Mark attended failed:', err);
-                                                        }
-                                                    }
+                                                    onClick: () => updateBookingStatusOptimistic(req, 'attended')
                                                 }
                                             ] : []}
                                             rightActions={req.status === 'approved' ? [
@@ -2789,24 +2818,7 @@ const SimulatorAdmin: React.FC = () => {
                                                     icon: 'person_off',
                                                     label: 'No Show',
                                                     color: 'red',
-                                                    onClick: async () => {
-                                                        try {
-                                                            const res = await fetch(`/api/bookings/${req.id}/checkin`, {
-                                                                method: 'PUT',
-                                                                headers: { 'Content-Type': 'application/json' },
-                                                                credentials: 'include',
-                                                                body: JSON.stringify({ status: 'no_show', source: req.source })
-                                                            });
-                                                            if (res.ok) {
-                                                                setTimeout(() => handleRefresh(), 300);
-                                                            } else {
-                                                                const err = await res.json();
-                                                                console.error('Mark no_show failed:', err.error || 'Unknown error');
-                                                            }
-                                                        } catch (err) {
-                                                            console.error('Mark no_show failed:', err);
-                                                        }
-                                                    }
+                                                    onClick: () => updateBookingStatusOptimistic(req, 'no_show')
                                                 }
                                             ] : []}
                                         >
@@ -2844,6 +2856,37 @@ const SimulatorAdmin: React.FC = () => {
                             );
                         })()}
                     </div>
+                    
+                    {/* Cancelled/Declined Section */}
+                    {cancelledRequests.length > 0 && (
+                        <div className="animate-pop-in" style={{animationDelay: '0.25s'}}>
+                            <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-red-400">block</span>
+                                Cancelled ({cancelledRequests.length})
+                            </h3>
+                            <div className="space-y-2">
+                                {cancelledRequests.slice(0, 10).map(req => (
+                                    <div 
+                                        key={`cancelled-${req.id}`}
+                                        className="glass-card p-3 border border-red-200/30 dark:border-red-500/20 bg-red-50/50 dark:bg-red-900/10 flex justify-between items-center"
+                                    >
+                                        <div>
+                                            <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                            <p className="text-xs text-primary/60 dark:text-white/60">
+                                                {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                            </p>
+                                            {req.bay_name && (
+                                                <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
+                                            )}
+                                        </div>
+                                        <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                            {formatStatusLabel(req.status)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="animate-pop-in" style={{animationDelay: '0.1s'}}>
@@ -3367,23 +3410,9 @@ const SimulatorAdmin: React.FC = () => {
                             <button
                                 onClick={async () => {
                                     if (!markStatusModal.booking) return;
-                                    try {
-                                        const res = await fetch(`/api/bookings/${markStatusModal.booking.id}/checkin`, {
-                                            method: 'PUT',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            credentials: 'include',
-                                            body: JSON.stringify({ status: 'no_show', source: markStatusModal.booking.source })
-                                        });
-                                        if (res.ok) {
-                                            setMarkStatusModal({ booking: null, confirmNoShow: false });
-                                            setTimeout(() => handleRefresh(), 300);
-                                        } else {
-                                            const err = await res.json();
-                                            console.error('Mark no show failed:', err.error || 'Unknown error');
-                                        }
-                                    } catch (err) {
-                                        console.error('Mark no show failed:', err);
-                                    }
+                                    const booking = markStatusModal.booking;
+                                    setMarkStatusModal({ booking: null, confirmNoShow: false });
+                                    await updateBookingStatusOptimistic(booking, 'no_show');
                                 }}
                                 className="flex-1 py-3 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-2"
                             >
@@ -3396,23 +3425,9 @@ const SimulatorAdmin: React.FC = () => {
                             <button
                                 onClick={async () => {
                                     if (!markStatusModal.booking) return;
-                                    try {
-                                        const res = await fetch(`/api/bookings/${markStatusModal.booking.id}/checkin`, {
-                                            method: 'PUT',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            credentials: 'include',
-                                            body: JSON.stringify({ status: 'attended', source: markStatusModal.booking.source })
-                                        });
-                                        if (res.ok) {
-                                            setMarkStatusModal({ booking: null, confirmNoShow: false });
-                                            setTimeout(() => handleRefresh(), 300);
-                                        } else {
-                                            const err = await res.json();
-                                            console.error('Mark attended failed:', err.error || 'Unknown error');
-                                        }
-                                    } catch (err) {
-                                        console.error('Mark attended failed:', err);
-                                    }
+                                    const booking = markStatusModal.booking;
+                                    setMarkStatusModal({ booking: null, confirmNoShow: false });
+                                    await updateBookingStatusOptimistic(booking, 'attended');
                                 }}
                                 className="flex-1 py-3 px-4 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center gap-2"
                             >

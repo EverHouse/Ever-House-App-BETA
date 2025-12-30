@@ -40,14 +40,17 @@ export function SwipeableListItem({
 }: SwipeableListItemProps) {
   const [translateX, setTranslateX] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [crossedTriggerThreshold, setCrossedTriggerThreshold] = useState<'left' | 'right' | null>(null);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
   const isSwipingRef = useRef(false);
   const directionLockedRef = useRef<'horizontal' | 'vertical' | null>(null);
+  const hasTriggeredHapticRef = useRef(false);
 
   const actionWidth = threshold;
   const maxLeftSwipe = leftActions.length > 0 ? actionWidth * leftActions.length : 0;
   const maxRightSwipe = rightActions.length > 0 ? actionWidth * rightActions.length : 0;
+  const triggerThreshold = actionWidth * 1.5;
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (disabled) return;
@@ -56,6 +59,8 @@ export function SwipeableListItem({
     startYRef.current = touch.clientY;
     isSwipingRef.current = false;
     directionLockedRef.current = null;
+    hasTriggeredHapticRef.current = false;
+    setCrossedTriggerThreshold(null);
     setIsTransitioning(false);
   }, [disabled]);
 
@@ -89,16 +94,45 @@ export function SwipeableListItem({
         newTranslateX = -maxRightSwipe + (deltaX + maxRightSwipe) * 0.2;
       }
 
+      if (deltaX > triggerThreshold && leftActions.length > 0) {
+        if (!hasTriggeredHapticRef.current) {
+          haptic.success();
+          hasTriggeredHapticRef.current = true;
+        }
+        setCrossedTriggerThreshold('right');
+      } else if (deltaX < -triggerThreshold && rightActions.length > 0) {
+        if (!hasTriggeredHapticRef.current) {
+          haptic.success();
+          hasTriggeredHapticRef.current = true;
+        }
+        setCrossedTriggerThreshold('left');
+      } else {
+        if (crossedTriggerThreshold !== null) {
+          hasTriggeredHapticRef.current = false;
+        }
+        setCrossedTriggerThreshold(null);
+      }
+
       setTranslateX(newTranslateX);
     }
-  }, [disabled, leftActions.length, rightActions.length, maxLeftSwipe, maxRightSwipe, onSwipeStart]);
+  }, [disabled, leftActions.length, rightActions.length, maxLeftSwipe, maxRightSwipe, triggerThreshold, crossedTriggerThreshold, onSwipeStart]);
 
   const handleTouchEnd = useCallback(() => {
     if (disabled || !isSwipingRef.current) return;
     
     setIsTransitioning(true);
     
-    if (translateX > threshold && leftActions.length > 0) {
+    if (crossedTriggerThreshold === 'right' && leftActions.length > 0) {
+      setTranslateX(0);
+      setCrossedTriggerThreshold(null);
+      haptic.medium();
+      leftActions[0].onClick();
+    } else if (crossedTriggerThreshold === 'left' && rightActions.length > 0) {
+      setTranslateX(0);
+      setCrossedTriggerThreshold(null);
+      haptic.medium();
+      rightActions[0].onClick();
+    } else if (translateX > threshold && leftActions.length > 0) {
       setTranslateX(maxLeftSwipe);
       haptic.light();
     } else if (translateX < -threshold && rightActions.length > 0) {
@@ -110,7 +144,7 @@ export function SwipeableListItem({
 
     onSwipeEnd?.();
     isSwipingRef.current = false;
-  }, [disabled, translateX, threshold, leftActions.length, rightActions.length, maxLeftSwipe, maxRightSwipe, onSwipeEnd]);
+  }, [disabled, translateX, threshold, leftActions, rightActions, maxLeftSwipe, maxRightSwipe, crossedTriggerThreshold, onSwipeEnd]);
 
   const handleActionClick = (action: SwipeAction) => {
     haptic.medium();
@@ -133,21 +167,29 @@ export function SwipeableListItem({
     <div className="relative overflow-hidden rounded-2xl bg-bone dark:bg-[#1a1f12]">
       {leftActions.length > 0 && (
         <div 
-          className={`absolute inset-0 flex items-stretch rounded-2xl overflow-hidden transition-opacity duration-100 ${showLeftActions ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 flex items-stretch rounded-2xl overflow-hidden transition-opacity duration-100 ${showLeftActions ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          style={{ zIndex: 1 }}
         >
           <div className="flex">
-            {leftActions.map((action) => (
-              <button
-                key={action.id}
-                onClick={() => handleActionClick(action)}
-                className={`flex flex-col items-center justify-center gap-1 ${colorClasses[action.color]} tap-target`}
-                style={{ width: actionWidth }}
-                aria-label={action.label}
-              >
-                <span className="material-symbols-outlined text-xl">{action.icon}</span>
-                <span className="text-xs font-medium">{action.label}</span>
-              </button>
-            ))}
+            {leftActions.map((action, index) => {
+              const isFirstAction = index === 0;
+              const isExpanded = isFirstAction && crossedTriggerThreshold === 'right';
+              return (
+                <button
+                  key={action.id}
+                  onClick={() => handleActionClick(action)}
+                  className={`flex flex-col items-center justify-center gap-1 ${colorClasses[action.color]} tap-target transition-all duration-150 pointer-events-auto ${isExpanded ? 'scale-105' : ''}`}
+                  style={{ 
+                    width: isExpanded ? actionWidth * 1.2 : actionWidth,
+                    minWidth: actionWidth 
+                  }}
+                  aria-label={action.label}
+                >
+                  <span className={`material-symbols-outlined transition-transform duration-150 ${isExpanded ? 'text-2xl scale-125' : 'text-xl'}`}>{action.icon}</span>
+                  <span className="text-xs font-medium">{action.label}</span>
+                </button>
+              );
+            })}
           </div>
           <div className={`flex-1 ${leftActions.length > 0 ? colorClasses[leftActions[leftActions.length - 1].color].split(' ')[0] : ''}`} />
         </div>
@@ -155,29 +197,37 @@ export function SwipeableListItem({
 
       {rightActions.length > 0 && (
         <div 
-          className={`absolute inset-0 flex items-stretch justify-end rounded-2xl overflow-hidden transition-opacity duration-100 ${showRightActions ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 flex items-stretch justify-end rounded-2xl overflow-hidden transition-opacity duration-100 ${showRightActions ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          style={{ zIndex: 1 }}
         >
           <div className={`flex-1 ${rightActions.length > 0 ? colorClasses[rightActions[0].color].split(' ')[0] : ''}`} />
           <div className="flex">
-            {rightActions.map((action) => (
-              <button
-                key={action.id}
-                onClick={() => handleActionClick(action)}
-                className={`flex flex-col items-center justify-center gap-1 ${colorClasses[action.color]} tap-target`}
-                style={{ width: actionWidth }}
-                aria-label={action.label}
-              >
-                <span className="material-symbols-outlined text-xl">{action.icon}</span>
-                <span className="text-xs font-medium">{action.label}</span>
-              </button>
-            ))}
+            {rightActions.map((action, index) => {
+              const isFirstAction = index === 0;
+              const isExpanded = isFirstAction && crossedTriggerThreshold === 'left';
+              return (
+                <button
+                  key={action.id}
+                  onClick={() => handleActionClick(action)}
+                  className={`flex flex-col items-center justify-center gap-1 ${colorClasses[action.color]} tap-target transition-all duration-150 pointer-events-auto ${isExpanded ? 'scale-105' : ''}`}
+                  style={{ 
+                    width: isExpanded ? actionWidth * 1.2 : actionWidth,
+                    minWidth: actionWidth 
+                  }}
+                  aria-label={action.label}
+                >
+                  <span className={`material-symbols-outlined transition-transform duration-150 ${isExpanded ? 'text-2xl scale-125' : 'text-xl'}`}>{action.icon}</span>
+                  <span className="text-xs font-medium">{action.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
       <div
         className={`relative rounded-2xl bg-bone dark:bg-[#1a1f12] ${isTransitioning ? 'transition-transform duration-200 ease-out' : ''}`}
-        style={{ transform: `translateX(${translateX}px)` }}
+        style={{ transform: `translateX(${translateX}px)`, zIndex: 2 }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
