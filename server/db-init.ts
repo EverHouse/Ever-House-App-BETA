@@ -27,6 +27,19 @@ export async function ensureDatabaseConstraints() {
           CHECK (duration_minutes IN (30, 60, 90, 120, 150, 180, 210, 240, 270, 300));
       END $$;
     `);
+    
+    // Add reschedule_booking_id column for reschedule workflow
+    await db.execute(sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'booking_requests' AND column_name = 'reschedule_booking_id'
+        ) THEN
+          ALTER TABLE booking_requests ADD COLUMN reschedule_booking_id INTEGER;
+        END IF;
+      END $$;
+    `);
   } catch (error: any) {
     console.error('[DB Init] Failed to ensure constraints:', error.message);
   }

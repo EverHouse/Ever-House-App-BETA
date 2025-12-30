@@ -138,6 +138,7 @@ export const bookingRequests = pgTable("booking_requests", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   calendarEventId: varchar("calendar_event_id"),
+  rescheduleBookingId: integer("reschedule_booking_id"),
 });
 
 // Resources table - bookable resources
