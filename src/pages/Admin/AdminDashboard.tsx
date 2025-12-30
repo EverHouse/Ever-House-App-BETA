@@ -27,6 +27,7 @@ import { useNotificationSounds } from '../../hooks/useNotificationSounds';
 import FloatingActionButton from '../../components/FloatingActionButton';
 import WalkingGolferSpinner from '../../components/WalkingGolferSpinner';
 import { SwipeableListItem } from '../../components/SwipeableListItem';
+import ModalShell from '../../components/ModalShell';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -6138,218 +6139,202 @@ const BlocksAdmin: React.FC = () => {
                 </div>
             )}
 
-            {isClosureModalOpen && createPortal(
-                <div className="fixed inset-0 z-[10001] overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} />
-                    <div className="flex min-h-full items-start justify-center pt-20 p-4 pointer-events-none">
-                        <div className="relative bg-white dark:bg-[#1a1d15] p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 border border-gray-200 dark:border-white/10 pointer-events-auto" style={{ overscrollBehavior: 'contain' }}>
-                            <h3 className="font-bold text-lg mb-5 text-primary dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-red-500">block</span>
-                                {editingClosureId ? 'Edit Closure' : 'Add Closure'}
-                            </h3>
-                            <div className="space-y-3 mb-5">
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Title</label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="e.g., Holiday Closure, Maintenance" 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                        value={closureForm.title} 
-                                        onChange={e => setClosureForm({...closureForm, title: e.target.value})} 
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Date *</label>
-                                        <input 
-                                            type="date" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                            value={closureForm.start_date} 
-                                            onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Time</label>
-                                        <input 
-                                            type="time" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                            value={closureForm.start_time} 
-                                            onChange={e => setClosureForm({...closureForm, start_time: e.target.value})} 
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Date</label>
-                                        <input 
-                                            type="date" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                            value={closureForm.end_date} 
-                                            onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Time</label>
-                                        <input 
-                                            type="time" 
-                                            className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
-                                            value={closureForm.end_time} 
-                                            onChange={e => setClosureForm({...closureForm, end_time: e.target.value})} 
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Resource *</label>
-                                    <select 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
-                                        value={closureForm.affected_areas}
-                                        onChange={e => setClosureForm({...closureForm, affected_areas: e.target.value})}
-                                    >
-                                        <option value="entire_facility">Entire Facility</option>
-                                        <option value="all_bays">All Bays</option>
-                                        <option value="conference_room">Conference Room</option>
-                                        {bays.map(bay => (
-                                            <option key={bay.id} value={`bay_${bay.id}`}>{bay.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Internal Note</label>
-                                    <textarea 
-                                        className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none" 
-                                        placeholder="e.g., Broken Sensor, Maintenance, etc." 
-                                        rows={2} 
-                                        value={closureForm.reason} 
-                                        onChange={e => setClosureForm({...closureForm, reason: e.target.value})} 
-                                    />
-                                </div>
-                                
-                                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-black/20 rounded-xl">
-                                    <div>
-                                        <p className="font-medium text-primary dark:text-white text-sm">Notify Members?</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Send push notification with internal note</p>
-                                    </div>
-                                    <Toggle
-                                        checked={closureForm.notify_members}
-                                        onChange={(val) => setClosureForm({...closureForm, notify_members: val})}
-                                        label="Notify members about closure"
-                                    />
-                                </div>
+            <ModalShell isOpen={isClosureModalOpen} onClose={() => { setIsClosureModalOpen(false); resetClosureForm(); }} title={editingClosureId ? 'Edit Closure' : 'Add Closure'} showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div className="space-y-3 mb-5">
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Title</label>
+                            <input 
+                                type="text" 
+                                placeholder="e.g., Holiday Closure, Maintenance" 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                value={closureForm.title} 
+                                onChange={e => setClosureForm({...closureForm, title: e.target.value})} 
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Date *</label>
+                                <input 
+                                    type="date" 
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                    value={closureForm.start_date} 
+                                    onChange={e => setClosureForm({...closureForm, start_date: e.target.value})} 
+                                />
                             </div>
-                            <div className="flex gap-3 justify-end">
-                                <button onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
-                                <button 
-                                    onClick={handleSaveClosure} 
-                                    disabled={closureSaving || !closureForm.start_date}
-                                    className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-bold shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
-                                >
-                                    {closureSaving ? 'Saving...' : editingClosureId ? 'Save Changes' : 'Add Closure'}
-                                </button>
+                            <div>
+                                <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Start Time</label>
+                                <input 
+                                    type="time" 
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                    value={closureForm.start_time} 
+                                    onChange={e => setClosureForm({...closureForm, start_time: e.target.value})} 
+                                />
                             </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Date</label>
+                                <input 
+                                    type="date" 
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                    value={closureForm.end_date} 
+                                    onChange={e => setClosureForm({...closureForm, end_date: e.target.value})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">End Time</label>
+                                <input 
+                                    type="time" 
+                                    className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all" 
+                                    value={closureForm.end_time} 
+                                    onChange={e => setClosureForm({...closureForm, end_time: e.target.value})} 
+                                />
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Resource *</label>
+                            <select 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
+                                value={closureForm.affected_areas}
+                                onChange={e => setClosureForm({...closureForm, affected_areas: e.target.value})}
+                            >
+                                <option value="entire_facility">Entire Facility</option>
+                                <option value="all_bays">All Bays</option>
+                                <option value="conference_room">Conference Room</option>
+                                {bays.map(bay => (
+                                    <option key={bay.id} value={`bay_${bay.id}`}>{bay.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Internal Note</label>
+                            <textarea 
+                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none" 
+                                placeholder="e.g., Broken Sensor, Maintenance, etc." 
+                                rows={2} 
+                                value={closureForm.reason} 
+                                onChange={e => setClosureForm({...closureForm, reason: e.target.value})} 
+                            />
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-black/20 rounded-xl">
+                            <div>
+                                <p className="font-medium text-primary dark:text-white text-sm">Notify Members?</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Send push notification with internal note</p>
+                            </div>
+                            <Toggle
+                                checked={closureForm.notify_members}
+                                onChange={(val) => setClosureForm({...closureForm, notify_members: val})}
+                                label="Notify members about closure"
+                            />
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
-
-            {isEditing && selectedBlock && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-md bg-[#1a1f12] rounded-3xl border border-white/10 p-6">
-                        <h3 className="text-lg font-bold text-white mb-4">Edit Block</h3>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-white/70 text-sm mb-1 block">Resource</label>
-                                <select
-                                    value={selectedBlock.bay_id}
-                                    onChange={(e) => setSelectedBlock({...selectedBlock, bay_id: parseInt(e.target.value)})}
-                                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
-                                >
-                                    {resources.map(r => (
-                                        <option key={r.id} value={r.id}>{r.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label className="text-white/70 text-sm mb-1 block">Date</label>
-                                <input
-                                    type="date"
-                                    value={selectedBlock.block_date}
-                                    onChange={(e) => setSelectedBlock({...selectedBlock, block_date: e.target.value})}
-                                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
-                                />
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-white/70 text-sm mb-1 block">Start Time</label>
-                                    <input
-                                        type="time"
-                                        value={selectedBlock.start_time.substring(0, 5)}
-                                        onChange={(e) => setSelectedBlock({...selectedBlock, start_time: e.target.value + ':00'})}
-                                        className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-white/70 text-sm mb-1 block">End Time</label>
-                                    <input
-                                        type="time"
-                                        value={selectedBlock.end_time.substring(0, 5)}
-                                        onChange={(e) => setSelectedBlock({...selectedBlock, end_time: e.target.value + ':00'})}
-                                        className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label className="text-white/70 text-sm mb-1 block">Block Type</label>
-                                <select
-                                    value={selectedBlock.block_type}
-                                    onChange={(e) => setSelectedBlock({...selectedBlock, block_type: e.target.value})}
-                                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
-                                >
-                                    <option value="blocked">Blocked</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="reserved">Reserved</option>
-                                    <option value="closure">Closure</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label className="text-white/70 text-sm mb-1 block">Notes</label>
-                                <textarea
-                                    value={selectedBlock.notes || ''}
-                                    onChange={(e) => setSelectedBlock({...selectedBlock, notes: e.target.value})}
-                                    rows={2}
-                                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white resize-none"
-                                    placeholder="Optional notes..."
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="flex gap-3 mt-6">
-                            <button
-                                onClick={() => {
-                                    setIsEditing(false);
-                                    setSelectedBlock(null);
-                                }}
-                                className="flex-1 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleUpdateBlock}
-                                className="flex-1 py-3 rounded-xl bg-brand-green text-white font-medium hover:opacity-90 transition-all"
-                            >
-                                Save Changes
-                            </button>
-                        </div>
+                    <div className="flex gap-3 justify-end">
+                        <button onClick={() => { setIsClosureModalOpen(false); resetClosureForm(); }} className="px-5 py-2.5 text-gray-500 dark:text-white/60 font-bold hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">Cancel</button>
+                        <button 
+                            onClick={handleSaveClosure} 
+                            disabled={closureSaving || !closureForm.start_date}
+                            className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-bold shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
+                        >
+                            {closureSaving ? 'Saving...' : editingClosureId ? 'Save Changes' : 'Add Closure'}
+                        </button>
                     </div>
                 </div>
-            )}
+            </ModalShell>
+
+            <ModalShell isOpen={isEditing && !!selectedBlock} onClose={() => { setIsEditing(false); setSelectedBlock(null); }} title="Edit Block" showCloseButton={false}>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="text-white/70 text-sm mb-1 block">Resource</label>
+                        <select
+                            value={selectedBlock?.bay_id}
+                            onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, bay_id: parseInt(e.target.value)})}
+                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                        >
+                            {resources.map(r => (
+                                <option key={r.id} value={r.id}>{r.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label className="text-white/70 text-sm mb-1 block">Date</label>
+                        <input
+                            type="date"
+                            value={selectedBlock?.block_date}
+                            onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, block_date: e.target.value})}
+                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-white/70 text-sm mb-1 block">Start Time</label>
+                            <input
+                                type="time"
+                                value={selectedBlock?.start_time.substring(0, 5)}
+                                onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, start_time: e.target.value + ':00'})}
+                                className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-white/70 text-sm mb-1 block">End Time</label>
+                            <input
+                                type="time"
+                                value={selectedBlock?.end_time.substring(0, 5)}
+                                onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, end_time: e.target.value + ':00'})}
+                                className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="text-white/70 text-sm mb-1 block">Block Type</label>
+                        <select
+                            value={selectedBlock?.block_type}
+                            onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, block_type: e.target.value})}
+                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                        >
+                            <option value="blocked">Blocked</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="reserved">Reserved</option>
+                            <option value="closure">Closure</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label className="text-white/70 text-sm mb-1 block">Notes</label>
+                        <textarea
+                            value={selectedBlock?.notes || ''}
+                            onChange={(e) => selectedBlock && setSelectedBlock({...selectedBlock, notes: e.target.value})}
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white resize-none"
+                            placeholder="Optional notes..."
+                        />
+                    </div>
+                    
+                    <div className="flex gap-3 mt-6">
+                        <button
+                            onClick={() => {
+                                setIsEditing(false);
+                                setSelectedBlock(null);
+                            }}
+                            className="flex-1 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleUpdateBlock}
+                            className="flex-1 py-3 rounded-xl bg-brand-green text-white font-medium hover:opacity-90 transition-all"
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </ModalShell>
             <FloatingActionButton onClick={openNewClosure} color="red" label="Add closure" />
         </div>
         </PullToRefresh>
