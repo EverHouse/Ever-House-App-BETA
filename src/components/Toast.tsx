@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -33,16 +34,16 @@ const getIconForType = (type: ToastType): string => {
   }
 };
 
-const getColorForType = (type: ToastType): string => {
+const getColorForType = (type: ToastType, isDark: boolean): string => {
   switch (type) {
     case 'success': return 'text-green-500';
     case 'error': return 'text-red-500';
     case 'warning': return 'text-orange-500';
-    case 'info': return 'text-brand-green dark:text-accent';
+    case 'info': return isDark ? 'text-accent' : 'text-brand-green';
   }
 };
 
-const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: () => void }> = ({ toast, onDismiss }) => {
+const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: () => void; isDark: boolean }> = ({ toast, onDismiss, isDark }) => {
   useEffect(() => {
     const timer = setTimeout(onDismiss, toast.duration || 3000);
     return () => clearTimeout(timer);
@@ -54,7 +55,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: () => void }> = ({ t
       role="alert"
       aria-live="polite"
     >
-      <span className={`material-symbols-outlined text-xl ${getColorForType(toast.type)}`}>
+      <span className={`material-symbols-outlined text-xl ${getColorForType(toast.type, isDark)}`}>
         {getIconForType(toast.type)}
       </span>
       <span>{toast.message}</span>
@@ -71,6 +72,8 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: () => void }> = ({ t
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const { effectiveTheme } = useTheme();
+  const isDarkTheme = effectiveTheme === 'dark';
 
   const showToast = useCallback((message: string, type: ToastType = 'success', duration: number = 3000) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -89,7 +92,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           <ToastItem 
             key={toast.id} 
             toast={toast} 
-            onDismiss={() => hideToast(toast.id)}
+            onDismiss={() => hideToast(toast.id)} 
+            isDark={isDarkTheme}
           />
         ))}
       </div>

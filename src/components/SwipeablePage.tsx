@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SwipeablePageProps {
   children: React.ReactNode;
@@ -6,9 +7,12 @@ interface SwipeablePageProps {
 }
 
 const SwipeablePage: React.FC<SwipeablePageProps> = ({ children, className = "" }) => {
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+
   return (
     <div 
-      className={`w-full min-h-full bg-[#F2F2EC] dark:bg-[#0f120a] relative animate-page-enter ${className}`}
+      className={`w-full min-h-full ${isDark ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]'} relative animate-page-enter ${className}`}
     >
       {children}
     </div>

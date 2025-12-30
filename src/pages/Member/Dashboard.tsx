@@ -453,7 +453,7 @@ const Dashboard: React.FC = () => {
         
         <div className="mb-6">
           <div className="flex items-center gap-3 animate-pop-in">
-            <h1 className="text-3xl font-bold tracking-tight text-primary dark:text-white">
+            <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-primary'}`}>
               {getGreeting()}, {user?.name.split(' ')[0]}
             </h1>
             {user?.tier && (
@@ -462,7 +462,7 @@ const Dashboard: React.FC = () => {
               </span>
             )}
           </div>
-          <p className="text-sm font-medium mt-1 animate-pop-in text-primary/60 dark:text-white/60" style={{animationDelay: '0.1s'}}>
+          <p className={`text-sm font-medium mt-1 animate-pop-in ${isDark ? 'text-white/60' : 'text-primary/60'}`} style={{animationDelay: '0.1s'}}>
             {new Date().toLocaleDateString('en-US', { timeZone: CLUB_TIMEZONE, weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -517,20 +517,20 @@ const Dashboard: React.FC = () => {
 
         {/* Guest Passes - only show for regular members with passes */}
         {!isStaffOrAdminProfile && guestPasses && guestPasses.passes_remaining > 0 && (
-          <div className="mb-6 p-5 rounded-3xl animate-pop-in backdrop-blur-xl border shadow-lg shadow-black/5 bg-white/10 border-white/20" style={{animationDelay: '0.115s'}}>
+          <div className={`mb-6 p-5 rounded-3xl animate-pop-in backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`} style={{animationDelay: '0.115s'}}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-lg text-primary/60 dark:opacity-60">group_add</span>
-                <span className="text-sm font-medium text-primary dark:text-white">Guest Passes</span>
+                <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>group_add</span>
+                <span className={`text-sm font-medium ${isDark ? '' : 'text-primary'}`}>Guest Passes</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-brand-green dark:text-accent">{guestPasses.passes_remaining}</span>
-                <span className="text-xs text-primary/50 dark:opacity-50">/ {guestPasses.passes_total}</span>
+                <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-brand-green'}`}>{guestPasses.passes_remaining}</span>
+                <span className={`text-xs ${isDark ? 'opacity-50' : 'text-primary/50'}`}>/ {guestPasses.passes_total}</span>
               </div>
             </div>
             <button
               onClick={() => setShowGuestCheckin(true)}
-              className="w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 bg-brand-green/10 hover:bg-brand-green/20 text-brand-green dark:bg-accent/20 dark:hover:bg-accent/30 dark:text-accent"
+              className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${isDark ? 'bg-accent/20 hover:bg-accent/30 text-accent' : 'bg-brand-green/10 hover:bg-brand-green/20 text-brand-green'}`}
             >
               <span className="material-symbols-outlined text-lg">confirmation_number</span>
               Check In a Guest
@@ -595,14 +595,14 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group backdrop-blur-xl border shadow-lg shadow-black/5 bg-white/10 border-white/20">
+              <div className={`relative overflow-hidden rounded-3xl p-6 flex items-center justify-between group backdrop-blur-xl border shadow-lg shadow-black/5 ${isDark ? 'bg-white/10 border-white/20' : 'bg-white/10 border-white/20'}`}>
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm bg-white/30 dark:bg-white/20">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm ${isDark ? 'bg-white/20' : 'bg-white/30'}`}>
                     <span className="material-symbols-outlined text-brand-green dark:text-white text-3xl drop-shadow-sm">sports_golf</span>
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold mb-1 text-primary dark:text-white">Upcoming Bookings</h2>
-                    <p className="text-sm text-primary/70 dark:text-white/70">Ready to plan your day?</p>
+                    <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-primary'}`}>Upcoming Bookings</h2>
+                    <p className={`text-sm ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Ready to plan your day?</p>
                   </div>
                 </div>
                 <button 
@@ -620,7 +620,7 @@ const Dashboard: React.FC = () => {
           <div className="space-y-8 animate-pop-in" style={{animationDelay: '0.15s'}}>
             <div>
               <div className="flex justify-between items-center mb-4 px-1">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-primary/60 dark:text-white/60">Upcoming Events & Wellness</h3>
+                <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-white/60' : 'text-primary/60'}`}>Upcoming Events & Wellness</h3>
               </div>
               <div className="space-y-3">
                 {upcomingEventsWellness.length > 0 ? upcomingEventsWellness.map((item, idx) => {
@@ -678,11 +678,11 @@ const Dashboard: React.FC = () => {
     >
       {confirmModal && (
         <div className="p-6">
-          <p className="mb-6 text-sm opacity-70">{confirmModal.message}</p>
+          <p className={`mb-6 text-sm ${isDark ? 'opacity-70' : 'opacity-70'}`}>{confirmModal.message}</p>
           <div className="flex gap-3">
             <button 
               onClick={() => setConfirmModal(null)}
-              className="flex-1 py-3 rounded-xl font-bold text-sm bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20"
+              className={`flex-1 py-3 rounded-xl font-bold text-sm ${isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}
             >
               Keep it
             </button>

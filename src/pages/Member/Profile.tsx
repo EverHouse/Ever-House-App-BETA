@@ -30,8 +30,9 @@ const Profile: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, actualUser, isViewingAs } = useData();
-  const { themeMode, setThemeMode } = useTheme();
+  const { themeMode, setThemeMode, effectiveTheme } = useTheme();
   const { setPageReady } = usePageReady();
+  const isDark = effectiveTheme === 'dark';
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [showGuestCheckin, setShowGuestCheckin] = useState(false);
   const [guestPasses, setGuestPasses] = useState<{ passes_used: number; passes_total: number; passes_remaining: number } | null>(null);
@@ -196,30 +197,30 @@ const Profile: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className="px-6 pt-6 pb-32 min-h-screen bg-[#F2F2EC] dark:bg-[#0f120a]">
+    <div className={`px-6 pt-6 pb-32 min-h-screen ${isDark ? 'bg-[#0f120a]' : 'bg-[#F2F2EC]'}`}>
       <div className="space-y-6">
-         <Section title="Account" delay="0.05s">
-            <Row icon="person" label="Name" value={user.name} />
-            <Row icon="mail" label="Email" value={user.email} />
-            <Row icon="call" label="Phone" value={formatPhoneNumber(staffDetails?.phone || user.phone)} />
+         <Section title="Account" isDark={isDark} delay="0.05s">
+            <Row icon="person" label="Name" value={user.name} isDark={isDark} />
+            <Row icon="mail" label="Email" value={user.email} isDark={isDark} />
+            <Row icon="call" label="Phone" value={formatPhoneNumber(staffDetails?.phone || user.phone)} isDark={isDark} />
             {isStaffOrAdminProfile && staffDetails?.job_title && (
-              <Row icon="badge" label="Job Title" value={staffDetails.job_title} />
+              <Row icon="badge" label="Job Title" value={staffDetails.job_title} isDark={isDark} />
             )}
          </Section>
 
-         <Section title="Settings" delay="0.1s">
-            <div className="p-4 flex items-center justify-between transition-colors hover:bg-black/5 dark:hover:bg-white/5">
+         <Section title="Settings" isDark={isDark} delay="0.1s">
+            <div className={`p-4 flex items-center justify-between transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
               <div className="flex items-center gap-4">
-                <span className="material-symbols-outlined text-primary/70 dark:opacity-70">notifications</span>
+                <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>notifications</span>
                 <div>
-                  <span className="font-medium text-sm text-primary dark:text-white">Push Notifications</span>
-                  <p className="text-xs mt-0.5 text-primary/50 dark:opacity-50">
+                  <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>Push Notifications</span>
+                  <p className={`text-xs mt-0.5 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>
                     {isStaffOrAdminProfile 
                       ? 'Get notified of new booking requests' 
                       : 'Get notified when bookings are approved'}
                   </p>
                   {!pushSupported && (
-                    <p className="text-xs mt-1 text-amber-600 dark:text-amber-400/70">
+                    <p className={`text-xs mt-1 ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>
                       Not supported in this browser
                     </p>
                   )}
@@ -232,31 +233,31 @@ const Profile: React.FC = () => {
                 label="Push Notifications"
               />
             </div>
-            <Row icon="lock" label="Privacy" arrow />
+            <Row icon="lock" label="Privacy" arrow isDark={isDark} />
          </Section>
 
          {/* Password Setup Banner for Staff/Admin */}
          {showPasswordSetupBanner && isStaffOrAdminProfile && (
-           <div className="rounded-2xl p-4 mb-4 bg-amber-50 border border-amber-200 dark:bg-accent/20 dark:border-accent/30">
+           <div className={`rounded-2xl p-4 mb-4 ${isDark ? 'bg-accent/20 border border-accent/30' : 'bg-amber-50 border border-amber-200'}`}>
              <div className="flex items-start gap-3">
-               <span className="material-symbols-outlined text-xl text-amber-600 dark:text-accent">key</span>
+               <span className={`material-symbols-outlined text-xl ${isDark ? 'text-accent' : 'text-amber-600'}`}>key</span>
                <div className="flex-1">
-                 <p className="font-semibold text-sm text-amber-800 dark:text-accent">
+                 <p className={`font-semibold text-sm ${isDark ? 'text-accent' : 'text-amber-800'}`}>
                    Set Up Password Login (Optional)
                  </p>
-                 <p className="text-xs mt-1 text-amber-700 dark:text-white/60">
+                 <p className={`text-xs mt-1 ${isDark ? 'text-white/60' : 'text-amber-700'}`}>
                    For faster access, you can set a password to log in without email codes.
                  </p>
                  <div className="flex gap-2 mt-3">
                    <button
                      onClick={() => { setShowPasswordSection(true); setShowPasswordSetupBanner(false); }}
-                     className="px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 text-white dark:bg-accent dark:text-primary"
+                     className={`px-4 py-2 rounded-lg text-xs font-bold ${isDark ? 'bg-accent text-primary' : 'bg-amber-600 text-white'}`}
                    >
                      Set Password
                    </button>
                    <button
                      onClick={() => setShowPasswordSetupBanner(false)}
-                     className="px-4 py-2 rounded-lg text-xs font-medium bg-amber-100 text-amber-700 dark:bg-white/10 dark:text-white/70"
+                     className={`px-4 py-2 rounded-lg text-xs font-medium ${isDark ? 'bg-white/10 text-white/70' : 'bg-amber-100 text-amber-700'}`}
                    >
                      Maybe Later
                    </button>
@@ -268,32 +269,32 @@ const Profile: React.FC = () => {
 
          {/* Staff Info - only show for staff/admin users */}
          {isStaffOrAdminProfile && (
-           <Section title="Staff Information" delay="0.15s">
-              <Row icon="shield_person" label="Role" value={user?.role === 'admin' ? 'Administrator' : 'Staff'} />
-              {staffDetails?.job_title && <Row icon="work" label="Job Title" value={staffDetails.job_title} />}
+           <Section title="Staff Information" isDark={isDark} delay="0.15s">
+              <Row icon="shield_person" label="Role" value={user?.role === 'admin' ? 'Administrator' : 'Staff'} isDark={isDark} />
+              {staffDetails?.job_title && <Row icon="work" label="Job Title" value={staffDetails.job_title} isDark={isDark} />}
            </Section>
          )}
 
          {/* Password Section - only show for staff/admin users */}
          {isStaffOrAdminProfile && (
-           <Section title="Security" delay="0.2s">
+           <Section title="Security" isDark={isDark} delay="0.2s">
               <div 
-                className="p-4 flex items-center justify-between transition-colors cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+                className={`p-4 flex items-center justify-between transition-colors cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}
                 onClick={() => setShowPasswordSection(!showPasswordSection)}
               >
                 <div className="flex items-center gap-4">
-                  <span className="material-symbols-outlined text-primary/70 dark:opacity-70">key</span>
-                  <span className="font-medium text-sm text-primary dark:text-white">
+                  <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>key</span>
+                  <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>
                     {hasPassword ? 'Change Password' : 'Set Up Password'}
                   </span>
                 </div>
-                <span className="material-symbols-outlined text-sm text-primary/40 dark:opacity-40">
+                <span className={`material-symbols-outlined text-sm ${isDark ? 'opacity-40' : 'text-primary/40'}`}>
                   {showPasswordSection ? 'expand_less' : 'expand_more'}
                 </span>
               </div>
               
               {showPasswordSection && (
-                <div className="p-4 pt-0 space-y-4 animate-pop-in border-t border-black/5 dark:border-white/5">
+                <div className={`p-4 pt-0 space-y-4 animate-pop-in ${isDark ? 'border-t border-white/5' : 'border-t border-black/5'}`}>
                   {passwordError && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
                       {passwordError}
@@ -311,7 +312,7 @@ const Profile: React.FC = () => {
                       placeholder="Current Password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border text-sm bg-white border-black/10 text-primary placeholder:text-primary/40 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-white/40"
+                      className={`w-full px-4 py-3 rounded-xl border text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/40' : 'bg-white border-black/10 text-primary placeholder:text-primary/40'}`}
                     />
                   )}
                   
@@ -320,7 +321,7 @@ const Profile: React.FC = () => {
                     placeholder="New Password (min 8 characters)"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border text-sm bg-white border-black/10 text-primary placeholder:text-primary/40 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-white/40"
+                    className={`w-full px-4 py-3 rounded-xl border text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/40' : 'bg-white border-black/10 text-primary placeholder:text-primary/40'}`}
                   />
                   
                   <input
@@ -328,14 +329,14 @@ const Profile: React.FC = () => {
                     placeholder="Confirm New Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border text-sm bg-white border-black/10 text-primary placeholder:text-primary/40 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-white/40"
+                    className={`w-full px-4 py-3 rounded-xl border text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/40' : 'bg-white border-black/10 text-primary placeholder:text-primary/40'}`}
                   />
                   
                   <div className="flex gap-2">
                     <button
                       onClick={handlePasswordSubmit}
                       disabled={passwordLoading || !newPassword || !confirmPassword}
-                      className="flex-1 py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 bg-primary text-white dark:bg-accent dark:text-primary"
+                      className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${isDark ? 'bg-accent text-primary' : 'bg-primary text-white'}`}
                     >
                       {passwordLoading ? 'Saving...' : (hasPassword ? 'Update Password' : 'Set Password')}
                     </button>
@@ -347,7 +348,7 @@ const Profile: React.FC = () => {
                         setConfirmPassword('');
                         setPasswordError('');
                       }}
-                      className="px-4 py-3 rounded-xl text-sm font-medium bg-black/5 text-primary/70 dark:bg-white/10 dark:text-white/70"
+                      className={`px-4 py-3 rounded-xl text-sm font-medium ${isDark ? 'bg-white/10 text-white/70' : 'bg-black/5 text-primary/70'}`}
                     >
                       Cancel
                     </button>
@@ -357,11 +358,11 @@ const Profile: React.FC = () => {
            </Section>
          )}
 
-         <Section title="Appearance" delay="0.15s">
+         <Section title="Appearance" isDark={isDark} delay="0.15s">
             <div className="p-4">
               <div className="flex items-center gap-3 mb-3">
-                <span className="material-symbols-outlined text-lg text-primary/60 dark:opacity-60">palette</span>
-                <span className="text-sm font-medium text-primary dark:text-white">Theme</span>
+                <span className={`material-symbols-outlined text-lg ${isDark ? 'opacity-60' : 'text-primary/60'}`}>palette</span>
+                <span className={`text-sm font-medium ${isDark ? '' : 'text-primary'}`}>Theme</span>
               </div>
               <div className="flex gap-2">
                 {(['light', 'dark', 'system'] as const).map((mode) => (
@@ -371,7 +372,7 @@ const Profile: React.FC = () => {
                     className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
                       themeMode === mode 
                         ? 'bg-accent text-[#293515] shadow-glow' 
-                        : 'bg-black/5 text-primary/60 hover:bg-black/10 dark:bg-white/10 dark:text-white/60 dark:hover:bg-white/15'
+                        : (isDark ? 'bg-white/10 text-white/60 hover:bg-white/15' : 'bg-black/5 text-primary/60 hover:bg-black/10')
                     }`}
                   >
                     {mode === 'system' ? 'Auto' : mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -381,13 +382,13 @@ const Profile: React.FC = () => {
             </div>
          </Section>
 
-         <button onClick={() => { logout(); navigate('/login'); }} className="w-full py-4 rounded-xl text-red-400 font-bold text-sm transition-colors animate-pop-in bg-white border border-black/5 hover:bg-red-50 dark:glass-button dark:border-0 dark:hover:bg-red-500/10" style={{animationDelay: '0.2s'}}>
+         <button onClick={() => { logout(); navigate('/login'); }} className={`w-full py-4 rounded-xl text-red-400 font-bold text-sm transition-colors animate-pop-in ${isDark ? 'glass-button hover:bg-red-500/10' : 'bg-white border border-black/5 hover:bg-red-50'}`} style={{animationDelay: '0.2s'}}>
             Sign Out
          </button>
 
          <button 
            onClick={() => setShowBugReport(true)} 
-           className="w-full py-4 rounded-xl font-bold text-sm transition-colors animate-pop-in flex items-center justify-center gap-2 bg-white border border-black/5 text-primary/60 hover:text-primary hover:bg-black/5 dark:glass-button dark:border-0 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5" 
+           className={`w-full py-4 rounded-xl font-bold text-sm transition-colors animate-pop-in flex items-center justify-center gap-2 ${isDark ? 'glass-button text-white/60 hover:text-white hover:bg-white/5' : 'bg-white border border-black/5 text-primary/60 hover:text-primary hover:bg-black/5'}`} 
            style={{animationDelay: '0.25s'}}
          >
             <span className="material-symbols-outlined text-lg">bug_report</span>
@@ -431,7 +432,7 @@ const Profile: React.FC = () => {
       {isStaffOrAdminProfile ? (
         <StaffBottomNavSimple />
       ) : (
-        <MemberBottomNav currentPath="/profile" />
+        <MemberBottomNav currentPath="/profile" isDarkTheme={isDark} />
       )}
 
       {/* Full Screen Card Modal */}
@@ -584,29 +585,29 @@ const Profile: React.FC = () => {
   );
 };
 
-const Section: React.FC<{title: string; children: React.ReactNode; delay?: string}> = ({ title, children, delay }) => (
+const Section: React.FC<{title: string; children: React.ReactNode; isDark?: boolean; delay?: string}> = ({ title, children, isDark = true, delay }) => (
   <div className="animate-pop-in" style={delay ? {animationDelay: delay} : undefined}>
-     <h3 className="text-xs font-bold uppercase tracking-wider ml-2 mb-3 text-primary/50 dark:text-white/50">{title}</h3>
-     <div className="rounded-2xl overflow-hidden glass-card divide-y divide-black/5 border-black/10 dark:divide-white/5 dark:border-white/10">
+     <h3 className={`text-xs font-bold uppercase tracking-wider ml-2 mb-3 ${isDark ? 'opacity-50' : 'text-primary/50'}`}>{title}</h3>
+     <div className={`rounded-2xl overflow-hidden glass-card divide-y ${isDark ? 'divide-white/5 border-white/10' : 'divide-black/5 border-black/10'}`}>
         {children}
      </div>
   </div>
 );
 
-const Row: React.FC<{icon: string; label: string; value?: string; toggle?: boolean; arrow?: boolean}> = ({ icon, label, value, toggle, arrow }) => (
-   <div className="p-4 flex items-center justify-between transition-colors cursor-pointer hover:bg-black/5 dark:hover:bg-white/5">
+const Row: React.FC<{icon: string; label: string; value?: string; toggle?: boolean; arrow?: boolean; isDark?: boolean}> = ({ icon, label, value, toggle, arrow, isDark = true }) => (
+   <div className={`p-4 flex items-center justify-between transition-colors cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
       <div className="flex items-center gap-4">
-         <span className="material-symbols-outlined text-primary/70 dark:opacity-70">{icon}</span>
-         <span className="font-medium text-sm text-primary dark:text-white">{label}</span>
+         <span className={`material-symbols-outlined ${isDark ? 'opacity-70' : 'text-primary/70'}`}>{icon}</span>
+         <span className={`font-medium text-sm ${isDark ? '' : 'text-primary'}`}>{label}</span>
       </div>
       <div className="flex items-center gap-2">
-         {value && <span className="text-sm text-primary/50 dark:opacity-50">{value}</span>}
+         {value && <span className={`text-sm ${isDark ? 'opacity-50' : 'text-primary/50'}`}>{value}</span>}
          {toggle && (
             <div className="w-10 h-6 bg-green-500 rounded-full relative">
                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div>
             </div>
          )}
-         {arrow && <span className="material-symbols-outlined text-sm text-primary/40 dark:opacity-40">arrow_forward_ios</span>}
+         {arrow && <span className={`material-symbols-outlined text-sm ${isDark ? 'opacity-40' : 'text-primary/40'}`}>arrow_forward_ios</span>}
       </div>
    </div>
 );

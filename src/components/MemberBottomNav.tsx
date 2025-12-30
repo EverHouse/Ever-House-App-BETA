@@ -20,9 +20,10 @@ const MEMBER_NAV_ITEMS: MemberNavItem[] = [
 
 interface MemberBottomNavProps {
   currentPath: string;
+  isDarkTheme: boolean;
 }
 
-const MemberBottomNav: React.FC<MemberBottomNavProps> = ({ currentPath }) => {
+const MemberBottomNav: React.FC<MemberBottomNavProps> = ({ currentPath, isDarkTheme }) => {
   const navigate = useNavigate();
   const navigatingRef = useRef(false);
   const lastTapRef = useRef(0);
