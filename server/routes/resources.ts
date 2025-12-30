@@ -98,7 +98,7 @@ router.get('/api/bookings', async (req, res) => {
   }
 });
 
-router.get('/api/pending-bookings', async (req, res) => {
+router.get('/api/pending-bookings', isStaffOrAdmin, async (req, res) => {
   try {
     const result = await db
       .select({
@@ -248,7 +248,7 @@ async function checkBookingConflict(resourceId: number, bookingDate: string, sta
   return { hasConflict: false };
 }
 
-router.put('/api/bookings/:id/approve', async (req, res) => {
+router.put('/api/bookings/:id/approve', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const bookingId = parseInt(id);
@@ -299,7 +299,7 @@ router.put('/api/bookings/:id/approve', async (req, res) => {
   }
 });
 
-router.put('/api/bookings/:id/decline', async (req, res) => {
+router.put('/api/bookings/:id/decline', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await db.update(bookings)
@@ -406,7 +406,7 @@ router.post('/api/bookings', async (req, res) => {
   }
 });
 
-router.delete('/api/bookings/:id', async (req, res) => {
+router.delete('/api/bookings/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     

@@ -3,6 +3,7 @@ import { importTrackmanBookings, getUnmatchedBookings, resolveUnmatchedBooking, 
 import path from 'path';
 import multer from 'multer';
 import fs from 'fs';
+import { isAdmin } from '../core/middleware';
 
 const router = Router();
 
@@ -34,7 +35,7 @@ const upload = multer({
   }
 });
 
-router.get('/api/admin/trackman/unmatched', async (req, res) => {
+router.get('/api/admin/trackman/unmatched', isAdmin, async (req, res) => {
   try {
     const resolved = req.query.resolved === 'true' ? true : req.query.resolved === 'false' ? false : undefined;
     const limit = parseInt(req.query.limit as string) || 100;
@@ -48,7 +49,7 @@ router.get('/api/admin/trackman/unmatched', async (req, res) => {
   }
 });
 
-router.get('/api/admin/trackman/import-runs', async (req, res) => {
+router.get('/api/admin/trackman/import-runs', isAdmin, async (req, res) => {
   try {
     const runs = await getImportRuns();
     res.json(runs);
@@ -58,7 +59,7 @@ router.get('/api/admin/trackman/import-runs', async (req, res) => {
   }
 });
 
-router.post('/api/admin/trackman/import', async (req, res) => {
+router.post('/api/admin/trackman/import', isAdmin, async (req, res) => {
   try {
     const { filename } = req.body;
     const user = (req as any).session?.user?.email || 'admin';
@@ -82,7 +83,7 @@ router.post('/api/admin/trackman/import', async (req, res) => {
   }
 });
 
-router.post('/api/admin/trackman/upload', upload.single('file'), async (req, res) => {
+router.post('/api/admin/trackman/upload', isAdmin, upload.single('file'), async (req, res) => {
   let csvPath: string | undefined;
   try {
     if (!req.file) {
@@ -113,7 +114,7 @@ router.post('/api/admin/trackman/upload', upload.single('file'), async (req, res
   }
 });
 
-router.put('/api/admin/trackman/unmatched/:id/resolve', async (req, res) => {
+router.put('/api/admin/trackman/unmatched/:id/resolve', isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { memberEmail } = req.body;

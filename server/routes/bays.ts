@@ -8,6 +8,7 @@ import { CALENDAR_CONFIG, getCalendarIdByName, createCalendarEvent, createCalend
 import { sendPushNotification, sendPushNotificationToStaff } from './push';
 import { checkDailyBookingLimit } from '../core/tierService';
 import { notifyAllStaff } from '../core/staffNotifications';
+import { isStaffOrAdmin } from '../core/middleware';
 
 const router = Router();
 
@@ -219,7 +220,7 @@ router.get('/api/bays/:bayId/availability', async (req, res) => {
   }
 });
 
-router.get('/api/booking-requests', async (req, res) => {
+router.get('/api/booking-requests', isStaffOrAdmin, async (req, res) => {
   try {
     const { user_email, status, include_all } = req.query;
     
@@ -353,7 +354,7 @@ router.post('/api/booking-requests', async (req, res) => {
   }
 });
 
-router.put('/api/booking-requests/:id', async (req, res) => {
+router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, staff_notes, suggested_time, reviewed_by, bay_id } = req.body;
@@ -642,7 +643,7 @@ router.put('/api/booking-requests/:id', async (req, res) => {
   }
 });
 
-router.put('/api/bookings/:id/checkin', async (req, res) => {
+router.put('/api/bookings/:id/checkin', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -705,7 +706,7 @@ router.put('/api/bookings/:id/checkin', async (req, res) => {
   }
 });
 
-router.get('/api/approved-bookings', async (req, res) => {
+router.get('/api/approved-bookings', isStaffOrAdmin, async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
     

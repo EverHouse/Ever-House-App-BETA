@@ -4,6 +4,7 @@ import { getHubSpotClient } from '../core/integrations';
 import { db } from '../db';
 import { formSubmissions } from '../../shared/schema';
 import { notifyAllStaff } from '../core/staffNotifications';
+import { isStaffOrAdmin } from '../core/middleware';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -31,7 +32,7 @@ const normalizeMembershipTier = (tier: string | undefined): string => {
   return 'Core';
 };
 
-router.get('/api/hubspot/contacts', async (req, res) => {
+router.get('/api/hubspot/contacts', isStaffOrAdmin, async (req, res) => {
   try {
     const hubspot = await getHubSpotClient();
     
@@ -79,7 +80,7 @@ router.get('/api/hubspot/contacts', async (req, res) => {
   }
 });
 
-router.get('/api/hubspot/contacts/:id', async (req, res) => {
+router.get('/api/hubspot/contacts/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const hubspot = await getHubSpotClient();
     const { id } = req.params;
@@ -284,7 +285,7 @@ function parseCSV(content: string): Record<string, string>[] {
 }
 
 // Sync membership tiers from CSV to HubSpot
-router.post('/api/hubspot/sync-tiers', async (req, res) => {
+router.post('/api/hubspot/sync-tiers', isStaffOrAdmin, async (req, res) => {
   try {
     const { dryRun = true } = req.body;
     const hubspot = await getHubSpotClient();
