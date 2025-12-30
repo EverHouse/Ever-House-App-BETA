@@ -40,6 +40,10 @@ const BugReportsAdmin: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    useEffect(() => {
         if (!isLoading) {
             setPageReady(true);
         }

@@ -100,4 +100,23 @@ router.delete('/api/notifications/:id', async (req, res) => {
   }
 });
 
+router.delete('/api/notifications/dismiss-all', async (req, res) => {
+  try {
+    const { user_email } = req.body;
+    
+    if (!user_email) {
+      return res.status(400).json(createErrorResponse(req, 'user_email is required', 'MISSING_EMAIL'));
+    }
+    
+    const result = await pool.query(
+      'DELETE FROM notifications WHERE user_email = $1',
+      [user_email]
+    );
+    
+    res.json({ success: true, deletedCount: result.rowCount });
+  } catch (error: any) {
+    logAndRespond(req, res, 500, 'Failed to dismiss all notifications', error, 'DISMISS_ALL_ERROR');
+  }
+});
+
 export default router;

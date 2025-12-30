@@ -84,7 +84,7 @@ const getNotificationRoute = (notif: UserNotification, isStaffOrAdmin: boolean):
   }
   
   // Event notifications
-  if (notif.type === 'event_reminder' || notif.type === 'event_rsvp') {
+  if (notif.type === 'event_reminder' || notif.type === 'event_rsvp' || notif.type === 'event_rsvp_cancelled') {
     return isStaffOrAdmin ? '/admin?tab=events' : '/member-events';
   }
   
@@ -234,6 +234,23 @@ const MemberUpdates: React.FC = () => {
       window.dispatchEvent(new CustomEvent('notifications-read'));
     } catch (err) {
       console.error('Failed to mark all as read:', err);
+    }
+  };
+
+  const dismissAll = async () => {
+    if (!user?.email) return;
+    try {
+      await fetch('/api/notifications/dismiss-all', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_email: user.email }),
+        credentials: 'include'
+      });
+      setNotifications([]);
+      setUnreadCount(0);
+      window.dispatchEvent(new CustomEvent('notifications-read'));
+    } catch (err) {
+      console.error('Failed to dismiss all notifications:', err);
     }
   };
 
@@ -428,17 +445,29 @@ const MemberUpdates: React.FC = () => {
 
   const renderActivityTab = () => (
     <div className="relative z-10 pb-32">
-      {unreadCount > 0 && (
-        <div className="flex justify-end mb-4">
+      {notifications.length > 0 && (
+        <div className="flex justify-end gap-2 mb-4">
+          {unreadCount > 0 && (
+            <button 
+              onClick={markAllAsRead}
+              className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                isDark 
+                  ? 'text-white/70 hover:text-white bg-white/5 hover:bg-white/10' 
+                  : 'text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10'
+              }`}
+            >
+              Mark all as read
+            </button>
+          )}
           <button 
-            onClick={markAllAsRead}
+            onClick={dismissAll}
             className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
               isDark 
-                ? 'text-white/70 hover:text-white bg-white/5 hover:bg-white/10' 
-                : 'text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10'
+                ? 'text-red-400/70 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20' 
+                : 'text-red-600/70 hover:text-red-600 bg-red-500/5 hover:bg-red-500/10'
             }`}
           >
-            Mark all as read
+            Dismiss all
           </button>
         </div>
       )}

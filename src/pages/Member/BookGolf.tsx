@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -180,6 +180,10 @@ const BookGolf: React.FC = () => {
   const [previousTab, setPreviousTab] = useState<'simulator' | 'conference'>(initialTab as 'simulator' | 'conference');
   const [closures, setClosures] = useState<Closure[]>([]);
   const [expandedHour, setExpandedHour] = useState<string | null>(null);
+  const [hasUserSelectedDuration, setHasUserSelectedDuration] = useState(false);
+  
+  const timeSlotsRef = useRef<HTMLDivElement>(null);
+  const requestButtonRef = useRef<HTMLDivElement>(null);
 
   const effectiveUser = viewAsUser || user;
   
@@ -355,6 +359,24 @@ const BookGolf: React.FC = () => {
     fetchMyRequests();
     fetchClosures();
   }, [fetchMyRequests, fetchClosures, showConfirmation]);
+
+  // Auto-scroll to time slots when duration is selected by user (not on initial load)
+  useEffect(() => {
+    if (hasUserSelectedDuration && duration && timeSlotsRef.current && activeTab !== 'my-requests') {
+      setTimeout(() => {
+        timeSlotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [hasUserSelectedDuration, duration, activeTab]);
+
+  // Auto-scroll to request button when a slot is selected
+  useEffect(() => {
+    if (selectedSlot && selectedResource && requestButtonRef.current) {
+      setTimeout(() => {
+        requestButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }, [selectedSlot, selectedResource]);
 
   const handleCancelRequest = async (id: number) => {
     haptic.light();
@@ -689,7 +711,7 @@ const BookGolf: React.FC = () => {
                 {[30, 60, 90, 120].filter(mins => (mins !== 90 && mins !== 120) || tierPermissions.hasExtendedSessions).map(mins => (
                   <button 
                     key={mins}
-                    onClick={() => { haptic.selection(); setDuration(mins); setExpandedHour(null); }}
+                    onClick={() => { haptic.selection(); setDuration(mins); setExpandedHour(null); setHasUserSelectedDuration(true); }}
                     aria-pressed={duration === mins}
                     className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-accent focus:outline-none ${
                       duration === mins 
@@ -750,7 +772,7 @@ const BookGolf: React.FC = () => {
             </div>
           )}
 
-          <section className="min-h-[120px]">
+          <section ref={timeSlotsRef} className="min-h-[120px]">
             <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 pl-1 ${isDark ? 'text-white/80' : 'text-primary/80'}`}>Available Times</h3>
             
             <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-100' : 'opacity-0 hidden'}`}>
@@ -866,7 +888,7 @@ const BookGolf: React.FC = () => {
       )}
 
       {canBook && (
-        <div className="fixed bottom-24 left-0 right-0 z-20 px-6 flex justify-center w-full max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-300">
+        <div ref={requestButtonRef} className="fixed bottom-24 left-0 right-0 z-20 px-6 flex justify-center w-full max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-300">
           <button 
             onClick={() => { haptic.heavy(); handleConfirm(); }}
             disabled={isBooking}

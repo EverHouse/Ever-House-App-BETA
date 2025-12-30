@@ -424,6 +424,7 @@ const CafeAdmin: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
+        window.scrollTo(0, 0);
         setPageReady(true);
     }, [setPageReady]);
 
@@ -6823,6 +6824,10 @@ const TiersAdmin: React.FC = () => {
 // --- CHANGELOG ADMIN ---
 
 const ChangelogAdmin: React.FC = () => {
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr + 'T12:00:00');
         return date.toLocaleDateString('en-GB', { 
@@ -6838,7 +6843,7 @@ const ChangelogAdmin: React.FC = () => {
                 A complete history of updates, improvements, and new features added to the Even House app.
             </div>
 
-            {changelog.slice().reverse().map((entry, index) => (
+            {changelog.map((entry, index) => (
                 <div 
                     key={entry.version}
                     className={`relative pl-8 pb-6 ${index !== changelog.length - 1 ? 'border-l-2 border-primary/20 dark:border-white/20' : ''}`}

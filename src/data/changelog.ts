@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "6.8",
+    date: "2025-12-30",
+    title: "UX Improvements",
+    changes: [
+      "Added 'Dismiss All' button to clear all notifications at once",
+      "Booking page now auto-scrolls to time slots after selecting duration",
+      "Booking page auto-scrolls to request button after selecting a bay/room",
+      "Version History now shows newest updates at the top",
+      "Fixed staff pages (Cafe Menu, Bug Reports, Version History) to open at top of page"
+    ]
+  },
+  {
     version: "6.7",
     date: "2025-12-30",
     title: "Mobile App Fixes",
