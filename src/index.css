@@ -488,6 +488,14 @@ html.dark .glass-input:focus {
   max-width: 100%;
   min-width: 0;
 }
+/* Force date/time inputs to full width on iOS Safari */
+[role="dialog"] input[type="date"],
+[role="dialog"] input[type="time"],
+[role="dialog"] input[type="datetime-local"] {
+  width: 100% !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
 
 /* iOS Safari dark mode date/time input fixes */
 html.dark input[type="date"],
