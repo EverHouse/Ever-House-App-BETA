@@ -143,7 +143,7 @@ const AdminDashboard: React.FC = () => {
     switch (activeTab) {
       case 'home': return 'Dashboard';
       case 'cafe': return 'Cafe Menu';
-      case 'events': return 'Events';
+      case 'events': return 'Calendar';
       case 'announcements': return 'News';
       case 'directory': return 'Directory';
       case 'simulator': return 'Bookings';
