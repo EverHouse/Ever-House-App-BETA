@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "6.6",
+    date: "2025-12-30",
+    title: "Sync Reliability Improvements",
+    changes: [
+      "Sync buttons now automatically retry up to 3 times if network issues occur",
+      "Fixed false 'sync failed' messages when Eventbrite is not configured",
+      "Sync errors now clearly indicate which service had the issue",
+      "Improved network error messages to be more user-friendly"
+    ]
+  },
+  {
     version: "6.5",
     date: "2025-12-30",
     title: "Staff Bookings Reorganized",
