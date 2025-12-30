@@ -57,16 +57,17 @@ export function ModalShell({
       setTimeout(() => {
         modalRef.current?.focus();
       }, 50);
-    }
 
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-      document.documentElement.classList.remove('overflow-hidden');
-      
-      if (previousActiveElement.current && !isOpen) {
-        previousActiveElement.current.focus();
-      }
-    };
+      return () => {
+        document.removeEventListener('keydown', handleEscapeKey);
+        document.documentElement.classList.remove('overflow-hidden');
+        
+        if (previousActiveElement.current) {
+          previousActiveElement.current.focus();
+          previousActiveElement.current = null;
+        }
+      };
+    }
   }, [isOpen, handleEscapeKey]);
 
   if (!isOpen) return null;
