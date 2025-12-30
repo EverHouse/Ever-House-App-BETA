@@ -130,7 +130,7 @@ export function SwipeableListItem({
   const showRightActions = isSwipingLeft && rightActions.length > 0;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
+    <div className="relative overflow-hidden rounded-2xl bg-bone dark:bg-[#1a1f12]">
       {leftActions.length > 0 && (
         <div 
           className={`absolute inset-0 flex items-stretch rounded-2xl overflow-hidden transition-opacity duration-100 ${showLeftActions ? 'opacity-100' : 'opacity-0'}`}
