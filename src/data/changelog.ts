@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.8",
+    date: "2025-12-31",
+    title: "Production Sync & Training Updates",
+    changes: [
+      "Enabled calendar sync (events, wellness, tours, closures) in production for automatic updates",
+      "Training sections now sync in production to keep staff instructions up-to-date",
+      "Added manual closure sync endpoint for immediate calendar updates",
+      "Updated training instructions to reflect current app navigation (Closures in bottom nav)",
+      "Fixed training references to show all 4 simulator bays instead of 3",
+      "Updated closure instructions to mention multi-select checkboxes for affected areas"
+    ]
+  },
+  {
     version: "7.7",
     date: "2025-12-31",
     title: "Performance & Code Optimization",

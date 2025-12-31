@@ -1,0 +1,134 @@
+The reason your **Internal Calendar events are not syncing to closures** in the published app is that the background synchronization logic is explicitly disabled in production mode within your `server/index.ts` file.
+
+The logs in your `server/index.ts` confirm this behavior:
+
+```typescript
+} else {
+  console.log('[Startup] Production mode: auto-seeding and background sync disabled');
+  // ...
+}
+
+```
+
+To fix this, you need to:
+
+1. **Enable the background sync interval** in `server/index.ts` so it runs in production.
+2. **Add a manual sync endpoint** to `server/routes/closures.ts` (as the logs suggest using manual endpoints, but one doesn't exist for closures yet).
+
+Here are the code updates to resolve this:
+
+### 1. Update `server/index.ts`
+
+This change moves the calendar synchronization logic **outside** of the `if (!isProduction)` block so that it runs in your published app as well.
+
+```typescript
+// server/index.ts
+
+// ... imports remain the same
+
+// FIND the block starting around line 333 (if (!isProduction) { ... }) 
+// and REPLACE the entire block down to the daily reminder scheduler with this:
+
+  // 1. Development-only Auto-seeding
+  if (!isProduction) {
+    setTimeout(async () => {
+      try { await autoSeedResources(); } catch (err) { console.error('[Startup] Auto-seed resources failed:', err); }
+      try { await autoSeedCafeMenu(); } catch (err) { console.error('[Startup] Auto-seed cafe menu failed:', err); }
+      try { await autoSeedTrainingSectionsWrapper(); } catch (err) { console.error('[Startup] Auto-seed training sections failed:', err); }
+    }, 100);
+  }
+
+  // 2. Calendar Sync (Enabled in BOTH Development and Production)
+  setTimeout(async () => {
+    console.log('[Startup] Initializing calendar sync...');
+    
+    // Initial Sync on Startup
+    try {
+      const gcalResult = await syncGoogleCalendarEvents();
+      if (gcalResult.error) console.log(`[Startup] Google Calendar sync skipped: ${gcalResult.error}`);
+      else console.log(`[Startup] Google Calendar sync: ${gcalResult.synced} events`);
+    } catch (err) { console.log('[Startup] Google Calendar sync failed:', err); }
+
+    try {
+      const closuresResult = await syncInternalCalendarToClosures();
+      if (closuresResult.error) console.log(`[Startup] Internal Calendar closures sync skipped: ${closuresResult.error}`);
+      else console.log(`[Startup] Internal Calendar closures sync: ${closuresResult.synced} events`);
+    } catch (err) { console.log('[Startup] Internal Calendar closures sync failed:', err); }
+
+    try {
+      const toursResult = await syncToursFromCalendar();
+      if (toursResult.error) console.log(`[Startup] Tours sync skipped: ${toursResult.error}`);
+      else console.log(`[Startup] Tours sync: ${toursResult.synced} tours`);
+    } catch (err) { console.log('[Startup] Tours sync failed:', err); }
+
+    // Start Interval (Every 5 minutes)
+    const SYNC_INTERVAL_MS = 5 * 60 * 1000;
+    setInterval(async () => {
+      try {
+        // Run syncs in parallel
+        const [events, wellness, tours, closures] = await Promise.all([
+          syncGoogleCalendarEvents().catch(e => ({ error: e.message, synced: 0 })),
+          syncWellnessCalendarEvents().catch(e => ({ error: e.message, synced: 0 })),
+          syncToursFromCalendar().catch(e => ({ error: e.message, synced: 0 })),
+          syncInternalCalendarToClosures().catch(e => ({ error: e.message, synced: 0 })) //
+        ]);
+
+        console.log(`[Auto-sync] Events: ${events.synced}, Wellness: ${wellness.synced}, Tours: ${tours.synced}, Closures: ${closures.synced}`);
+      } catch (err) {
+        console.error('[Auto-sync] Calendar sync cycle failed:', err);
+      }
+    }, SYNC_INTERVAL_MS);
+    
+    console.log('[Startup] Background calendar sync enabled (every 5 minutes)');
+  }, 1000);
+
+  // Daily reminder scheduler - runs at 6pm local time
+  // ... rest of the file remains the same
+
+```
+
+### 2. Update `server/routes/closures.ts`
+
+Add a manual sync endpoint. This is useful for debugging or forcing an immediate update without waiting 5 minutes.
+
+```typescript
+// server/routes/closures.ts
+
+// 1. Add this import at the top
+import { syncInternalCalendarToClosures } from '../core/calendar';
+
+// ... existing imports
+
+const router = Router();
+
+// ... existing routes
+
+// 2. Add this NEW route before 'export default router'
+router.post('/api/closures/sync', isStaffOrAdmin, async (req, res) => {
+  try {
+    console.log('[Manual Sync] Starting Internal Calendar closure sync...');
+    const result = await syncInternalCalendarToClosures();
+    
+    if (result.error) {
+      return res.status(400).json(result);
+    }
+    
+    res.json({
+      success: true,
+      message: 'Closures synced successfully',
+      stats: result
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Manual closure sync error:', error);
+    res.status(500).json({ error: 'Failed to sync closures' });
+  }
+});
+
+export default router;
+
+```
+
+### Summary of Changes
+
+1. **`server/index.ts`**: The sync logic was moved out of the `else` block so it runs in production. This ensures your internal calendar events are automatically converted to facility closures every 5 minutes.
+2. **`server/routes/closures.ts`**: Added `POST /api/closures/sync`. You can hit this endpoint from your frontend (or a tool like Postman) to instantly sync closures if you make a change in Google Calendar and don't want to wait.

@@ -25,7 +25,7 @@ export const TRAINING_SEED_DATA = [
     steps: [
       { title: 'Access the Staff Portal', content: 'Log in with your staff credentials. After logging in, you will be automatically directed to the Staff Portal dashboard.', pageIcon: 'admin_panel_settings' },
       { title: 'Dashboard Overview', content: 'The Home dashboard shows quick access cards organized into sections: Employee Resources, Operations, Public Content, and Admin Settings (admin only).', pageIcon: 'home' },
-      { title: 'Bottom Navigation', content: 'Use the bottom navigation bar to quickly access: Home, Bookings, Tours, Calendar, and Inquiries.' },
+      { title: 'Bottom Navigation', content: 'Use the bottom navigation bar to quickly access: Home, Bookings, Tours, Calendar, and Closures.' },
       { title: 'Header Navigation', content: 'The campaign icon in the header takes you to the Updates page where you can view your activity notifications and manage member announcements.' },
       { title: 'Profile Access', content: 'Tap your avatar in the top right to access your profile, where you can manage push notifications and set up a password for faster login.', pageIcon: 'person' },
     ]
@@ -40,7 +40,7 @@ export const TRAINING_SEED_DATA = [
     steps: [
       { title: 'Access Bookings', content: 'Go to the Bookings tab from the bottom nav or dashboard. You will see pending requests that need action.', pageIcon: 'event_note' },
       { title: 'Review Pending Requests', content: 'Each request card shows the member name, requested date, time, duration, and any notes they included.' },
-      { title: 'Assign a Bay', content: 'Before approving a simulator booking, select which bay (1, 2, or 3) to assign. The system will check for conflicts automatically.' },
+      { title: 'Assign a Bay', content: 'Before approving a simulator booking, select which bay (1, 2, 3, or 4) to assign. The system will check for conflicts automatically.' },
       { title: 'Check for Conflicts', content: 'Green checkmark means the slot is available. Red warning indicates a conflict with another booking or closure.' },
       { title: 'Approve or Decline', content: 'Click Approve to confirm the booking (this syncs to Google Calendar) or Decline to reject it. You can add staff notes with either action.' },
       { title: 'Calendar View', content: 'Switch to Calendar view to see all approved bookings for a selected date. Closures appear as red "CLOSED" blocks.', pageIcon: 'calendar_month' },
@@ -72,7 +72,7 @@ export const TRAINING_SEED_DATA = [
     steps: [
       { title: 'Access Closures', content: 'Go to Closures from the dashboard to manage facility closures.', pageIcon: 'event_busy' },
       { title: 'Create a Closure', content: 'Click "Add Closure" and fill in the title, reason, affected areas, and date/time range.' },
-      { title: 'Affected Areas', content: 'Choose what the closure affects: Entire Facility, All Simulator Bays, specific bays (1, 2, or 3), or the Conference Room.' },
+      { title: 'Affected Areas', content: 'Choose what the closure affects: Entire Facility, All Simulator Bays, specific bays (1, 2, 3, or 4), or the Conference Room. You can select multiple areas using checkboxes.' },
       { title: 'Full Day vs Partial', content: 'For full-day closures, leave time fields empty. For partial closures (e.g., morning maintenance), specify start and end times.' },
       { title: 'Automatic Announcements', content: 'When you create a closure, an announcement is automatically created and shown to members. This announcement is deleted when the closure is deleted.' },
       { title: 'Calendar Sync', content: 'Closures sync to Google Calendar automatically. Whole facility closures appear in both the Golf and Conference Room calendars.' },
@@ -134,7 +134,7 @@ export const TRAINING_SEED_DATA = [
     sortOrder: 8,
     isAdminOnly: false,
     steps: [
-      { title: 'Access Inquiries', content: 'Go to the Inquiries tab from the bottom nav or dashboard to view form submissions.', pageIcon: 'mail' },
+      { title: 'Access Inquiries', content: 'Go to Inquiries from the dashboard to view form submissions.', pageIcon: 'mail' },
       { title: 'Filter by Type', content: 'Use the filter buttons to view specific form types: Contact, Tour Request, Membership Inquiry, Private Hire, or Guest Check-in.' },
       { title: 'Filter by Status', content: 'Filter by status: New (unread), Read, Replied, or Archived.' },
       { title: 'View Submission Details', content: 'Click on an inquiry to expand and see the full submission details.' },

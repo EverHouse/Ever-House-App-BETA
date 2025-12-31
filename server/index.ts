@@ -332,8 +332,7 @@ async function startServer() {
     process.exit(1);
   });
 
-  // Only run auto-seeding and background sync in development
-  // In production (Autoscale), use `npm run seed` and manual sync endpoints instead
+  // 1. Development-only auto-seeding (resources and cafe menu only)
   if (!isProduction) {
     setTimeout(async () => {
       try {
@@ -347,68 +346,86 @@ async function startServer() {
       } catch (err) {
         console.error('[Startup] Auto-seed cafe menu failed:', err);
       }
-
-      try {
-        await autoSeedTrainingSectionsWrapper();
-      } catch (err) {
-        console.error('[Startup] Auto-seed training sections failed:', err);
-      }
-
-      try {
-        const gcalResult = await syncGoogleCalendarEvents();
-        if (gcalResult.error) {
-          console.log(`[Startup] Google Calendar sync skipped: ${gcalResult.error}`);
-        } else {
-          console.log(`[Startup] Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated, ${gcalResult.deleted} removed)`);
-        }
-      } catch (err) {
-        console.log('[Startup] Google Calendar sync failed:', err);
-      }
-
-      try {
-        const closuresResult = await syncInternalCalendarToClosures();
-        if (closuresResult.error) {
-          console.log(`[Startup] Internal Calendar closures sync skipped: ${closuresResult.error}`);
-        } else {
-          console.log(`[Startup] Internal Calendar closures sync: ${closuresResult.synced} events (${closuresResult.created} created, ${closuresResult.updated} updated, ${closuresResult.deleted} removed)`);
-        }
-      } catch (err) {
-        console.log('[Startup] Internal Calendar closures sync failed:', err);
-      }
-
-      try {
-        const toursResult = await syncToursFromCalendar();
-        if (toursResult.error) {
-          console.log(`[Startup] Tours sync skipped: ${toursResult.error}`);
-        } else {
-          console.log(`[Startup] Tours sync: ${toursResult.synced} tours (${toursResult.created} created, ${toursResult.updated} updated)`);
-        }
-      } catch (err) {
-        console.log('[Startup] Tours sync failed:', err);
-      }
-
-      const SYNC_INTERVAL_MS = 5 * 60 * 1000;
-      setInterval(async () => {
-        try {
-          const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Events sync failed' }));
-          const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Wellness sync failed' }));
-          const toursResult = await syncToursFromCalendar().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Tours sync failed' }));
-          const closuresResult = await syncInternalCalendarToClosures().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Closures sync failed' }));
-          const eventsMsg = eventsResult.error ? eventsResult.error : `${eventsResult.synced} synced`;
-          const wellnessMsg = wellnessResult.error ? wellnessResult.error : `${wellnessResult.synced} synced`;
-          const toursMsg = toursResult.error ? toursResult.error : `${toursResult.synced} synced`;
-          const closuresMsg = closuresResult.error ? closuresResult.error : `${closuresResult.synced} synced`;
-          console.log(`[Auto-sync] Events: ${eventsMsg}, Wellness: ${wellnessMsg}, Tours: ${toursMsg}, Closures: ${closuresMsg}`);
-        } catch (err) {
-          console.error('[Auto-sync] Calendar sync failed:', err);
-        }
-      }, SYNC_INTERVAL_MS);
-      console.log('[Startup] Background calendar sync enabled (every 5 minutes)');
     }, 100);
-  } else {
-    console.log('[Startup] Production mode: auto-seeding and background sync disabled');
-    console.log('[Startup] Use POST /api/events/sync/google and POST /api/wellness-classes/sync for manual sync');
   }
+
+  // 2. Training sections sync (runs in BOTH development and production)
+  // Uses smart upsert to keep instructions up-to-date
+  setTimeout(async () => {
+    try {
+      await autoSeedTrainingSectionsWrapper();
+    } catch (err) {
+      console.error('[Startup] Training sections sync failed:', err);
+    }
+  }, 200);
+
+  // 3. Calendar sync (runs in BOTH development and production)
+  setTimeout(async () => {
+    console.log('[Startup] Initializing calendar sync...');
+    
+    try {
+      const gcalResult = await syncGoogleCalendarEvents();
+      if (gcalResult.error) {
+        console.log(`[Startup] Google Calendar sync skipped: ${gcalResult.error}`);
+      } else {
+        console.log(`[Startup] Google Calendar sync: ${gcalResult.synced} events (${gcalResult.created} created, ${gcalResult.updated} updated, ${gcalResult.deleted} removed)`);
+      }
+    } catch (err) {
+      console.log('[Startup] Google Calendar sync failed:', err);
+    }
+
+    try {
+      const closuresResult = await syncInternalCalendarToClosures();
+      if (closuresResult.error) {
+        console.log(`[Startup] Internal Calendar closures sync skipped: ${closuresResult.error}`);
+      } else {
+        console.log(`[Startup] Internal Calendar closures sync: ${closuresResult.synced} events (${closuresResult.created} created, ${closuresResult.updated} updated, ${closuresResult.deleted} removed)`);
+      }
+    } catch (err) {
+      console.log('[Startup] Internal Calendar closures sync failed:', err);
+    }
+
+    try {
+      const toursResult = await syncToursFromCalendar();
+      if (toursResult.error) {
+        console.log(`[Startup] Tours sync skipped: ${toursResult.error}`);
+      } else {
+        console.log(`[Startup] Tours sync: ${toursResult.synced} tours (${toursResult.created} created, ${toursResult.updated} updated)`);
+      }
+    } catch (err) {
+      console.log('[Startup] Tours sync failed:', err);
+    }
+
+    try {
+      const wellnessResult = await syncWellnessCalendarEvents();
+      if (wellnessResult.error) {
+        console.log(`[Startup] Wellness sync skipped: ${wellnessResult.error}`);
+      } else {
+        console.log(`[Startup] Wellness sync: ${wellnessResult.synced} classes`);
+      }
+    } catch (err) {
+      console.log('[Startup] Wellness sync failed:', err);
+    }
+
+    // Background sync interval (every 5 minutes)
+    const SYNC_INTERVAL_MS = 5 * 60 * 1000;
+    setInterval(async () => {
+      try {
+        const eventsResult = await syncGoogleCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Events sync failed' }));
+        const wellnessResult = await syncWellnessCalendarEvents().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Wellness sync failed' }));
+        const toursResult = await syncToursFromCalendar().catch(() => ({ synced: 0, created: 0, updated: 0, error: 'Tours sync failed' }));
+        const closuresResult = await syncInternalCalendarToClosures().catch(() => ({ synced: 0, created: 0, updated: 0, deleted: 0, error: 'Closures sync failed' }));
+        const eventsMsg = eventsResult.error ? eventsResult.error : `${eventsResult.synced} synced`;
+        const wellnessMsg = wellnessResult.error ? wellnessResult.error : `${wellnessResult.synced} synced`;
+        const toursMsg = toursResult.error ? toursResult.error : `${toursResult.synced} synced`;
+        const closuresMsg = closuresResult.error ? closuresResult.error : `${closuresResult.synced} synced`;
+        console.log(`[Auto-sync] Events: ${eventsMsg}, Wellness: ${wellnessMsg}, Tours: ${toursMsg}, Closures: ${closuresMsg}`);
+      } catch (err) {
+        console.error('[Auto-sync] Calendar sync failed:', err);
+      }
+    }, SYNC_INTERVAL_MS);
+    console.log('[Startup] Background calendar sync enabled (every 5 minutes)');
+  }, 1000);
   
   // Daily reminder scheduler - runs at 6pm local time
   const REMINDER_HOUR = 18; // 6pm

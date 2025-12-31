@@ -5,7 +5,7 @@ import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks, a
 import { eq, desc, or, isNull, inArray } from 'drizzle-orm';
 import webpush from 'web-push';
 import { isStaffOrAdmin } from '../core/middleware';
-import { getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG } from '../core/calendar';
+import { getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG, syncInternalCalendarToClosures } from '../core/calendar';
 import { getGoogleCalendarClient } from '../core/integrations';
 import { createPacificDate, parseLocalDate, addDaysToPacificDate } from '../utils/dateUtils';
 
@@ -843,6 +843,27 @@ router.post('/api/closures/backfill-blocks', isStaffOrAdmin, async (req, res) =>
   } catch (error: any) {
     console.error('Backfill error:', error);
     res.status(500).json({ error: 'Failed to backfill availability blocks' });
+  }
+});
+
+// Manual sync endpoint for closures from Internal Calendar
+router.post('/api/closures/sync', isStaffOrAdmin, async (req, res) => {
+  try {
+    console.log('[Manual Sync] Starting Internal Calendar closure sync...');
+    const result = await syncInternalCalendarToClosures();
+    
+    if (result.error) {
+      return res.status(400).json(result);
+    }
+    
+    res.json({
+      success: true,
+      message: 'Closures synced successfully',
+      stats: result
+    });
+  } catch (error: any) {
+    if (!isProduction) console.error('Manual closure sync error:', error);
+    res.status(500).json({ error: 'Failed to sync closures' });
   }
 });
 
