@@ -3,7 +3,7 @@ import { getGoogleCalendarClient } from './integrations';
 import { db } from '../db';
 import { wellnessClasses } from '../../shared/models/auth';
 import { isNull, gte, asc, sql, and } from 'drizzle-orm';
-import { createPacificDate } from '../utils/dateUtils';
+import { createPacificDate, getPacificISOString } from '../utils/dateUtils';
 
 const calendarIdCache: Record<string, string> = {};
 
@@ -211,18 +211,15 @@ export async function createCalendarEvent(booking: any, bayName: string): Promis
       return null;
     }
     
-    const startDateTime = createPacificDate(requestDate, startTime);
-    const endDateTime = createPacificDate(requestDate, endTime);
-    
     const event = {
       summary: `Booking: ${userName || userEmail}`,
       description: `Area: ${bayName}\nMember: ${userEmail}\nDuration: ${durationMinutes} minutes${booking.notes ? '\nNotes: ' + booking.notes : ''}`,
       start: {
-        dateTime: startDateTime.toISOString(),
+        dateTime: getPacificISOString(requestDate, startTime),
         timeZone: 'America/Los_Angeles',
       },
       end: {
-        dateTime: endDateTime.toISOString(),
+        dateTime: getPacificISOString(requestDate, endTime),
         timeZone: 'America/Los_Angeles',
       },
     };
@@ -255,23 +252,15 @@ export async function createCalendarEventOnCalendar(
     
     const calendar = await getGoogleCalendarClient();
     
-    const startDateTime = createPacificDate(date, startTime);
-    const endDateTime = createPacificDate(date, endTime || startTime);
-    
-    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
-      console.error('Error creating calendar event: Invalid date/time values');
-      return null;
-    }
-    
     const event = {
       summary,
       description,
       start: {
-        dateTime: startDateTime.toISOString(),
+        dateTime: getPacificISOString(date, startTime),
         timeZone: 'America/Los_Angeles',
       },
       end: {
-        dateTime: endDateTime.toISOString(),
+        dateTime: getPacificISOString(date, endTime || startTime),
         timeZone: 'America/Los_Angeles',
       },
     };
@@ -319,14 +308,6 @@ export async function updateCalendarEvent(
     
     const calendar = await getGoogleCalendarClient();
     
-    const startDateTime = createPacificDate(date, startTime);
-    const endDateTime = createPacificDate(date, endTime || startTime);
-    
-    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
-      console.error('Error updating calendar event: Invalid date/time values');
-      return false;
-    }
-    
     await calendar.events.update({
       calendarId,
       eventId,
@@ -334,11 +315,11 @@ export async function updateCalendarEvent(
         summary,
         description,
         start: {
-          dateTime: startDateTime.toISOString(),
+          dateTime: getPacificISOString(date, startTime),
           timeZone: 'America/Los_Angeles',
         },
         end: {
-          dateTime: endDateTime.toISOString(),
+          dateTime: getPacificISOString(date, endTime || startTime),
           timeZone: 'America/Los_Angeles',
         },
       },

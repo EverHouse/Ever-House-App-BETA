@@ -7,7 +7,7 @@ import webpush from 'web-push';
 import { isStaffOrAdmin, isAdmin } from '../core/middleware';
 import { getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG, syncInternalCalendarToClosures } from '../core/calendar';
 import { getGoogleCalendarClient } from '../core/integrations';
-import { createPacificDate, parseLocalDate, addDaysToPacificDate } from '../utils/dateUtils';
+import { createPacificDate, parseLocalDate, addDaysToPacificDate, getPacificISOString } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -239,18 +239,15 @@ async function createClosureCalendarEvents(
       const eventIds: string[] = [];
       
       for (const date of dates) {
-        const startDateTime = createPacificDate(date, startTime);
-        const endDateTime = createPacificDate(date, endTime);
-        
         const event = {
           summary: title,
           description: `${description}${dates.length > 1 ? `\n\n(Day ${dates.indexOf(date) + 1} of ${dates.length})` : ''}`,
           start: {
-            dateTime: startDateTime.toISOString(),
+            dateTime: getPacificISOString(date, startTime),
             timeZone: 'America/Los_Angeles',
           },
           end: {
-            dateTime: endDateTime.toISOString(),
+            dateTime: getPacificISOString(date, endTime),
             timeZone: 'America/Los_Angeles',
           },
         };
