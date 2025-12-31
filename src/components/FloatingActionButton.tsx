@@ -13,11 +13,11 @@ interface FloatingActionButtonProps {
 }
 
 const colorClasses: Record<FABColor, string> = {
-  brand: 'bg-primary dark:bg-white text-white dark:text-primary',
-  amber: 'bg-amber-500 dark:bg-amber-400 text-white dark:text-gray-900',
-  green: 'bg-[#293515] dark:bg-[#4a5f2a] text-white',
-  purple: 'bg-[#CCB8E4] dark:bg-[#CCB8E4] text-[#293515] dark:text-[#293515]',
-  red: 'bg-red-600 dark:bg-red-500 text-white',
+  brand: 'bg-primary/70 dark:bg-white/70 text-white dark:text-primary backdrop-blur-xl border border-primary/20 dark:border-white/30',
+  amber: 'bg-amber-500/70 dark:bg-amber-400/70 text-white dark:text-gray-900 backdrop-blur-xl border border-amber-400/30 dark:border-amber-300/40',
+  green: 'bg-[#293515]/70 dark:bg-[#4a5f2a]/70 text-white backdrop-blur-xl border border-[#293515]/20 dark:border-[#4a5f2a]/30',
+  purple: 'bg-[#CCB8E4]/70 dark:bg-[#CCB8E4]/70 text-[#293515] dark:text-[#293515] backdrop-blur-xl border border-[#CCB8E4]/30 dark:border-[#CCB8E4]/40',
+  red: 'bg-red-600/70 dark:bg-red-500/70 text-white backdrop-blur-xl border border-red-500/20 dark:border-red-400/30',
 };
 
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
@@ -32,7 +32,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   const fabContent = (
     <button
       onClick={onClick}
-      className={`fixed right-5 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center gap-0.5 transition-all duration-300 ease-out hover:scale-110 active:scale-95 ${colorClasses[color]}`}
+      className={`fixed right-5 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out hover:scale-110 active:scale-95 ${colorClasses[color]}`}
       style={{ 
         bottom: isAtBottom 
           ? 'calc(24px + env(safe-area-inset-bottom, 0px))' 
@@ -41,10 +41,10 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       aria-label={label || 'Add new item'}
     >
       {secondaryIcon ? (
-        <>
-          <span className="material-symbols-outlined text-base">{icon}</span>
-          <span className="material-symbols-outlined text-xl">{secondaryIcon}</span>
-        </>
+        <div className="relative flex items-center justify-center w-full h-full">
+          <span className="material-symbols-outlined text-2xl">{secondaryIcon}</span>
+          <span className="material-symbols-outlined text-xs absolute left-2 top-1/2 -translate-y-1/2 opacity-90">{icon}</span>
+        </div>
       ) : (
         <span className="material-symbols-outlined text-2xl">{icon}</span>
       )}
