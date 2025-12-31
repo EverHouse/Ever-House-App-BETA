@@ -4,7 +4,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useData, CafeItem, EventData, Announcement, MemberProfile, Booking } from '../../contexts/DataContext';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import { usePageReady } from '../../contexts/PageReadyContext';
-import { getTodayPacific, addDaysToPacificDate } from '../../utils/dateUtils';
+import { getTodayPacific, addDaysToPacificDate, formatDateDisplayWithDay, formatDateTimePacific } from '../../utils/dateUtils';
 import MenuOverlay from '../../components/MenuOverlay';
 import PullToRefresh from '../../components/PullToRefresh';
 import TierBadge from '../../components/TierBadge';
@@ -851,9 +851,7 @@ const EventsAdminContent: React.FC = () => {
     const formatDate = (dateStr: string) => {
         if (!dateStr) return 'TBD';
         const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-        const date = new Date(datePart + 'T12:00:00');
-        if (isNaN(date.getTime())) return 'Invalid Date';
-        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        return formatDateDisplayWithDay(datePart);
     };
 
     const formatTime = (timeStr: string) => {
@@ -1227,8 +1225,7 @@ const ParticipantDetailsModal: React.FC<ParticipantDetailsModalProps> = ({
     type
 }) => {
     const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return formatDateTimePacific(dateStr);
     };
 
     return (
@@ -1507,7 +1504,7 @@ const StaffUpdatesAdmin: React.FC = () => {
                                             {notif.title}
                                         </h4>
                                         <span className="text-[10px] ml-2 shrink-0 text-primary/50 dark:text-white/50">
-                                            {notif.created_at ? new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now'}
+                                            {notif.created_at ? formatDateTimePacific(notif.created_at) : 'Just now'}
                                         </span>
                                     </div>
                                     <p className={`text-xs mt-0.5 ${notif.is_read ? 'text-primary/50 dark:text-white/50' : 'text-primary/70 dark:text-white/70'}`}>
@@ -2031,12 +2028,10 @@ const formatTime12 = (time24: string): string => {
     return `${hours12}:${minutes?.toString().padStart(2, '0') || '00'} ${period}`;
 };
 
-const formatDateShort = (dateStr: string): string => {
+const formatDateShortAdmin = (dateStr: string): string => {
     if (!dateStr) return 'No Date';
     const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-    const date = new Date(datePart + 'T12:00:00');
-    if (isNaN(date.getTime())) return 'Invalid Date';
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return formatDateDisplayWithDay(datePart);
 };
 
 const formatStatusLabel = (status: string): string => {
@@ -2769,7 +2764,7 @@ const SimulatorAdmin: React.FC = () => {
                                             <div>
                                                 <p className="font-bold text-primary dark:text-white">{req.user_name || req.user_email}</p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                    {formatDateShortAdmin(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
                                                 </p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">{req.duration_minutes} min</p>
                                             </div>
@@ -2853,7 +2848,7 @@ const SimulatorAdmin: React.FC = () => {
                                                 {getRelativeDateLabel(date)}
                                             </span>
                                             <span className="text-xs text-primary/50 dark:text-white/50">
-                                                {formatDateShort(date)}
+                                                {formatDateShortAdmin(date)}
                                             </span>
                                         </div>
                                         <div className="space-y-2">
@@ -2972,7 +2967,7 @@ const SimulatorAdmin: React.FC = () => {
                                             <div>
                                                 <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
                                                 <p className="text-xs text-primary/60 dark:text-white/60">
-                                                    {formatDateShort(req.request_date)}
+                                                    {formatDateShortAdmin(req.request_date)}
                                                 </p>
                                                 <p className="text-xs text-primary/60 dark:text-white/60">
                                                     {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
@@ -3007,7 +3002,7 @@ const SimulatorAdmin: React.FC = () => {
                                         <div>
                                             <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
                                             <p className="text-xs text-primary/60 dark:text-white/60">
-                                                {formatDateShort(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                {formatDateShortAdmin(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
                                             </p>
                                             {req.bay_name && (
                                                 <p className="text-xs text-primary/60 dark:text-white/60">{req.bay_name}</p>
@@ -3041,7 +3036,7 @@ const SimulatorAdmin: React.FC = () => {
                                 onClick={() => setCalendarDate(getTodayPacific())}
                                 className="font-semibold text-primary dark:text-white min-w-[120px] text-center text-sm py-1 px-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
                             >
-                                {formatDateShort(calendarDate)}
+                                {formatDateShortAdmin(calendarDate)}
                             </button>
                             <button
                                 onClick={() => {
@@ -3143,7 +3138,7 @@ const SimulatorAdmin: React.FC = () => {
                     <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                         <p className="font-medium text-primary dark:text-white">{selectedRequest?.user_name || selectedRequest?.user_email}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {selectedRequest && formatDateShort(selectedRequest.request_date)} • {selectedRequest && formatTime12(selectedRequest.start_time)} - {selectedRequest && formatTime12(selectedRequest.end_time)}
+                            {selectedRequest && formatDateShortAdmin(selectedRequest.request_date)} • {selectedRequest && formatTime12(selectedRequest.start_time)} - {selectedRequest && formatTime12(selectedRequest.end_time)}
                         </p>
                     </div>
                     
@@ -3258,7 +3253,7 @@ const SimulatorAdmin: React.FC = () => {
                     <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg text-sm">
                         <p className="font-medium text-primary dark:text-white">{selectedRequest?.user_name || selectedRequest?.user_email}</p>
                         <p className="text-gray-500 dark:text-gray-400">
-                            {selectedRequest && formatDateShort(selectedRequest.request_date)} • {selectedRequest && formatTime12(selectedRequest.start_time)} - {selectedRequest && formatTime12(selectedRequest.end_time)}
+                            {selectedRequest && formatDateShortAdmin(selectedRequest.request_date)} • {selectedRequest && formatTime12(selectedRequest.start_time)} - {selectedRequest && formatTime12(selectedRequest.end_time)}
                         </p>
                         {selectedBayId && (
                             <p className="text-gray-500 dark:text-gray-400">
@@ -3366,7 +3361,7 @@ const SimulatorAdmin: React.FC = () => {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Date</p>
-                            <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking && formatDateShort(selectedCalendarBooking.request_date)}</p>
+                            <p className="font-medium text-primary dark:text-white text-sm">{selectedCalendarBooking && formatDateShortAdmin(selectedCalendarBooking.request_date)}</p>
                         </div>
                         <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Time</p>
@@ -3463,7 +3458,7 @@ const SimulatorAdmin: React.FC = () => {
                                                 body: JSON.stringify({
                                                     user_email: selectedCalendarBooking.user_email,
                                                     title: 'Booking Cancelled',
-                                                    message: `Your booking for ${formatDateShort(selectedCalendarBooking.request_date)} at ${formatTime12(selectedCalendarBooking.start_time)} has been cancelled by staff.`,
+                                                    message: `Your booking for ${formatDateShortAdmin(selectedCalendarBooking.request_date)} at ${formatTime12(selectedCalendarBooking.start_time)} has been cancelled by staff.`,
                                                     type: 'booking_cancelled',
                                                     related_id: selectedCalendarBooking.id,
                                                     related_type: 'booking'
@@ -3524,7 +3519,7 @@ const SimulatorAdmin: React.FC = () => {
                     <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg text-sm">
                         <p className="font-medium text-primary dark:text-white">{markStatusModal.booking?.user_name || markStatusModal.booking?.user_email}</p>
                         <p className="text-gray-500 dark:text-gray-400">
-                            {markStatusModal.booking && formatDateShort(markStatusModal.booking.request_date)} • {markStatusModal.booking && formatTime12(markStatusModal.booking.start_time)} - {markStatusModal.booking && formatTime12(markStatusModal.booking.end_time)}
+                            {markStatusModal.booking && formatDateShortAdmin(markStatusModal.booking.request_date)} • {markStatusModal.booking && formatTime12(markStatusModal.booking.start_time)} - {markStatusModal.booking && formatTime12(markStatusModal.booking.end_time)}
                         </p>
                         {markStatusModal.booking?.bay_name && (
                             <p className="text-gray-500 dark:text-gray-400">
@@ -4358,9 +4353,7 @@ const WellnessAdminContent: React.FC = () => {
     const formatDate = (dateStr: string) => {
         if (!dateStr) return 'No Date';
         const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-        const date = new Date(datePart + 'T12:00:00');
-        if (isNaN(date.getTime())) return 'Invalid Date';
-        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        return formatDateDisplayWithDay(datePart);
     };
 
     const handleViewEnrollments = async (cls: WellnessClass) => {
@@ -5900,11 +5893,7 @@ const BlocksAdmin: React.FC = () => {
     const formatDate = (dateStr: string) => {
         if (!dateStr) return 'No Date';
         const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-        const date = new Date(datePart + 'T12:00:00');
-        if (isNaN(date.getTime())) return 'Invalid Date';
-        return date.toLocaleDateString('en-US', { 
-            weekday: 'short', month: 'short', day: 'numeric' 
-        });
+        return formatDateDisplayWithDay(datePart);
     };
 
     const formatTime = (time: string) => {
@@ -7040,12 +7029,10 @@ const ChangelogAdmin: React.FC = () => {
     }, []);
 
     const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr + 'T12:00:00');
-        return date.toLocaleDateString('en-GB', { 
-            day: 'numeric', 
-            month: 'long', 
-            year: 'numeric' 
-        });
+        const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        const [year, month, day] = datePart.split('-').map(Number);
+        const longMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return `${day} ${longMonths[month - 1]} ${year}`;
     };
 
     return (
@@ -7956,8 +7943,8 @@ const ToursAdmin: React.FC = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + 'T12:00:00');
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+    return formatDateDisplayWithDay(datePart);
   };
 
   if (loading) {
@@ -8335,7 +8322,7 @@ const TrackmanAdmin: React.FC = () => {
                 <div className="flex flex-col gap-1">
                   <p className="font-medium text-primary dark:text-white text-sm truncate">{run.filename}</p>
                   <p className="text-xs text-primary/60 dark:text-white/60">
-                    {run.createdAt ? new Date(run.createdAt).toLocaleDateString() : 'Unknown date'} by {run.importedBy || 'system'}
+                    {run.createdAt ? formatDateTimePacific(run.createdAt) : 'Unknown date'} by {run.importedBy || 'system'}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-1">
                     <span className="text-xs text-green-600 dark:text-green-400">{run.matchedRows ?? 0} matched</span>

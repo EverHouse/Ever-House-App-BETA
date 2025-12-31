@@ -567,7 +567,7 @@ const MemberUpdates: React.FC = () => {
                         {notif.title}
                       </h4>
                       <span className={`text-[10px] ml-2 shrink-0 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
-                        {notif.created_at ? new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Just now'}
+                        {notif.created_at ? formatDateTimePacific(notif.created_at) : 'Just now'}
                       </span>
                     </div>
                     <p className={`text-xs mt-0.5 ${notif.is_read ? (isDark ? 'text-white/50' : 'text-primary/50') : (isDark ? 'text-white/70' : 'text-primary/70')}`}>

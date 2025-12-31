@@ -4,6 +4,7 @@ import { Footer } from '../../components/Footer';
 import { BookingCardSkeleton, SkeletonList } from '../../components/skeletons';
 import BackToTop from '../../components/BackToTop';
 import { usePageReady } from '../../contexts/PageReadyContext';
+import { formatDateDisplayWithDay } from '../../utils/dateUtils';
 
 interface Event {
   id: number;
@@ -97,13 +98,14 @@ const WhatsOn: React.FC = () => {
   const formatDate = (dateString: string) => {
     if (!dateString) return { day: '--', month: '---', weekday: '---', full: 'No Date' };
     const datePart = dateString.includes('T') ? dateString.split('T')[0] : dateString;
-    const date = new Date(datePart + 'T12:00:00');
-    if (isNaN(date.getTime())) return { day: '--', month: '---', weekday: '---', full: 'Invalid Date' };
+    const [year, month, day] = datePart.split('-').map(Number);
+    if (!year || !month || !day) return { day: '--', month: '---', weekday: '---', full: 'Invalid Date' };
+    const shortMonths = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
     return {
-      day: date.getDate().toString().padStart(2, '0'),
-      month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-      weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
-      full: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      day: day.toString().padStart(2, '0'),
+      month: shortMonths[month - 1],
+      weekday: formatDateDisplayWithDay(datePart).split(',')[0],
+      full: formatDateDisplayWithDay(datePart)
     };
   };
 

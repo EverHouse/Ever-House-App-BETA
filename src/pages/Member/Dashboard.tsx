@@ -7,7 +7,7 @@ import { useToast } from '../../components/Toast';
 import GlassRow from '../../components/GlassRow';
 import DateButton from '../../components/DateButton';
 import WelcomeBanner from '../../components/WelcomeBanner';
-import { formatDateShort, getTodayString, getPacificHour, CLUB_TIMEZONE } from '../../utils/dateUtils';
+import { formatDateShort, getTodayString, getPacificHour, CLUB_TIMEZONE, formatDateTimePacific } from '../../utils/dateUtils';
 import { DashboardSkeleton } from '../../components/skeletons';
 import { getBaseTier, isFoundingMember } from '../../utils/permissions';
 import { getTierColor } from '../../utils/tierUtils';
@@ -472,8 +472,7 @@ const Dashboard: React.FC = () => {
 
   const formatLastVisit = (dateStr: string | undefined) => {
     if (!dateStr) return null;
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return formatDateTimePacific(dateStr);
   };
 
   if (isLoading) {
