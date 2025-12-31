@@ -5976,7 +5976,7 @@ const BlocksAdmin: React.FC = () => {
 
     const handlePullRefresh = async () => {
         await Promise.all([fetchClosures(), fetchBlocks()]);
-        showToast('Closures and blocks refreshed', 'success');
+        showToast('Notices and blocks refreshed', 'success');
     };
 
     const handleDeleteBlock = async (id: number) => {
@@ -6105,22 +6105,22 @@ const BlocksAdmin: React.FC = () => {
                     onClick={() => setActiveTab('closures')}
                     className={`flex-1 py-3 rounded-xl font-medium transition-all ${
                         activeTab === 'closures' 
-                            ? 'bg-red-500 text-white' 
+                            ? 'bg-amber-500 text-white' 
                             : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20'
                     }`}
                 >
-                    <span className="material-symbols-outlined text-lg align-middle mr-1">block</span>
-                    Closures ({closures.length})
+                    <span className="material-symbols-outlined text-lg align-middle mr-1">notifications</span>
+                    Notices ({closures.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('blocks')}
                     className={`flex-1 py-3 rounded-xl font-medium transition-all ${
                         activeTab === 'blocks' 
-                            ? 'bg-amber-500 text-white' 
+                            ? 'bg-red-500 text-white' 
                             : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20'
                     }`}
                 >
-                    <span className="material-symbols-outlined text-lg align-middle mr-1">event_busy</span>
+                    <span className="material-symbols-outlined text-lg align-middle mr-1">lock</span>
                     Blocks ({new Set(blocks.map(b => b.block_date)).size})
                 </button>
             </div>
@@ -6128,34 +6128,40 @@ const BlocksAdmin: React.FC = () => {
             {activeTab === 'closures' && (
                 <div className="space-y-4 animate-pop-in" style={{animationDelay: '0.1s'}}>
                     {closuresLoading ? (
-                        <div className="text-center py-8 text-gray-400 dark:text-white/50">Loading closures...</div>
+                        <div className="text-center py-8 text-gray-400 dark:text-white/50">Loading notices...</div>
                     ) : closures.length === 0 ? (
                         <div className="text-center py-12 text-gray-400 dark:text-white/50">
                             <span className="material-symbols-outlined text-4xl mb-2">event_available</span>
-                            <p>No active closures</p>
+                            <p>No active notices</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {closures.map((closure, index) => (
+                            {closures.map((closure, index) => {
+                                const isNotice = closure.affectedAreas === 'none';
+                                return (
                                 <div 
                                     key={closure.id} 
                                     onClick={() => handleEditClosure(closure)}
-                                    className="p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 cursor-pointer hover:border-red-400 dark:hover:border-red-500/50 transition-all animate-pop-in"
+                                    className={`p-4 rounded-2xl cursor-pointer transition-all animate-pop-in ${
+                                        isNotice 
+                                            ? 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-500/50'
+                                            : 'bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 hover:border-red-400 dark:hover:border-red-500/50'
+                                    }`}
                                     style={{animationDelay: `${0.15 + index * 0.05}s`}}
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                                <span className="text-[10px] font-bold uppercase text-red-500 dark:text-red-400">Closure</span>
-                                                <span className="text-[10px] text-red-400 dark:text-red-400/70">• {formatAffectedAreas(closure.affectedAreas)}</span>
+                                                <span className={`w-2 h-2 rounded-full ${isNotice ? 'bg-amber-500' : 'bg-red-500'}`}></span>
+                                                <span className={`text-[10px] font-bold uppercase ${isNotice ? 'text-amber-500 dark:text-amber-400' : 'text-red-500 dark:text-red-400'}`}>{isNotice ? 'Notice' : 'Closure'}</span>
+                                                <span className={`text-[10px] ${isNotice ? 'text-amber-400 dark:text-amber-400/70' : 'text-red-400 dark:text-red-400/70'}`}>• {formatAffectedAreas(closure.affectedAreas)}</span>
                                             </div>
                                             <h4 className="font-bold text-primary dark:text-white mb-1">{closure.title}</h4>
                                             {closure.reason && (
                                                 <p className="text-sm text-gray-600 dark:text-white/60 leading-relaxed mb-2">{closure.reason}</p>
                                             )}
                                             <div className="flex flex-wrap gap-2">
-                                                <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-500/20 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
+                                                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${isNotice ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'}`}>
                                                     <span className="material-symbols-outlined text-[12px]">calendar_today</span>
                                                     <span>
                                                         {formatDate(closure.startDate)}
@@ -6163,7 +6169,7 @@ const BlocksAdmin: React.FC = () => {
                                                     </span>
                                                 </div>
                                                 {(closure.startTime || closure.endTime) && (
-                                                    <div className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-500/20 px-2 py-1 rounded text-xs text-red-600 dark:text-red-400">
+                                                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${isNotice ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'}`}>
                                                         <span className="material-symbols-outlined text-[12px]">schedule</span>
                                                         <span>{formatTime(closure.startTime || '')}{closure.endTime ? ` - ${formatTime(closure.endTime)}` : ''}</span>
                                                     </div>
@@ -6172,13 +6178,14 @@ const BlocksAdmin: React.FC = () => {
                                         </div>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); handleDeleteClosure(closure.id); }} 
-                                            className="text-red-400 dark:text-red-400/50 hover:text-red-600 dark:hover:text-red-400 p-1"
+                                            className={`p-1 ${isNotice ? 'text-amber-400 dark:text-amber-400/50 hover:text-amber-600 dark:hover:text-amber-400' : 'text-red-400 dark:text-red-400/50 hover:text-red-600 dark:hover:text-red-400'}`}
                                         >
                                             <span className="material-symbols-outlined">delete</span>
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -6243,13 +6250,13 @@ const BlocksAdmin: React.FC = () => {
                                             className="w-full p-4 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <span className="material-symbols-outlined text-amber-500 dark:text-amber-400">
+                                                <span className="material-symbols-outlined text-red-500 dark:text-red-400">
                                                     calendar_today
                                                 </span>
                                                 <span className="font-bold text-primary dark:text-white">
                                                     {formatDate(date)}
                                                 </span>
-                                                <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-medium">
+                                                <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
                                                     {dateBlocks.length} block{dateBlocks.length !== 1 ? 's' : ''}
                                                 </span>
                                             </div>

@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.18",
+    date: "2025-12-31",
+    title: "Notices vs Blocks Visual Distinction",
+    changes: [
+      "Admin Notices page now clearly distinguishes between informational notices and booking blocks",
+      "Notices tab (amber) shows general announcements that don't affect availability",
+      "Blocks tab (red) shows items that actually restrict booking times",
+      "Cards with 'None' affected areas now display in amber instead of red",
+      "Improved visual hierarchy helps staff quickly identify what impacts bookings"
+    ]
+  },
+  {
     version: "7.17",
     date: "2025-12-31",
     title: "Closures Renamed to Notices",
