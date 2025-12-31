@@ -5789,14 +5789,24 @@ const BlocksAdmin: React.FC = () => {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
+                const data = await res.json().catch(() => ({}));
                 setIsClosureModalOpen(false);
                 resetClosureForm();
                 fetchClosures();
                 fetchBlocks();
-                showToast(
-                    editingClosureId ? 'Closure updated successfully' : 'Closure created successfully',
-                    'success'
-                );
+                
+                // Check for warnings in the response
+                if (data.warnings && data.warnings.length > 0) {
+                    showToast(
+                        `Closure ${editingClosureId ? 'updated' : 'created'}, but: ${data.warnings.join(', ')}`,
+                        'warning'
+                    );
+                } else {
+                    showToast(
+                        editingClosureId ? 'Closure updated successfully' : 'Closure created successfully',
+                        'success'
+                    );
+                }
             } else {
                 const error = await res.json().catch(() => ({}));
                 showToast(error.error || 'Failed to save closure', 'error');

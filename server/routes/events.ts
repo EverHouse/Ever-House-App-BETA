@@ -302,17 +302,19 @@ router.delete('/api/events/:id', isStaffOrAdmin, async (req, res) => {
         const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
         if (calendarId) {
           await deleteCalendarEvent(existing[0].googleCalendarId, calendarId);
+        } else {
+          console.error(`[Events] Calendar "${CALENDAR_CONFIG.events.name}" not found for event deletion`);
         }
-      } catch (calError) {
-        if (!isProduction) console.error('Failed to delete Google Calendar event:', calError);
+      } catch (calError: any) {
+        console.error('Failed to delete Google Calendar event:', calError?.message || calError);
       }
     }
     
     await db.delete(events).where(eq(events.id, parseInt(id)));
     res.json({ success: true });
   } catch (error: any) {
-    if (!isProduction) console.error('Event delete error:', error);
-    res.status(500).json({ error: 'Failed to delete event' });
+    console.error('Event delete error:', error?.message || error);
+    res.status(500).json({ error: 'Failed to delete event', details: error?.message });
   }
 });
 

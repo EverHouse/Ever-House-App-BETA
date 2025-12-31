@@ -59,6 +59,30 @@ export async function getCalendarIdByName(name: string): Promise<string | null> 
   return calendarIdCache[name] || null;
 }
 
+export async function getCalendarStatus(): Promise<{
+  configured: { key: string; name: string; calendarId: string | null; status: 'connected' | 'not_found' }[];
+  discovered: { name: string; calendarId: string }[];
+}> {
+  await discoverCalendarIds();
+  
+  const configured = Object.entries(CALENDAR_CONFIG).map(([key, config]) => {
+    const calendarId = calendarIdCache[config.name] || null;
+    return {
+      key,
+      name: config.name,
+      calendarId,
+      status: calendarId ? 'connected' as const : 'not_found' as const
+    };
+  });
+  
+  const discovered = Object.entries(calendarIdCache).map(([name, calendarId]) => ({
+    name,
+    calendarId
+  }));
+  
+  return { configured, discovered };
+}
+
 export interface TimeSlot {
   start: string;
   end: string;
@@ -174,12 +198,25 @@ export async function createCalendarEvent(booking: any, bayName: string): Promis
   try {
     const calendar = await getGoogleCalendarClient();
     
-    const startDateTime = createPacificDate(booking.request_date, booking.start_time);
-    const endDateTime = createPacificDate(booking.request_date, booking.end_time);
+    // Support both camelCase (from Drizzle ORM) and snake_case property names
+    const requestDate = booking.requestDate || booking.request_date;
+    const startTime = booking.startTime || booking.start_time;
+    const endTime = booking.endTime || booking.end_time;
+    const userName = booking.userName || booking.user_name;
+    const userEmail = booking.userEmail || booking.user_email;
+    const durationMinutes = booking.durationMinutes || booking.duration_minutes;
+    
+    if (!requestDate || !startTime || !endTime) {
+      console.error('Error creating calendar event: Missing required booking fields', { requestDate, startTime, endTime });
+      return null;
+    }
+    
+    const startDateTime = createPacificDate(requestDate, startTime);
+    const endDateTime = createPacificDate(requestDate, endTime);
     
     const event = {
-      summary: `Booking: ${booking.user_name || booking.user_email}`,
-      description: `Area: ${bayName}\nMember: ${booking.user_email}\nDuration: ${booking.duration_minutes} minutes${booking.notes ? '\nNotes: ' + booking.notes : ''}`,
+      summary: `Booking: ${userName || userEmail}`,
+      description: `Area: ${bayName}\nMember: ${userEmail}\nDuration: ${durationMinutes} minutes${booking.notes ? '\nNotes: ' + booking.notes : ''}`,
       start: {
         dateTime: startDateTime.toISOString(),
         timeZone: 'America/Los_Angeles',

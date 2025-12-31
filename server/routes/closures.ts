@@ -451,6 +451,8 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       console.error('[Closures] Failed to create calendar event:', calError);
     }
     
+    const warnings: string[] = [];
+    
     if (notify_members) {
       const notificationTitle = title || 'Facility Closure';
       const affectedText = affected_areas === 'entire_facility' 
@@ -465,36 +467,52 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         ? `${reason} - ${affectedText} on ${startDateFormattedNotif}`
         : `${affectedText} will be closed on ${startDateFormattedNotif}`;
       
-      const memberUsers = await db
-        .select({ email: users.email })
-        .from(users)
-        .where(or(eq(users.role, 'member'), isNull(users.role)));
-      
-      // Filter out users with null/empty emails
-      const membersWithEmails = memberUsers.filter(m => m.email && m.email.trim());
-      
-      if (membersWithEmails.length > 0) {
-        const notificationValues = membersWithEmails.map(m => ({
-          userEmail: m.email!,
-          title: notificationTitle,
-          message: notificationBody,
-          type: 'closure',
-          relatedId: closureId,
-          relatedType: 'closure'
-        }));
+      try {
+        const memberUsers = await db
+          .select({ email: users.email })
+          .from(users)
+          .where(or(eq(users.role, 'member'), isNull(users.role)));
         
-        await db.insert(notifications).values(notificationValues);
-        console.log(`[Closures] Created in-app notifications for ${membersWithEmails.length} members`);
+        // Filter out users with null/empty emails
+        const membersWithEmails = memberUsers.filter(m => m.email && m.email.trim());
+        
+        if (membersWithEmails.length > 0) {
+          const notificationValues = membersWithEmails.map(m => ({
+            userEmail: m.email!,
+            title: notificationTitle,
+            message: notificationBody,
+            type: 'closure',
+            relatedId: closureId,
+            relatedType: 'closure'
+          }));
+          
+          await db.insert(notifications).values(notificationValues);
+          console.log(`[Closures] Created in-app notifications for ${membersWithEmails.length} members`);
+        }
+      } catch (notifError) {
+        console.error('[Closures] Failed to create in-app notifications:', notifError);
+        warnings.push('Failed to send in-app notifications to members');
       }
       
-      await sendPushNotificationToAllMembers({
-        title: notificationTitle,
-        body: notificationBody,
-        url: '/announcements'
-      });
+      try {
+        await sendPushNotificationToAllMembers({
+          title: notificationTitle,
+          body: notificationBody,
+          url: '/announcements'
+        });
+      } catch (pushError) {
+        console.error('[Closures] Failed to send push notifications:', pushError);
+        warnings.push('Failed to send push notifications to members');
+      }
     }
     
-    res.json({ ...result, googleCalendarId: golfEventIds, conferenceCalendarId: conferenceEventIds, internalCalendarId: internalEventIds });
+    res.json({ 
+      ...result, 
+      googleCalendarId: golfEventIds, 
+      conferenceCalendarId: conferenceEventIds, 
+      internalCalendarId: internalEventIds,
+      warnings: warnings.length > 0 ? warnings : undefined
+    });
   } catch (error: any) {
     if (!isProduction) console.error('Closure create error:', error);
     res.status(500).json({ error: 'Failed to create closure' });

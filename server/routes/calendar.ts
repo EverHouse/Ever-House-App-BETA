@@ -1,11 +1,44 @@
 import { Router } from 'express';
 import { isProduction } from '../core/db';
 import { getGoogleCalendarClient } from '../core/integrations';
-import { CALENDAR_CONFIG, getCalendarAvailability, discoverCalendarIds } from '../core/calendar';
+import { CALENDAR_CONFIG, getCalendarAvailability, discoverCalendarIds, getCalendarStatus } from '../core/calendar';
+import { isStaffOrAdmin } from '../core/middleware';
 
 const router = Router();
 
-const calendarIdCache: Record<string, string> = {};
+// Admin endpoint to check calendar status
+router.get('/api/admin/calendars', isStaffOrAdmin, async (req, res) => {
+  try {
+    const status = await getCalendarStatus();
+    
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      summary: {
+        total_configured: status.configured.length,
+        connected: status.configured.filter(c => c.status === 'connected').length,
+        not_found: status.configured.filter(c => c.status === 'not_found').length,
+        total_discovered: status.discovered.length
+      },
+      configured_calendars: status.configured,
+      all_discovered_calendars: status.discovered,
+      usage_mapping: {
+        'Booked Golf': 'Bay bookings (Golf Simulators)',
+        'MBO_Conference_Room': 'Conference Room bookings',
+        'Events': 'Events sync',
+        'Wellness & Classes': 'Wellness classes sync',
+        'Tours Scheduled': 'Tours sync',
+        'Internal Calendar': 'Closures (internal tracking)'
+      }
+    });
+  } catch (error: any) {
+    console.error('Calendar status check error:', error);
+    res.status(500).json({ 
+      error: 'Failed to check calendar status',
+      details: error.message 
+    });
+  }
+});
 
 router.get('/api/calendar-availability/golf', async (req, res) => {
   try {
@@ -65,9 +98,9 @@ router.get('/api/calendar-availability/conference', async (req, res) => {
 
 router.get('/api/calendars', async (req, res) => {
   try {
-    await discoverCalendarIds();
+    const status = await getCalendarStatus();
     res.json({
-      calendars: Object.entries(calendarIdCache).map(([name, id]) => ({ name, id })),
+      calendars: status.discovered,
       configured: {
         golf: CALENDAR_CONFIG.golf.name,
         conference: CALENDAR_CONFIG.conference.name,
