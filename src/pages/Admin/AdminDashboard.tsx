@@ -7773,7 +7773,7 @@ const StaffTrainingGuide: React.FC = () => {
 
                 <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-400">
                     <p>Even House Members App - Staff Training Guide</p>
-                    <p>Generated on {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    <p>Generated on {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Los_Angeles' })}</p>
                 </div>
             </div>
 

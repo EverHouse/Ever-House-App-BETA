@@ -467,7 +467,8 @@ router.post('/api/booking-requests', async (req, res) => {
     const formattedDate = new Date(row.requestDate).toLocaleDateString('en-US', { 
       weekday: 'short', 
       month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      timeZone: 'America/Los_Angeles'
     });
     const formattedTime = row.startTime?.substring(0, 5) || start_time.substring(0, 5);
     
@@ -478,7 +479,8 @@ router.post('/api/booking-requests', async (req, res) => {
       const origFormattedDate = new Date(originalBooking.requestDate).toLocaleDateString('en-US', { 
         weekday: 'short', 
         month: 'short', 
-        day: 'numeric' 
+        day: 'numeric',
+        timeZone: 'America/Los_Angeles'
       });
       const origFormattedTime = originalBooking.startTime?.substring(0, 5) || '';
       staffTitle = 'Reschedule Request';

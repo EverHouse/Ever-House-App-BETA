@@ -916,7 +916,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
     // Notify member about their new booking
     try {
       const formattedDate = new Date(booking_date + 'T00:00:00').toLocaleDateString('en-US', { 
-        weekday: 'short', month: 'short', day: 'numeric' 
+        weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles'
       });
       const formatTime = (t: string) => {
         const [h, m] = t.split(':').map(Number);

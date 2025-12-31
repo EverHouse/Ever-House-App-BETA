@@ -159,7 +159,7 @@ const InquiriesAdmin: React.FC = () => {
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' });
     };
 
     const getFormTypeLabel = (type: string) => {
