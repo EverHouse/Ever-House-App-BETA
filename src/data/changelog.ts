@@ -9,7 +9,7 @@ export interface ChangelogEntry {
 export const changelog: ChangelogEntry[] = [
   {
     version: "7.6",
-    date: "2025-12-31",
+    date: "2025-12-30",
     title: "Navigation Fix",
     changes: [
       "Closure card on dashboard now navigates to the Closures tab on Updates page"
@@ -17,7 +17,7 @@ export const changelog: ChangelogEntry[] = [
   },
   {
     version: "7.5",
-    date: "2025-12-31",
+    date: "2025-12-30",
     title: "Wellness Time Display",
     changes: [
       "Wellness event times now display in reader-friendly 12-hour format with AM/PM"
@@ -25,7 +25,7 @@ export const changelog: ChangelogEntry[] = [
   },
   {
     version: "7.4",
-    date: "2025-12-31",
+    date: "2025-12-30",
     title: "Flexible Booking Durations",
     changes: [
       "Core members can now select 30-minute or 60-minute durations for golf and conference room bookings"
@@ -33,7 +33,7 @@ export const changelog: ChangelogEntry[] = [
   },
   {
     version: "7.3",
-    date: "2025-12-31",
+    date: "2025-12-30",
     title: "Closure Management Improvements",
     changes: [
       "Multi-select checkboxes for closure affected areas (select individual bays, conference room, or none)",
@@ -47,7 +47,7 @@ export const changelog: ChangelogEntry[] = [
   },
   {
     version: "7.2",
-    date: "2025-12-31",
+    date: "2025-12-30",
     title: "UI Polish",
     changes: [
       "Member search dropdown now has solid background for better readability in dark mode",
@@ -56,7 +56,7 @@ export const changelog: ChangelogEntry[] = [
   },
   {
     version: "7.1",
-    date: "2025-12-31",
+    date: "2025-12-30",
     title: "Reschedule Workflow Improvements",
     changes: [
       "Staff notifications for reschedule requests now navigate to bookings page when tapped",

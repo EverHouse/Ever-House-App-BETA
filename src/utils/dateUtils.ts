@@ -112,3 +112,28 @@ export function compareDates(dateStr1: string, dateStr2: string): number {
   const clean2 = dateStr2.split('T')[0];
   return clean1.localeCompare(clean2);
 }
+
+export function formatDateDisplayWithDay(dateStr: string): string {
+  const cleanDate = dateStr.split('T')[0];
+  const [year, month, day] = cleanDate.split('-').map(Number);
+  const dayOfWeek = getDayOfWeek(year, month, day);
+  return `${SHORT_DAYS[dayOfWeek]}, ${SHORT_MONTHS[month - 1]} ${day}`;
+}
+
+export function formatTime12Hour(timeStr: string): string {
+  if (!timeStr) return '';
+  const [hours, minutes] = timeStr.substring(0, 5).split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${String(minutes).padStart(2, '0')} ${period}`;
+}
+
+export function formatDateTimePacific(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric',
+    timeZone: CLUB_TIMEZONE 
+  });
+}

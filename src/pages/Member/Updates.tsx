@@ -7,7 +7,7 @@ import SwipeablePage from '../../components/SwipeablePage';
 import PullToRefresh from '../../components/PullToRefresh';
 import { MotionList, MotionListItem } from '../../components/motion';
 import { SwipeableListItem } from '../../components/SwipeableListItem';
-import { getTodayPacific, parseLocalDate } from '../../utils/dateUtils';
+import { getTodayPacific, formatDateDisplayWithDay, formatDateTimePacific } from '../../utils/dateUtils';
 
 interface UserNotification {
   id: number;
@@ -53,10 +53,8 @@ const formatAffectedAreas = (areas: string): string => {
 };
 
 const formatClosureDateRange = (startDate: string, endDate: string, startTime: string | null, endTime: string | null): string => {
-  const start = parseLocalDate(startDate);
-  const end = parseLocalDate(endDate);
-  const startFormatted = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  const endFormatted = end.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const startFormatted = formatDateDisplayWithDay(startDate);
+  const endFormatted = formatDateDisplayWithDay(endDate);
   
   const timeRange = startTime && endTime 
     ? ` (${startTime.substring(0, 5)} - ${endTime.substring(0, 5)})`
@@ -72,9 +70,10 @@ const formatClosureDateRange = (startDate: string, endDate: string, startTime: s
 
 const formatDate = (dateStr: string): string => {
   if (!dateStr || dateStr === 'Just now') return dateStr;
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (dateStr.includes('T') || dateStr.includes('Z')) {
+    return formatDateTimePacific(dateStr);
+  }
+  return formatDateDisplayWithDay(dateStr);
 };
 
 const isActiveAnnouncement = (item: Announcement): boolean => {

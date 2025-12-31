@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useData } from '../contexts/DataContext';
-import { getTodayPacific, parseLocalDate } from '../utils/dateUtils';
+import { getTodayPacific, formatDateDisplayWithDay } from '../utils/dateUtils';
 
 interface Closure {
   id: number;
@@ -37,10 +37,8 @@ const formatAffectedAreas = (areas: string): string => {
 };
 
 const formatDateRange = (startDate: string, endDate: string, startTime: string | null, endTime: string | null): string => {
-  const start = parseLocalDate(startDate);
-  const end = parseLocalDate(endDate);
-  const startFormatted = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  const endFormatted = end.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const startFormatted = formatDateDisplayWithDay(startDate);
+  const endFormatted = formatDateDisplayWithDay(endDate);
   
   const timeRange = startTime && endTime 
     ? ` (${startTime.substring(0, 5)} - ${endTime.substring(0, 5)})`
