@@ -1312,9 +1312,10 @@ interface StaffNotification {
 }
 
 const StaffUpdatesAdmin: React.FC = () => {
+    const navigate = useNavigate();
     const { setPageReady } = usePageReady();
     const { actualUser } = useData();
-    const [activeSubTab, setActiveSubTab] = useState<'activity' | 'announcements'>('activity');
+    const [activeSubTab, setActiveSubTab] = useState<'activity' | 'announcements'>('announcements');
     const [notifications, setNotifications] = useState<StaffNotification[]>([]);
     const [notificationsLoading, setNotificationsLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
