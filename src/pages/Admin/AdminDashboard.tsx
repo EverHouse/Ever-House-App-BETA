@@ -1557,7 +1557,7 @@ const StaffUpdatesAdmin: React.FC = () => {
                 </div>
 
                 {activeSubTab === 'activity' ? renderActivityTab() : <AnnouncementsAdmin triggerCreate={triggerCreateAnnouncement} />}
-                <FloatingActionButton onClick={handleCreateAnnouncement} color="amber" secondaryIcon="campaign" label="Add announcement" />
+                <FloatingActionButton onClick={handleCreateAnnouncement} color="purple" label="Add announcement" />
             </div>
         </PullToRefresh>
     );
@@ -6274,12 +6274,12 @@ const BlocksAdmin: React.FC = () => {
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 <span className="font-bold text-primary dark:text-white">{block.bay_name}</span>
-                                                                <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs">
+                                                                <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-xs">
                                                                     {block.block_type}
                                                                 </span>
                                                                 {block.closure_id && (
-                                                                    <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-xs">
-                                                                        From Closure
+                                                                    <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs">
+                                                                        From Notice
                                                                     </span>
                                                                 )}
                                                             </div>

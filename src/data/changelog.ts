@@ -8,12 +8,34 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.20",
+    date: "2025-12-31",
+    title: "Block Tags Visual Update",
+    changes: [
+      "Block type badges now display in red for clearer visibility",
+      "Renamed 'From Closure' to 'From Notice' for consistency with new terminology",
+      "Notice-linked blocks show amber 'From Notice' badge to indicate source"
+    ]
+  },
+  {
+    version: "7.19",
+    date: "2025-12-31",
+    title: "Announcements Visual Update",
+    changes: [
+      "Announcements now use brand purple color for visual distinction",
+      "Updated Announcements tab on Updates page to purple styling",
+      "Updated announcement cards on member dashboard to purple theme",
+      "Simplified FAB button design - removed secondary icon overlay",
+      "Clear color hierarchy: Purple (announcements), Amber (notices), Red (blocks)"
+    ]
+  },
+  {
     version: "7.18",
     date: "2025-12-31",
     title: "Notices vs Blocks Visual Distinction",
     changes: [
       "Admin Notices page now clearly distinguishes between informational notices and booking blocks",
-      "Notices tab (amber) shows general announcements that don't affect availability",
+      "Notices tab (amber) shows items that don't affect availability",
       "Blocks tab (red) shows items that actually restrict booking times",
       "Cards with 'None' affected areas now display in amber instead of red",
       "Improved visual hierarchy helps staff quickly identify what impacts bookings"

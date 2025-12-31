@@ -53,23 +53,23 @@ const AnnouncementAlert: React.FC = () => {
 
   const cardColors = isUpdate
     ? isDark 
-      ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/15' 
-      : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+      ? 'bg-[#CCB8E4]/10 border-[#CCB8E4]/30 hover:bg-[#CCB8E4]/15' 
+      : 'bg-[#CCB8E4]/10 border-[#CCB8E4]/30 hover:bg-[#CCB8E4]/20'
     : isDark
-      ? 'bg-accent/10 border-accent/30 hover:bg-accent/15'
-      : 'bg-accent/10 border-accent/30 hover:bg-accent/20';
+      ? 'bg-[#CCB8E4]/10 border-[#CCB8E4]/30 hover:bg-[#CCB8E4]/15'
+      : 'bg-[#CCB8E4]/10 border-[#CCB8E4]/30 hover:bg-[#CCB8E4]/20';
 
   const iconBgColor = isUpdate
-    ? isDark ? 'bg-amber-500/20' : 'bg-amber-100'
-    : isDark ? 'bg-accent/20' : 'bg-accent/20';
+    ? isDark ? 'bg-[#CCB8E4]/20' : 'bg-[#CCB8E4]/20'
+    : isDark ? 'bg-[#CCB8E4]/20' : 'bg-[#CCB8E4]/20';
 
   const iconColor = isUpdate
-    ? isDark ? 'text-amber-400' : 'text-amber-600'
-    : isDark ? 'text-accent' : 'text-accent';
+    ? isDark ? 'text-[#CCB8E4]' : 'text-[#9370B8]'
+    : isDark ? 'text-[#CCB8E4]' : 'text-[#9370B8]';
 
   const labelColor = isUpdate
-    ? isDark ? 'text-amber-400' : 'text-amber-700'
-    : isDark ? 'text-accent' : 'text-primary';
+    ? isDark ? 'text-[#CCB8E4]' : 'text-[#7B5BA0]'
+    : isDark ? 'text-[#CCB8E4]' : 'text-[#7B5BA0]';
 
   const labelText = hasMultiple 
     ? `${unseenHighPriority.length} new ${isUpdate ? 'updates' : 'announcements'}` 
