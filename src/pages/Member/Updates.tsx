@@ -34,7 +34,18 @@ interface Closure {
 const formatAffectedAreas = (areas: string): string => {
   if (areas === 'entire_facility') return 'Entire Facility';
   if (areas === 'all_bays') return 'All Simulator Bays';
-  return areas;
+  if (areas === 'none') return 'No booking restrictions';
+  
+  const areaList = areas.split(',').map(a => a.trim());
+  const formatted = areaList.map(area => {
+    if (area === 'entire_facility') return 'Entire Facility';
+    if (area === 'all_bays') return 'All Simulator Bays';
+    if (area === 'conference_room') return 'Conference Room';
+    if (area === 'Conference Room') return 'Conference Room';
+    if (area === 'none') return 'No booking restrictions';
+    return area;
+  });
+  return formatted.join(', ');
 };
 
 const formatClosureDateRange = (startDate: string, endDate: string, startTime: string | null, endTime: string | null): string => {
@@ -624,7 +635,7 @@ const MemberUpdates: React.FC = () => {
                   </p>
                   {closure.reason && (
                     <p className={`text-sm mt-2 ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
-                      {closure.reason}
+                      {closure.reason === 'Internal calendar event' ? 'Private event' : closure.reason}
                     </p>
                   )}
                 </div>

@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.3",
+    date: "2025-12-31",
+    title: "Closure Management Improvements",
+    changes: [
+      "Multi-select checkboxes for closure affected areas (select individual bays, conference room, or none)",
+      "Blocks list now grouped by date with accordion-style expandable sections",
+      "Added spaces after commas in affected areas display for better readability",
+      "Private calendar events now labeled as 'Private event' instead of 'Internal calendar event'"
+    ]
+  },
+  {
     version: "7.2",
     date: "2025-12-31",
     title: "UI Polish",

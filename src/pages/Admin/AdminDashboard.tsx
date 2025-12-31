@@ -5689,6 +5689,7 @@ const BlocksAdmin: React.FC = () => {
     const [closuresLoading, setClosuresLoading] = useState(true);
     const [isClosureModalOpen, setIsClosureModalOpen] = useState(false);
     const [editingClosureId, setEditingClosureId] = useState<number | null>(null);
+    const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
     const [closureForm, setClosureForm] = useState<BlocksClosureForm>({
         start_date: '',
         start_time: '',
@@ -5916,18 +5917,52 @@ const BlocksAdmin: React.FC = () => {
         if (areas === 'entire_facility') return 'Entire Facility';
         if (areas === 'all_bays') return 'All Bays';
         if (areas === 'conference_room') return 'Conference Room';
-        if (areas.startsWith('bay_')) {
-            const bayId = parseInt(areas.replace('bay_', ''));
-            const bay = bays.find(b => b.id === bayId);
-            return bay ? bay.name : areas;
-        }
-        return areas;
+        if (areas === 'none') return 'No booking restrictions';
+        
+        const areaList = areas.split(',').map(a => a.trim());
+        const formatted = areaList.map(area => {
+            if (area === 'entire_facility') return 'Entire Facility';
+            if (area === 'all_bays') return 'All Bays';
+            if (area === 'conference_room') return 'Conference Room';
+            if (area === 'Conference Room') return 'Conference Room';
+            if (area === 'none') return 'No booking restrictions';
+            if (area.startsWith('bay_')) {
+                const bayId = parseInt(area.replace('bay_', ''));
+                const bay = bays.find(b => b.id === bayId);
+                return bay ? bay.name : area;
+            }
+            return area;
+        });
+        return formatted.join(', ');
     };
 
     const filteredBlocks = filterDate 
         ? blocks.filter(b => b.block_date === filterDate)
         : blocks;
     const conferenceRoom = resources.find(r => r.type === 'conference_room');
+
+    const blocksGroupedByDate = useMemo(() => {
+        const groups: { [date: string]: AvailabilityBlock[] } = {};
+        filteredBlocks.forEach(block => {
+            if (!groups[block.block_date]) {
+                groups[block.block_date] = [];
+            }
+            groups[block.block_date].push(block);
+        });
+        return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+    }, [filteredBlocks]);
+
+    const toggleDateExpand = (date: string) => {
+        setExpandedDates(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(date)) {
+                newSet.delete(date);
+            } else {
+                newSet.add(date);
+            }
+            return newSet;
+        });
+    };
 
     if (isLoading && closuresLoading) {
         return (
@@ -6077,51 +6112,82 @@ const BlocksAdmin: React.FC = () => {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {filteredBlocks.map((block, index) => (
-                                <div
-                                    key={block.id}
-                                    className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center gap-4 animate-pop-in"
-                                    style={{animationDelay: `${0.2 + index * 0.05}s`}}
-                                >
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-bold text-primary dark:text-white">{block.bay_name}</span>
-                                            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs">
-                                                {block.block_type}
-                                            </span>
-                                            {block.closure_id && (
-                                                <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-xs">
-                                                    From Closure
+                            {blocksGroupedByDate.map(([date, dateBlocks], groupIndex) => {
+                                const isExpanded = expandedDates.has(date);
+                                return (
+                                    <div key={date} className="rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 overflow-hidden animate-pop-in" style={{animationDelay: `${0.1 + groupIndex * 0.05}s`}}>
+                                        <button
+                                            onClick={() => toggleDateExpand(date)}
+                                            className="w-full p-4 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="material-symbols-outlined text-amber-500 dark:text-amber-400">
+                                                    calendar_today
                                                 </span>
-                                            )}
-                                        </div>
-                                        <p className="text-gray-600 dark:text-white/70 text-sm">
-                                            {formatDate(block.block_date)} · {formatTime(block.start_time)} - {formatTime(block.end_time)}
-                                        </p>
-                                        {block.notes && (
-                                            <p className="text-gray-400 dark:text-white/50 text-xs mt-1 truncate">{block.notes}</p>
+                                                <span className="font-bold text-primary dark:text-white">
+                                                    {formatDate(date)}
+                                                </span>
+                                                <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-medium">
+                                                    {dateBlocks.length} block{dateBlocks.length !== 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                            <span className={`material-symbols-outlined text-gray-400 dark:text-white/50 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                                                expand_more
+                                            </span>
+                                        </button>
+                                        {isExpanded && (
+                                            <div className="border-t border-gray-200 dark:border-white/10">
+                                                {dateBlocks.map((block) => (
+                                                    <div
+                                                        key={block.id}
+                                                        className="p-4 flex items-center gap-4 border-b border-gray-100 dark:border-white/5 last:border-b-0"
+                                                    >
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="font-bold text-primary dark:text-white">{block.bay_name}</span>
+                                                                <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs">
+                                                                    {block.block_type}
+                                                                </span>
+                                                                {block.closure_id && (
+                                                                    <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-xs">
+                                                                        From Closure
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-gray-600 dark:text-white/70 text-sm">
+                                                                {formatTime(block.start_time)} - {formatTime(block.end_time)}
+                                                            </p>
+                                                            {block.notes && (
+                                                                <p className="text-gray-400 dark:text-white/50 text-xs mt-1 truncate">
+                                                                    {block.notes === 'Internal calendar event' ? 'Private event' : block.notes}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setSelectedBlock(block);
+                                                                    setIsEditing(true);
+                                                                }}
+                                                                className="p-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20 hover:text-primary dark:hover:text-white transition-all"
+                                                            >
+                                                                <span className="material-symbols-outlined text-lg">edit</span>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteBlock(block.id)}
+                                                                className="p-2 rounded-xl bg-red-100 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/20 transition-all"
+                                                            >
+                                                                <span className="material-symbols-outlined text-lg">delete</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
-                                    
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => {
-                                                setSelectedBlock(block);
-                                                setIsEditing(true);
-                                            }}
-                                            className="p-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20 hover:text-primary dark:hover:text-white transition-all"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">edit</span>
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteBlock(block.id)}
-                                            className="p-2 rounded-xl bg-red-100 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/20 transition-all"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">delete</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -6178,19 +6244,87 @@ const BlocksAdmin: React.FC = () => {
                         </div>
                         
                         <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1 block">Resource *</label>
-                            <select 
-                                className="w-full border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-black/30 p-2.5 rounded-xl text-sm text-primary dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
-                                value={closureForm.affected_areas}
-                                onChange={e => setClosureForm({...closureForm, affected_areas: e.target.value})}
-                            >
-                                <option value="entire_facility">Entire Facility</option>
-                                <option value="all_bays">All Bays</option>
-                                <option value="conference_room">Conference Room</option>
-                                {bays.map(bay => (
-                                    <option key={bay.id} value={`bay_${bay.id}`}>{bay.name}</option>
-                                ))}
-                            </select>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-2 block">Affected Resources</label>
+                            <div className="space-y-2 p-3 bg-gray-50 dark:bg-black/20 rounded-xl border border-gray-200 dark:border-white/10">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="closure_type"
+                                        checked={closureForm.affected_areas === 'none'}
+                                        onChange={() => setClosureForm({...closureForm, affected_areas: 'none'})}
+                                        className="w-4 h-4 border-gray-300 text-red-500 focus:ring-red-500"
+                                    />
+                                    <span className="text-sm text-primary dark:text-white">No booking restrictions (informational only)</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="closure_type"
+                                        checked={closureForm.affected_areas === 'entire_facility'}
+                                        onChange={() => setClosureForm({...closureForm, affected_areas: 'entire_facility'})}
+                                        className="w-4 h-4 border-gray-300 text-red-500 focus:ring-red-500"
+                                    />
+                                    <span className="text-sm text-primary dark:text-white font-medium">Entire Facility</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="closure_type"
+                                        checked={closureForm.affected_areas !== 'none' && closureForm.affected_areas !== 'entire_facility'}
+                                        onChange={() => {
+                                            if (closureForm.affected_areas === 'none' || closureForm.affected_areas === 'entire_facility') {
+                                                setClosureForm({...closureForm, affected_areas: ''});
+                                            }
+                                        }}
+                                        className="w-4 h-4 border-gray-300 text-red-500 focus:ring-red-500"
+                                    />
+                                    <span className="text-sm text-primary dark:text-white">Select specific resources</span>
+                                </label>
+                                {closureForm.affected_areas !== 'none' && closureForm.affected_areas !== 'entire_facility' && (
+                                    <div className="pl-6 space-y-2 border-l-2 border-gray-200 dark:border-white/20 ml-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={closureForm.affected_areas.split(',').some(a => a.trim() === 'conference_room')}
+                                                onChange={(e) => {
+                                                    const current = closureForm.affected_areas.split(',').map(a => a.trim()).filter(a => a && a !== 'conference_room');
+                                                    if (e.target.checked) {
+                                                        current.push('conference_room');
+                                                    }
+                                                    setClosureForm({...closureForm, affected_areas: current.join(',')});
+                                                }}
+                                                className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
+                                            />
+                                            <span className="text-sm text-primary dark:text-white">Conference Room</span>
+                                        </label>
+                                        {bays.map(bay => (
+                                            <label key={bay.id} className="flex items-center gap-2 cursor-pointer">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={closureForm.affected_areas.split(',').some(a => a.trim() === `bay_${bay.id}`)}
+                                                    onChange={(e) => {
+                                                        const current = closureForm.affected_areas.split(',').map(a => a.trim()).filter(a => a && a !== `bay_${bay.id}`);
+                                                        if (e.target.checked) {
+                                                            current.push(`bay_${bay.id}`);
+                                                        }
+                                                        setClosureForm({...closureForm, affected_areas: current.filter(a => a.startsWith('bay_') || a === 'conference_room').join(',')});
+                                                    }}
+                                                    className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
+                                                />
+                                                <span className="text-sm text-primary dark:text-white">{bay.name}</span>
+                                            </label>
+                                        ))}
+                                        {!closureForm.affected_areas && (
+                                            <p className="text-xs text-amber-600 dark:text-amber-400">Please select at least one resource</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            {closureForm.affected_areas !== 'none' && closureForm.affected_areas !== 'entire_facility' && closureForm.affected_areas && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Selected: {formatAffectedAreas(closureForm.affected_areas)}
+                                </p>
+                            )}
                         </div>
                         
                         <div>
