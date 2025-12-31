@@ -881,7 +881,7 @@ router.post('/api/staff/bookings/manual', isStaffOrAdmin, async (req, res) => {
           const calendarName = CALENDAR_CONFIG.golf.name;
           const oldCalendarId = await getCalendarIdByName(calendarName);
           if (oldCalendarId) {
-            await deleteCalendarEvent(oldCalendarId, oldBookingRequest.calendarEventId);
+            await deleteCalendarEvent(oldBookingRequest.calendarEventId, oldCalendarId);
           }
         } catch (calErr) {
           logger.warn('Failed to delete old calendar event during reschedule', { error: calErr as Error, requestId: req.requestId });

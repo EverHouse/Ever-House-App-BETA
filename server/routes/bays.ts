@@ -9,7 +9,7 @@ import { sendPushNotification, sendPushNotificationToStaff } from './push';
 import { checkDailyBookingLimit } from '../core/tierService';
 import { notifyAllStaff } from '../core/staffNotifications';
 import { isStaffOrAdmin } from '../core/middleware';
-import { formatNotificationDateTime, formatDateDisplayWithDay, formatTime12Hour } from '../utils/dateUtils';
+import { formatNotificationDateTime, formatDateDisplayWithDay, formatTime12Hour, createPacificDate } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -332,6 +332,7 @@ router.get('/api/booking-requests', async (req, res) => {
       created_at: bookingRequests.createdAt,
       updated_at: bookingRequests.updatedAt,
       calendar_event_id: bookingRequests.calendarEventId,
+      reschedule_booking_id: bookingRequests.rescheduleBookingId,
       bay_name: bays.name
     })
     .from(bookingRequests)
@@ -354,7 +355,7 @@ router.post('/api/booking-requests', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    const { user_email, user_name, bay_id, bay_preference, request_date, start_time, duration_minutes, notes, user_tier } = req.body;
+    const { user_email, user_name, bay_id, bay_preference, request_date, start_time, duration_minutes, notes, user_tier, reschedule_booking_id } = req.body;
     
     if (!user_email || !request_date || !start_time || !duration_minutes) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -374,12 +375,71 @@ router.post('/api/booking-requests', async (req, res) => {
       return res.status(400).json({ error: 'Invalid duration. Must be between 1 and 480 minutes.' });
     }
     
-    const limitCheck = await checkDailyBookingLimit(user_email, request_date, duration_minutes, user_tier);
-    if (!limitCheck.allowed) {
-      return res.status(403).json({ 
-        error: limitCheck.reason,
-        remainingMinutes: limitCheck.remainingMinutes
-      });
+    let originalBooking: any = null;
+    
+    if (reschedule_booking_id) {
+      const [origBooking] = await db.select()
+        .from(bookingRequests)
+        .where(eq(bookingRequests.id, reschedule_booking_id));
+      
+      if (!origBooking) {
+        return res.status(400).json({ error: 'Original booking not found' });
+      }
+      
+      if (origBooking.userEmail.toLowerCase() !== requestEmail) {
+        return res.status(400).json({ error: 'Original booking does not belong to you' });
+      }
+      
+      // Only allow rescheduling of approved/confirmed bookings (not attended, declined, cancelled, no_show)
+      const validStatuses = ['approved', 'confirmed', 'pending_approval'];
+      if (!validStatuses.includes(origBooking.status || '')) {
+        return res.status(400).json({ error: 'Original booking cannot be rescheduled (already cancelled, declined, attended, or no-show)' });
+      }
+      
+      // Build Pacific datetime from booking date and start time using proper timezone utilities
+      const bookingDateStr = origBooking.requestDate; // YYYY-MM-DD
+      const bookingTimeStr = origBooking.startTime?.substring(0, 5) || '00:00'; // HH:MM
+      
+      // createPacificDate properly handles Pacific timezone and DST
+      const bookingDateTime = createPacificDate(bookingDateStr, bookingTimeStr);
+      const now = new Date();
+      
+      // Check if booking has already started or passed
+      if (bookingDateTime.getTime() <= now.getTime()) {
+        return res.status(400).json({ error: 'Cannot reschedule a booking that has already started or passed' });
+      }
+      
+      // Server-side 30-minute cutoff enforcement
+      const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
+      if (bookingDateTime.getTime() <= thirtyMinutesFromNow.getTime()) {
+        return res.status(400).json({ error: 'Cannot reschedule a booking within 30 minutes of its start time' });
+      }
+      
+      // Prevent multiple reschedule requests regardless of status (not just pending)
+      // Check for any non-declined, non-cancelled reschedule request
+      const existingReschedule = await db.select({ id: bookingRequests.id, status: bookingRequests.status })
+        .from(bookingRequests)
+        .where(and(
+          eq(bookingRequests.rescheduleBookingId, reschedule_booking_id),
+          ne(bookingRequests.status, 'declined'),
+          ne(bookingRequests.status, 'cancelled')
+        ));
+      
+      if (existingReschedule.length > 0) {
+        return res.status(400).json({ error: 'A reschedule request already exists for this booking' });
+      }
+      
+      originalBooking = origBooking;
+    }
+    
+    if (!reschedule_booking_id) {
+      const limitCheck = await checkDailyBookingLimit(user_email, request_date, duration_minutes, user_tier);
+      if (!limitCheck.allowed) {
+        return res.status(403).json({ 
+          error: limitCheck.reason,
+          remainingMinutes: limitCheck.remainingMinutes
+        });
+      }
     }
     
     const [hours, mins] = start_time.split(':').map(Number);
@@ -397,7 +457,8 @@ router.post('/api/booking-requests', async (req, res) => {
       startTime: start_time,
       durationMinutes: duration_minutes,
       endTime: end_time,
-      notes: notes
+      notes: notes,
+      rescheduleBookingId: reschedule_booking_id || null
     }).returning();
     
     const row = result[0];
@@ -409,11 +470,36 @@ router.post('/api/booking-requests', async (req, res) => {
       day: 'numeric' 
     });
     const formattedTime = row.startTime?.substring(0, 5) || start_time.substring(0, 5);
-    const staffMessage = `${row.userName || row.userEmail} requested ${formattedDate} at ${formattedTime}`;
+    
+    let staffMessage: string;
+    let staffTitle: string;
+    
+    if (originalBooking) {
+      const origFormattedDate = new Date(originalBooking.requestDate).toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      const origFormattedTime = originalBooking.startTime?.substring(0, 5) || '';
+      staffTitle = 'Reschedule Request';
+      staffMessage = `Reschedule request from ${row.userName || row.userEmail} - moving ${origFormattedDate} at ${origFormattedTime} to ${formattedDate} at ${formattedTime}`;
+      
+      db.insert(notifications).values({
+        userEmail: row.userEmail,
+        title: 'Reschedule Request Submitted',
+        message: `Reschedule request submitted for ${formattedDate} at ${formattedTime}`,
+        type: 'booking',
+        relatedId: row.id,
+        relatedType: 'booking_request'
+      }).catch(err => console.error('Member notification failed:', err));
+    } else {
+      staffTitle = 'New Golf Booking Request';
+      staffMessage = `${row.userName || row.userEmail} requested ${formattedDate} at ${formattedTime}`;
+    }
     
     // In-app notification to all staff - don't fail booking if this fails
     notifyAllStaff(
-      'New Golf Booking Request',
+      staffTitle,
       staffMessage,
       'booking',
       row.id,
@@ -422,7 +508,7 @@ router.post('/api/booking-requests', async (req, res) => {
     
     // Push notification - already non-blocking
     sendPushNotificationToStaff({
-      title: 'New Golf Booking Request',
+      title: staffTitle,
       body: staffMessage,
       url: '/#/admin'
     }).catch(err => console.error('Staff push notification failed:', err));
@@ -445,7 +531,8 @@ router.post('/api/booking-requests', async (req, res) => {
       reviewed_at: row.reviewedAt,
       created_at: row.createdAt,
       updated_at: row.updatedAt,
-      calendar_event_id: row.calendarEventId
+      calendar_event_id: row.calendarEventId,
+      reschedule_booking_id: row.rescheduleBookingId
     });
   } catch (error: any) {
     console.error('Booking request creation error:', error);
@@ -480,7 +567,8 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
       reviewed_at: row.reviewedAt,
       created_at: row.createdAt,
       updated_at: row.updatedAt,
-      calendar_event_id: row.calendarEventId
+      calendar_event_id: row.calendarEventId,
+      reschedule_booking_id: row.rescheduleBookingId
     });
     
     if (status === 'approved') {
@@ -570,11 +658,14 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
           .where(eq(bookingRequests.id, bookingId))
           .returning();
         
-        const approvalMessage = `Your simulator booking for ${formatNotificationDateTime(updatedRow.requestDate, updatedRow.startTime)} has been approved.`;
+        const isReschedule = !!updatedRow.rescheduleBookingId;
+        const approvalMessage = isReschedule
+          ? `Reschedule approved - your booking is now ${formatNotificationDateTime(updatedRow.requestDate, updatedRow.startTime)}`
+          : `Your simulator booking for ${formatNotificationDateTime(updatedRow.requestDate, updatedRow.startTime)} has been approved.`;
         
         await tx.insert(notifications).values({
           userEmail: updatedRow.userEmail,
-          title: 'Booking Request Approved',
+          title: isReschedule ? 'Reschedule Approved' : 'Booking Request Approved',
           message: approvalMessage,
           type: 'booking_approved',
           relatedId: updatedRow.id,
@@ -592,8 +683,38 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
         return { updated: updatedRow, bayName, approvalMessage };
       });
       
+      if (updated.rescheduleBookingId) {
+        try {
+          const [originalBooking] = await db.select({
+            id: bookingRequests.id,
+            calendarEventId: bookingRequests.calendarEventId,
+            bayId: bookingRequests.bayId
+          })
+            .from(bookingRequests)
+            .where(eq(bookingRequests.id, updated.rescheduleBookingId));
+          
+          if (originalBooking) {
+            await db.update(bookingRequests)
+              .set({ status: 'cancelled', updatedAt: new Date() })
+              .where(eq(bookingRequests.id, originalBooking.id));
+            
+            if (originalBooking.calendarEventId) {
+              try {
+                const calendarName = await getCalendarNameForBayAsync(originalBooking.bayId);
+                const calendarId = await getCalendarIdByName(calendarName);
+                await deleteCalendarEvent(originalBooking.calendarEventId, calendarId || 'primary');
+              } catch (calError) {
+                console.error('Failed to delete original booking calendar event (non-blocking):', calError);
+              }
+            }
+          }
+        } catch (rescheduleError) {
+          console.error('Failed to cancel original booking during reschedule approval:', rescheduleError);
+        }
+      }
+      
       sendPushNotification(updated.userEmail, {
-        title: 'Booking Approved!',
+        title: updated.rescheduleBookingId ? 'Reschedule Approved!' : 'Booking Approved!',
         body: approvalMessage,
         url: '/#/sims'
       }).catch(err => console.error('Push notification failed:', err));
@@ -604,7 +725,7 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
     if (status === 'declined') {
       const bookingId = parseInt(id);
       
-      const { updated, declineMessage } = await db.transaction(async (tx) => {
+      const { updated, declineMessage, isReschedule } = await db.transaction(async (tx) => {
         const [existing] = await tx.select().from(bookingRequests).where(eq(bookingRequests.id, bookingId));
         
         if (!existing) {
@@ -623,13 +744,35 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
           .where(eq(bookingRequests.id, bookingId))
           .returning();
         
-        const declineMessage = suggested_time 
-          ? `Your simulator booking request for ${formatDateDisplayWithDay(updatedRow.requestDate)} was declined. Suggested alternative: ${formatTime12Hour(suggested_time)}`
-          : `Your simulator booking request for ${formatDateDisplayWithDay(updatedRow.requestDate)} was declined.`;
+        const isReschedule = !!updatedRow.rescheduleBookingId;
+        let declineMessage: string;
+        let notificationTitle: string;
+        
+        if (isReschedule) {
+          const [originalBooking] = await tx.select({
+            requestDate: bookingRequests.requestDate,
+            startTime: bookingRequests.startTime
+          })
+            .from(bookingRequests)
+            .where(eq(bookingRequests.id, updatedRow.rescheduleBookingId!));
+          
+          if (originalBooking) {
+            const origDateTime = formatNotificationDateTime(originalBooking.requestDate, originalBooking.startTime);
+            declineMessage = `Reschedule declined - your original booking for ${origDateTime} remains active`;
+          } else {
+            declineMessage = `Reschedule declined - your original booking remains active`;
+          }
+          notificationTitle = 'Reschedule Declined';
+        } else {
+          declineMessage = suggested_time 
+            ? `Your simulator booking request for ${formatDateDisplayWithDay(updatedRow.requestDate)} was declined. Suggested alternative: ${formatTime12Hour(suggested_time)}`
+            : `Your simulator booking request for ${formatDateDisplayWithDay(updatedRow.requestDate)} was declined.`;
+          notificationTitle = 'Booking Request Declined';
+        }
         
         await tx.insert(notifications).values({
           userEmail: updatedRow.userEmail,
-          title: 'Booking Request Declined',
+          title: notificationTitle,
           message: declineMessage,
           type: 'booking_declined',
           relatedId: updatedRow.id,
@@ -644,11 +787,11 @@ router.put('/api/booking-requests/:id', isStaffOrAdmin, async (req, res) => {
             eq(notifications.type, 'booking')
           ));
         
-        return { updated: updatedRow, declineMessage };
+        return { updated: updatedRow, declineMessage, isReschedule };
       });
       
       sendPushNotification(updated.userEmail, {
-        title: 'Booking Request Update',
+        title: isReschedule ? 'Reschedule Declined' : 'Booking Request Update',
         body: declineMessage,
         url: '/#/sims'
       }).catch(err => console.error('Push notification failed:', err));

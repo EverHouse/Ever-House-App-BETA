@@ -126,7 +126,6 @@ const Dashboard: React.FC = () => {
   
   const [selectedBooking, setSelectedBooking] = useState<DBBooking | null>(null);
   const [newDate, setNewDate] = useState<string>('');
-  const [checkInConfirmed, setCheckInConfirmed] = useState(false); 
   const [newTime, setNewTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
@@ -235,6 +234,7 @@ const Dashboard: React.FC = () => {
       title: b.resource_name || 'Booking',
       resourceType: b.resource_type || 'simulator',
       date: formatDate(b.booking_date),
+      rawDate: b.booking_date.split('T')[0],
       time: formatTime12(b.start_time),
       endTime: formatTime12(b.end_time),
       details: `${formatTime12(b.start_time)} - ${formatTime12(b.end_time)}`,
@@ -248,6 +248,7 @@ const Dashboard: React.FC = () => {
       title: r.bay_name || (r.notes?.includes('Conference room') ? 'Conference Room' : 'Simulator'),
       resourceType: r.notes?.includes('Conference room') ? 'conference_room' : 'simulator',
       date: formatDate(r.request_date),
+      rawDate: r.request_date.split('T')[0],
       time: formatTime12(r.start_time),
       endTime: formatTime12(r.end_time),
       details: `${formatTime12(r.start_time)} - ${formatTime12(r.end_time)}`,
@@ -297,6 +298,7 @@ const Dashboard: React.FC = () => {
         title: 'Conference Room',
         resourceType: 'conference_room',
         date: formatDate(c.request_date),
+        rawDate: c.request_date.split('T')[0],
         time: formatTime12(c.start_time),
         endTime: formatTime12(c.end_time),
         details: `${formatTime12(c.start_time)} - ${formatTime12(c.end_time)}`,
@@ -598,29 +600,12 @@ const Dashboard: React.FC = () => {
                   
                   <div className="flex gap-2">
                     <button 
-                      onClick={async () => {
-                        if (navigator.vibrate) navigator.vibrate(10);
-                        try {
-                          const res = await fetch(`/api/bookings/${nextBooking.dbId}/checkin`, { method: 'POST' });
-                          if (res.ok) {
-                            setCheckInConfirmed(true);
-                            setTimeout(() => setCheckInConfirmed(false), 3000);
-                          } else {
-                            showToast('Check-in failed. Please try again.', 'error');
-                          }
-                        } catch (e) {
-                          showToast('Connection error during check-in.', 'error');
-                        }
-                      }}
+                      onClick={() => navigate(`/book?reschedule=${nextBooking.dbId}&date=${nextBooking.rawDate}`)}
                       className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 focus:ring-2 focus:ring-accent focus:outline-none ${isDark ? 'bg-accent text-primary' : 'bg-brand-green text-white'}`}
-                      aria-label="Check in to booking"
+                      aria-label="Reschedule booking"
                     >
-                      {checkInConfirmed ? (
-                        <>
-                          <span className="material-symbols-outlined text-lg">check_circle</span>
-                          Checked In
-                        </>
-                      ) : 'Check In'}
+                      <span className="material-symbols-outlined text-lg">event_repeat</span>
+                      Reschedule
                     </button>
                     <button 
                       onClick={() => handleCancelBooking(nextBooking.dbId, nextBooking.type)}

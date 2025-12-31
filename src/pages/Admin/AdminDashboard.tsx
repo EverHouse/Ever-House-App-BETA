@@ -1986,6 +1986,7 @@ interface BookingRequest {
     resource_name?: string;
     first_name?: string;
     last_name?: string;
+    reschedule_booking_id?: number | null;
 }
 
 interface Bay {
@@ -2744,9 +2745,16 @@ const SimulatorAdmin: React.FC = () => {
                                                 </p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">{req.duration_minutes} min</p>
                                             </div>
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
-                                                {formatStatusLabel(req.status)}
-                                            </span>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                    {formatStatusLabel(req.status)}
+                                                </span>
+                                                {req.reschedule_booking_id && (
+                                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                                                        Reschedule
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         
                                         {req.bay_preference && (
@@ -6973,6 +6981,10 @@ const TRAINING_SECTIONS: TrainingSection[] = [
             { title: 'Approving a Request', content: 'Tap a request to expand it, then tap "Approve". The system will check for conflicts with other approved bookings and facility closures. If there\'s a conflict, you\'ll see an error message explaining why.' },
             { title: 'Declining a Request', content: 'Tap "Decline" if you cannot accommodate the request. The member will be notified that their request was declined.' },
             { title: 'Calendar View', content: 'Switch to the Calendar view using the tabs at the top to see all approved bookings in a visual timeline. Red blocks indicate facility closures.' },
+            { title: 'Reschedule Requests', content: 'When a member requests to reschedule, you will see a blue "Reschedule" badge on the request. This means they want to move an existing approved booking to a new time. If you approve, their original booking is automatically cancelled.' },
+            { title: 'Checking In Members', content: 'After a member completes their booking, tap on it in the Scheduled section to mark them as "Attended" or "No Show". This updates their lifetime visit count and helps track attendance patterns.' },
+            { title: 'Manual Bookings', content: 'Staff can create bookings on behalf of members using the "+" button. Enter the member email, select date/time, and the booking is created directly without needing member approval.' },
+            { title: 'Conflict Detection', content: 'The system automatically checks for conflicts with other bookings and facility closures. If you see a conflict error when approving, you will need to decline the request or suggest an alternative time.' },
         ]
     },
     {
@@ -7124,6 +7136,20 @@ const ADMIN_SECTIONS: TrainingSection[] = [
             { title: 'While Viewing', content: 'You\'ll see the member portal as that member sees it, including their bookings, events, and dashboard. A banner reminds you that you\'re in View As mode.' },
             { title: 'Taking Actions', content: 'If you try to book or RSVP while in View As mode, you\'ll see a confirmation asking if you want to do this on behalf of the member.' },
             { title: 'Exiting View As Mode', content: 'Tap the banner or use the profile menu to exit View As mode and return to your admin account.' },
+        ]
+    },
+    {
+        id: 'trackman-import',
+        icon: 'upload_file',
+        title: 'Trackman Historical Import (Admin Only)',
+        description: 'Import booking history from Trackman CSV exports',
+        steps: [
+            { title: 'Overview', content: 'The Trackman Import tool allows you to import historical booking data from Trackman CSV exports. This updates member visit counts and creates booking records for historical tracking.' },
+            { title: 'Preparing CSV Files', content: 'You need two CSV files: (1) Trackman booking export with columns for date, time, duration, and email/name, (2) Optional member mapping CSV to link Trackman placeholder emails to real member emails.' },
+            { title: 'Email Matching Process', content: 'The import tries 4 methods to match bookings to members: (1) Member CSV mapping file, (2) Previously learned mappings from trackman_linked_emails, (3) Direct email match in database, (4) Name matching as fallback.' },
+            { title: 'Running the Import', content: 'Upload your CSV files, preview the results, and confirm. Past bookings are marked as "attended" and update lifetime visit counts. Future bookings are marked as "approved".' },
+            { title: 'Handling Unmatched Bookings', content: 'Bookings that cannot be matched to a member are listed separately. You can manually assign them to members, and the system will learn this mapping for future imports.' },
+            { title: 'Verification', content: 'After import, check member profiles to verify visit counts are updated. Review the import summary for any errors or warnings.' },
         ]
     },
 ];
