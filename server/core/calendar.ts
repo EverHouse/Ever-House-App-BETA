@@ -683,11 +683,14 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
       const status = 'Open';
       
       const existing = await pool.query(
-        'SELECT id FROM wellness_classes WHERE google_calendar_id = $1',
+        'SELECT id, locally_edited FROM wellness_classes WHERE google_calendar_id = $1',
         [googleEventId]
       );
       
       if (existing.rows.length > 0) {
+        if (existing.rows[0].locally_edited === true) {
+          continue;
+        }
         await pool.query(
           `UPDATE wellness_classes SET 
             title = $1, time = $2, instructor = $3, duration = $4, 

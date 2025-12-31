@@ -247,6 +247,7 @@ router.put('/api/wellness-classes/:id', isStaffOrAdmin, async (req, res) => {
         is_active = COALESCE($10, is_active),
         image_url = COALESCE($11, image_url),
         external_url = COALESCE($12, external_url),
+        locally_edited = true,
         updated_at = NOW()
        WHERE id = $13 RETURNING *`,
       [title, time, instructor, duration, category, spots, status, description, date, is_active, image_url, external_url, id]

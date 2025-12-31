@@ -81,6 +81,7 @@ export const wellnessClasses = pgTable("wellness_classes", {
   googleCalendarId: varchar("google_calendar_id"),
   imageUrl: text("image_url"),
   externalUrl: text("external_url"),
+  locallyEdited: boolean("locally_edited").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
