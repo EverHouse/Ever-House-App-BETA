@@ -810,6 +810,91 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
       return Array.from(idSet);
     };
     
+    // Helper function to get resource IDs based on affected_areas string
+    const getResourceIdsForAffectedAreas = async (affectedAreas: string): Promise<number[]> => {
+      const idSet = new Set<number>();
+      
+      // Normalize for case-insensitive comparison
+      const normalized = affectedAreas.toLowerCase().trim();
+      
+      // entire_facility = all bays + all resources
+      if (normalized === 'entire_facility') {
+        return getAllResourceIds();
+      }
+      
+      // all_bays = just the simulator bays
+      if (normalized === 'all_bays') {
+        const baysResult = await pool.query('SELECT id FROM bays WHERE is_active = true');
+        baysResult.rows.forEach((r: any) => idSet.add(r.id));
+        return Array.from(idSet);
+      }
+      
+      // conference_room = just the conference room (handle various formats)
+      if (normalized === 'conference_room' || normalized === 'conference room') {
+        const confResult = await pool.query("SELECT id FROM resources WHERE LOWER(name) LIKE '%conference%' LIMIT 1");
+        if (confResult.rows.length > 0) {
+          idSet.add(confResult.rows[0].id);
+        }
+        return Array.from(idSet);
+      }
+      
+      // Helper to process a single token and add IDs to the set
+      const processToken = async (token: string): Promise<void> => {
+        const t = token.toLowerCase().trim();
+        if (t === 'entire_facility') {
+          const all = await getAllResourceIds();
+          all.forEach(id => idSet.add(id));
+        } else if (t === 'all_bays') {
+          const baysResult = await pool.query('SELECT id FROM bays WHERE is_active = true');
+          baysResult.rows.forEach((r: any) => idSet.add(r.id));
+        } else if (t === 'conference_room' || t === 'conference room') {
+          const confResult = await pool.query("SELECT id FROM resources WHERE LOWER(name) LIKE '%conference%' LIMIT 1");
+          if (confResult.rows.length > 0) idSet.add(confResult.rows[0].id);
+        } else if (t.startsWith('bay_')) {
+          const bayId = parseInt(t.replace('bay_', ''));
+          if (!isNaN(bayId)) idSet.add(bayId);
+        }
+      };
+      
+      // Single bay (bay_1, bay_2, etc.)
+      if (normalized.startsWith('bay_') && !normalized.includes(',') && !normalized.includes('[')) {
+        const bayId = parseInt(normalized.replace('bay_', ''));
+        if (!isNaN(bayId)) {
+          idSet.add(bayId);
+        }
+        if (idSet.size > 0) return Array.from(idSet);
+      }
+      
+      // Try parsing as JSON array (e.g., ["bay_1", "bay_2", "conference_room", "all_bays"])
+      try {
+        const parsed = JSON.parse(affectedAreas);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (typeof item === 'string') {
+              await processToken(item);
+            }
+          }
+          if (idSet.size > 0) return Array.from(idSet);
+        }
+      } catch {
+        // Not JSON, try comma-separated
+      }
+      
+      // Comma-separated list (e.g., "bay_1,bay_2,conference_room")
+      const parts = affectedAreas.split(',').map(s => s.trim());
+      for (const part of parts) {
+        await processToken(part);
+      }
+      
+      // FALLBACK: If no resources resolved, default to entire facility to prevent silent no-op closures
+      if (idSet.size === 0) {
+        console.warn(`[getResourceIdsForAffectedAreas] Could not resolve resources for "${affectedAreas}", falling back to entire_facility`);
+        return getAllResourceIds();
+      }
+      
+      return Array.from(idSet);
+    };
+    
     // Helper function to get dates between start and end (inclusive)
     const getDatesBetween = (start: string, end: string): string[] => {
       const dates: string[] = [];
@@ -895,18 +980,18 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
         continue;
       }
       
-      // All resources (facility-wide closure)
-      const affectedAreas = 'entire_facility';
-      
       // Check if this closure already exists
       const existing = await pool.query(
-        'SELECT id, start_date, end_date, start_time, end_time FROM facility_closures WHERE internal_calendar_id = $1',
+        'SELECT id, start_date, end_date, start_time, end_time, affected_areas FROM facility_closures WHERE internal_calendar_id = $1',
         [internalCalendarId]
       );
       
       if (existing.rows.length > 0) {
         const existingClosure = existing.rows[0];
         const closureId = existingClosure.id;
+        
+        // PRESERVE manually-set affected_areas - don't overwrite with entire_facility
+        const preservedAffectedAreas = existingClosure.affected_areas || 'entire_facility';
         
         // Check if dates/times changed - if so, recreate availability blocks
         const datesChanged = 
@@ -915,19 +1000,19 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
           existingClosure.start_time !== startTime ||
           existingClosure.end_time !== endTime;
         
-        // Update existing closure
+        // Update existing closure - preserve affected_areas, only update title/reason/dates
         await pool.query(
           `UPDATE facility_closures SET 
            title = $1, reason = $2, start_date = $3, start_time = $4,
-           end_date = $5, end_time = $6, affected_areas = $7, is_active = true
-           WHERE internal_calendar_id = $8`,
-          [title, reason, startDate, startTime, endDate, endTime, affectedAreas, internalCalendarId]
+           end_date = $5, end_time = $6, is_active = true
+           WHERE internal_calendar_id = $7`,
+          [title, reason, startDate, startTime, endDate, endTime, internalCalendarId]
         );
         
-        // If dates/times changed, recreate availability blocks
+        // If dates/times changed, recreate availability blocks using preserved affected_areas
         if (datesChanged) {
           await deleteAvailabilityBlocks(closureId);
-          const resourceIds = await getAllResourceIds();
+          const resourceIds = await getResourceIdsForAffectedAreas(preservedAffectedAreas);
           const dates = getDatesBetween(startDate, endDate);
           const blockStartTime = startTime || '08:00:00';
           const blockEndTime = endTime || '22:00:00';
@@ -937,6 +1022,8 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
         
         updated++;
       } else {
+        // Default to entire_facility for NEW closures from calendar (no manual input yet)
+        const affectedAreas = 'entire_facility';
         // Create new closure
         const result = await pool.query(
           `INSERT INTO facility_closures 
