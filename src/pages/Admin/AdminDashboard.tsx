@@ -1720,6 +1720,153 @@ const AnnouncementsAdmin: React.FC<{ triggerCreate?: number }> = ({ triggerCreat
     );
 };
 
+// --- MEMBER DETAILS MODAL ---
+
+interface MemberDetailsModalProps {
+    isOpen: boolean;
+    member: MemberProfile | null;
+    isAdmin: boolean;
+    onClose: () => void;
+    onViewAs: (member: MemberProfile) => void;
+}
+
+const MemberDetailsModal: React.FC<MemberDetailsModalProps> = ({ isOpen, member, isAdmin, onClose, onViewAs }) => {
+    const [linkedEmails, setLinkedEmails] = useState<string[]>([]);
+    const [removingEmail, setRemovingEmail] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (member?.trackmanLinkedEmails) {
+            setLinkedEmails(member.trackmanLinkedEmails);
+        } else {
+            setLinkedEmails([]);
+        }
+    }, [member]);
+
+    const handleRemoveLinkedEmail = async (email: string) => {
+        if (!member || !isAdmin) return;
+        setRemovingEmail(email);
+        try {
+            const res = await fetch('/api/admin/trackman/linked-email', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ memberEmail: member.email, linkedEmail: email })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setLinkedEmails(data.trackmanLinkedEmails || []);
+            }
+        } catch (err) {
+            console.error('Failed to remove linked email:', err);
+        } finally {
+            setRemovingEmail(null);
+        }
+    };
+
+    const formatJoinDate = (date: string | null | undefined) => {
+        if (!date) return null;
+        try {
+            const d = new Date(date);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } catch {
+            return date;
+        }
+    };
+
+    return (
+        <ModalShell isOpen={isOpen && !!member} onClose={onClose} title={member?.name || ''}>
+            <div className="p-6">
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-gray-400">email</span>
+                        <span className="text-gray-700 dark:text-gray-300">{member?.email}</span>
+                    </div>
+                    {member?.phone && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">phone</span>
+                            <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(member.phone)}</span>
+                        </div>
+                    )}
+                    {member?.tier && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">card_membership</span>
+                            <TierBadge tier={member.tier} size="md" />
+                        </div>
+                    )}
+                    {member?.tags && member.tags.length > 0 && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">label</span>
+                            <div className="flex flex-wrap gap-1">
+                                {member.tags.map(tag => (
+                                    <TagBadge key={tag} tag={tag} size="sm" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {member?.mindbodyClientId && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">badge</span>
+                            <span className="text-gray-700 dark:text-gray-300 text-sm">MindBody ID: {member.mindbodyClientId}</span>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-gray-400">sports_golf</span>
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">Lifetime Visits: {member?.lifetimeVisits || 0}</span>
+                    </div>
+                    {member?.joinDate && (
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-gray-400">calendar_today</span>
+                            <span className="text-gray-700 dark:text-gray-300 text-sm">Joined: {formatJoinDate(member.joinDate)}</span>
+                        </div>
+                    )}
+                </div>
+
+                {isAdmin && linkedEmails.length > 0 && (
+                    <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
+                        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[18px]">link</span>
+                            Trackman Linked Emails
+                        </h4>
+                        <div className="space-y-2">
+                            {linkedEmails.map(email => (
+                                <div key={email} className="flex items-center justify-between bg-gray-50 dark:bg-white/5 px-3 py-2 rounded-lg">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400 font-mono truncate">{email}</span>
+                                    <button
+                                        onClick={() => handleRemoveLinkedEmail(email)}
+                                        disabled={removingEmail === email}
+                                        className="text-red-500 hover:text-red-600 p-1 disabled:opacity-50"
+                                        title="Remove linked email"
+                                    >
+                                        {removingEmail === email ? (
+                                            <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-[18px]">close</span>
+                                        )}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                            These emails link Trackman imports to this member. Remove if incorrectly linked.
+                        </p>
+                    </div>
+                )}
+
+                {isAdmin && member && (
+                    <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onViewAs(member); }}
+                            className="w-full py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">visibility</span>
+                            View As This Member
+                        </button>
+                    </div>
+                )}
+            </div>
+        </ModalShell>
+    );
+};
+
 // --- DIRECTORY ADMIN (Members + Staff Tabs) ---
 
 const TIER_OPTIONS = ['All', 'Social', 'Core', 'Premium', 'Corporate', 'VIP'] as const;
@@ -1942,50 +2089,13 @@ const MembersAdmin: React.FC = () => {
             </div>
             )}
 
-            <ModalShell isOpen={isViewingDetails && !!selectedMember} onClose={() => { setIsViewingDetails(false); setSelectedMember(null); }} title={selectedMember?.name || ''}>
-                <div className="p-6">
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-gray-400">email</span>
-                            <span className="text-gray-700 dark:text-gray-300">{selectedMember?.email}</span>
-                        </div>
-                        {selectedMember?.phone && (
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-gray-400">phone</span>
-                                <span className="text-gray-700 dark:text-gray-300">{formatPhoneNumber(selectedMember.phone)}</span>
-                            </div>
-                        )}
-                        {selectedMember?.tier && (
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-gray-400">card_membership</span>
-                                <TierBadge tier={selectedMember.tier} size="md" />
-                            </div>
-                        )}
-                        {selectedMember?.tags && selectedMember.tags.length > 0 && (
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-gray-400">label</span>
-                                <div className="flex flex-wrap gap-1">
-                                    {selectedMember.tags.map(tag => (
-                                        <TagBadge key={tag} tag={tag} size="sm" />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {isAdmin && selectedMember && (
-                        <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setIsViewingDetails(false); setSelectedMember(null); handleViewAs(selectedMember); }}
-                                className="w-full py-3 px-4 rounded-lg bg-brand-green text-white font-medium hover:opacity-90 flex items-center justify-center gap-2"
-                            >
-                                <span className="material-symbols-outlined text-lg">visibility</span>
-                                View As This Member
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </ModalShell>
+            <MemberDetailsModal
+                isOpen={isViewingDetails && !!selectedMember}
+                member={selectedMember}
+                isAdmin={isAdmin}
+                onClose={() => { setIsViewingDetails(false); setSelectedMember(null); }}
+                onViewAs={(member) => { setIsViewingDetails(false); setSelectedMember(null); handleViewAs(member); }}
+            />
         </div>
     );
 };

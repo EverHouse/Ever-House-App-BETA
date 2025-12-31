@@ -56,6 +56,7 @@ export interface MemberProfile {
   mindbodyClientId?: string;
   lifetimeVisits?: number;
   lastBookingDate?: string;
+  trackmanLinkedEmails?: string[];
 }
 
 export interface Booking {

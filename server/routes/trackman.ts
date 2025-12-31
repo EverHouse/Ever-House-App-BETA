@@ -4,6 +4,7 @@ import path from 'path';
 import multer from 'multer';
 import fs from 'fs';
 import { isAdmin } from '../core/middleware';
+import { pool } from '../core/db';
 
 const router = Router();
 
@@ -141,6 +142,41 @@ router.put('/api/admin/trackman/unmatched/:id/resolve', isAdmin, async (req, res
   } catch (error: any) {
     console.error('Resolve error:', error);
     res.status(500).json({ error: 'Failed to resolve unmatched booking' });
+  }
+});
+
+router.delete('/api/admin/trackman/linked-email', isAdmin, async (req, res) => {
+  try {
+    const { memberEmail, linkedEmail } = req.body;
+    
+    if (!memberEmail || !linkedEmail) {
+      return res.status(400).json({ error: 'memberEmail and linkedEmail are required' });
+    }
+    
+    // Use array_remove after casting jsonb to text array, then back to jsonb
+    const result = await pool.query(
+      `UPDATE users 
+       SET trackman_linked_emails = (
+         SELECT COALESCE(jsonb_agg(to_jsonb(elem)), '[]'::jsonb)
+         FROM jsonb_array_elements_text(COALESCE(trackman_linked_emails, '[]'::jsonb)) elem
+         WHERE elem != $1
+       )
+       WHERE LOWER(email) = LOWER($2)
+       RETURNING trackman_linked_emails`,
+      [linkedEmail, memberEmail]
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    res.json({ 
+      success: true, 
+      trackmanLinkedEmails: result.rows[0].trackman_linked_emails || []
+    });
+  } catch (error: any) {
+    console.error('Remove linked email error:', error);
+    res.status(500).json({ error: 'Failed to remove linked email' });
   }
 });
 

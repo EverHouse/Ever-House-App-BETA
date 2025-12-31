@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.15",
+    date: "2025-12-31",
+    title: "Enhanced Member Directory",
+    changes: [
+      "Member popup now shows MindBody ID, lifetime visits, join date, and tags",
+      "Admins can view and remove incorrectly linked Trackman placeholder emails",
+      "Email mappings are editable directly from the member directory"
+    ]
+  },
+  {
     version: "7.14",
     date: "2025-12-31",
     title: "Smarter Trackman Import Resolution",

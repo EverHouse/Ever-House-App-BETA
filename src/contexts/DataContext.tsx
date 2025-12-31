@@ -234,10 +234,15 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
             id: contact.id,
             name: [contact.firstName, contact.lastName].filter(Boolean).join(' ') || contact.email || 'Unknown',
             tier: contact.tier || 'Core',
+            tags: contact.tags || [],
             status: contact.status || 'Active',
             email: contact.email || '',
             phone: contact.phone || '',
-            role: 'member'
+            role: 'member',
+            lifetimeVisits: contact.lifetimeVisits || 0,
+            joinDate: contact.joinDate || null,
+            mindbodyClientId: contact.mindbodyClientId || null,
+            trackmanLinkedEmails: contact.trackmanLinkedEmails || []
           }));
           setMembers(formatted);
         }

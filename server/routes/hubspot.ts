@@ -47,7 +47,7 @@ router.get('/api/hubspot/contacts', isStaffOrAdmin, async (req, res) => {
       after = response.paging?.next?.after;
     } while (after);
 
-    const contacts = allContacts
+    const hubspotContacts = allContacts
       .map((contact: any) => ({
         id: contact.id,
         firstName: contact.properties.firstname || '',
@@ -61,6 +61,33 @@ router.get('/api/hubspot/contacts', isStaffOrAdmin, async (req, res) => {
         createdAt: contact.properties.createdate
       }))
       .filter((contact: any) => contact.status.toLowerCase() === 'active');
+    
+    // Fetch additional user data from database
+    const emails = hubspotContacts.map((c: any) => c.email.toLowerCase()).filter(Boolean);
+    let dbUserMap: Record<string, any> = {};
+    
+    if (emails.length > 0) {
+      const dbResult = await pool.query(
+        `SELECT email, lifetime_visits, joined_on, mindbody_client_id, trackman_linked_emails 
+         FROM users WHERE LOWER(email) = ANY($1)`,
+        [emails]
+      );
+      for (const row of dbResult.rows) {
+        dbUserMap[row.email.toLowerCase()] = row;
+      }
+    }
+    
+    // Merge HubSpot data with database data
+    const contacts = hubspotContacts.map((contact: any) => {
+      const dbUser = dbUserMap[contact.email.toLowerCase()];
+      return {
+        ...contact,
+        lifetimeVisits: dbUser?.lifetime_visits || 0,
+        joinDate: dbUser?.joined_on || null,
+        mindbodyClientId: dbUser?.mindbody_client_id || null,
+        trackmanLinkedEmails: dbUser?.trackman_linked_emails || []
+      };
+    });
     
     contactsCache = { data: contacts, timestamp: now };
     
