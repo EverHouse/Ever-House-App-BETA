@@ -1,0 +1,414 @@
+Yes, there is absolutely a better way. Creating dummy blocking events on your public-facing calendars ("Booked Golf", "MBO Conference") creates clutter and makes your calendar management fragile (as you have to sync 3 events for 1 action).
+
+**The Solution: Database-First Blocking**
+Instead of using Google Calendar events to "block" slots, you should use your **Database (`facility_closures`)** as the source of truth for availability.
+
+1. **Create Closures ONLY on the Internal Calendar:** This keeps your staff view accurate but leaves the resource calendars clean.
+2. **Update Availability Logic:** Modify your `getCalendarAvailability` function to check **both** the Google Calendar (for real bookings) **AND** your database's `facility_closures` table (for blocks).
+
+This approach is faster, cleaner, and prevents "ghost events" on your booking calendars.
+
+Here is the code to implement this architecture.
+
+### 1. Update `server/routes/closures.ts`
+
+Remove the logic that creates/updates/deletes events on the Golf and Conference calendars. We will *only* sync with the Internal Calendar.
+
+```typescript
+import { Router } from 'express';
+import { isProduction } from '../core/db';
+import { db } from '../db';
+import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks, announcements, notifications, resources } from '../../shared/schema';
+import { eq, desc, or, isNull, inArray } from 'drizzle-orm';
+import webpush from 'web-push';
+import { isStaffOrAdmin } from '../core/middleware';
+import { getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG, syncInternalCalendarToClosures } from '../core/calendar';
+import { getGoogleCalendarClient } from '../core/integrations';
+import { createPacificDate, parseLocalDate, addDaysToPacificDate } from '../utils/dateUtils';
+
+const router = Router();
+
+// ... [Keep helper functions: sendPushNotificationToAllMembers, getConferenceRoomId, getAffectedBayIds, getDatesBetween, formatAffectedAreasForDisplay, createAvailabilityBlocksForClosure, deleteAvailabilityBlocksForClosure] ...
+
+// Helper: Only create events for the Internal Calendar
+async function createInternalCalendarEvent(
+  title: string,
+  description: string,
+  startDate: string,
+  endDate: string,
+  startTime: string | null,
+  endTime: string | null
+): Promise<string | null> {
+  try {
+    const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
+    if (!calendarId) return null;
+
+    const calendar = await getGoogleCalendarClient();
+    const hasSpecificTimes = startTime && endTime;
+    
+    if (hasSpecificTimes) {
+      // For specific times, we create separate events for each day if it spans multiple days
+      // (Simplified to just create one event if single day, or multiple if needed)
+      // For simplicity in this refactor, we'll follow the pattern of creating one event per day logic if needed
+      // But usually closures are single blocks. Let's reuse the logic you had but simplified for one calendar.
+      
+      const dates = getDatesBetween(startDate, endDate);
+      const eventIds: string[] = [];
+      
+      for (const date of dates) {
+        const startDateTime = createPacificDate(date, startTime);
+        const endDateTime = createPacificDate(date, endTime);
+        
+        const event = {
+          summary: title,
+          description: `${description}${dates.length > 1 ? `\n\n(Day ${dates.indexOf(date) + 1} of ${dates.length})` : ''}`,
+          start: { dateTime: startDateTime.toISOString(), timeZone: 'America/Los_Angeles' },
+          end: { dateTime: endDateTime.toISOString(), timeZone: 'America/Los_Angeles' },
+        };
+        
+        const response = await calendar.events.insert({ calendarId, requestBody: event });
+        if (response.data.id) eventIds.push(response.data.id);
+      }
+      return eventIds.join(',');
+    } else {
+      // All day event
+      const endDatePlusOne = addDaysToPacificDate(endDate, 1);
+      const event = {
+        summary: title,
+        description,
+        start: { date: startDate },
+        end: { date: endDatePlusOne },
+      };
+      const response = await calendar.events.insert({ calendarId, requestBody: event });
+      return response.data.id || null;
+    }
+  } catch (error) {
+    console.error('Error creating internal calendar event:', error);
+    return null;
+  }
+}
+
+// ... [Keep router.get('/api/closures') and router.post('/api/closures/sync')] ...
+
+router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
+  try {
+    const { 
+      title, reason, start_date, start_time, end_date, end_time,
+      affected_areas, notify_members, created_by 
+    } = req.body;
+    
+    if (!start_date || !affected_areas) {
+      return res.status(400).json({ error: 'Start date and affected areas are required' });
+    }
+    
+    // 1. Create DB Record
+    const [result] = await db.insert(facilityClosures).values({
+      title: title || 'Facility Closure',
+      reason,
+      startDate: start_date,
+      startTime: start_time || null,
+      endDate: end_date || start_date,
+      endTime: end_time || null,
+      affectedAreas: affected_areas,
+      isActive: true,
+      createdBy: created_by
+    }).returning();
+    
+    const closureId = result.id;
+
+    // 2. Create Availability Blocks (DB Blocking)
+    const affectedBayIds = await getAffectedBayIds(affected_areas);
+    const dates = getDatesBetween(start_date, end_date || start_date);
+    
+    if (affectedBayIds.length > 0) {
+      await createAvailabilityBlocksForClosure(
+        closureId, affectedBayIds, dates, start_time, end_time, reason, created_by
+      );
+    }
+    
+    // 3. Create Calendar Event (INTERNAL ONLY)
+    // We NO LONGER create events on 'Booked Golf' or 'MBO Conference Room'
+    let internalEventIds: string | null = null;
+    try {
+      const affectedText = await formatAffectedAreasForDisplay(affected_areas);
+      const eventTitle = `CLOSURE: ${title || 'Facility Closure'}`;
+      const eventDescription = `${reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
+      
+      internalEventIds = await createInternalCalendarEvent(
+        eventTitle, eventDescription, start_date, end_date || start_date, start_time, end_time
+      );
+
+      if (internalEventIds) {
+        await db.update(facilityClosures)
+          .set({ internalCalendarId: internalEventIds })
+          .where(eq(facilityClosures.id, closureId));
+      }
+    } catch (calError) {
+      console.error('[Closures] Failed to create internal calendar event:', calError);
+    }
+    
+    // 4. Notifications
+    if (notify_members) {
+       // ... [Keep existing notification logic] ...
+       const notificationTitle = title || 'Facility Closure';
+       const affectedText = await formatAffectedAreasForDisplay(affected_areas); // Use the helper
+       const [sny, snm, snd] = start_date.split('-').map(Number);
+       const monthsNotif = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+       const startDateFormattedNotif = `${monthsNotif[snm - 1]} ${snd}`;
+       const notificationBody = reason 
+         ? `${reason} - ${affectedText} on ${startDateFormattedNotif}`
+         : `${affectedText} will be closed on ${startDateFormattedNotif}`;
+       
+       const memberUsers = await db
+         .select({ email: users.email })
+         .from(users)
+         .where(or(eq(users.role, 'member'), isNull(users.role)));
+       
+       const membersWithEmails = memberUsers.filter(m => m.email && m.email.trim());
+       
+       if (membersWithEmails.length > 0) {
+         const notificationValues = membersWithEmails.map(m => ({
+           userEmail: m.email!,
+           title: notificationTitle,
+           message: notificationBody,
+           type: 'closure',
+           relatedId: closureId,
+           relatedType: 'closure'
+         }));
+         
+         await db.insert(notifications).values(notificationValues);
+       }
+       
+       await sendPushNotificationToAllMembers({
+         title: notificationTitle,
+         body: notificationBody,
+         url: '/announcements'
+       });
+    }
+    
+    res.json({ ...result, internalCalendarId: internalEventIds });
+  } catch (error: any) {
+    if (!isProduction) console.error('Closure create error:', error);
+    res.status(500).json({ error: 'Failed to create closure' });
+  }
+});
+
+router.delete('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const closureId = parseInt(id);
+    
+    const [closure] = await db.select().from(facilityClosures).where(eq(facilityClosures.id, closureId));
+    
+    // Only delete from Internal Calendar
+    if (closure?.internalCalendarId) {
+      try {
+        const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
+        if (internalCalendarId) {
+          // Helper to delete multiple IDs if comma separated
+          const ids = closure.internalCalendarId.split(',').filter(id => id.trim());
+          for (const eid of ids) {
+             await deleteCalendarEvent(eid.trim(), internalCalendarId);
+          }
+        }
+      } catch (calError) {
+        console.error('[Closures] Failed to delete internal calendar event:', calError);
+      }
+    }
+    
+    // Clean up DB blocks and announcements
+    await deleteAvailabilityBlocksForClosure(closureId);
+    try {
+      await db.delete(announcements).where(eq(announcements.closureId, closureId));
+    } catch (e) {}
+    
+    await db.update(facilityClosures).set({ isActive: false }).where(eq(facilityClosures.id, closureId));
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to delete closure' });
+  }
+});
+
+router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
+    // ... [Keep existing logic but only update Internal Calendar events] ...
+    // For brevity, apply similar logic: update DB, recreate DB blocks, update ONLY Internal Calendar event
+    // Copy the "Update existing closure" logic from your previous file but remove golf/conference calendar references.
+    try {
+        const { id } = req.params;
+        const closureId = parseInt(id);
+        const { title, reason, start_date, start_time, end_date, end_time, affected_areas } = req.body;
+
+        const [existing] = await db.select().from(facilityClosures).where(eq(facilityClosures.id, closureId));
+        if (!existing) return res.status(404).json({ error: 'Closure not found' });
+
+        // Update DB
+        const [updated] = await db.update(facilityClosures).set({
+            title: title || existing.title,
+            reason: reason !== undefined ? reason : existing.reason,
+            startDate: start_date || existing.startDate,
+            startTime: start_time !== undefined ? start_time : existing.startTime,
+            endDate: end_date || existing.endDate,
+            endTime: end_time !== undefined ? end_time : existing.endTime,
+            affectedAreas: affected_areas || existing.affectedAreas
+        }).where(eq(facilityClosures.id, closureId)).returning();
+
+        // Recreate Availability Blocks if needed
+        const datesChanged = start_date !== existing.startDate || end_date !== existing.endDate;
+        const timesChanged = start_time !== existing.startTime || end_time !== existing.endTime;
+        const areasChanged = affected_areas !== existing.affectedAreas;
+
+        if (datesChanged || timesChanged || areasChanged) {
+            await deleteAvailabilityBlocksForClosure(closureId);
+            const newAffectedAreas = affected_areas || existing.affectedAreas;
+            const affectedBayIds = await getAffectedBayIds(newAffectedAreas);
+            const dates = getDatesBetween(start_date || existing.startDate, end_date || existing.endDate || start_date || existing.startDate);
+            
+            if (affectedBayIds.length > 0) {
+                await createAvailabilityBlocksForClosure(
+                    closureId, affectedBayIds, dates,
+                    start_time !== undefined ? start_time : existing.startTime,
+                    end_time !== undefined ? end_time : existing.endTime,
+                    reason !== undefined ? reason : existing.reason,
+                    existing.createdBy
+                );
+            }
+        }
+
+        // Update Internal Calendar Event
+        if (existing.internalCalendarId && (datesChanged || timesChanged || title !== existing.title || reason !== existing.reason || areasChanged)) {
+            const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
+            if (internalCalendarId) {
+                // Delete old
+                const oldIds = existing.internalCalendarId.split(',').filter(i => i.trim());
+                for (const eid of oldIds) await deleteCalendarEvent(eid.trim(), internalCalendarId);
+                
+                // Create new
+                const newAffectedAreas = affected_areas || existing.affectedAreas || 'entire_facility';
+                const affectedText = await formatAffectedAreasForDisplay(newAffectedAreas);
+                const eventTitle = `CLOSURE: ${title || existing.title}`;
+                const eventDescription = `${reason !== undefined ? reason : existing.reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
+                
+                const newEventIds = await createInternalCalendarEvent(
+                    eventTitle, eventDescription,
+                    start_date || existing.startDate, end_date || existing.endDate,
+                    start_time !== undefined ? start_time : existing.startTime,
+                    end_time !== undefined ? end_time : existing.endTime
+                );
+
+                if (newEventIds) {
+                    await db.update(facilityClosures).set({ internalCalendarId: newEventIds }).where(eq(facilityClosures.id, closureId));
+                }
+            }
+        }
+
+        res.json(updated);
+    } catch (error: any) {
+        res.status(500).json({ error: 'Failed to update closure' });
+    }
+});
+
+// ... [Keep router.post('/api/closures/backfill-blocks') and export] ...
+export default router;
+
+```
+
+### 2. Update `server/core/calendar.ts`
+
+Update `getCalendarAvailability` to merge busy times from Google Calendar (bookings) AND the Database (closures).
+
+```typescript
+import { pool, isProduction } from './db';
+import { getGoogleCalendarClient } from './integrations';
+import { db } from '../db';
+import { wellnessClasses, facilityClosures } from '../../shared/models/auth'; // Ensure facilityClosures is exported here or use schema
+import { facilityClosures as facilityClosuresSchema } from '../../shared/schema';
+import { isNull, gte, lte, asc, sql, and, or, eq } from 'drizzle-orm';
+import { createPacificDate } from '../utils/dateUtils';
+
+// ... [Keep CALENDAR_CONFIG, discoverCalendarIds, getCalendarIdByName, interfaces] ...
+
+// Helper to check if a closure affects the requested resource type
+function doesClosureAffectResource(affectedAreas: string | null, resourceType: 'golf' | 'conference'): boolean {
+  if (!affectedAreas) return false;
+  const areas = affectedAreas.toLowerCase();
+  
+  if (areas === 'entire_facility') return true;
+  
+  if (resourceType === 'golf') {
+    return areas === 'all_bays' || areas.includes('bay_') || areas.includes('simulator');
+  }
+  
+  if (resourceType === 'conference') {
+    return areas === 'conference_room' || areas.includes('conference');
+  }
+  
+  return false;
+}
+
+export async function getCalendarAvailability(
+  resourceType: 'golf' | 'conference',
+  date: string,
+  durationMinutes?: number
+): Promise<{ slots: TimeSlot[]; calendarId: string | null; error?: string }> {
+  const config = CALENDAR_CONFIG[resourceType];
+  if (!config) {
+    return { slots: [], calendarId: null, error: 'Invalid resource type' };
+  }
+  
+  const calendarId = await getCalendarIdByName(config.name);
+  if (!calendarId) {
+    return { slots: [], calendarId: null, error: `Calendar "${config.name}" not found` };
+  }
+  
+  // 1. Fetch Google Calendar Busy Times (Real Bookings)
+  const busyPeriods = await getCalendarBusyTimes(calendarId, date);
+  
+  // 2. Fetch Database Closures (Blocks)
+  try {
+    const dbClosures = await db
+      .select()
+      .from(facilityClosuresSchema)
+      .where(and(
+        eq(facilityClosuresSchema.isActive, true),
+        lte(facilityClosuresSchema.startDate, date),
+        gte(facilityClosuresSchema.endDate, date)
+      ));
+
+    // 3. Merge Closure Blocks into Busy Periods
+    for (const closure of dbClosures) {
+      if (doesClosureAffectResource(closure.affectedAreas, resourceType)) {
+        // If closure has specific times, block those. If not, block whole day.
+        const startStr = closure.startTime || '00:00:00';
+        const endStr = closure.endTime || '23:59:59';
+        
+        const start = createPacificDate(date, startStr);
+        const end = createPacificDate(date, endStr);
+        
+        // Handle multi-day closures correctly if needed, but for 'date' query:
+        // If today is the start date, use start time. If today is > start date, use 00:00.
+        // If today is the end date, use end time. If today is < end date, use 23:59.
+        
+        let effectiveStart = start;
+        let effectiveEnd = end;
+
+        if (closure.startDate < date) effectiveStart = createPacificDate(date, '00:00:00');
+        if (closure.endDate > date) effectiveEnd = createPacificDate(date, '23:59:59');
+
+        busyPeriods.push({ start: effectiveStart, end: effectiveEnd });
+      }
+    }
+  } catch (err) {
+    console.error('[Availability] Failed to fetch DB closures:', err);
+    // Continue with just calendar busy times so we don't break booking entirely
+  }
+  
+  const slotDuration = durationMinutes || config.slotDuration;
+  const slots = generateTimeSlots(date, busyPeriods, config.businessHours, slotDuration);
+  
+  return { slots, calendarId };
+}
+
+// ... [Keep rest of the file] ...
+
+```

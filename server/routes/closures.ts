@@ -362,143 +362,44 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
       );
     }
     
-    let golfEventIds: string | null = null;
-    let conferenceEventIds: string | null = null;
     let internalEventIds: string | null = null;
     
-    const calendarStatus: { calendar: string; status: 'created' | 'skipped' | 'failed' | 'not_found'; reason?: string }[] = [];
-    
+    // Create calendar event ONLY on Internal Calendar (staff visibility)
+    // Availability blocking is handled by the availability_blocks table created above
     try {
-      const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-      const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
       const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
       
-      console.log(`[Closures] Calendar discovery for closure #${closureId}: Golf=${golfCalendarId ? 'found' : 'NOT FOUND'}, Conference=${conferenceCalendarId ? 'found' : 'NOT FOUND'}, Internal=${internalCalendarId ? 'found' : 'NOT FOUND'}`);
-      
-      const affectedText = await formatAffectedAreasForDisplay(affected_areas);
-          
-      const eventTitle = `CLOSURE: ${title || 'Facility Closure'}`;
-      const eventDescription = `${reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
-      
-      // Determine what resources are affected
-      const affectsConferenceRoom = affected_areas === 'entire_facility' || affected_areas === 'conference_room';
-      const affectsBays = affected_areas === 'entire_facility' || affected_areas === 'all_bays' || 
-        affected_areas.includes('bay_') || affectedBayIds.length > 0;
-      
-      console.log(`[Closures] Closure #${closureId} affects: bays=${affectsBays}, conference=${affectsConferenceRoom}`);
-      
-      // Create event in Booked Golf calendar (only if bays are affected)
-      if (affectsBays) {
-        if (golfCalendarId) {
-          try {
-            golfEventIds = await createClosureCalendarEvents(
-              golfCalendarId,
-              eventTitle,
-              eventDescription,
-              start_date,
-              end_date || start_date,
-              start_time,
-              end_time
-            );
-            
-            if (golfEventIds) {
-              console.log(`[Closures] Created Booked Golf calendar event(s) for closure #${closureId}: ${golfEventIds}`);
-              calendarStatus.push({ calendar: 'Booked Golf', status: 'created' });
-            } else {
-              console.error(`[Closures] Failed to create Booked Golf calendar event for closure #${closureId} - returned null`);
-              calendarStatus.push({ calendar: 'Booked Golf', status: 'failed', reason: 'Event creation returned null' });
-            }
-          } catch (golfError: any) {
-            console.error(`[Closures] Error creating Booked Golf calendar event:`, golfError?.message || golfError);
-            calendarStatus.push({ calendar: 'Booked Golf', status: 'failed', reason: golfError?.message || 'Unknown error' });
-          }
-        } else {
-          console.error(`[Closures] Booked Golf calendar not found - cannot create event for closure #${closureId}`);
-          calendarStatus.push({ calendar: 'Booked Golf', status: 'not_found' });
-        }
-      } else {
-        calendarStatus.push({ calendar: 'Booked Golf', status: 'skipped', reason: 'Bays not affected' });
-      }
-      
-      // Create event in MBO_Conference_Room calendar (if conference room or entire facility is affected)
-      if (affectsConferenceRoom) {
-        if (conferenceCalendarId) {
-          try {
-            conferenceEventIds = await createClosureCalendarEvents(
-              conferenceCalendarId,
-              eventTitle,
-              eventDescription,
-              start_date,
-              end_date || start_date,
-              start_time,
-              end_time
-            );
-            
-            if (conferenceEventIds) {
-              console.log(`[Closures] Created MBO_Conference_Room calendar event(s) for closure #${closureId}: ${conferenceEventIds}`);
-              calendarStatus.push({ calendar: 'MBO_Conference_Room', status: 'created' });
-            } else {
-              console.error(`[Closures] Failed to create MBO_Conference_Room calendar event for closure #${closureId} - returned null`);
-              calendarStatus.push({ calendar: 'MBO_Conference_Room', status: 'failed', reason: 'Event creation returned null' });
-            }
-          } catch (confError: any) {
-            console.error(`[Closures] Error creating MBO_Conference_Room calendar event:`, confError?.message || confError);
-            calendarStatus.push({ calendar: 'MBO_Conference_Room', status: 'failed', reason: confError?.message || 'Unknown error' });
-          }
-        } else {
-          console.error(`[Closures] MBO_Conference_Room calendar not found - cannot create event for closure #${closureId}`);
-          calendarStatus.push({ calendar: 'MBO_Conference_Room', status: 'not_found' });
-        }
-      } else {
-        calendarStatus.push({ calendar: 'MBO_Conference_Room', status: 'skipped', reason: 'Conference room not affected' });
-      }
-      
-      // Always create event in Internal Calendar for all closures
       if (internalCalendarId) {
-        try {
-          internalEventIds = await createClosureCalendarEvents(
-            internalCalendarId,
-            eventTitle,
-            eventDescription,
-            start_date,
-            end_date || start_date,
-            start_time,
-            end_time
-          );
+        const affectedText = await formatAffectedAreasForDisplay(affected_areas);
+        const eventTitle = `CLOSURE: ${title || 'Facility Closure'}`;
+        const eventDescription = `${reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
+        
+        internalEventIds = await createClosureCalendarEvents(
+          internalCalendarId,
+          eventTitle,
+          eventDescription,
+          start_date,
+          end_date || start_date,
+          start_time,
+          end_time
+        );
+        
+        if (internalEventIds) {
+          console.log(`[Closures] Created Internal Calendar event(s) for closure #${closureId}: ${internalEventIds}`);
           
-          if (internalEventIds) {
-            console.log(`[Closures] Created Internal Calendar event(s) for closure #${closureId}: ${internalEventIds}`);
-            calendarStatus.push({ calendar: 'Internal Calendar', status: 'created' });
-          } else {
-            console.error(`[Closures] Failed to create Internal Calendar event for closure #${closureId} - returned null`);
-            calendarStatus.push({ calendar: 'Internal Calendar', status: 'failed', reason: 'Event creation returned null' });
-          }
-        } catch (intError: any) {
-          console.error(`[Closures] Error creating Internal Calendar event:`, intError?.message || intError);
-          calendarStatus.push({ calendar: 'Internal Calendar', status: 'failed', reason: intError?.message || 'Unknown error' });
+          await db
+            .update(facilityClosures)
+            .set({ internalCalendarId: internalEventIds })
+            .where(eq(facilityClosures.id, closureId));
+        } else {
+          console.error(`[Closures] Failed to create Internal Calendar event for closure #${closureId}`);
         }
       } else {
         console.error(`[Closures] Internal Calendar not found - cannot create event for closure #${closureId}`);
-        calendarStatus.push({ calendar: 'Internal Calendar', status: 'not_found' });
-      }
-      
-      // Store event IDs in separate columns
-      if (golfEventIds || conferenceEventIds || internalEventIds) {
-        await db
-          .update(facilityClosures)
-          .set({ 
-            googleCalendarId: golfEventIds,
-            conferenceCalendarId: conferenceEventIds,
-            internalCalendarId: internalEventIds
-          })
-          .where(eq(facilityClosures.id, closureId));
       }
     } catch (calError: any) {
-      console.error('[Closures] Failed to create calendar events:', calError?.message || calError);
-      calendarStatus.push({ calendar: 'all', status: 'failed', reason: calError?.message || 'Unknown error' });
+      console.error('[Closures] Failed to create Internal Calendar event:', calError?.message || calError);
     }
-    
-    const warnings: string[] = [];
     
     if (notify_members) {
       const notificationTitle = title || 'Facility Closure';
@@ -520,7 +421,6 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
           .from(users)
           .where(or(eq(users.role, 'member'), isNull(users.role)));
         
-        // Filter out users with null/empty emails
         const membersWithEmails = memberUsers.filter(m => m.email && m.email.trim());
         
         if (membersWithEmails.length > 0) {
@@ -538,7 +438,6 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         }
       } catch (notifError) {
         console.error('[Closures] Failed to create in-app notifications:', notifError);
-        warnings.push('Failed to send in-app notifications to members');
       }
       
       try {
@@ -549,25 +448,14 @@ router.post('/api/closures', isStaffOrAdmin, async (req, res) => {
         });
       } catch (pushError) {
         console.error('[Closures] Failed to send push notifications:', pushError);
-        warnings.push('Failed to send push notifications to members');
       }
-    }
-    
-    // Add calendar failures to warnings for frontend display
-    const calendarFailures = calendarStatus.filter(s => s.status === 'failed' || s.status === 'not_found');
-    if (calendarFailures.length > 0) {
-      calendarFailures.forEach(f => {
-        warnings.push(`Calendar "${f.calendar}": ${f.status}${f.reason ? ` - ${f.reason}` : ''}`);
-      });
     }
     
     res.json({ 
       ...result, 
-      googleCalendarId: golfEventIds, 
-      conferenceCalendarId: conferenceEventIds, 
-      internalCalendarId: internalEventIds,
-      calendarStatus,
-      warnings: warnings.length > 0 ? warnings : undefined
+      googleCalendarId: null,
+      conferenceCalendarId: null,
+      internalCalendarId: internalEventIds
     });
   } catch (error: any) {
     if (!isProduction) console.error('Closure create error:', error);
@@ -585,32 +473,31 @@ router.delete('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
       .from(facilityClosures)
       .where(eq(facilityClosures.id, closureId));
     
-    // Delete calendar events from all calendars
+    // Delete calendar event from Internal Calendar only
+    // (Legacy golf/conference events are also cleaned up for backward compatibility)
     try {
-      // Delete from Booked Golf calendar
-      if (closure?.googleCalendarId) {
-        const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-        if (golfCalendarId) {
-          await deleteClosureCalendarEvents(golfCalendarId, closure.googleCalendarId);
-          console.log(`[Closures] Deleted Booked Golf calendar event(s) for closure #${closureId}`);
-        }
-      }
-      
-      // Delete from MBO_Conference_Room calendar
-      if (closure?.conferenceCalendarId) {
-        const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
-        if (conferenceCalendarId) {
-          await deleteClosureCalendarEvents(conferenceCalendarId, closure.conferenceCalendarId);
-          console.log(`[Closures] Deleted MBO_Conference_Room calendar event(s) for closure #${closureId}`);
-        }
-      }
-      
-      // Delete from Internal Calendar
+      // Delete from Internal Calendar (primary)
       if (closure?.internalCalendarId) {
         const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
         if (internalCalendarId) {
           await deleteClosureCalendarEvents(internalCalendarId, closure.internalCalendarId);
           console.log(`[Closures] Deleted Internal Calendar event(s) for closure #${closureId}`);
+        }
+      }
+      
+      // Backward compatibility: clean up any legacy golf/conference events
+      if (closure?.googleCalendarId) {
+        const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+        if (golfCalendarId) {
+          await deleteClosureCalendarEvents(golfCalendarId, closure.googleCalendarId);
+          console.log(`[Closures] Cleaned up legacy Booked Golf event(s) for closure #${closureId}`);
+        }
+      }
+      if (closure?.conferenceCalendarId) {
+        const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
+        if (conferenceCalendarId) {
+          await deleteClosureCalendarEvents(conferenceCalendarId, closure.conferenceCalendarId);
+          console.log(`[Closures] Cleaned up legacy Conference Room event(s) for closure #${closureId}`);
         }
       }
     } catch (calError) {
@@ -709,75 +596,44 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
       }
     }
     
-    // Update calendar events if dates/times/title changed
-    const hasCalendarEvents = existing.googleCalendarId || existing.conferenceCalendarId || existing.internalCalendarId;
-    if (hasCalendarEvents && (datesChanged || timesChanged || title !== existing.title || reason !== existing.reason || areasChanged)) {
+    // Update Internal Calendar event if dates/times/title changed
+    // Only update Internal Calendar - availability blocking is handled by the availability_blocks table
+    const shouldUpdateCalendar = datesChanged || timesChanged || title !== existing.title || reason !== existing.reason || areasChanged;
+    if (shouldUpdateCalendar) {
       try {
-        const newAffectedAreas = affected_areas || existing.affectedAreas || 'entire_facility';
-        const affectedText = await formatAffectedAreasForDisplay(newAffectedAreas);
-            
-        const eventTitle = `CLOSURE: ${title || existing.title}`;
-        const eventDescription = `${reason !== undefined ? reason : existing.reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
-        const newStartDate = start_date || existing.startDate;
-        const newEndDate = end_date || existing.endDate;
-        const newStartTime = start_time !== undefined ? start_time : existing.startTime;
-        const newEndTime = end_time !== undefined ? end_time : existing.endTime;
-        
-        const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
-        const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
         const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
         
-        // Delete old events from all calendars
-        if (existing.googleCalendarId && golfCalendarId) {
-          await deleteClosureCalendarEvents(golfCalendarId, existing.googleCalendarId);
-        }
-        if (existing.conferenceCalendarId && conferenceCalendarId) {
-          await deleteClosureCalendarEvents(conferenceCalendarId, existing.conferenceCalendarId);
-        }
-        if (existing.internalCalendarId && internalCalendarId) {
-          await deleteClosureCalendarEvents(internalCalendarId, existing.internalCalendarId);
-        }
-        
-        // Create new events
-        let newGolfEventIds: string | null = null;
-        let newConferenceEventIds: string | null = null;
-        let newInternalEventIds: string | null = null;
-        
-        // Determine what resources are affected
-        const affectsConferenceRoom = newAffectedAreas === 'entire_facility' || newAffectedAreas === 'conference_room';
-        const calendarAffectedBayIds = await getAffectedBayIds(newAffectedAreas);
-        const affectsBays = newAffectedAreas === 'entire_facility' || newAffectedAreas === 'all_bays' || 
-          newAffectedAreas.includes('bay_') || calendarAffectedBayIds.length > 0;
-        
-        // Create golf calendar event only if bays are affected
-        if (golfCalendarId && affectsBays) {
-          newGolfEventIds = await createClosureCalendarEvents(
-            golfCalendarId,
-            eventTitle,
-            eventDescription,
-            newStartDate,
-            newEndDate || newStartDate,
-            newStartTime,
-            newEndTime
-          );
-        }
-        
-        // Create conference room calendar event if conference room or entire facility is affected
-        if (conferenceCalendarId && affectsConferenceRoom) {
-          newConferenceEventIds = await createClosureCalendarEvents(
-            conferenceCalendarId,
-            eventTitle,
-            eventDescription,
-            newStartDate,
-            newEndDate || newStartDate,
-            newStartTime,
-            newEndTime
-          );
-        }
-        
-        // Always create Internal Calendar event for all closures
         if (internalCalendarId) {
-          newInternalEventIds = await createClosureCalendarEvents(
+          // Delete old Internal Calendar event
+          if (existing.internalCalendarId) {
+            await deleteClosureCalendarEvents(internalCalendarId, existing.internalCalendarId);
+          }
+          
+          // Also clean up any legacy golf/conference events (backward compatibility)
+          if (existing.googleCalendarId) {
+            const golfCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.golf.name);
+            if (golfCalendarId) {
+              await deleteClosureCalendarEvents(golfCalendarId, existing.googleCalendarId);
+            }
+          }
+          if (existing.conferenceCalendarId) {
+            const conferenceCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.conference.name);
+            if (conferenceCalendarId) {
+              await deleteClosureCalendarEvents(conferenceCalendarId, existing.conferenceCalendarId);
+            }
+          }
+          
+          // Create new Internal Calendar event only
+          const newAffectedAreas = affected_areas || existing.affectedAreas || 'entire_facility';
+          const affectedText = await formatAffectedAreasForDisplay(newAffectedAreas);
+          const eventTitle = `CLOSURE: ${title || existing.title}`;
+          const eventDescription = `${reason !== undefined ? reason : existing.reason || 'Scheduled closure'}\n\nAffected: ${affectedText}`;
+          const newStartDate = start_date || existing.startDate;
+          const newEndDate = end_date || existing.endDate;
+          const newStartTime = start_time !== undefined ? start_time : existing.startTime;
+          const newEndTime = end_time !== undefined ? end_time : existing.endTime;
+          
+          const newInternalEventIds = await createClosureCalendarEvents(
             internalCalendarId,
             eventTitle,
             eventDescription,
@@ -786,19 +642,19 @@ router.put('/api/closures/:id', isStaffOrAdmin, async (req, res) => {
             newStartTime,
             newEndTime
           );
+          
+          // Update stored calendar ID (clear legacy columns)
+          await db
+            .update(facilityClosures)
+            .set({ 
+              googleCalendarId: null,
+              conferenceCalendarId: null,
+              internalCalendarId: newInternalEventIds
+            })
+            .where(eq(facilityClosures.id, closureId));
+          
+          console.log(`[Closures] Updated Internal Calendar event for closure #${closureId}`);
         }
-        
-        // Update stored calendar IDs in separate columns
-        await db
-          .update(facilityClosures)
-          .set({ 
-            googleCalendarId: newGolfEventIds,
-            conferenceCalendarId: newConferenceEventIds,
-            internalCalendarId: newInternalEventIds
-          })
-          .where(eq(facilityClosures.id, closureId));
-        
-        console.log(`[Closures] Updated Google Calendar event(s) for closure #${closureId}`);
       } catch (calError) {
         console.error('[Closures] Failed to update calendar events:', calError);
       }

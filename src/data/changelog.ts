@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.13",
+    date: "2025-12-31",
+    title: "Simplified Closure System",
+    changes: [
+      "Closures now create one calendar event (Internal Calendar) instead of three",
+      "Booking availability is blocked via database instead of duplicate calendar events",
+      "Cleaner calendars - no more duplicate CLOSURE events cluttering booking views",
+      "Deleting a closure now properly frees up those time slots for new bookings",
+      "Legacy calendar events are automatically cleaned up when closures are updated"
+    ]
+  },
+  {
     version: "7.12",
     date: "2025-12-31",
     title: "Security & Reliability Improvements",
