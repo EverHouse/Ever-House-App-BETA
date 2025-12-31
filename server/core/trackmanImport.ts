@@ -461,18 +461,19 @@ export async function getUnmatchedBookings(options?: {
     .offset(options?.offset || 0);
 }
 
-export async function resolveUnmatchedBooking(
-  unmatchedId: number, 
-  memberEmail: string, 
-  resolvedBy: string
+async function insertBookingIfNotExists(
+  booking: typeof trackmanUnmatchedBookings.$inferSelect,
+  memberEmail: string
 ): Promise<boolean> {
-  const unmatched = await db.select()
-    .from(trackmanUnmatchedBookings)
-    .where(eq(trackmanUnmatchedBookings.id, unmatchedId));
+  const trackmanIdPattern = `[Trackman Import ID:${booking.trackmanBookingId}]`;
+  const existing = await db.select({ id: bookingRequests.id })
+    .from(bookingRequests)
+    .where(sql`notes LIKE ${`%${trackmanIdPattern}%`}`)
+    .limit(1);
 
-  if (unmatched.length === 0) return false;
-
-  const booking = unmatched[0];
+  if (existing.length > 0) {
+    return false;
+  }
 
   await db.insert(bookingRequests).values({
     userEmail: memberEmail,
@@ -487,7 +488,26 @@ export async function resolveUnmatchedBooking(
     createdAt: booking.createdAt
   });
 
-  if (booking.status === 'attended') {
+  return true;
+}
+
+export async function resolveUnmatchedBooking(
+  unmatchedId: number, 
+  memberEmail: string, 
+  resolvedBy: string
+): Promise<{ success: boolean; resolved: number; autoResolved: number }> {
+  const unmatched = await db.select()
+    .from(trackmanUnmatchedBookings)
+    .where(eq(trackmanUnmatchedBookings.id, unmatchedId));
+
+  if (unmatched.length === 0) return { success: false, resolved: 0, autoResolved: 0 };
+
+  const booking = unmatched[0];
+  const originalEmail = booking.originalEmail?.toLowerCase().trim();
+
+  const inserted = await insertBookingIfNotExists(booking, memberEmail);
+
+  if (inserted && booking.status === 'attended') {
     await db.execute(sql`
       UPDATE users 
       SET lifetime_visits = COALESCE(lifetime_visits, 0) + 1 
@@ -496,9 +516,7 @@ export async function resolveUnmatchedBooking(
   }
 
   // Save the placeholder email mapping to the member's trackman_linked_emails for future imports
-  const originalEmail = booking.originalEmail?.toLowerCase().trim();
   if (originalEmail && isPlaceholderEmail(originalEmail)) {
-    // Add the email only if it's not already in the array
     const emailAsJsonb = JSON.stringify(originalEmail);
     await db.execute(sql`
       UPDATE users 
@@ -521,7 +539,41 @@ export async function resolveUnmatchedBooking(
     })
     .where(eq(trackmanUnmatchedBookings.id, unmatchedId));
 
-  return true;
+  // Auto-resolve other unmatched bookings with the same placeholder email
+  let autoResolved = 0;
+  if (originalEmail && isPlaceholderEmail(originalEmail)) {
+    const otherUnmatched = await db.select()
+      .from(trackmanUnmatchedBookings)
+      .where(sql`LOWER(TRIM(original_email)) = ${originalEmail} AND resolved_email IS NULL AND id != ${unmatchedId}`);
+
+    for (const other of otherUnmatched) {
+      const otherInserted = await insertBookingIfNotExists(other, memberEmail);
+
+      if (otherInserted && other.status === 'attended') {
+        await db.execute(sql`
+          UPDATE users 
+          SET lifetime_visits = COALESCE(lifetime_visits, 0) + 1 
+          WHERE email = ${memberEmail}
+        `);
+      }
+
+      await db.update(trackmanUnmatchedBookings)
+        .set({
+          resolvedEmail: memberEmail,
+          resolvedAt: new Date(),
+          resolvedBy: resolvedBy
+        })
+        .where(eq(trackmanUnmatchedBookings.id, other.id));
+
+      autoResolved++;
+    }
+
+    if (autoResolved > 0) {
+      process.stderr.write(`[Trackman Resolve] Auto-resolved ${autoResolved} additional bookings with same email: ${originalEmail}\n`);
+    }
+  }
+
+  return { success: true, resolved: 1 + autoResolved, autoResolved };
 }
 
 export async function getImportRuns() {

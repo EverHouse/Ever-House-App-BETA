@@ -124,10 +124,17 @@ router.put('/api/admin/trackman/unmatched/:id/resolve', isAdmin, async (req, res
       return res.status(400).json({ error: 'memberEmail is required' });
     }
     
-    const success = await resolveUnmatchedBooking(parseInt(id), memberEmail, resolvedBy);
+    const result = await resolveUnmatchedBooking(parseInt(id), memberEmail, resolvedBy);
     
-    if (success) {
-      res.json({ success: true });
+    if (result.success) {
+      res.json({ 
+        success: true, 
+        resolved: result.resolved,
+        autoResolved: result.autoResolved,
+        message: result.autoResolved > 0 
+          ? `Resolved ${result.resolved} booking(s) (${result.autoResolved} auto-resolved with same email)`
+          : 'Booking resolved successfully'
+      });
     } else {
       res.status(404).json({ error: 'Unmatched booking not found' });
     }

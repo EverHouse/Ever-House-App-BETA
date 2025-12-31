@@ -8,6 +8,16 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.14",
+    date: "2025-12-31",
+    title: "Smarter Trackman Import Resolution",
+    changes: [
+      "Resolving one unmatched booking now auto-resolves all others with same placeholder email",
+      "Saves significant time when dealing with repeat guests in historical imports",
+      "Email mappings learned from resolutions still apply to future imports automatically"
+    ]
+  },
+  {
     version: "7.13",
     date: "2025-12-31",
     title: "Simplified Closure System",
