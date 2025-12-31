@@ -211,7 +211,7 @@ export const events = pgTable("events", {
 // Event RSVPs table - event registrations
 export const eventRsvps = pgTable("event_rsvps", {
   id: serial("id").primaryKey(),
-  eventId: integer("event_id"),
+  eventId: integer("event_id").references(() => events.id, { onDelete: 'cascade' }),
   userEmail: varchar("user_email").notNull(),
   status: varchar("status").default("confirmed"),
   createdAt: timestamp("created_at").defaultNow(),
