@@ -1359,15 +1359,43 @@ const StaffUpdatesAdmin: React.FC = () => {
         await fetchNotifications();
     }, [fetchNotifications]);
 
+    const getStaffNotificationRoute = (notif: StaffNotification): string | null => {
+        if (notif.type === 'booking' || notif.type === 'booking_request' || 
+            notif.type === 'booking_cancelled' || notif.type === 'booking_approved' ||
+            notif.type === 'booking_declined') {
+            return '/admin?tab=simulator';
+        }
+        if (notif.type === 'event_rsvp' || notif.type === 'event_rsvp_cancelled') {
+            return '/admin?tab=events';
+        }
+        if (notif.type === 'tour_scheduled' || notif.type === 'tour_reminder') {
+            return '/admin?tab=tours';
+        }
+        if (notif.type === 'wellness_booking' || notif.type === 'wellness_enrollment' || 
+            notif.type === 'wellness_cancellation') {
+            return '/admin?tab=events';
+        }
+        if (notif.type === 'closure') {
+            return '/admin?tab=blocks';
+        }
+        return null;
+    };
+
     const handleNotificationClick = async (notif: StaffNotification) => {
         if (!notif.is_read) {
             try {
                 await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT', credentials: 'include' });
                 setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
                 setUnreadCount(prev => Math.max(0, prev - 1));
+                window.dispatchEvent(new CustomEvent('notifications-read'));
             } catch (err) {
                 console.error('Failed to mark notification as read:', err);
             }
+        }
+        
+        const route = getStaffNotificationRoute(notif);
+        if (route) {
+            navigate(route);
         }
     };
 

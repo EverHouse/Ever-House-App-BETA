@@ -9,7 +9,7 @@ const CONFERENCE_ROOM_BAY_ID = 11;
 
 router.get('/api/availability', async (req, res) => {
   try {
-    const { resource_id, date, duration } = req.query;
+    const { resource_id, date, duration, ignore_booking_id } = req.query;
     
     if (!resource_id || !date) {
       return res.status(400).json({ error: 'resource_id and date are required' });
@@ -26,11 +26,20 @@ router.get('/api/availability', async (req, res) => {
     );
     const resourceType = resourceResult.rows[0]?.type || 'simulator';
     
-    const bookedSlots = await pool.query(
-      `SELECT start_time, end_time FROM booking_requests 
-       WHERE bay_id = $1 AND request_date = $2 AND status = 'approved'`,
-      [resource_id, date]
-    );
+    // When rescheduling, ignore the original booking so its slot shows as available
+    const ignoreId = ignore_booking_id ? parseInt(ignore_booking_id as string) : null;
+    
+    const bookedSlots = ignoreId
+      ? await pool.query(
+          `SELECT start_time, end_time FROM booking_requests 
+           WHERE bay_id = $1 AND request_date = $2 AND status = 'approved' AND id != $3`,
+          [resource_id, date, ignoreId]
+        )
+      : await pool.query(
+          `SELECT start_time, end_time FROM booking_requests 
+           WHERE bay_id = $1 AND request_date = $2 AND status = 'approved'`,
+          [resource_id, date]
+        );
     
     const blockedSlots = await pool.query(
       `SELECT start_time, end_time FROM availability_blocks 

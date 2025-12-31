@@ -110,8 +110,11 @@ const formatDate = (dateStr: string): string => {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, addBooking, deleteBooking } = useData();
+  const { user, actualUser, isViewingAs, addBooking, deleteBooking } = useData();
   const { effectiveTheme } = useTheme();
+  
+  // Check if admin is viewing as a member
+  const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
   const { setPageReady } = usePageReady();
   const { showToast } = useToast();
   const isDark = effectiveTheme === 'dark';
@@ -358,17 +361,23 @@ const Dashboard: React.FC = () => {
         try {
           let res;
           if (bookingType === 'booking') {
+            // Pass acting_as_email for admin "View As" mode
             res = await fetch(`/api/bookings/${bookingId}/member-cancel`, {
               method: 'PUT',
-              credentials: 'include'
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify(isAdminViewingAs ? { acting_as_email: user?.email } : {})
             });
             if (res.ok) {
               setDbBookings(prev => prev.filter(b => b.id !== bookingId));
             }
           } else {
+            // Pass acting_as_email for admin "View As" mode
             res = await fetch(`/api/booking-requests/${bookingId}/member-cancel`, {
               method: 'PUT',
-              credentials: 'include'
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify(isAdminViewingAs ? { acting_as_email: user?.email } : {})
             });
             if (res.ok) {
               setDbBookingRequests(prev => prev.map(r => 

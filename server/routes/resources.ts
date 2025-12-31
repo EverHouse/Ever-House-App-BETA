@@ -573,7 +573,12 @@ router.put('/api/bookings/:id/member-cancel', async (req, res) => {
   try {
     const { id } = req.params;
     const rawSessionEmail = (req.session as any)?.user?.email;
+    const sessionUserRole = (req.session as any)?.user?.role;
     const userEmail = rawSessionEmail?.toLowerCase();
+    
+    // Check for admin "View As" mode - get the impersonated user's email from request body
+    const actingAsEmail = req.body?.acting_as_email?.toLowerCase();
+    const isAdminViewingAs = (sessionUserRole === 'admin' || sessionUserRole === 'staff') && actingAsEmail;
     
     if (!userEmail) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -598,11 +603,17 @@ router.put('/api/bookings/:id/member-cancel', async (req, res) => {
     }
     
     const bookingEmail = existing.userEmail?.toLowerCase();
-    if (bookingEmail !== userEmail) {
+    
+    // Allow cancel if: (1) session user owns the booking, OR (2) admin/staff is viewing as the booking owner
+    const isOwnBooking = bookingEmail === userEmail;
+    const isValidViewAs = isAdminViewingAs && bookingEmail === actingAsEmail;
+    
+    if (!isOwnBooking && !isValidViewAs) {
       logger.warn('Member cancel email mismatch', { 
         bookingId, 
         bookingEmail: existing.userEmail, 
         sessionEmail: rawSessionEmail,
+        actingAsEmail: actingAsEmail || 'none',
         normalizedBookingEmail: bookingEmail,
         normalizedSessionEmail: userEmail,
         requestId: req.requestId 

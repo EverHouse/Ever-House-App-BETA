@@ -318,8 +318,10 @@ const BookGolf: React.FC = () => {
       const allSlots: Map<string, { slot: TimeSlot; resourceIds: number[] }> = new Map();
       
       const results = await Promise.allSettled(resourcesToUse.map(async (resource) => {
+        // When rescheduling, pass the original booking ID so its slot shows as available
+        const ignoreParam = rescheduleBookingId ? `&ignore_booking_id=${rescheduleBookingId}` : '';
         const { ok, data: slots } = await apiRequest<APISlot[]>(
-          `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}`
+          `/api/availability?resource_id=${resource.dbId}&date=${selectedDateObj.date}&duration=${duration}${ignoreParam}`
         );
         return { resource, ok, slots };
       }));
@@ -370,7 +372,7 @@ const BookGolf: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [resources, selectedDateObj, duration, showToast]);
+  }, [resources, selectedDateObj, duration, showToast, rescheduleBookingId]);
 
   useEffect(() => {
     fetchAvailability();
