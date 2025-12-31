@@ -196,6 +196,30 @@ const BookGolf: React.FC = () => {
   // Check if admin is viewing as a member
   const isAdminViewingAs = actualUser?.role === 'admin' && isViewingAs;
 
+  // IMPORTANT: Define tier permissions, dates, and selectedDateObj BEFORE any useEffect that depends on them
+  const { permissions: tierPermissions, loading: tierLoading } = useTierPermissions(effectiveUser?.tier);
+  const canBookSimulators = canAccessResource(tierPermissions, 'simulator');
+  const canBookConference = canAccessResource(tierPermissions, 'conference');
+  const isTierLoaded = Boolean(effectiveUser?.tier) && !tierLoading;
+  
+  const pendingRequestsCount = myRequests.filter(r => r.status === 'pending').length;
+  
+  // Generate dates with safe fallback - ensure we always have at least one date
+  const dates = useMemo(() => {
+    const advanceDays = tierPermissions?.advanceBookingDays ?? 7;
+    return generateDates(advanceDays);
+  }, [tierPermissions?.advanceBookingDays]);
+  
+  // Initialize with null to avoid accessing potentially undefined array element
+  const [selectedDateObj, setSelectedDateObj] = useState<{ label: string; date: string; day: string; dateNum: string } | null>(null);
+
+  // Sync selectedDateObj when dates array changes (e.g., when user tier loads)
+  useEffect(() => {
+    if (dates.length > 0 && (!selectedDateObj || !dates.find(d => d.date === selectedDateObj.date))) {
+      setSelectedDateObj(dates[0]);
+    }
+  }, [dates, selectedDateObj]);
+
   useEffect(() => {
     if (!isLoading) {
       setPageReady(true);
@@ -223,7 +247,7 @@ const BookGolf: React.FC = () => {
 
   useEffect(() => {
     const fetchOriginalBooking = async () => {
-      if (!rescheduleBookingId || !effectiveUser?.email) return;
+      if (!rescheduleBookingId || !effectiveUser?.email || dates.length === 0) return;
       
       try {
         const { ok, data } = await apiRequest<BookingRequest[]>(
@@ -247,29 +271,6 @@ const BookGolf: React.FC = () => {
     
     fetchOriginalBooking();
   }, [rescheduleBookingId, effectiveUser?.email, dates, searchParams]);
-
-  const { permissions: tierPermissions, loading: tierLoading } = useTierPermissions(effectiveUser?.tier);
-  const canBookSimulators = canAccessResource(tierPermissions, 'simulator');
-  const canBookConference = canAccessResource(tierPermissions, 'conference');
-  const isTierLoaded = Boolean(effectiveUser?.tier) && !tierLoading;
-  
-  const pendingRequestsCount = myRequests.filter(r => r.status === 'pending').length;
-  
-  // Generate dates with safe fallback - ensure we always have at least one date
-  const dates = useMemo(() => {
-    const advanceDays = tierPermissions?.advanceBookingDays ?? 7;
-    return generateDates(advanceDays);
-  }, [tierPermissions?.advanceBookingDays]);
-  
-  // Initialize with null to avoid accessing potentially undefined array element
-  const [selectedDateObj, setSelectedDateObj] = useState<{ label: string; date: string; day: string; dateNum: string } | null>(null);
-
-  // Sync selectedDateObj when dates array changes (e.g., when user tier loads)
-  useEffect(() => {
-    if (dates.length > 0 && (!selectedDateObj || !dates.find(d => d.date === selectedDateObj.date))) {
-      setSelectedDateObj(dates[0]);
-    }
-  }, [dates, selectedDateObj]);
 
   const fetchResources = useCallback(async () => {
     const { ok, data, error } = await apiRequest<APIResource[]>('/api/resources');
