@@ -17,6 +17,7 @@ export const changelog: ChangelogEntry[] = [
       "Fixed duplicate availability blocks being created for closures (with database constraint)",
       "Fixed date display in Blocks tab showing wrong day due to timezone",
       "Fixed calendar sync overwriting manual bay selections - closures now preserve selected affected areas",
+      "Staff bottom nav now shows Closures instead of Inquiries for quick access",
       "Private calendar events now labeled as 'Private event' instead of 'Internal calendar event'"
     ]
   },

@@ -267,7 +267,7 @@ const NAV_ITEMS: NavItemData[] = [
   { id: 'simulator', icon: 'event_note', label: 'Bookings' },
   { id: 'tours', icon: 'directions_walk', label: 'Tours' },
   { id: 'events', icon: 'calendar_month', label: 'Calendar' },
-  { id: 'inquiries', icon: 'mail', label: 'Inquiries' },
+  { id: 'blocks', icon: 'event_busy', label: 'Closures' },
 ];
 
 const StaffBottomNav: React.FC<{
