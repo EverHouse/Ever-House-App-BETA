@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { isProduction } from '../core/db';
 import { db } from '../db';
 import { facilityClosures, pushSubscriptions, users, bays, availabilityBlocks, announcements, notifications, resources } from '../../shared/schema';
-import { eq, desc, or, isNull, inArray } from 'drizzle-orm';
+import { eq, desc, or, isNull, inArray, and } from 'drizzle-orm';
 import webpush from 'web-push';
-import { isStaffOrAdmin } from '../core/middleware';
+import { isStaffOrAdmin, isAdmin } from '../core/middleware';
 import { getCalendarIdByName, deleteCalendarEvent, CALENDAR_CONFIG, syncInternalCalendarToClosures } from '../core/calendar';
 import { getGoogleCalendarClient } from '../core/integrations';
 import { createPacificDate, parseLocalDate, addDaysToPacificDate } from '../utils/dateUtils';
@@ -941,6 +941,77 @@ router.post('/api/closures/sync', isStaffOrAdmin, async (req, res) => {
   } catch (error: any) {
     if (!isProduction) console.error('Manual closure sync error:', error);
     res.status(500).json({ error: 'Failed to sync closures' });
+  }
+});
+
+// Fix orphaned closures - create calendar events for closures without google_calendar_id
+router.post('/api/closures/fix-orphaned', isAdmin, async (req, res) => {
+  try {
+    console.log('[Fix Orphaned] Starting orphaned closures fix...');
+    
+    const orphanedClosures = await db
+      .select()
+      .from(facilityClosures)
+      .where(and(
+        eq(facilityClosures.isActive, true),
+        isNull(facilityClosures.googleCalendarId)
+      ));
+    
+    if (orphanedClosures.length === 0) {
+      return res.json({ success: true, message: 'No orphaned closures found', fixed: 0 });
+    }
+    
+    const internalCalendarId = await getCalendarIdByName(CALENDAR_CONFIG.internal.name);
+    if (!internalCalendarId) {
+      return res.status(400).json({ error: 'Internal Calendar not found' });
+    }
+    
+    const results: { id: number; title: string; status: string; eventId?: string }[] = [];
+    
+    for (const closure of orphanedClosures) {
+      try {
+        const eventIds = await createClosureCalendarEvents(
+          internalCalendarId,
+          closure.title,
+          closure.reason || 'Facility closure',
+          closure.startDate,
+          closure.endDate,
+          closure.startTime,
+          closure.endTime
+        );
+        
+        if (eventIds) {
+          await db.update(facilityClosures)
+            .set({ 
+              googleCalendarId: eventIds,
+              internalCalendarId: eventIds 
+            })
+            .where(eq(facilityClosures.id, closure.id));
+          
+          results.push({ id: closure.id, title: closure.title, status: 'fixed', eventId: eventIds });
+          console.log(`[Fix Orphaned] Created calendar event for closure #${closure.id}: ${closure.title}`);
+        } else {
+          results.push({ id: closure.id, title: closure.title, status: 'failed' });
+        }
+      } catch (err: any) {
+        console.error(`[Fix Orphaned] Error fixing closure #${closure.id}:`, err);
+        results.push({ id: closure.id, title: closure.title, status: 'error', eventId: err.message });
+      }
+    }
+    
+    const fixedCount = results.filter(r => r.status === 'fixed').length;
+    console.log(`[Fix Orphaned] Complete: ${fixedCount}/${orphanedClosures.length} closures fixed`);
+    
+    res.json({
+      success: true,
+      message: `Fixed ${fixedCount} of ${orphanedClosures.length} orphaned closures`,
+      fixed: fixedCount,
+      total: orphanedClosures.length,
+      details: results
+    });
+  } catch (error: any) {
+    console.error('[Fix Orphaned] Error:', error);
+    res.status(500).json({ error: 'Failed to fix orphaned closures' });
   }
 });
 
