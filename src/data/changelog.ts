@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.4",
+    date: "2025-12-31",
+    title: "Flexible Booking Durations",
+    changes: [
+      "Core members can now select 30-minute or 60-minute durations for golf and conference room bookings"
+    ]
+  },
+  {
     version: "7.3",
     date: "2025-12-31",
     title: "Closure Management Improvements",

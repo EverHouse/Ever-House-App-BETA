@@ -926,11 +926,10 @@ const BookGolf: React.FC = () => {
                   const maxMinutes = tierPermissions.dailySimulatorMinutes || 60;
                   // VIP/unlimited gets all options
                   if (maxMinutes >= 999 || tierPermissions.unlimitedAccess) return true;
-                  // Premium tiers with extended sessions see durations up to their limit
-                  if (tierPermissions.hasExtendedSessions) return mins <= maxMinutes;
-                  // Standard tiers (Core) see only their exact limit as the option
-                  // Core (60 min) = only 60m option
-                  return mins === maxMinutes;
+                  // All tiers see durations up to their daily limit
+                  // Core (60 min) = 30m and 60m options
+                  // Premium (120 min) = 30m, 60m, 90m, 120m options
+                  return mins <= maxMinutes;
                 }).map(mins => (
                   <button 
                     key={mins}
