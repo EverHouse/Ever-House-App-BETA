@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.2",
+    date: "2025-12-31",
+    title: "UI Polish",
+    changes: [
+      "Member search dropdown now has solid background for better readability in dark mode",
+      "Updates page tabs now properly fit all text without overflow"
+    ]
+  },
+  {
     version: "7.1",
     date: "2025-12-31",
     title: "Reschedule Workflow Improvements",
