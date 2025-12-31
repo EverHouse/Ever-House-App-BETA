@@ -1548,7 +1548,7 @@ const StaffUpdatesAdmin: React.FC = () => {
                         onClick={() => setActiveSubTab('announcements')}
                         className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
                             activeSubTab === 'announcements'
-                                ? 'bg-amber-500 text-white'
+                                ? 'bg-[#CCB8E4] text-[#293515]'
                                 : 'bg-primary/5 text-primary/60 hover:bg-primary/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
                         }`}
                     >

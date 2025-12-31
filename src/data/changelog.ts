@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.21",
+    date: "2025-12-31",
+    title: "Staff Portal Announcements Tab Fix",
+    changes: [
+      "Fixed Announcements tab in Staff Portal to use brand purple color",
+      "Consistent purple styling across both Member and Staff Updates pages"
+    ]
+  },
+  {
     version: "7.20",
     date: "2025-12-31",
     title: "Block Tags Visual Update",
