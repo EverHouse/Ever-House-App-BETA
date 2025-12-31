@@ -8254,6 +8254,7 @@ const ToursAdmin: React.FC = () => {
 const TrackmanAdmin: React.FC = () => {
   const { setPageReady } = usePageReady();
   const { actualUser } = useData();
+  const { showToast } = useToast();
   const [unmatchedBookings, setUnmatchedBookings] = useState<any[]>([]);
   const [importRuns, setImportRuns] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -8356,11 +8357,20 @@ const TrackmanAdmin: React.FC = () => {
         body: JSON.stringify({ memberEmail: resolveModal.memberEmail })
       });
       if (res.ok) {
+        const data = await res.json();
         setResolveModal(null);
         fetchData();
+        if (data.autoResolved > 0) {
+          showToast(`Resolved ${data.resolved} booking(s) (${data.autoResolved} auto-resolved with same email)`, 'success', 5000);
+        } else {
+          showToast('Booking resolved successfully', 'success');
+        }
+      } else {
+        showToast('Failed to resolve booking', 'error');
       }
     } catch (err) {
       console.error('Failed to resolve booking:', err);
+      showToast('Failed to resolve booking', 'error');
     }
   };
 
@@ -8505,7 +8515,7 @@ const TrackmanAdmin: React.FC = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setResolveModal({ booking, memberEmail: '' })}
+                  onClick={() => { setSearchQuery(''); setResolveModal({ booking, memberEmail: '' }); }}
                   className="px-3 py-1.5 bg-accent text-primary rounded-lg text-xs font-bold hover:opacity-90 transition-opacity shrink-0"
                 >
                   Resolve
