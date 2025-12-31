@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.7",
+    date: "2025-12-31",
+    title: "Performance & Code Optimization",
+    changes: [
+      "Reorganized shared types and default data into dedicated modules for better maintainability",
+      "Background sync interval reduced from 15 to 5 minutes for faster data updates",
+      "Notification polling now integrated with centralized state management for efficiency",
+      "Improved iOS edge swipe sensitivity for easier back navigation",
+      "Added native scroll physics class for smoother rubber-band scrolling",
+      "Fixed input auto-zoom on iOS by enforcing 16px minimum font size",
+      "Added accessibility fallback for users with reduced transparency preferences"
+    ]
+  },
+  {
     version: "7.6",
     date: "2025-12-30",
     title: "Navigation Fix",
