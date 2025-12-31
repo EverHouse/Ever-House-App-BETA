@@ -10,6 +10,16 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+const removeSplash = () => {
+  const splash = document.getElementById('app-splash');
+  if (splash) {
+    splash.style.opacity = '0';
+    setTimeout(() => {
+      splash.remove();
+    }, 500);
+  }
+};
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
@@ -17,3 +27,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+
+requestAnimationFrame(() => {
+  removeSplash();
+});

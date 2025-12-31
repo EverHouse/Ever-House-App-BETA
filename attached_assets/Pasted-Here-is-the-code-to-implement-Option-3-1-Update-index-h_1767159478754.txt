@@ -1,12 +1,22 @@
+Here is the code to implement Option 3.
+
+1. Update index.html
+Add the #app-splash div. I've positioned it to cover the entire screen with your brand green.
+
+HTML
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
     <meta name="theme-color" id="theme-color-meta" content="#293515" />
+    
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EH Members" />
+    
     <script>
       (function() {
         var themeMode = localStorage.getItem('themeMode');
@@ -15,15 +25,20 @@
         if (isDark) document.documentElement.classList.add('dark');
       })();
     </script>
+    
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <title>Even House</title>
+    
     <link rel="preload" href="/images/hero-lounge-optimized.webp" as="image" type="image/webp" />
+    
+    <title>Even House</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
     <style>
       #app-splash {
         position: fixed;
@@ -38,9 +53,52 @@
     </style>
   </head>
   <body>
-    <div id="app-splash"></div>
+    <div id="app-splash">
+      </div>
+
     <div id="root"></div>
     <div id="nav-overlay-root" style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+2. Update src/main.tsx
+Add logic to gracefully fade out and remove the splash screen once React has mounted.
+
+TypeScript
+
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
+import './index.css';
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// OPTION 3: Remove splash screen once React mounts
+const removeSplash = () => {
+  const splash = document.getElementById('app-splash');
+  if (splash) {
+    splash.style.opacity = '0';
+    setTimeout(() => {
+      splash.remove();
+    }, 500); // Matches the CSS transition duration
+  }
+};
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </React.StrictMode>
+);
+
+// Call removeSplash after render
+// Using requestAnimationFrame to ensure the first paint has occurred
+requestAnimationFrame(() => {
+  removeSplash();
+});
