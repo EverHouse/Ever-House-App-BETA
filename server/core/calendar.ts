@@ -800,14 +800,14 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
     let created = 0;
     let updated = 0;
     
-    // Helper function to get all active bay IDs and resource IDs (for facility-wide closures)
+    // Helper function to get all active bay IDs and resources (for facility-wide closures)
     const getAllResourceIds = async (): Promise<number[]> => {
+      const idSet = new Set<number>();
       const baysResult = await pool.query('SELECT id FROM bays WHERE is_active = true');
+      baysResult.rows.forEach((r: any) => idSet.add(r.id));
       const resourcesResult = await pool.query('SELECT id FROM resources');
-      return [
-        ...baysResult.rows.map((r: any) => r.id),
-        ...resourcesResult.rows.map((r: any) => r.id)
-      ];
+      resourcesResult.rows.forEach((r: any) => idSet.add(r.id));
+      return Array.from(idSet);
     };
     
     // Helper function to get dates between start and end (inclusive)

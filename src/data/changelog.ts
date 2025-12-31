@@ -14,7 +14,8 @@ export const changelog: ChangelogEntry[] = [
     changes: [
       "Multi-select checkboxes for closure affected areas (select individual bays, conference room, or none)",
       "Blocks list now grouped by date with accordion-style expandable sections",
-      "Fixed duplicate availability blocks being created for closures",
+      "Fixed duplicate availability blocks being created for closures (with database constraint)",
+      "Fixed date display in Blocks tab showing wrong day due to timezone",
       "Private calendar events now labeled as 'Private event' instead of 'Internal calendar event'"
     ]
   },

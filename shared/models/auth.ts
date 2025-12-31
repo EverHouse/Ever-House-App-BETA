@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar, serial, boolean, text, date, time, integer, numeric } from "drizzle-orm/pg-core";
+import { index, uniqueIndex, jsonb, pgTable, timestamp, varchar, serial, boolean, text, date, time, integer, numeric } from "drizzle-orm/pg-core";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -116,7 +116,11 @@ export const availabilityBlocks = pgTable("availability_blocks", {
   createdBy: varchar("created_by"),
   createdAt: timestamp("created_at").defaultNow(),
   closureId: integer("closure_id"),
-});
+}, (table) => [
+  uniqueIndex("availability_blocks_closure_unique_idx").on(
+    table.bayId, table.blockDate, table.startTime, table.endTime, table.closureId
+  )
+]);
 
 // Booking requests table - pending booking requests
 export const bookingRequests = pgTable("booking_requests", {

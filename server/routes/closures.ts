@@ -48,6 +48,15 @@ export async function sendPushNotificationToAllMembers(payload: { title: string;
   }
 }
 
+async function getConferenceRoomId(): Promise<number | null> {
+  const result = await db
+    .select({ id: resources.id })
+    .from(resources)
+    .where(eq(resources.type, 'conference_room'))
+    .limit(1);
+  return result.length > 0 ? result[0].id : null;
+}
+
 async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
   const idSet = new Set<number>();
   
@@ -57,7 +66,8 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
       .from(bays)
       .where(eq(bays.isActive, true));
     activeBays.forEach(bay => idSet.add(bay.id));
-    idSet.add(11);
+    const allResources = await db.select({ id: resources.id }).from(resources);
+    allResources.forEach(r => idSet.add(r.id));
     return Array.from(idSet);
   }
   
@@ -71,7 +81,8 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
   }
   
   if (affectedAreas === 'conference_room' || affectedAreas === 'Conference Room') {
-    return [11];
+    const conferenceRoomId = await getConferenceRoomId();
+    return conferenceRoomId ? [conferenceRoomId] : [];
   }
   
   if (affectedAreas.startsWith('bay_') && !affectedAreas.includes(',') && !affectedAreas.includes('[')) {
@@ -80,6 +91,8 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
       return [bayId];
     }
   }
+  
+  const conferenceRoomId = await getConferenceRoomId();
   
   try {
     const parsed = JSON.parse(affectedAreas);
@@ -92,7 +105,7 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
             const bayId = parseInt(item.replace('bay_', ''));
             if (!isNaN(bayId)) idSet.add(bayId);
           } else if (item === 'conference_room' || item.toLowerCase() === 'conference room') {
-            idSet.add(11);
+            if (conferenceRoomId) idSet.add(conferenceRoomId);
           } else {
             const bayId = parseInt(item);
             if (!isNaN(bayId)) idSet.add(bayId);
@@ -114,7 +127,7 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
         idSet.add(bayId);
       }
     } else if (part === 'conference_room' || part.toLowerCase() === 'conference room') {
-      idSet.add(11);
+      if (conferenceRoomId) idSet.add(conferenceRoomId);
     } else if (part.match(/^Bay\s*(\d+)$/i)) {
       const match = part.match(/^Bay\s*(\d+)$/i);
       if (match) {

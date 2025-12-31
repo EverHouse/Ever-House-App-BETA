@@ -5898,7 +5898,11 @@ const BlocksAdmin: React.FC = () => {
     };
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', { 
+        if (!dateStr) return 'No Date';
+        const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        const date = new Date(datePart + 'T12:00:00');
+        if (isNaN(date.getTime())) return 'Invalid Date';
+        return date.toLocaleDateString('en-US', { 
             weekday: 'short', month: 'short', day: 'numeric' 
         });
     };
