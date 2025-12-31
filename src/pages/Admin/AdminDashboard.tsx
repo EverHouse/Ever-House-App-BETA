@@ -5993,7 +5993,7 @@ const BlocksAdmin: React.FC = () => {
                     }`}
                 >
                     <span className="material-symbols-outlined text-lg align-middle mr-1">event_busy</span>
-                    Blocks ({blocks.length})
+                    Blocks ({new Set(blocks.map(b => b.block_date)).size})
                 </button>
             </div>
 
