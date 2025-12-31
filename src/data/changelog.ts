@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.1",
+    date: "2025-12-31",
+    title: "Reschedule Workflow Improvements",
+    changes: [
+      "Staff notifications for reschedule requests now navigate to bookings page when tapped",
+      "Original bay now shows as available when rescheduling an existing booking",
+      "Admins using 'View As Member' can now cancel bookings on behalf of members",
+      "Added 30-minute cutoff enforcement for last-minute reschedules"
+    ]
+  },
+  {
     version: "7.0",
     date: "2025-12-30",
     title: "Tier-Based Booking Limits",
