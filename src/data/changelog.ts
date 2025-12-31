@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.5",
+    date: "2025-12-31",
+    title: "Wellness Time Display",
+    changes: [
+      "Wellness event times now display in reader-friendly 12-hour format with AM/PM"
+    ]
+  },
+  {
     version: "7.4",
     date: "2025-12-31",
     title: "Flexible Booking Durations",

@@ -40,6 +40,25 @@ const formatDateForDisplay = (dateStr: string): string => {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 };
 
+const formatTimeTo12Hour = (timeStr: string): { time: string; period: string } => {
+  if (!timeStr) return { time: '12:00', period: 'PM' };
+  
+  if (timeStr.includes('AM') || timeStr.includes('PM')) {
+    const parts = timeStr.split(' ');
+    return { time: parts[0], period: parts[1] || 'PM' };
+  }
+  
+  const timePart = timeStr.split(':');
+  let hours = parseInt(timePart[0]) || 0;
+  const minutes = timePart[1] || '00';
+  
+  const period = hours >= 12 ? 'PM' : 'AM';
+  if (hours === 0) hours = 12;
+  else if (hours > 12) hours -= 12;
+  
+  return { time: `${hours}:${minutes}`, period };
+};
+
 const Wellness: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { user } = useData();
@@ -415,7 +434,9 @@ const FilterPill: React.FC<{label: string; active?: boolean; onClick?: () => voi
   </button>
 );
 
-const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, spotsRemaining, status, description, isExpanded, onToggle, onBook, onCancel, isEnrolled, isCancelling, isDark = true }) => (
+const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, category, spots, spotsRemaining, status, description, isExpanded, onToggle, onBook, onCancel, isEnrolled, isCancelling, isDark = true }) => {
+  const formattedTime = formatTimeTo12Hour(time);
+  return (
   <div 
     className={`rounded-xl relative overflow-hidden transition-all glass-card ${isDark ? 'border-white/10' : 'border-black/10'}`}
   >
@@ -436,8 +457,8 @@ const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, cat
         </div>
         <div className="flex flex-col items-end">
           <span className={`text-sm font-bold ${isDark ? 'text-accent' : 'text-primary'}`}>{date}</span>
-          <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{time.split(' ')[0]}</span>
-          <span className={`text-xs font-medium ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{time.split(' ')[1]}</span>
+          <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-primary'}`}>{formattedTime.time}</span>
+          <span className={`text-xs font-medium ${isDark ? 'text-white/50' : 'text-primary/50'}`}>{formattedTime.period}</span>
         </div>
       </div>
     </div>
@@ -473,7 +494,8 @@ const ClassCard: React.FC<any> = ({ title, date, time, instructor, duration, cat
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const MedSpaCard: React.FC<{title: string; subtitle?: string; children: React.ReactNode; isDark?: boolean}> = ({ title, subtitle, children, isDark = true }) => (
   <div className={`rounded-2xl p-5 border glass-card ${isDark ? 'border-white/5' : 'border-black/10'}`}>
