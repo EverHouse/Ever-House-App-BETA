@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.17",
+    date: "2025-12-31",
+    title: "Closures Renamed to Notices",
+    changes: [
+      "Renamed 'Closures' to 'Notices' throughout the app for clarity",
+      "Notices with 'None' affected areas no longer block bookings (informational only)",
+      "Fixed bug where calendar sync incorrectly blocked entire facility for 'none' areas",
+      "Updated icons to amber notification style for better visibility",
+      "Updated training guide to reflect new terminology"
+    ]
+  },
+  {
     version: "7.16",
     date: "2025-12-31",
     title: "Database Cleanup",

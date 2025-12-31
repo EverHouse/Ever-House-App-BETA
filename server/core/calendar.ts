@@ -1065,6 +1065,11 @@ export async function syncInternalCalendarToClosures(): Promise<{ synced: number
       // Normalize for case-insensitive comparison
       const normalized = affectedAreas.toLowerCase().trim();
       
+      // "none" means no resources are affected - this is an informational notice, not a closure
+      if (normalized === 'none' || normalized === '') {
+        return [];
+      }
+      
       // entire_facility = all bays + all resources
       if (normalized === 'entire_facility') {
         return getAllResourceIds();

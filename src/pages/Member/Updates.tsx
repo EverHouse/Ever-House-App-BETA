@@ -113,9 +113,9 @@ const getNotificationRoute = (notif: UserNotification, isStaffOrAdmin: boolean):
     return isStaffOrAdmin ? '/admin?tab=events' : '/member-wellness';
   }
   
-  // Closure notifications
+  // Notice/Closure notifications
   if (notif.type === 'closure') {
-    return isStaffOrAdmin ? '/admin?tab=blocks' : '/updates?tab=closures';
+    return isStaffOrAdmin ? '/admin?tab=blocks' : '/updates?tab=notices';
   }
   
   // Guest pass notifications
@@ -138,8 +138,8 @@ const MemberUpdates: React.FC = () => {
   const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
   
   const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'activity' | 'announcements' | 'closures'>(
-    tabParam === 'activity' ? 'activity' : tabParam === 'closures' ? 'closures' : 'announcements'
+  const [activeTab, setActiveTab] = useState<'activity' | 'announcements' | 'notices'>(
+    tabParam === 'activity' ? 'activity' : (tabParam === 'notices' || tabParam === 'closures') ? 'notices' : 'announcements'
   );
   
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
@@ -177,12 +177,14 @@ const MemberUpdates: React.FC = () => {
   }, [fetchClosures]);
 
   useEffect(() => {
-    if (tabParam === 'activity' || tabParam === 'announcements' || tabParam === 'closures') {
+    if (tabParam === 'activity' || tabParam === 'announcements') {
       setActiveTab(tabParam);
+    } else if (tabParam === 'notices' || tabParam === 'closures') {
+      setActiveTab('notices');
     }
   }, [tabParam]);
 
-  const handleTabChange = (tab: 'activity' | 'announcements' | 'closures') => {
+  const handleTabChange = (tab: 'activity' | 'announcements' | 'notices') => {
     setActiveTab(tab);
     setSearchParams({ tab });
   };
@@ -584,7 +586,7 @@ const MemberUpdates: React.FC = () => {
     </div>
   );
 
-  const renderClosuresTab = () => (
+  const renderNoticesTab = () => (
     <div className="relative z-10 pb-32">
       {closuresLoading ? (
         <div className="space-y-4">
@@ -603,7 +605,7 @@ const MemberUpdates: React.FC = () => {
       ) : closures.length === 0 ? (
         <div className={`text-center py-16 ${isDark ? 'text-white/50' : 'text-primary/50'}`}>
           <span className="material-symbols-outlined text-6xl mb-4 block opacity-30">event_available</span>
-          <p className="text-lg font-medium">No upcoming closures</p>
+          <p className="text-lg font-medium">No upcoming notices</p>
           <p className="text-sm mt-1 opacity-70">The club is open as usual.</p>
         </div>
       ) : (
@@ -611,17 +613,17 @@ const MemberUpdates: React.FC = () => {
           {closures.map((closure) => (
             <MotionListItem 
               key={`closure-${closure.id}`}
-              className={`rounded-2xl transition-all overflow-hidden ${isDark ? 'bg-red-500/10 shadow-layered-dark' : 'bg-red-50 shadow-layered'}`}
+              className={`rounded-2xl transition-all overflow-hidden ${isDark ? 'bg-amber-500/10 shadow-layered-dark' : 'bg-amber-50 shadow-layered'}`}
             >
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-red-500/20' : 'bg-red-100'}`}>
-                    <span className={`material-symbols-outlined text-xl ${isDark ? 'text-red-400' : 'text-red-600'}`}>event_busy</span>
+                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
+                    <span className={`material-symbols-outlined text-xl ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>notifications</span>
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-                        Closure
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                        Notice
                       </span>
                     </div>
                     <h3 className={`text-lg font-bold leading-snug truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -685,23 +687,23 @@ const MemberUpdates: React.FC = () => {
           Announcements
         </button>
         <button
-          onClick={() => handleTabChange('closures')}
+          onClick={() => handleTabChange('notices')}
           className={`flex-1 py-3 px-2 rounded-xl text-[11px] font-bold uppercase tracking-tight transition-all relative ${
-            activeTab === 'closures'
-              ? 'bg-red-500 text-white'
+            activeTab === 'notices'
+              ? 'bg-amber-500 text-white'
               : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
           }`}
         >
-          Closures
-          {closures.length > 0 && activeTab !== 'closures' && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          Notices
+          {closures.length > 0 && activeTab !== 'notices' && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
               {closures.length > 9 ? '9+' : closures.length}
             </span>
           )}
         </button>
       </div>
 
-      {activeTab === 'activity' ? renderActivityTab() : activeTab === 'announcements' ? renderAnnouncementsTab() : renderClosuresTab()}
+      {activeTab === 'activity' ? renderActivityTab() : activeTab === 'announcements' ? renderAnnouncementsTab() : renderNoticesTab()}
     </SwipeablePage>
     </PullToRefresh>
   );

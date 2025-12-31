@@ -62,7 +62,7 @@ const ClosureAlert: React.FC = () => {
   const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
-  const getStorageKey = () => `eh_dismissed_closures_${user?.email || 'guest'}`;
+  const getStorageKey = () => `eh_dismissed_notices_${user?.email || 'guest'}`;
 
   useEffect(() => {
     const stored = localStorage.getItem(getStorageKey());
@@ -112,7 +112,7 @@ const ClosureAlert: React.FC = () => {
   };
 
   const handleViewDetails = () => {
-    navigate('/updates?tab=closures');
+    navigate('/updates?tab=notices');
   };
 
   if (isLoading || activeClosures.length === 0) return null;
@@ -124,19 +124,19 @@ const ClosureAlert: React.FC = () => {
     <div 
       className={`mb-6 p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
         isDark 
-          ? 'bg-red-500/10 border-red-500/30 hover:bg-red-500/15' 
-          : 'bg-red-50 border-red-200 hover:bg-red-100'
+          ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/15' 
+          : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
       }`}
       onClick={handleViewDetails}
     >
       <div className="flex items-start gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-          isDark ? 'bg-red-500/20' : 'bg-red-100'
+          isDark ? 'bg-amber-500/20' : 'bg-amber-100'
         }`}>
           <span className={`material-symbols-outlined text-xl ${
-            isDark ? 'text-red-400' : 'text-red-600'
+            isDark ? 'text-amber-400' : 'text-amber-600'
           }`}>
-            event_busy
+            notifications
           </span>
         </div>
         
@@ -168,9 +168,9 @@ const ClosureAlert: React.FC = () => {
           
           <div className="flex items-center justify-between mt-2">
             <span className={`text-[10px] uppercase font-bold tracking-wide ${
-              isDark ? 'text-red-400' : 'text-red-700'
+              isDark ? 'text-amber-400' : 'text-amber-700'
             }`}>
-              {hasMultiple ? `${activeClosures.length} closures scheduled` : 'Facility Closure'}
+              {hasMultiple ? `${activeClosures.length} notices` : 'Notice'}
             </span>
             <span className={`text-xs font-medium flex items-center gap-1 ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
               View details

@@ -152,7 +152,7 @@ const AdminDashboard: React.FC = () => {
       case 'inquiries': return 'Inquiries';
       case 'gallery': return 'Gallery';
       case 'tiers': return 'Tiers';
-      case 'blocks': return 'Closures';
+      case 'blocks': return 'Notices';
       case 'changelog': return 'Changelog';
       case 'bugs': return 'Bug Reports';
       case 'training': return 'Training';
@@ -267,7 +267,7 @@ const NAV_ITEMS: NavItemData[] = [
   { id: 'simulator', icon: 'event_note', label: 'Bookings' },
   { id: 'tours', icon: 'directions_walk', label: 'Tours' },
   { id: 'events', icon: 'calendar_month', label: 'Calendar' },
-  { id: 'blocks', icon: 'event_busy', label: 'Closures' },
+  { id: 'blocks', icon: 'notifications', label: 'Notices' },
 ];
 
 const StaffBottomNav: React.FC<{
@@ -349,7 +349,7 @@ const StaffDashboardHome: React.FC<{ onTabChange: (tab: TabType) => void; isAdmi
   const operationsLinks = [
     { id: 'simulator' as TabType, icon: 'event_note', label: 'Bookings', description: 'Manage booking requests and approvals' },
     { id: 'events' as TabType, icon: 'calendar_month', label: 'Calendar', description: 'View and manage events and wellness' },
-    { id: 'blocks' as TabType, icon: 'event_busy', label: 'Closures', description: 'Manage closures and availability blocks' },
+    { id: 'blocks' as TabType, icon: 'notifications', label: 'Notices', description: 'Manage notices and availability blocks' },
     { id: 'updates' as TabType, icon: 'campaign', label: 'Updates', description: 'Activity and announcements for members' },
     { id: 'tours' as TabType, icon: 'directions_walk', label: 'Tours', description: 'View scheduled tours and check-ins' },
     { id: 'inquiries' as TabType, icon: 'mail', label: 'Inquiries', description: 'View form submissions' },
@@ -2476,7 +2476,7 @@ const SimulatorAdmin: React.FC = () => {
                     
                     if (closure) {
                         hasConflict = true;
-                        details = `Conflicts with closure: ${closure.title}`;
+                        details = `Conflicts with notice: ${closure.title}`;
                     }
                 }
                 
@@ -7252,13 +7252,13 @@ const TRAINING_SECTIONS: TrainingSection[] = [
         steps: [
             { title: 'Viewing Requests', content: 'Tap "Requests" in the bottom nav to see all pending booking requests. New requests show at the top. A red badge shows the count of pending requests.' },
             { title: 'Request Details', content: 'Each request shows the member name, date/time requested, duration, and resource (which simulator bay or conference room).' },
-            { title: 'Approving a Request', content: 'Tap a request to expand it, then tap "Approve". The system will check for conflicts with other approved bookings and facility closures. If there\'s a conflict, you\'ll see an error message explaining why.' },
+            { title: 'Approving a Request', content: 'Tap a request to expand it, then tap "Approve". The system will check for conflicts with other approved bookings and facility notices. If there\'s a conflict, you\'ll see an error message explaining why.' },
             { title: 'Declining a Request', content: 'Tap "Decline" if you cannot accommodate the request. The member will be notified that their request was declined.' },
-            { title: 'Calendar View', content: 'Switch to the Calendar view using the tabs at the top to see all approved bookings in a visual timeline. Red blocks indicate facility closures.' },
+            { title: 'Calendar View', content: 'Switch to the Calendar view using the tabs at the top to see all approved bookings in a visual timeline. Highlighted blocks indicate facility notices.' },
             { title: 'Reschedule Requests', content: 'When a member requests to reschedule, you will see a blue "Reschedule" badge on the request. This means they want to move an existing approved booking to a new time. If you approve, their original booking is automatically cancelled.' },
             { title: 'Checking In Members', content: 'After a member completes their booking, tap on it in the Scheduled section to mark them as "Attended" or "No Show". This updates their lifetime visit count and helps track attendance patterns.' },
             { title: 'Manual Bookings', content: 'Staff can create bookings on behalf of members using the "+" button. Enter the member email, select date/time, and the booking is created directly without needing member approval.' },
-            { title: 'Conflict Detection', content: 'The system automatically checks for conflicts with other bookings and facility closures. If you see a conflict error when approving, you will need to decline the request or suggest an alternative time.' },
+            { title: 'Conflict Detection', content: 'The system automatically checks for conflicts with other bookings and facility notices. If you see a conflict error when approving, you will need to decline the request or suggest an alternative time.' },
         ]
     },
     {
@@ -7295,7 +7295,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
             { title: 'Viewing Announcements', content: 'Tap "News" in the bottom nav to see all announcements. Current/active announcements show first, followed by past ones.' },
             { title: 'Creating an Announcement', content: 'Tap "+ Announcement" to create a new announcement. Add a title, content, and optionally set start/end dates for when it should be visible.' },
             { title: 'Priority Levels', content: 'Set the priority level: Normal for general news, High for important notices (these appear more prominently to members), Urgent for critical alerts.' },
-            { title: 'Automatic Announcements', content: 'When you create a facility closure, an announcement is automatically created and linked. When the closure is deleted, its announcement is also removed.' },
+            { title: 'Automatic Announcements', content: 'When you create a facility notice, an announcement is automatically created and linked. When the notice is deleted, its announcement is also removed.' },
         ]
     },
     {
@@ -7360,17 +7360,17 @@ const TRAINING_SECTIONS: TrainingSection[] = [
         ]
     },
     {
-        id: 'closures',
-        icon: 'block',
-        title: 'Facility Closures & Availability',
-        description: 'Block booking times for maintenance or special events',
+        id: 'notices',
+        icon: 'notifications',
+        title: 'Notices & Availability',
+        description: 'Manage notices for events and block booking times',
         steps: [
-            { title: 'Accessing Blocks', content: 'From the Home dashboard, tap "Closures" to manage facility closures and availability blocks.' },
-            { title: 'Creating a Closure', content: 'Tap "+" to create a closure. Set the date range, time range, affected areas (simulator bays, conference room, or whole facility), and reason.' },
-            { title: 'Affected Areas', content: 'Choose which resources are affected: individual simulator bays (Bay 1, Bay 2, Bay 3), the conference room, or the entire facility.' },
-            { title: 'Calendar Sync', content: 'Closures automatically sync to Google Calendar and appear as red "CLOSED" blocks in the staff calendar view.' },
-            { title: 'Automatic Announcements', content: 'Creating a closure automatically generates an announcement for members with the closure details.' },
-            { title: 'Booking Conflicts', content: 'The system prevents staff from approving bookings that conflict with closures. You\'ll see a clear error message if there\'s a conflict.' },
+            { title: 'Accessing Notices', content: 'From the Home dashboard, tap "Notices" to manage facility notices and availability blocks.' },
+            { title: 'Creating a Notice', content: 'Tap "+" to create a notice. Set the date range, time range, affected areas (simulator bays, conference room, whole facility, or none for informational notices), and reason.' },
+            { title: 'Affected Areas', content: 'Choose which resources are affected: individual simulator bays (Bay 1, Bay 2, Bay 3), the conference room, the entire facility, or "None" for informational notices that don\'t block bookings.' },
+            { title: 'Calendar Sync', content: 'Notices automatically sync to Google Calendar and appear in the staff calendar view.' },
+            { title: 'Automatic Announcements', content: 'Creating a notice automatically generates an announcement for members with the notice details.' },
+            { title: 'Booking Conflicts', content: 'The system prevents staff from approving bookings that conflict with notices that have affected areas. Notices with "None" selected don\'t block any bookings.' },
         ]
     },
 ];
