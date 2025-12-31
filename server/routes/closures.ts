@@ -49,13 +49,25 @@ export async function sendPushNotificationToAllMembers(payload: { title: string;
 }
 
 async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
-  if (affectedAreas === 'entire_facility' || affectedAreas === 'all_bays') {
+  const idSet = new Set<number>();
+  
+  if (affectedAreas === 'entire_facility') {
     const activeBays = await db
       .select({ id: bays.id })
       .from(bays)
       .where(eq(bays.isActive, true));
-    const allResources = await db.select({ id: resources.id }).from(resources);
-    return [...activeBays.map(bay => bay.id), ...allResources.map(r => r.id)];
+    activeBays.forEach(bay => idSet.add(bay.id));
+    idSet.add(11);
+    return Array.from(idSet);
+  }
+  
+  if (affectedAreas === 'all_bays') {
+    const activeBays = await db
+      .select({ id: bays.id })
+      .from(bays)
+      .where(eq(bays.isActive, true));
+    activeBays.forEach(bay => idSet.add(bay.id));
+    return Array.from(idSet);
   }
   
   if (affectedAreas === 'conference_room' || affectedAreas === 'Conference Room') {
@@ -72,56 +84,56 @@ async function getAffectedBayIds(affectedAreas: string): Promise<number[]> {
   try {
     const parsed = JSON.parse(affectedAreas);
     if (Array.isArray(parsed)) {
-      const ids: number[] = [];
       for (const item of parsed) {
         if (typeof item === 'number') {
-          ids.push(item);
+          idSet.add(item);
         } else if (typeof item === 'string') {
           if (item.startsWith('bay_')) {
             const bayId = parseInt(item.replace('bay_', ''));
-            if (!isNaN(bayId)) ids.push(bayId);
+            if (!isNaN(bayId)) idSet.add(bayId);
+          } else if (item === 'conference_room' || item.toLowerCase() === 'conference room') {
+            idSet.add(11);
           } else {
             const bayId = parseInt(item);
-            if (!isNaN(bayId)) ids.push(bayId);
+            if (!isNaN(bayId)) idSet.add(bayId);
           }
         }
       }
-      if (ids.length > 0) return ids;
+      if (idSet.size > 0) return Array.from(idSet);
     }
   } catch (parseError) {
     console.warn('[getAffectedBayIds] Failed to parse JSON affectedAreas:', affectedAreas, parseError);
   }
   
-  const bayIds: number[] = [];
   const parts = affectedAreas.split(',').map(s => s.trim());
   
   for (const part of parts) {
     if (part.startsWith('bay_')) {
       const bayId = parseInt(part.replace('bay_', ''));
       if (!isNaN(bayId)) {
-        bayIds.push(bayId);
+        idSet.add(bayId);
       }
-    } else if (part.toLowerCase() === 'conference room') {
-      bayIds.push(11);
+    } else if (part === 'conference_room' || part.toLowerCase() === 'conference room') {
+      idSet.add(11);
     } else if (part.match(/^Bay\s*(\d+)$/i)) {
       const match = part.match(/^Bay\s*(\d+)$/i);
       if (match) {
-        bayIds.push(parseInt(match[1]));
+        idSet.add(parseInt(match[1]));
       }
     } else if (part.match(/^Simulator\s*Bay\s*(\d+)$/i)) {
       const match = part.match(/^Simulator\s*Bay\s*(\d+)$/i);
       if (match) {
-        bayIds.push(parseInt(match[1]));
+        idSet.add(parseInt(match[1]));
       }
     } else {
       const parsed = parseInt(part);
       if (!isNaN(parsed)) {
-        bayIds.push(parsed);
+        idSet.add(parsed);
       }
     }
   }
   
-  return bayIds;
+  return Array.from(idSet);
 }
 
 function getDatesBetween(startDate: string, endDate: string): string[] {

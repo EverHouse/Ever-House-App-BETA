@@ -14,7 +14,7 @@ export const changelog: ChangelogEntry[] = [
     changes: [
       "Multi-select checkboxes for closure affected areas (select individual bays, conference room, or none)",
       "Blocks list now grouped by date with accordion-style expandable sections",
-      "Added spaces after commas in affected areas display for better readability",
+      "Fixed duplicate availability blocks being created for closures",
       "Private calendar events now labeled as 'Private event' instead of 'Internal calendar event'"
     ]
   },
