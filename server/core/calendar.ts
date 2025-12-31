@@ -836,6 +836,16 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
                 return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
               };
               
+              // Format dbRow.date to YYYY-MM-DD string (PostgreSQL returns Date objects)
+              const formatDateToISO = (d: Date | string): string => {
+                if (typeof d === 'string') return d;
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+              };
+              const dbDateStr = formatDateToISO(dbRow.date);
+              
               const startTime24 = convertTo24Hour(dbRow.time);
               const endTime24 = calculateEndTime(startTime24, dbRow.duration);
               
@@ -855,11 +865,11 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
                   summary: calendarTitle,
                   description: calendarDescription,
                   start: {
-                    dateTime: `${dbRow.date}T${startTime24}`,
+                    dateTime: `${dbDateStr}T${startTime24}`,
                     timeZone: 'America/Los_Angeles',
                   },
                   end: {
-                    dateTime: `${dbRow.date}T${endTime24}`,
+                    dateTime: `${dbDateStr}T${endTime24}`,
                     timeZone: 'America/Los_Angeles',
                   },
                   extendedProperties: {

@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.12",
+    date: "2025-12-31",
+    title: "Security & Reliability Improvements",
+    changes: [
+      "Enhanced security for staff-only features like availability blocks and calendar sync",
+      "Events and wellness classes now require successful calendar sync before saving",
+      "Fixed time calculations for booking slots to be accurate in Pacific timezone",
+      "Fixed wellness calendar sync errors caused by date formatting issues",
+      "Added protection for wellness enrollment deletion with proper user verification"
+    ]
+  },
+  {
     version: "7.11",
     date: "2025-12-31",
     title: "PWA Layer Cake Fix",

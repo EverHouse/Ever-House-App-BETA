@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { pool, isProduction } from '../core/db';
+import { isStaffOrAdmin } from '../core/middleware';
 import { getCalendarBusyTimes, getCalendarIdByName, CALENDAR_CONFIG } from '../core/calendar';
+import { getTodayPacific, getPacificDateParts } from '../utils/dateUtils';
 
 const router = Router();
 
@@ -82,13 +84,11 @@ router.get('/api/availability', async (req, res) => {
     
     const slots = [];
     
-    // Club timezone and current time
-    const clubTimezone = 'America/Los_Angeles';
-    const now = new Date();
-    const localNow = new Date(now.toLocaleString('en-US', { timeZone: clubTimezone }));
-    const todayStr = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
+    // Use Pacific timezone utilities for accurate time calculations
+    const todayStr = getTodayPacific();
     const isToday = date === todayStr;
-    const currentMinutes = isToday ? localNow.getHours() * 60 + localNow.getMinutes() : 0;
+    const pacificParts = getPacificDateParts();
+    const currentMinutes = isToday ? pacificParts.hour * 60 + pacificParts.minute : 0;
     
     // Get day of week for the requested date (0 = Sunday, 1 = Monday, etc.)
     const requestedDate = new Date(date as string + 'T12:00:00');
@@ -173,7 +173,7 @@ router.get('/api/availability', async (req, res) => {
   }
 });
 
-router.post('/api/availability-blocks', async (req, res) => {
+router.post('/api/availability-blocks', isStaffOrAdmin, async (req, res) => {
   try {
     const { bay_id, block_date, start_time, end_time, block_type, notes, created_by } = req.body;
     
@@ -225,7 +225,7 @@ router.get('/api/availability-blocks', async (req, res) => {
   }
 });
 
-router.put('/api/availability-blocks/:id', async (req, res) => {
+router.put('/api/availability-blocks/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { bay_id, block_date, start_time, end_time, block_type, notes } = req.body;
@@ -253,7 +253,7 @@ router.put('/api/availability-blocks/:id', async (req, res) => {
   }
 });
 
-router.delete('/api/availability-blocks/:id', async (req, res) => {
+router.delete('/api/availability-blocks/:id', isStaffOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM availability_blocks WHERE id = $1', [id]);

@@ -11,7 +11,7 @@ import { createPacificDate, parseLocalDate, formatDateDisplayWithDay } from '../
 
 const router = Router();
 
-router.post('/api/events/sync/google', async (req, res) => {
+router.post('/api/events/sync/google', isStaffOrAdmin, async (req, res) => {
   try {
     const result = await syncGoogleCalendarEvents();
     if (result.error) {
@@ -28,7 +28,7 @@ router.post('/api/events/sync/google', async (req, res) => {
   }
 });
 
-router.post('/api/events/sync', async (req, res) => {
+router.post('/api/events/sync', isStaffOrAdmin, async (req, res) => {
   try {
     const googleResult = await syncGoogleCalendarEvents();
     
@@ -170,22 +170,30 @@ router.post('/api/events', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid date/time combination' });
     }
     
+    const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
+    if (!calendarId) {
+      return res.status(500).json({ error: 'Events calendar not configured. Please contact support.' });
+    }
+    
+    const eventDescription = [description, location ? `Location: ${location}` : ''].filter(Boolean).join('\n');
+    
     let googleCalendarId: string | null = null;
     try {
-      const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
-      if (calendarId) {
-        const eventDescription = [description, location ? `Location: ${location}` : ''].filter(Boolean).join('\n');
-        googleCalendarId = await createCalendarEventOnCalendar(
-          calendarId,
-          trimmedTitle,
-          eventDescription,
-          trimmedEventDate,
-          trimmedStartTime,
-          trimmedEndTime || trimmedStartTime
-        );
-      }
-    } catch (calError) {
+      googleCalendarId = await createCalendarEventOnCalendar(
+        calendarId,
+        trimmedTitle,
+        eventDescription,
+        trimmedEventDate,
+        trimmedStartTime,
+        trimmedEndTime || trimmedStartTime
+      );
+    } catch (calError: any) {
       if (!isProduction) console.error('Failed to create Google Calendar event:', calError);
+      return res.status(500).json({ error: 'Failed to create calendar event. Please try again.' });
+    }
+    
+    if (!googleCalendarId) {
+      return res.status(500).json({ error: 'Failed to create calendar event. Please try again.' });
     }
     
     const result = await db.insert(events).values({

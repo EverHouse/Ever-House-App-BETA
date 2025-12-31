@@ -11,7 +11,7 @@ import { formatDateDisplayWithDay } from '../utils/dateUtils';
 
 const router = Router();
 
-router.post('/api/wellness-classes/sync', async (req, res) => {
+router.post('/api/wellness-classes/sync', isStaffOrAdmin, async (req, res) => {
   try {
     await discoverCalendarIds();
     const result = await syncWellnessCalendarEvents();
@@ -160,57 +160,63 @@ router.post('/api/wellness-classes', isStaffOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
+    const convertTo24Hour = (timeStr: string): string => {
+      const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (match12h) {
+        let hours = parseInt(match12h[1]);
+        const minutes = match12h[2];
+        const period = match12h[3].toUpperCase();
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+      }
+      const match24h = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (match24h) {
+        const hours = match24h[1].padStart(2, '0');
+        const minutes = match24h[2];
+        const seconds = match24h[3] || '00';
+        return `${hours}:${minutes}:${seconds}`;
+      }
+      return '09:00:00';
+    };
+    
+    const calculateEndTime = (startTime24: string, durationStr: string): string => {
+      const durationMatch = durationStr.match(/(\d+)/);
+      const durationMinutes = durationMatch ? parseInt(durationMatch[1]) : 60;
+      const [hours, minutes] = startTime24.split(':').map(Number);
+      const totalMinutes = hours * 60 + minutes + durationMinutes;
+      const endHours = Math.floor(totalMinutes / 60) % 24;
+      const endMins = totalMinutes % 60;
+      return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
+    };
+    
+    const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
+    if (!calendarId) {
+      return res.status(500).json({ error: 'Wellness calendar not configured. Please contact support.' });
+    }
+    
+    const calendarTitle = `${category} - ${title} with ${instructor}`;
+    const calendarDescription = [description, `Duration: ${duration}`, `Spots: ${spots}`].filter(Boolean).join('\n');
+    const startTime24 = convertTo24Hour(time);
+    const endTime24 = calculateEndTime(startTime24, duration);
+    
     let googleCalendarId: string | null = null;
     try {
-      const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
-      if (calendarId) {
-        const calendarTitle = `${category} - ${title} with ${instructor}`;
-        const calendarDescription = [description, `Duration: ${duration}`, `Spots: ${spots}`].filter(Boolean).join('\n');
-        
-        const convertTo24Hour = (timeStr: string): string => {
-          const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-          if (match12h) {
-            let hours = parseInt(match12h[1]);
-            const minutes = match12h[2];
-            const period = match12h[3].toUpperCase();
-            if (period === 'PM' && hours !== 12) hours += 12;
-            if (period === 'AM' && hours === 12) hours = 0;
-            return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
-          }
-          const match24h = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
-          if (match24h) {
-            const hours = match24h[1].padStart(2, '0');
-            const minutes = match24h[2];
-            const seconds = match24h[3] || '00';
-            return `${hours}:${minutes}:${seconds}`;
-          }
-          return '09:00:00';
-        };
-        
-        const calculateEndTime = (startTime24: string, durationStr: string): string => {
-          const durationMatch = durationStr.match(/(\d+)/);
-          const durationMinutes = durationMatch ? parseInt(durationMatch[1]) : 60;
-          const [hours, minutes] = startTime24.split(':').map(Number);
-          const totalMinutes = hours * 60 + minutes + durationMinutes;
-          const endHours = Math.floor(totalMinutes / 60) % 24;
-          const endMins = totalMinutes % 60;
-          return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
-        };
-        
-        const startTime24 = convertTo24Hour(time);
-        const endTime24 = calculateEndTime(startTime24, duration);
-        
-        googleCalendarId = await createCalendarEventOnCalendar(
-          calendarId,
-          calendarTitle,
-          calendarDescription,
-          date,
-          startTime24,
-          endTime24
-        );
-      }
-    } catch (calError) {
+      googleCalendarId = await createCalendarEventOnCalendar(
+        calendarId,
+        calendarTitle,
+        calendarDescription,
+        date,
+        startTime24,
+        endTime24
+      );
+    } catch (calError: any) {
       if (!isProduction) console.error('Failed to create Google Calendar event for wellness class:', calError);
+      return res.status(500).json({ error: 'Failed to create calendar event. Please try again.' });
+    }
+    
+    if (!googleCalendarId) {
+      return res.status(500).json({ error: 'Failed to create calendar event. Please try again.' });
     }
     
     const result = await pool.query(
@@ -475,6 +481,26 @@ router.post('/api/wellness-enrollments', async (req, res) => {
 router.delete('/api/wellness-enrollments/:class_id/:user_email', async (req, res) => {
   try {
     const { class_id, user_email } = req.params;
+    const enrollmentEmail = user_email.toLowerCase();
+    
+    const rawSessionEmail = (req.session as any)?.user?.email;
+    const sessionUserRole = (req.session as any)?.user?.role;
+    const sessionEmail = rawSessionEmail?.toLowerCase();
+    
+    const actingAsEmail = req.body?.acting_as_email?.toLowerCase();
+    const isAdminOrStaff = sessionUserRole === 'admin' || sessionUserRole === 'staff';
+    const isAdminViewingAs = isAdminOrStaff && actingAsEmail;
+    
+    if (!sessionEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const isOwnEnrollment = enrollmentEmail === sessionEmail;
+    const isValidViewAs = isAdminViewingAs && enrollmentEmail === actingAsEmail;
+    
+    if (!isOwnEnrollment && !isValidViewAs && !isAdminOrStaff) {
+      return res.status(403).json({ error: 'You can only cancel your own enrollments' });
+    }
     
     const classData = await db.select({
       title: wellnessClasses.title,
