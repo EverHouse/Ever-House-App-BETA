@@ -82,7 +82,7 @@ export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [cafeMenuLoaded, setCafeMenuLoaded] = useState(false);
   const [eventsLoaded, setEventsLoaded] = useState(false);
   const [announcementsLoaded, setAnnouncementsLoaded] = useState(false);
-  const [cafeMenu, setCafeMenu] = useState<CafeItem[]>([]);
+  const [cafeMenu, setCafeMenu] = useState<CafeItem[]>(INITIAL_CAFE);
   const [events, setEvents] = useState<EventData[]>(INITIAL_EVENTS);
   const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
   const [members, setMembers] = useState<MemberProfile[]>(INITIAL_MEMBERS);
