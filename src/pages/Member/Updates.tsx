@@ -644,10 +644,10 @@ const MemberUpdates: React.FC = () => {
         <p className={`text-sm font-medium mt-1 ${isDark ? 'text-white/70' : 'text-primary/70'}`}>Stay in the loop with what's happening.</p>
       </section>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-1.5 mb-6">
         <button
           onClick={() => handleTabChange('activity')}
-          className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all relative ${
+          className={`flex-1 py-3 px-2 rounded-xl text-[11px] font-bold uppercase tracking-tight transition-all relative ${
             activeTab === 'activity'
               ? 'bg-accent text-primary'
               : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
@@ -662,7 +662,7 @@ const MemberUpdates: React.FC = () => {
         </button>
         <button
           onClick={() => handleTabChange('announcements')}
-          className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
+          className={`flex-1 py-3 px-2 rounded-xl text-[11px] font-bold uppercase tracking-tight transition-all ${
             activeTab === 'announcements'
               ? 'bg-amber-400 text-amber-900'
               : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
@@ -672,7 +672,7 @@ const MemberUpdates: React.FC = () => {
         </button>
         <button
           onClick={() => handleTabChange('closures')}
-          className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wide transition-all relative ${
+          className={`flex-1 py-3 px-2 rounded-xl text-[11px] font-bold uppercase tracking-tight transition-all relative ${
             activeTab === 'closures'
               ? 'bg-red-500 text-white'
               : isDark ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-primary/5 text-primary/60 hover:bg-primary/10'
