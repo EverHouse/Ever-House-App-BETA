@@ -1,0 +1,296 @@
+Here is the complete code to implement the "Layer Cake" fix. This ensures the PWA starts green (matching the status bar) and seamlessly transitions to your app without any white flashes, while preserving your bone-white designs.
+1. index.html
+Changes:
+ * Updated theme-color to #293515 (Brand Green).
+ * Added the #app-splash div and its inline CSS to cover the screen immediately.
+<!-- end list -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <meta name="theme-color" id="theme-color-meta" content="#293515" />
+    
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="EH Members" />
+    
+    <script>
+      (function() {
+        var themeMode = localStorage.getItem('themeMode');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = themeMode === 'dark' || (themeMode === 'system' && prefersDark) || (!themeMode && prefersDark);
+        if (isDark) document.documentElement.classList.add('dark');
+      })();
+    </script>
+    
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    
+    <title>Even House</title>
+    
+    <link rel="preload" href="/images/hero-lounge-optimized.webp" as="image" type="image/webp" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <style>
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        background-color: #293515; /* Brand Green */
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s ease-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-splash"></div>
+
+    <div id="root"></div>
+    <div id="nav-overlay-root" style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+2. src/main.tsx
+Changes:
+ * Added removeSplash function to fade out the green screen once React is ready.
+<!-- end list -->
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
+import './index.css';
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// ADDED: Splash removal logic
+const removeSplash = () => {
+  const splash = document.getElementById('app-splash');
+  if (splash) {
+    splash.style.opacity = '0';
+    setTimeout(() => {
+      splash.remove();
+    }, 500); // Matches CSS transition
+  }
+};
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </React.StrictMode>
+);
+
+// ADDED: Remove splash after first paint
+requestAnimationFrame(() => {
+  removeSplash();
+});
+
+3. src/index.css
+Changes:
+ * Changed default background-color to #293515 (Green). This acts as the "safety layer" behind everything.
+<!-- end list -->
+@import "tailwindcss";
+
+:root {
+  /* ... (keep existing variables) ... */
+  --nav-bottom-offset: 2rem;
+  --nav-height: 4rem;
+  --nav-clearance: calc(var(--nav-height) + var(--nav-bottom-offset) + env(safe-area-inset-bottom, 0px));
+  
+  --brand-primary: #293515;
+  --brand-secondary: #F2F2EC;
+  --brand-accent: #CCB8E4;
+  
+  /* ... (rest of your variables) ... */
+}
+
+@theme {
+  /* ... (keep existing theme config) ... */
+}
+
+/* ... (keep global resets) ... */
+
+html, body {
+  width: 100%;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* CHANGED: Default background is now GREEN to prevent white flash */
+  background-color: #293515; 
+  
+  color: var(--brand-primary);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ... (rest of the file stays exactly the same) ... */
+.native-scroller {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
+  height: 100%;
+}
+/* ... etc ... */
+
+4. src/App.tsx
+Changes:
+ * Updated Layout component to conditionally use Green background (bg-[#293515]) on the Landing Page, but revert to Bone (bg-[#F2F2EC]) for all other pages.
+<!-- end list -->
+// ... imports ...
+
+// ... InitialLoadingScreen, PageSkeleton, etc ...
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { announcements, user, actualUser, isViewingAs } = useData();
+  const { effectiveTheme } = useTheme();
+  const { endNavigation } = useNavigationLoading();
+  const unreadCount = useUserStore(state => state.unreadNotifications);
+  const { processNotifications } = useNotificationSounds(false, user?.email);
+  
+  // ... existing useEffects for navigation, debug layout, edge swipe ...
+
+  // Scroll/Theme Color Logic
+  const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
+  useEffect(() => {
+    // ... (keep existing theme color meta logic) ...
+  }, [location.pathname]);
+  
+  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/updates'].some(path => location.pathname.startsWith(path));
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isLandingPage = location.pathname === '/';
+  const isFullBleedHeroPage = isLandingPage || location.pathname === '/private-hire';
+  const isDarkTheme = (isAdminRoute || isMemberRoute) && effectiveTheme === 'dark';
+  const showHeader = !isAdminRoute;
+
+  // ... handleTopLeftClick, handleTopRightClick, etc ...
+
+  const openNotifications = (tab?: 'updates' | 'announcements') => {
+    navigate(`/updates?tab=${tab || 'activity'}`);
+  };
+  
+  // ... headerClasses, headerContent ...
+
+  // CHANGED: Dynamic Background Logic
+  // If Landing Page: Use Green (#293515) so transparent status bar sees green
+  // If Member/Public Page: Use Bone (#F2F2EC) so content looks correct
+  // If Dark Mode: Use Dark Liquid BG
+  const appBackgroundClass = isDarkTheme 
+    ? 'dark liquid-bg text-white' 
+    : isLandingPage 
+      ? 'bg-[#293515] text-primary' 
+      : 'bg-[#F2F2EC] text-primary';
+
+  return (
+    <div className={`${appBackgroundClass} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
+      
+      {/* Edge swipe indicator ... */}
+      <div 
+        className={`fixed left-0 top-1/2 -translate-y-1/2 z-[9999] pointer-events-none transition-all duration-200 ${isEdgeSwipeActive ? 'opacity-100' : 'opacity-0'}`}
+        style={{ 
+          transform: `translateY(-50%) translateX(${isEdgeSwipeActive ? Math.min(edgeSwipeProgress * 60, 50) : -40}px) scale(${0.8 + edgeSwipeProgress * 0.3})`,
+          transition: isEdgeSwipeActive ? 'none' : 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        }}
+      >
+        <div 
+          className="w-10 h-10 rounded-full bg-accent/90 backdrop-blur-sm flex items-center justify-center shadow-lg"
+          style={{ opacity: Math.min(edgeSwipeProgress * 1.5, 1) }}
+        >
+          <span className="material-symbols-outlined text-white text-xl">arrow_back</span>
+        </div>
+      </div>
+
+      {isDarkTheme ? (
+        <>
+            <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow"></div>
+            <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#E7E7DC]/5 rounded-full blur-[100px] pointer-events-none animate-pulse-slow" style={{animationDelay: '2s'}}></div>
+        </>
+      ) : (
+        <>
+            <div className="fixed top-[-20%] right-[-20%] w-[600px] h-[600px] bg-white rounded-full blur-[80px] pointer-events-none opacity-60"></div>
+            <div className="fixed bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#E7E7DC] rounded-full blur-[60px] pointer-events-none opacity-40"></div>
+        </>
+      )}
+      
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+
+      <NotificationContext.Provider value={{ openNotifications }}>
+        <ViewAsBanner />
+        
+        {/* Header rendered via portal to escape transform context */}
+        {headerContent && createPortal(headerContent, document.body)}
+        
+        <div className={`relative w-full min-h-screen flex flex-col ${isDarkTheme ? 'text-white' : 'text-primary'}`}>
+
+            <main 
+                id="main-content"
+                className={`flex-1 relative native-scroller ${showHeader && !isFullBleedHeroPage ? 'pt-[max(88px,calc(env(safe-area-inset-top)+72px))]' : ''}`}
+            >
+                {children}
+                {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}
+            </main>
+
+            {isMemberRoute && !isAdminRoute && !isProfilePage && user && (
+              <MemberBottomNav currentPath={location.pathname} isDarkTheme={isDarkTheme} />
+            )}
+
+            <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        </div>
+      </NotificationContext.Provider>
+    </div>
+  );
+};
+
+// ... Rest of App.tsx (App component) remains the same ...
+const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <ThemeProvider>
+        <DataProvider>
+          <ToastProvider>
+          <BottomNavProvider>
+          <AnnouncementBadgeProvider>
+          <NavigationLoadingProvider>
+          <PageReadyProvider>
+          <InitialLoadingScreen>
+            <OfflineBanner />
+            <HashRouter>
+              <NavigationLoader />
+              <SmoothScrollProvider>
+                <ScrollToTop />
+                <Layout>
+                  <AnimatedRoutes />
+                </Layout>
+              </SmoothScrollProvider>
+            </HashRouter>
+          </InitialLoadingScreen>
+          </PageReadyProvider>
+          </NavigationLoadingProvider>
+          </AnnouncementBadgeProvider>
+          </BottomNavProvider>
+          </ToastProvider>
+        </DataProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
+};
+
+export default App;
+
