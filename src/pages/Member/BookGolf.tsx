@@ -279,6 +279,7 @@ const BookGolf: React.FC = () => {
       if (!ok || !data) {
         showToast('Unable to load data. Please try again.', 'error');
         setError(error || 'Unable to load resources');
+        setIsLoading(false);
         return [];
       }
       
@@ -303,6 +304,7 @@ const BookGolf: React.FC = () => {
     } catch (err) {
       console.error('[BookGolf] Error fetching resources:', err);
       setError('Unable to load resources');
+      setIsLoading(false);
       return [];
     }
   }, [activeTab, showToast]);
