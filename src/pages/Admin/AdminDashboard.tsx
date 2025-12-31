@@ -214,7 +214,7 @@ const AdminDashboard: React.FC = () => {
       {createPortal(headerContent, document.body)}
 
       {/* Main Content Area - add top padding for fixed header */}
-      <main className="flex-1 px-4 md:px-8 max-w-4xl mx-auto pt-[max(112px,calc(env(safe-area-inset-top)+96px))] w-full relative z-0">
+      <main className={`flex-1 px-4 md:px-8 mx-auto pt-[max(112px,calc(env(safe-area-inset-top)+96px))] w-full relative z-0 ${activeTab === 'simulator' ? 'max-w-[1920px]' : 'max-w-4xl'}`}>
         {activeTab === 'home' && <StaffDashboardHome onTabChange={handleTabChange} isAdmin={actualUser?.role === 'admin'} />}
         {activeTab === 'cafe' && <CafeAdmin />}
         {activeTab === 'events' && <EventsWellnessAdmin />}
@@ -2707,46 +2707,49 @@ const SimulatorAdmin: React.FC = () => {
 
     return (
         <PullToRefresh onRefresh={handleRefresh}>
-            <div className="flex justify-center animate-pop-in">
-                <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
-                {/* Tab Bar */}
-                <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in px-4 py-3" style={{animationDelay: '0.05s'}}>
-                <div className="flex">
-                    <button
-                        onClick={() => setActiveView('requests')}
-                        className={`py-3 px-6 font-medium text-sm transition-all relative ${
-                            activeView === 'requests'
-                                ? 'text-primary dark:text-white'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                        }`}
-                    >
-                        Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
-                        {activeView === 'requests' && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setActiveView('calendar')}
-                        className={`py-3 px-6 font-medium text-sm transition-all relative ${
-                            activeView === 'calendar'
-                                ? 'text-primary dark:text-white'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                        }`}
-                    >
-                        Calendar
-                        {activeView === 'calendar' && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
-                        )}
-                    </button>
+            <div className="flex justify-center animate-pop-in h-full">
+                <div className="w-full bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col lg:h-[calc(100vh-140px)]">
+                {/* Tab Bar - Hidden on Desktop */}
+                <div className="lg:hidden flex items-center justify-between border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in px-4 py-3" style={{animationDelay: '0.05s'}}>
+                    <div className="flex">
+                        <button
+                            onClick={() => setActiveView('requests')}
+                            className={`py-3 px-6 font-medium text-sm transition-all relative ${
+                                activeView === 'requests'
+                                    ? 'text-primary dark:text-white'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                        >
+                            Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                            {activeView === 'requests' && (
+                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setActiveView('calendar')}
+                            className={`py-3 px-6 font-medium text-sm transition-all relative ${
+                                activeView === 'calendar'
+                                    ? 'text-primary dark:text-white'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                        >
+                            Calendar
+                            {activeView === 'calendar' && (
+                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
+                            )}
+                        </button>
+                    </div>
                 </div>
-            </div>
 
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                     <span className="material-symbols-outlined animate-spin text-primary dark:text-white">progress_activity</span>
                 </div>
-            ) : activeView === 'requests' ? (
-                <div className="space-y-6 p-5 animate-pop-in" style={{animationDelay: '0.1s'}}>
+            ) : (
+                <div className="flex flex-col lg:flex-row h-full overflow-hidden">
+                    {/* LEFT COLUMN: Queue / Requests - Always visible on desktop, toggle on mobile */}
+                    <div className={`lg:w-[400px] xl:w-[450px] lg:border-r border-gray-200 dark:border-white/10 flex-shrink-0 h-full overflow-y-auto scrollbar-hide ${activeView === 'requests' ? 'block' : 'hidden lg:block'}`}>
+                        <div className="space-y-6 p-5 animate-pop-in" style={{animationDelay: '0.1s'}}>
                     {/* Pending Requests Section */}
                     <div className="animate-pop-in" style={{animationDelay: '0.05s'}}>
                         <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
@@ -3017,9 +3020,12 @@ const SimulatorAdmin: React.FC = () => {
                             </div>
                         </div>
                     )}
-                </div>
-            ) : (
-                <div className="animate-pop-in" style={{animationDelay: '0.1s'}}>
+                        </div>
+                    </div>
+                    
+                    {/* RIGHT COLUMN: Calendar - Always visible on desktop, toggle on mobile */}
+                    <div className={`flex-1 h-full overflow-y-auto scrollbar-hide ${activeView === 'calendar' ? 'block' : 'hidden lg:block'}`}>
+                        <div className="animate-pop-in h-full" style={{animationDelay: '0.1s'}}>
                     {/* Date Selector Row */}
                     <div className="bg-gray-50 dark:bg-white/5 py-3 mb-4 animate-pop-in" style={{animationDelay: '0.2s'}}>
                         <div className="flex items-center justify-center gap-2">
@@ -3129,6 +3135,8 @@ const SimulatorAdmin: React.FC = () => {
                                     </React.Fragment>
                                 ))}
                             </div>
+                        </div>
+                    </div>
                         </div>
                     </div>
                 </div>

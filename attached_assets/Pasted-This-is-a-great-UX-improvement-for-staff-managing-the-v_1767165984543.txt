@@ -1,0 +1,512 @@
+This is a great UX improvement for staff managing the venue. A side-by-side layout (Master-Detail view) allows staff to process the queue while referencing the calendar timeline without context switching.
+
+Here are the changes:
+
+1. **`AdminDashboard`**: Widened the main container only for the 'simulator' tab to utilize the full screen width.
+2. **`SimulatorAdmin`**:
+* Refactored the layout into a responsive grid.
+* **Desktop:** Shows Queue (Left) and Calendar (Right) side-by-side.
+* **Mobile:** Keeps the tab switcher to toggle views.
+* Enabled independent scrolling for the panels on desktop so a long queue doesn't push the calendar off-screen.
+
+
+
+```typescript
+// src/pages/Admin/AdminDashboard.tsx
+
+// [Modification 1: Update the Main container to be wider when on the bookings tab]
+// Find the <main> tag around line 133 and update the className
+
+const AdminDashboard: React.FC = () => {
+  // ... existing code ...
+
+  return (
+    <div className="min-h-screen bg-bone font-display dark:bg-transparent transition-colors duration-300 flex flex-col relative">
+      
+      {createPortal(headerContent, document.body)}
+
+      {/* CHANGED: Dynamic max-width based on active tab */}
+      <main className={`flex-1 px-4 md:px-8 mx-auto pt-[max(112px,calc(env(safe-area-inset-top)+96px))] w-full relative z-0 ${activeTab === 'simulator' ? 'max-w-[1920px]' : 'max-w-4xl'}`}>
+        {activeTab === 'home' && <StaffDashboardHome onTabChange={handleTabChange} isAdmin={actualUser?.role === 'admin'} />}
+        {/* ... other tabs ... */}
+        {activeTab === 'simulator' && <SimulatorAdmin />}
+        {/* ... other tabs ... */}
+        <BottomSentinel />
+      </main>
+
+      {/* ... rest of render ... */}
+    </div>
+  );
+};
+
+// [Modification 2: Refactor SimulatorAdmin for Side-by-Side Layout]
+// Find the SimulatorAdmin component definition (around line 1350) and update the return statement
+
+const SimulatorAdmin: React.FC = () => {
+    // ... existing state and hooks ...
+
+    // ... existing functions (fetchData, handleRefresh, etc.) ...
+
+    return (
+        <PullToRefresh onRefresh={handleRefresh}>
+            <div className="flex justify-center animate-pop-in h-full">
+                {/* CHANGED: Removed max-width constraints, added h-[85vh] for desktop scrolling */}
+                <div className="w-full bg-white dark:bg-surface-dark rounded-2xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col lg:h-[calc(100vh-140px)]">
+                
+                {/* Tab Bar - HIDDEN on Desktop (lg) */}
+                <div className="lg:hidden flex items-center justify-between border-b border-gray-200 dark:border-white/10 mb-0 animate-pop-in px-4 py-3" style={{animationDelay: '0.05s'}}>
+                    <div className="flex">
+                        <button
+                            onClick={() => setActiveView('requests')}
+                            className={`py-3 px-6 font-medium text-sm transition-all relative ${
+                                activeView === 'requests'
+                                    ? 'text-primary dark:text-white'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                        >
+                            Queue {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                            {activeView === 'requests' && (
+                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setActiveView('calendar')}
+                            className={`py-3 px-6 font-medium text-sm transition-all relative ${
+                                activeView === 'calendar'
+                                    ? 'text-primary dark:text-white'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                        >
+                            Calendar
+                            {activeView === 'calendar' && (
+                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-white" />
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <span className="material-symbols-outlined animate-spin text-primary dark:text-white">progress_activity</span>
+                    </div>
+                ) : (
+                    /* CHANGED: Side-by-Side Grid Layout */
+                    <div className="flex flex-col lg:flex-row h-full overflow-hidden">
+                        
+                        {/* LEFT COLUMN: Queue / Requests */}
+                        {/* Visible on Mobile if activeView='requests', Always Visible on Desktop */}
+                        <div className={`
+                            lg:w-[400px] xl:w-[450px] lg:border-r border-gray-200 dark:border-white/10 flex-shrink-0 
+                            h-full overflow-y-auto scrollbar-hide
+                            ${activeView === 'requests' ? 'block' : 'hidden lg:block'}
+                        `}>
+                            <div className="space-y-6 p-5 animate-pop-in" style={{animationDelay: '0.1s'}}>
+                                {/* Pending Requests Section */}
+                                <div className="animate-pop-in" style={{animationDelay: '0.05s'}}>
+                                    <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2 sticky top-0 bg-white dark:bg-surface-dark py-2 z-10">
+                                        <span className="material-symbols-outlined text-yellow-500">pending</span>
+                                        Pending Requests ({pendingRequests.length})
+                                    </h3>
+                                    {pendingRequests.length === 0 ? (
+                                        <div className="py-8 text-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
+                                            <p className="text-gray-400 dark:text-white/40">No pending requests</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {pendingRequests.map((req, index) => (
+                                                <div key={req.id} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10 animate-pop-in" style={{animationDelay: `${0.1 + index * 0.05}s`}}>
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <div>
+                                                            <p className="font-bold text-primary dark:text-white">{req.user_name || req.user_email}</p>
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                                {formatDateShortAdmin(req.request_date)} • {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400">{req.duration_minutes} min</p>
+                                                        </div>
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                                {formatStatusLabel(req.status)}
+                                                            </span>
+                                                            {req.reschedule_booking_id && (
+                                                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                                                                    Reschedule
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {req.bay_preference && (
+                                                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                                            <span className="font-medium">Bay preference:</span> {req.bay_preference}
+                                                        </p>
+                                                    )}
+                                                    {req.notes && (
+                                                        <p className="text-sm text-gray-600 dark:text-gray-300 italic mb-3">"{req.notes}"</p>
+                                                    )}
+                                                    
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => { setSelectedRequest(req); setActionModal('approve'); setSelectedBayId(req.bay_id); }}
+                                                            className="flex-1 py-2 px-3 bg-green-500 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 hover:bg-green-600 transition-colors"
+                                                        >
+                                                            <span className="material-symbols-outlined text-sm">check</span>
+                                                            Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setSelectedRequest(req); setActionModal('decline'); }}
+                                                            className="flex-1 py-2 px-3 bg-red-500 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 hover:bg-red-600 transition-colors"
+                                                        >
+                                                            <span className="material-symbols-outlined text-sm">close</span>
+                                                            Decline
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Scheduled Section */}
+                                <div className="animate-pop-in" style={{animationDelay: '0.15s'}}>
+                                    <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2 sticky top-0 bg-white dark:bg-surface-dark py-2 z-10">
+                                        <span className="material-symbols-outlined text-primary dark:text-accent">calendar_today</span>
+                                        Scheduled ({scheduledBookings.length})
+                                    </h3>
+                                    
+                                    <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide -mx-1 px-1 mb-3">
+                                        {(['all', 'today', 'tomorrow', 'week'] as const).map(filter => (
+                                            <button
+                                                key={filter}
+                                                onClick={() => setScheduledFilter(filter)}
+                                                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                                                    scheduledFilter === filter 
+                                                        ? 'bg-primary text-white shadow-md' 
+                                                        : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+                                                }`}
+                                            >
+                                                {filter === 'all' ? 'All' : filter === 'week' ? 'This Week' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    {scheduledBookings.length === 0 ? (
+                                        <div className="py-8 text-center border-2 border-dashed border-primary/10 dark:border-white/10 rounded-xl">
+                                            <p className="text-primary/40 dark:text-white/40">No scheduled bookings</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {Array.from(groupBookingsByDate(scheduledBookings)).map(([date, bookings]) => (
+                                                <div key={date}>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="text-xs font-bold text-primary/70 dark:text-white/70 uppercase tracking-wide">
+                                                            {getRelativeDateLabel(date)}
+                                                        </span>
+                                                        <span className="text-xs text-primary/50 dark:text-white/50">
+                                                            {formatDateShortAdmin(date)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {bookings.map((booking, index) => {
+                                                            const isToday = booking.request_date === getTodayPacific();
+                                                            return (
+                                                                <SwipeableListItem
+                                                                    key={`upcoming-${booking.id}`}
+                                                                    leftActions={[
+                                                                        {
+                                                                            id: 'reschedule',
+                                                                            icon: 'schedule',
+                                                                            label: 'Reschedule',
+                                                                            color: 'primary',
+                                                                            onClick: () => {
+                                                                                setRescheduleEmail(booking.user_email);
+                                                                                setRescheduleBookingId(Number(booking.id));
+                                                                                setShowManualBooking(true);
+                                                                            }
+                                                                        }
+                                                                    ]}
+                                                                    rightActions={[
+                                                                        {
+                                                                            id: 'cancel',
+                                                                            icon: 'close',
+                                                                            label: 'Cancel',
+                                                                            color: 'red',
+                                                                            onClick: () => cancelBookingOptimistic(booking)
+                                                                        }
+                                                                    ]}
+                                                                >
+                                                                    <div className="glass-card p-3 border border-primary/10 dark:border-white/10 flex justify-between items-center animate-pop-in" style={{animationDelay: `${0.2 + index * 0.03}s`}}>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <p className="font-medium text-primary dark:text-white text-sm">{booking.user_name || booking.user_email}</p>
+                                                                                    {(booking as any).tier && <TierBadge tier={(booking as any).tier} size="sm" />}
+                                                                                </div>
+                                                                                <p className="text-xs text-primary/60 dark:text-white/60">
+                                                                                    {formatTime12(booking.start_time)} - {formatTime12(booking.end_time)}
+                                                                                </p>
+                                                                                {booking.bay_name && (
+                                                                                    <p className="text-xs text-primary/60 dark:text-white/60">{booking.bay_name}</p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {isToday && (
+                                                                                <button
+                                                                                    onClick={() => updateBookingStatusOptimistic(booking, 'attended')}
+                                                                                    className="py-1.5 px-3 bg-accent text-primary rounded-lg text-xs font-medium flex items-center gap-1 hover:opacity-90 transition-colors"
+                                                                                >
+                                                                                    <span className="material-symbols-outlined text-xs">how_to_reg</span>
+                                                                                    Check In
+                                                                                </button>
+                                                                            )}
+                                                                            <button
+                                                                                onClick={() => setSelectedCalendarBooking(booking)}
+                                                                                className="py-1.5 px-3 glass-button border border-primary/20 dark:border-white/20 text-primary dark:text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-primary/5 dark:hover:bg-white/10 transition-colors"
+                                                                            >
+                                                                                <span className="material-symbols-outlined text-xs">edit</span>
+                                                                                Edit
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </SwipeableListItem>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Completed Section */}
+                                <div className="animate-pop-in" style={{animationDelay: '0.2s'}}>
+                                    <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2 sticky top-0 bg-white dark:bg-surface-dark py-2 z-10">
+                                        <span className="material-symbols-outlined text-green-500">check_circle</span>
+                                        Completed ({completedBookings.length})
+                                    </h3>
+                                    
+                                    <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide -mx-1 px-1 mb-3">
+                                        {(['all', 'attended', 'no_show'] as const).map(filter => (
+                                            <button
+                                                key={filter}
+                                                onClick={() => setProcessedFilter(filter)}
+                                                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                                                    processedFilter === filter 
+                                                        ? 'bg-primary text-white shadow-md' 
+                                                        : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+                                                }`}
+                                            >
+                                                {filter === 'all' ? 'All' : filter === 'no_show' ? 'No Show' : 'Attended'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    {(() => {
+                                        const filteredCompleted = processedFilter === 'all' 
+                                            ? completedBookings 
+                                            : completedBookings.filter(r => r.status === processedFilter);
+                                        
+                                        return filteredCompleted.length === 0 ? (
+                                            <div className="py-8 text-center border-2 border-dashed border-primary/10 dark:border-white/10 rounded-xl">
+                                                <p className="text-primary/40 dark:text-white/40">No recent completed bookings</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {filteredCompleted.slice(0, 20).map(req => (
+                                                    <div 
+                                                        key={`completed-${req.id}`}
+                                                        className="glass-card p-3 border border-primary/10 dark:border-white/10 flex justify-between items-center"
+                                                    >
+                                                        <div>
+                                                            <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                                            <p className="text-xs text-primary/60 dark:text-white/60">
+                                                                {formatDateShortAdmin(req.request_date)}
+                                                            </p>
+                                                            <p className="text-xs text-primary/60 dark:text-white/60">
+                                                                {formatTime12(req.start_time)} - {formatTime12(req.end_time)}
+                                                            </p>
+                                                        </div>
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                            {formatStatusLabel(req.status)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                                
+                                {/* Cancellations Section */}
+                                {cancellations.length > 0 && (
+                                    <div className="animate-pop-in" style={{animationDelay: '0.25s'}}>
+                                        <h3 className="font-bold text-primary dark:text-white mb-4 flex items-center gap-2 sticky top-0 bg-white dark:bg-surface-dark py-2 z-10">
+                                            <span className="material-symbols-outlined text-red-400">block</span>
+                                            Cancellations ({cancellations.length})
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {cancellations.slice(0, 10).map(req => (
+                                                <div 
+                                                    key={`cancelled-${req.id}`}
+                                                    className="glass-card p-3 border border-red-200/30 dark:border-red-500/20 bg-red-50/50 dark:bg-red-900/10 flex justify-between items-center"
+                                                >
+                                                    <div>
+                                                        <p className="font-medium text-primary dark:text-white text-sm">{req.user_name || req.user_email}</p>
+                                                        <p className="text-xs text-primary/60 dark:text-white/60">
+                                                            {formatDateShortAdmin(req.request_date)} • {formatTime12(req.start_time)}
+                                                        </p>
+                                                    </div>
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(req.status)}`}>
+                                                        {formatStatusLabel(req.status)}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* RIGHT COLUMN: Calendar Grid */}
+                        {/* Visible on Mobile if activeView='calendar', Always Visible on Desktop */}
+                        <div className={`
+                            flex-1 h-full overflow-y-auto overflow-x-hidden
+                            ${activeView === 'calendar' ? 'block' : 'hidden lg:block'}
+                        `}>
+                            <div className="animate-pop-in h-full flex flex-col" style={{animationDelay: '0.1s'}}>
+                                {/* Date Selector Row */}
+                                <div className="bg-gray-50 dark:bg-white/5 py-3 mb-0 sticky top-0 z-20 flex-shrink-0 animate-pop-in" style={{animationDelay: '0.2s'}}>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={() => {
+                                                const d = new Date(calendarDate);
+                                                d.setDate(d.getDate() - 1);
+                                                setCalendarDate(d.toISOString().split('T')[0]);
+                                            }}
+                                            className="p-1.5 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">chevron_left</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setCalendarDate(getTodayPacific())}
+                                            className="font-semibold text-primary dark:text-white min-w-[120px] text-center text-sm py-1 px-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                                        >
+                                            {formatDateShortAdmin(calendarDate)}
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const d = new Date(calendarDate);
+                                                d.setDate(d.getDate() + 1);
+                                                setCalendarDate(d.toISOString().split('T')[0]);
+                                            }}
+                                            className="p-1.5 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">chevron_right</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                {/* Calendar Grid */}
+                                <div className="overflow-x-auto px-2 pb-4 scroll-fade-right animate-pop-in flex-1" style={{animationDelay: '0.25s'}}>
+                                    <div className="inline-block min-w-full">
+                                        <div className="grid gap-0.5" style={{ gridTemplateColumns: `50px repeat(${resources.length}, minmax(100px, 1fr))` }}>
+                                            <div className="h-10 sticky left-0 z-10 bg-white dark:bg-surface-dark"></div>
+                                            {[...resources].sort((a, b) => {
+                                                if (a.type === 'conference_room' && b.type !== 'conference_room') return 1;
+                                                if (a.type !== 'conference_room' && b.type === 'conference_room') return -1;
+                                                return 0;
+                                            }).map(resource => (
+                                                <div key={resource.id} className={`h-10 flex items-center justify-center font-bold text-[10px] text-primary dark:text-white bg-white dark:bg-surface-dark rounded-t-lg border border-gray-200 dark:border-white/10 px-0.5 ${resource.type === 'conference_room' ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}>
+                                                    {resource.type === 'conference_room' ? 'Conference' : resource.name.replace('Simulator Bay ', 'Bay ')}
+                                                </div>
+                                            ))}
+                                            
+                                            {timeSlots.map(slot => (
+                                                <React.Fragment key={slot}>
+                                                    <div className="h-10 flex items-center justify-end pr-2 text-[10px] text-gray-600 dark:text-white/70 font-medium whitespace-nowrap sticky left-0 z-10 bg-white dark:bg-surface-dark border-r border-gray-100 dark:border-white/5">
+                                                        {formatTime12(slot)}
+                                                    </div>
+                                                    {[...resources].sort((a, b) => {
+                                                        if (a.type === 'conference_room' && b.type !== 'conference_room') return 1;
+                                                        if (a.type !== 'conference_room' && b.type === 'conference_room') return -1;
+                                                        return 0;
+                                                    }).map(resource => {
+                                                        const [slotHour, slotMin] = slot.split(':').map(Number);
+                                                        const slotStart = slotHour * 60 + slotMin;
+                                                        const slotEnd = slotStart + 30;
+                                                        
+                                                        const closure = getClosureForSlot(resource.id, calendarDate, slotStart, slotEnd);
+                                                        
+                                                        const booking = approvedBookings.find(b => {
+                                                            if (b.bay_id !== resource.id || b.request_date !== calendarDate) return false;
+                                                            const [bh, bm] = b.start_time.split(':').map(Number);
+                                                            const [eh, em] = b.end_time.split(':').map(Number);
+                                                            const bookStart = bh * 60 + bm;
+                                                            const bookEnd = eh * 60 + em;
+                                                            // Check intersection
+                                                            return slotStart < bookEnd && slotEnd > bookStart;
+                                                        });
+                                                        
+                                                        const isConference = resource.type === 'conference_room';
+                                                        const isStartOfBooking = booking && (() => {
+                                                            const [bh, bm] = booking.start_time.split(':').map(Number);
+                                                            return bh * 60 + bm === slotStart;
+                                                        })();
+                                                        
+                                                        return (
+                                                            <div
+                                                                key={`${resource.id}-${slot}`}
+                                                                title={closure ? `CLOSED: ${closure.title}` : booking ? `${booking.user_name || 'Booked'} - Click for details` : undefined}
+                                                                onClick={booking && !closure ? () => setSelectedCalendarBooking(booking) : undefined}
+                                                                className={`h-10 border-b border-r border-gray-100 dark:border-white/5 flex items-center justify-center p-0.5 relative ${
+                                                                    closure
+                                                                        ? 'bg-red-100 dark:bg-red-500/20'
+                                                                        : booking 
+                                                                            ? isConference
+                                                                                ? 'bg-purple-100 dark:bg-purple-500/20 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-500/30'
+                                                                                : 'bg-green-100 dark:bg-green-500/20 cursor-pointer hover:bg-green-200 dark:hover:bg-green-500/30' 
+                                                                            : isConference
+                                                                                ? 'bg-purple-50/30 dark:bg-purple-500/5 hover:bg-purple-50 dark:hover:bg-purple-500/10'
+                                                                                : 'bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10'
+                                                                } transition-colors`}
+                                                            >
+                                                                {closure ? (
+                                                                    // Only show text if it's the start of the block or every few slots
+                                                                    (slotMin === 0 || slotMin === 30) && (
+                                                                        <span className="text-[8px] font-bold text-red-500 dark:text-red-400 rotate-0 truncate px-1 w-full text-center">
+                                                                            CLOSED
+                                                                        </span>
+                                                                    )
+                                                                ) : booking && (
+                                                                    <div className={`w-full h-full flex items-center justify-center rounded ${
+                                                                        isConference 
+                                                                            ? 'border-l-2 border-purple-400' 
+                                                                            : 'border-l-2 border-green-400'
+                                                                    }`}>
+                                                                        {/* Only show name on the first slot of the booking, or if it spans multiple */}
+                                                                        {isStartOfBooking && (
+                                                                            <span className={`text-[10px] font-bold truncate px-1 w-full ${isConference ? 'text-purple-800 dark:text-purple-200' : 'text-green-800 dark:text-green-200'}`}>
+                                                                                {booking.user_name || 'Booked'}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </React.Fragment>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+            {/* ... modals ... */}
+        </div>
+        <FloatingActionButton onClick={() => setShowManualBooking(true)} color="brand" label="Create manual booking" />
+    </div>
+</PullToRefresh>
+
+```
