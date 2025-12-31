@@ -6248,79 +6248,71 @@ const BlocksAdmin: React.FC = () => {
                             <div className="space-y-2 p-3 bg-gray-50 dark:bg-black/20 rounded-xl border border-gray-200 dark:border-white/10">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input 
-                                        type="radio" 
-                                        name="closure_type"
-                                        checked={closureForm.affected_areas === 'none'}
-                                        onChange={() => setClosureForm({...closureForm, affected_areas: 'none'})}
-                                        className="w-4 h-4 border-gray-300 text-red-500 focus:ring-red-500"
+                                        type="checkbox" 
+                                        checked={closureForm.affected_areas === 'none' || closureForm.affected_areas === ''}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setClosureForm({...closureForm, affected_areas: 'none'});
+                                            }
+                                        }}
+                                        className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
                                     />
-                                    <span className="text-sm text-primary dark:text-white">No booking restrictions (informational only)</span>
+                                    <span className="text-sm text-primary dark:text-white">None (informational only)</span>
                                 </label>
+                                <div className="border-t border-gray-200 dark:border-white/10 my-2"></div>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input 
-                                        type="radio" 
-                                        name="closure_type"
+                                        type="checkbox" 
                                         checked={closureForm.affected_areas === 'entire_facility'}
-                                        onChange={() => setClosureForm({...closureForm, affected_areas: 'entire_facility'})}
-                                        className="w-4 h-4 border-gray-300 text-red-500 focus:ring-red-500"
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setClosureForm({...closureForm, affected_areas: 'entire_facility'});
+                                            } else {
+                                                setClosureForm({...closureForm, affected_areas: 'none'});
+                                            }
+                                        }}
+                                        className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
                                     />
                                     <span className="text-sm text-primary dark:text-white font-medium">Entire Facility</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input 
-                                        type="radio" 
-                                        name="closure_type"
-                                        checked={closureForm.affected_areas !== 'none' && closureForm.affected_areas !== 'entire_facility'}
-                                        onChange={() => {
-                                            if (closureForm.affected_areas === 'none' || closureForm.affected_areas === 'entire_facility') {
-                                                setClosureForm({...closureForm, affected_areas: ''});
+                                        type="checkbox" 
+                                        checked={closureForm.affected_areas.split(',').some(a => a.trim() === 'conference_room')}
+                                        onChange={(e) => {
+                                            const currentSet = new Set(closureForm.affected_areas.split(',').map(a => a.trim()).filter(a => a && a !== 'none' && a !== 'entire_facility'));
+                                            if (e.target.checked) {
+                                                currentSet.add('conference_room');
+                                            } else {
+                                                currentSet.delete('conference_room');
                                             }
+                                            setClosureForm({...closureForm, affected_areas: currentSet.size > 0 ? Array.from(currentSet).join(',') : 'none'});
                                         }}
-                                        className="w-4 h-4 border-gray-300 text-red-500 focus:ring-red-500"
+                                        className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
                                     />
-                                    <span className="text-sm text-primary dark:text-white">Select specific resources</span>
+                                    <span className="text-sm text-primary dark:text-white">Conference Room</span>
                                 </label>
-                                {closureForm.affected_areas !== 'none' && closureForm.affected_areas !== 'entire_facility' && (
-                                    <div className="pl-6 space-y-2 border-l-2 border-gray-200 dark:border-white/20 ml-2">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={closureForm.affected_areas.split(',').some(a => a.trim() === 'conference_room')}
-                                                onChange={(e) => {
-                                                    const current = closureForm.affected_areas.split(',').map(a => a.trim()).filter(a => a && a !== 'conference_room');
-                                                    if (e.target.checked) {
-                                                        current.push('conference_room');
-                                                    }
-                                                    setClosureForm({...closureForm, affected_areas: current.join(',')});
-                                                }}
-                                                className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
-                                            />
-                                            <span className="text-sm text-primary dark:text-white">Conference Room</span>
-                                        </label>
-                                        {bays.map(bay => (
-                                            <label key={bay.id} className="flex items-center gap-2 cursor-pointer">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={closureForm.affected_areas.split(',').some(a => a.trim() === `bay_${bay.id}`)}
-                                                    onChange={(e) => {
-                                                        const current = closureForm.affected_areas.split(',').map(a => a.trim()).filter(a => a && a !== `bay_${bay.id}`);
-                                                        if (e.target.checked) {
-                                                            current.push(`bay_${bay.id}`);
-                                                        }
-                                                        setClosureForm({...closureForm, affected_areas: current.filter(a => a.startsWith('bay_') || a === 'conference_room').join(',')});
-                                                    }}
-                                                    className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
-                                                />
-                                                <span className="text-sm text-primary dark:text-white">{bay.name}</span>
-                                            </label>
-                                        ))}
-                                        {!closureForm.affected_areas && (
-                                            <p className="text-xs text-amber-600 dark:text-amber-400">Please select at least one resource</p>
-                                        )}
-                                    </div>
-                                )}
+                                {bays.map(bay => (
+                                    <label key={bay.id} className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={closureForm.affected_areas.split(',').some(a => a.trim() === `bay_${bay.id}`)}
+                                            onChange={(e) => {
+                                                const currentSet = new Set(closureForm.affected_areas.split(',').map(a => a.trim()).filter(a => a && a !== 'none' && a !== 'entire_facility'));
+                                                if (e.target.checked) {
+                                                    currentSet.add(`bay_${bay.id}`);
+                                                } else {
+                                                    currentSet.delete(`bay_${bay.id}`);
+                                                }
+                                                setClosureForm({...closureForm, affected_areas: currentSet.size > 0 ? Array.from(currentSet).join(',') : 'none'});
+                                            }}
+                                            className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
+                                        />
+                                        <span className="text-sm text-primary dark:text-white">{bay.name}</span>
+                                    </label>
+                                ))}
                             </div>
-                            {closureForm.affected_areas !== 'none' && closureForm.affected_areas !== 'entire_facility' && closureForm.affected_areas && (
+                            {closureForm.affected_areas && closureForm.affected_areas !== 'none' && closureForm.affected_areas !== 'entire_facility' && (
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     Selected: {formatAffectedAreas(closureForm.affected_areas)}
                                 </p>

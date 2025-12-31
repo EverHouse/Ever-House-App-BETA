@@ -43,6 +43,10 @@ const formatAffectedAreas = (areas: string): string => {
     if (area === 'conference_room') return 'Conference Room';
     if (area === 'Conference Room') return 'Conference Room';
     if (area === 'none') return 'No booking restrictions';
+    if (area.startsWith('bay_')) {
+      const bayNum = area.replace('bay_', '');
+      return `Bay ${bayNum}`;
+    }
     return area;
   });
   return formatted.join(', ');
