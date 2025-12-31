@@ -1,0 +1,106 @@
+To fix the "flash" of the wrong status bar color on startup, you need to set the brand color in the static HTML and Manifest file. Currently, your app waits for React to load (`App.tsx`) before setting the color, which causes that delay.
+
+Here are the changes to force the brand green (`#293515`) immediately upon launch.
+
+### 1. Update `index.html`
+
+We change the default `theme-color` meta tag to your brand green. This tells the browser what color to use *before* any JavaScript runs.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <meta name="theme-color" id="theme-color-meta" content="#293515" />
+    
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <meta name="apple-mobile-web-app-title" content="EH Members" />
+    <script>
+      (function() {
+        var themeMode = localStorage.getItem('themeMode');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = themeMode === 'dark' || (themeMode === 'system' && prefersDark) || (!themeMode && prefersDark);
+        if (isDark) document.documentElement.classList.add('dark');
+      })();
+    </script>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <title>Even House</title>
+    <link rel="preload" href="/images/hero-lounge-optimized.webp" as="image" type="image/webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="nav-overlay-root" style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+```
+
+### 2. Update `public/manifest.webmanifest`
+
+The manifest controls the splash screen and the window color while the app is loading (before `index.html` is even fully parsed). Setting this ensures the very first pixel you see is brand aligned.
+
+```json
+{
+  "name": "EH Members",
+  "short_name": "EH Members",
+  "description": "Even House Members Club - Golf, Wellness & Community",
+  "start_url": "/",
+  "display": "standalone",
+  
+  "background_color": "#293515",
+  "theme_color": "#293515",
+  
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
+
+```
+
+### 3. Verify `App.tsx` (Logic Check)
+
+Your existing code in `App.tsx` is actually fine. It sets the theme color dynamically based on scroll.
+
+* **Current Behavior:** On load, it checks the path. If it's `/`, it sets it to transparent/dark.
+* **With New Changes:** The app will boot up Green (from HTML/Manifest). Once React loads (~200ms later), `App.tsx` will run and, if you are on the Home Page (`/`) and at the top, it might switch it to transparent/black for your hero image effect.
+* **If you want it ALWAYS green on startup even on Home:** You don't need to change `App.tsx`. The initial green flash is handled by the static files. React taking over slightly later is expected behavior for a dynamic PWA.
+
+
+
+**Note:** For these changes to take effect on a user's device, they usually need to **close and reopen the PWA** completely, or sometimes delete and re-add it to the home screen, as the `manifest.json` is heavily cached by iOS/Android.

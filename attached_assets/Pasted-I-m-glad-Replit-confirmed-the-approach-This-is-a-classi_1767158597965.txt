@@ -1,9 +1,20 @@
+I'm glad Replit confirmed the approach! This is a classic PWA polish issue—bridging the gap between the "static" loading state and the "dynamic" React state.
+
+Here are the updated files to implement the fix.
+
+### 1. `index.html`
+
+We are changing the default `theme-color` meta tag to **#293515** (Brand Green). This ensures the status bar is green the moment the HTML is parsed, before any JavaScript loads.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
     <meta name="theme-color" id="theme-color-meta" content="#293515" />
+    
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EH Members" />
@@ -31,3 +42,49 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
+```
+
+### 2. `public/manifest.webmanifest`
+
+We are updating the `background_color` and `theme_color` to match. This controls the "splash screen" color on Android and the window frame color before the HTML loads.
+
+```json
+{
+  "name": "EH Members",
+  "short_name": "EH Members",
+  "description": "Even House Members Club - Golf, Wellness & Community",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#293515",
+  "theme_color": "#293515",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
+
+```

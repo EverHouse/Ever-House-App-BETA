@@ -8,6 +8,15 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.9",
+    date: "2025-12-31",
+    title: "PWA Startup Polish",
+    changes: [
+      "Fixed status bar color flash on PWA launch - now shows brand green immediately",
+      "Updated splash screen background to brand green for consistent startup experience"
+    ]
+  },
+  {
     version: "7.8",
     date: "2025-12-31",
     title: "Production Sync & Training Updates",
