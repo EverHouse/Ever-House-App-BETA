@@ -26,7 +26,6 @@ export const users = pgTable("users", {
   tags: jsonb("tags").default(sql`'[]'::jsonb`),
   phone: varchar("phone"),
   mindbodyClientId: varchar("mindbody_client_id"),
-  membershipStartDate: date("membership_start_date"),
   lifetimeVisits: integer("lifetime_visits").default(0),
   linkedEmails: jsonb("linked_emails").default(sql`'[]'::jsonb`),
   trackmanLinkedEmails: jsonb("trackman_linked_emails").default(sql`'[]'::jsonb`),
@@ -325,26 +324,6 @@ export const formSubmissions = pgTable("form_submissions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Member referrals table - referral tracking
-export const memberReferrals = pgTable("member_referrals", {
-  id: serial("id").primaryKey(),
-  referrerEmail: varchar("referrer_email").notNull(),
-  referredEmail: varchar("referred_email").notNull(),
-  status: varchar("status").default("pending"),
-  createdAt: timestamp("created_at").defaultNow(),
-  completedAt: timestamp("completed_at"),
-});
-
-// Booking partners table - external booking integrations
-export const bookingPartners = pgTable("booking_partners", {
-  id: serial("id").primaryKey(),
-  name: varchar("name").notNull(),
-  type: varchar("type").notNull(),
-  apiKey: varchar("api_key"),
-  webhookUrl: text("webhook_url"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
 // Facility closures table - scheduled closures
 export const facilityClosures = pgTable("facility_closures", {
@@ -404,22 +383,6 @@ export const membershipTiers = pgTable("membership_tiers", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Membership tier conflicts table - tracks tier discrepancies between app and external sources
-export const membershipTierConflicts = pgTable("membership_tier_conflicts", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id"),
-  email: varchar("email").notNull(),
-  mindbodyId: varchar("mindbody_id"),
-  currentTier: varchar("current_tier"),
-  incomingTier: varchar("incoming_tier").notNull(),
-  source: varchar("source").notNull(),
-  status: varchar("status").default("open"),
-  resolvedBy: varchar("resolved_by"),
-  resolvedAt: timestamp("resolved_at"),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;

@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.16",
+    date: "2025-12-31",
+    title: "Database Cleanup",
+    changes: [
+      "Removed unused tables: member_referrals, booking_partners, membership_tier_conflicts",
+      "Removed duplicate columns: membership_start_date, total_bookings, mindbody_id",
+      "Consolidated to single columns: joined_on, lifetime_visits, mindbody_client_id",
+      "Linked adam@evenhouse.club to afogel@gmail.com for combined visit tracking"
+    ]
+  },
+  {
     version: "7.15",
     date: "2025-12-31",
     title: "Enhanced Member Directory",
