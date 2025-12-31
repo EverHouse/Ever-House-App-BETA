@@ -8268,9 +8268,11 @@ const TrackmanAdmin: React.FC = () => {
 
   const fetchData = async () => {
     try {
+      // Add cache-busting timestamp to ensure fresh data after resolves
+      const cacheBuster = `_t=${Date.now()}`;
       const [unmatchedRes, runsRes, membersRes] = await Promise.all([
-        fetch('/api/admin/trackman/unmatched?resolved=false', { credentials: 'include' }),
-        fetch('/api/admin/trackman/import-runs', { credentials: 'include' }),
+        fetch(`/api/admin/trackman/unmatched?resolved=false&${cacheBuster}`, { credentials: 'include' }),
+        fetch(`/api/admin/trackman/import-runs?${cacheBuster}`, { credentials: 'include' }),
         fetch('/api/hubspot/contacts', { credentials: 'include' })
       ]);
       
