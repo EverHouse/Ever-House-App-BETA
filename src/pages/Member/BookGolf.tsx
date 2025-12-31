@@ -234,8 +234,9 @@ const BookGolf: React.FC = () => {
           if (booking) {
             setOriginalBooking(booking);
             const dateParam = searchParams.get('date');
-            if (dateParam && dates.find(d => d.date === dateParam)) {
-              setSelectedDateObj(dates.find(d => d.date === dateParam)!);
+            const matchingDate = dateParam ? dates.find(d => d.date === dateParam) : null;
+            if (matchingDate) {
+              setSelectedDateObj(matchingDate);
             }
           }
         }
@@ -254,8 +255,14 @@ const BookGolf: React.FC = () => {
   
   const pendingRequestsCount = myRequests.filter(r => r.status === 'pending').length;
   
-  const dates = useMemo(() => generateDates(tierPermissions.advanceBookingDays), [tierPermissions.advanceBookingDays]);
-  const [selectedDateObj, setSelectedDateObj] = useState(dates[0]);
+  // Generate dates with safe fallback - ensure we always have at least one date
+  const dates = useMemo(() => {
+    const advanceDays = tierPermissions?.advanceBookingDays ?? 7;
+    return generateDates(advanceDays);
+  }, [tierPermissions?.advanceBookingDays]);
+  
+  // Initialize with null to avoid accessing potentially undefined array element
+  const [selectedDateObj, setSelectedDateObj] = useState<{ label: string; date: string; day: string; dateNum: string } | null>(null);
 
   // Sync selectedDateObj when dates array changes (e.g., when user tier loads)
   useEffect(() => {
@@ -550,7 +557,7 @@ const BookGolf: React.FC = () => {
 
   // Handle the actual booking submission
   const submitBooking = async () => {
-    if (!selectedSlot || !selectedResource || !effectiveUser) return;
+    if (!selectedSlot || !selectedResource || !effectiveUser || !selectedDateObj) return;
     
     setIsBooking(true);
     setError(null);
@@ -620,7 +627,7 @@ const BookGolf: React.FC = () => {
   };
 
   const handleConfirm = async () => {
-    if (!selectedSlot || !selectedResource || !effectiveUser) return;
+    if (!selectedSlot || !selectedResource || !effectiveUser || !selectedDateObj) return;
     
     // If admin is viewing as member, show confirmation popup first
     if (isAdminViewingAs) {
@@ -897,7 +904,7 @@ const BookGolf: React.FC = () => {
                     key={d.date}
                     day={d.day} 
                     date={d.dateNum} 
-                    active={selectedDateObj.date === d.date} 
+                    active={selectedDateObj?.date === d.date} 
                     onClick={() => { setSelectedDateObj(d); setExpandedHour(null); }} 
                     isDark={isDark}
                   />
