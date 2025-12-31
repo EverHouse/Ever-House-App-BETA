@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.6",
+    date: "2025-12-31",
+    title: "Navigation Fix",
+    changes: [
+      "Closure card on dashboard now navigates to the Closures tab on Updates page"
+    ]
+  },
+  {
     version: "7.5",
     date: "2025-12-31",
     title: "Wellness Time Display",

@@ -114,7 +114,7 @@ const ClosureAlert: React.FC = () => {
   };
 
   const handleViewDetails = () => {
-    navigate('/updates');
+    navigate('/updates?tab=closures');
   };
 
   if (isLoading || activeClosures.length === 0) return null;
