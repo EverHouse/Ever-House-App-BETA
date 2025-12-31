@@ -1,4 +1,6 @@
-const SYNC_INTERVAL = 15 * 60 * 1000;
+import { useUserStore } from '../stores/userStore';
+
+const SYNC_INTERVAL = 5 * 60 * 1000;
 const THROTTLE_MS = 60 * 1000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 1000;
@@ -96,10 +98,26 @@ export const fetchAndCache = async <T>(
 const syncAll = async () => {
   if (!isVisible() || !isOnline()) return;
 
-  await Promise.allSettled([
+  const tasks = [
     fetchAndCache('events', '/api/events'),
     fetchAndCache('cafe_menu', '/api/cafe-menu'),
-  ]);
+  ];
+
+  const user = useUserStore.getState().user;
+  if (user?.email) {
+    tasks.push(
+      fetchAndCache(
+        'notifications', 
+        `/api/notifications?user_email=${encodeURIComponent(user.email)}&unread_only=true`,
+        (data: any[]) => {
+          useUserStore.setState({ unreadNotifications: data.length });
+          window.dispatchEvent(new CustomEvent('notifications-read'));
+        }
+      )
+    );
+  }
+
+  await Promise.allSettled(tasks);
 };
 
 let intervalId: number | null = null;

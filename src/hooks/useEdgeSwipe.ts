@@ -21,7 +21,7 @@ export function useEdgeSwipe(config: EdgeSwipeConfig = {}) {
   const {
     edgeWidth = 20,
     threshold = 100,
-    velocityThreshold = 0.5,
+    velocityThreshold = 0.3,
     enabled = true,
     onBack
   } = config;

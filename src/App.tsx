@@ -24,6 +24,7 @@ import WalkingGolferLoader from './components/WalkingGolferLoader';
 import NavigationLoader from './components/NavigationLoader';
 import { useNotificationSounds } from './hooks/useNotificationSounds';
 import { useEdgeSwipe } from './hooks/useEdgeSwipe';
+import { useUserStore } from './stores/userStore';
 
 const INITIAL_LOAD_SAFETY_TIMEOUT_MS = 2000;
 
@@ -381,36 +382,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Check if actual user is staff/admin (for header logic)
   const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = useUserStore(state => state.unreadNotifications);
   const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
-
-  useEffect(() => {
-    if (user?.email) {
-      const fetchUnreadCount = async () => {
-        try {
-          const res = await fetch(`/api/notifications?user_email=${encodeURIComponent(user.email)}&unread_only=true`, { credentials: 'include' });
-          if (res.ok) {
-            const data = await res.json();
-            setUnreadCount(data.length);
-            processNotifications(data);
-          }
-        } catch (err) {
-          console.error('Failed to fetch notifications:', err);
-        }
-      };
-      fetchUnreadCount();
-      const interval = setInterval(fetchUnreadCount, 30000);
-      
-      // Listen for notifications-read event to refresh badge
-      const handleNotificationsRead = () => fetchUnreadCount();
-      window.addEventListener('notifications-read', handleNotificationsRead);
-      
-      return () => {
-        clearInterval(interval);
-        window.removeEventListener('notifications-read', handleNotificationsRead);
-      };
-    }
-  }, [user?.email, processNotifications]);
   
   useDebugLayout();
 
