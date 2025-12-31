@@ -273,32 +273,38 @@ const BookGolf: React.FC = () => {
   }, [rescheduleBookingId, effectiveUser?.email, dates, searchParams]);
 
   const fetchResources = useCallback(async () => {
-    const { ok, data, error } = await apiRequest<APIResource[]>('/api/resources');
-    
-    if (!ok) {
-      showToast('Unable to load data. Please try again.', 'error');
-      setError(error || 'Unable to load resources');
+    try {
+      const { ok, data, error } = await apiRequest<APIResource[]>('/api/resources');
+      
+      if (!ok || !data) {
+        showToast('Unable to load data. Please try again.', 'error');
+        setError(error || 'Unable to load resources');
+        return [];
+      }
+      
+      const typeMap: Record<string, string> = {
+        simulator: 'simulator',
+        conference: 'conference_room'
+      };
+      
+      const filtered = data
+        .filter(r => r.type === typeMap[activeTab])
+        .map(r => ({
+          id: `resource-${r.id}`,
+          dbId: r.id,
+          name: r.name,
+          meta: r.description || `Capacity: ${r.capacity}`,
+          badge: r.type === 'simulator' ? 'Indoor' : undefined,
+          icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
+        }));
+      
+      setResources(filtered);
+      return filtered;
+    } catch (err) {
+      console.error('[BookGolf] Error fetching resources:', err);
+      setError('Unable to load resources');
       return [];
     }
-    
-    const typeMap: Record<string, string> = {
-      simulator: 'simulator',
-      conference: 'conference_room'
-    };
-    
-    const filtered = data!
-      .filter(r => r.type === typeMap[activeTab])
-      .map(r => ({
-        id: `resource-${r.id}`,
-        dbId: r.id,
-        name: r.name,
-        meta: r.description || `Capacity: ${r.capacity}`,
-        badge: r.type === 'simulator' ? 'Indoor' : undefined,
-        icon: r.type === 'simulator' ? 'golf_course' : r.type === 'conference_room' ? 'meeting_room' : 'person'
-      }));
-    
-    setResources(filtered);
-    return filtered;
   }, [activeTab, showToast]);
 
   useEffect(() => {
