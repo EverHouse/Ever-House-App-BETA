@@ -434,8 +434,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       let themeColor: string;
       if (location.pathname === '/' && !scrolledPastHero) {
         themeColor = '#1a1610';
-      } else if (isAdmin || isMember) {
-        themeColor = '#0f120a';
       } else {
         themeColor = '#293515';
       }
@@ -526,7 +524,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   
   const headerClasses = isMemberRoute 
     ? (isDarkTheme 
-        ? "bg-[#0f120a] text-[#F2F2EC] shadow-md border-b border-white/5"
+        ? "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 border-b border-[#1e2810]"
         : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 border-b border-[#1e2810]")
     : isLandingPage
       ? (hasScrolledPastHero 
