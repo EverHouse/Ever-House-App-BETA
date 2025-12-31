@@ -8359,12 +8359,14 @@ const TrackmanAdmin: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         setResolveModal(null);
-        fetchData();
         if (data.autoResolved > 0) {
           showToast(`Resolved ${data.resolved} booking(s) (${data.autoResolved} auto-resolved with same email)`, 'success', 5000);
         } else {
           showToast('Booking resolved successfully', 'success');
         }
+        // Small delay to ensure database transactions complete before refetching
+        await new Promise(resolve => setTimeout(resolve, 300));
+        fetchData();
       } else {
         showToast('Failed to resolve booking', 'error');
       }
@@ -8381,6 +8383,10 @@ const TrackmanAdmin: React.FC = () => {
     return name.includes(query) || email.includes(query);
   });
 
+  const handlePullRefresh = async () => {
+    await fetchData();
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -8391,6 +8397,7 @@ const TrackmanAdmin: React.FC = () => {
   }
 
   return (
+    <PullToRefresh onRefresh={handlePullRefresh}>
     <div className="px-6 py-4 space-y-6">
       <div className="glass-card p-6 rounded-2xl border border-primary/10 dark:border-white/10">
         <h2 className="text-lg font-bold text-primary dark:text-white mb-4 flex items-center gap-2">
@@ -8594,6 +8601,7 @@ const TrackmanAdmin: React.FC = () => {
         </div>
       </ModalShell>
     </div>
+    </PullToRefresh>
   );
 };
 
