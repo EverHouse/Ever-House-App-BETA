@@ -1,8 +1,8 @@
 import { pool, isProduction } from './db';
 import { getGoogleCalendarClient } from './integrations';
 import { db } from '../db';
-import { wellnessClasses } from '../../shared/models/auth';
-import { isNull, gte, asc, sql, and } from 'drizzle-orm';
+import { wellnessClasses, events } from '../../shared/models/auth';
+import { isNull, gte, asc, sql, and, isNotNull, eq } from 'drizzle-orm';
 import { createPacificDate, getPacificISOString } from '../utils/dateUtils';
 
 const calendarIdCache: Record<string, string> = {};
@@ -661,14 +661,20 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
     }
     
     // Delete events that no longer exist in the Google Calendar (only calendar-sourced events)
-    const existingEvents = await pool.query(
-      `SELECT id, google_calendar_id FROM events WHERE google_calendar_id IS NOT NULL AND source = 'google_calendar'`
+    const existingEvents = await db.select({
+      id: events.id,
+      googleCalendarId: events.googleCalendarId,
+    }).from(events).where(
+      and(
+        isNotNull(events.googleCalendarId),
+        eq(events.source, 'google_calendar')
+      )
     );
     
     let deleted = 0;
-    for (const dbEvent of existingEvents.rows) {
-      if (!fetchedEventIds.has(dbEvent.google_calendar_id)) {
-        await pool.query('DELETE FROM events WHERE id = $1', [dbEvent.id]);
+    for (const dbEvent of existingEvents) {
+      if (!fetchedEventIds.has(dbEvent.googleCalendarId!)) {
+        await db.delete(events).where(eq(events.id, dbEvent.id));
         deleted++;
       }
     }
