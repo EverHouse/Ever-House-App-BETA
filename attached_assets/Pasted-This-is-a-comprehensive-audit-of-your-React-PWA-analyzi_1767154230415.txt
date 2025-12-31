@@ -1,0 +1,120 @@
+This is a comprehensive audit of your React PWA, analyzing the provided code against "Native App" standards, efficiency benchmarks, and modern React patterns.
+
+1. "Native iOS Feel" Audit
+To bridge the gap between a PWA and a native iOS app, you must nail the "tactile" physics and gesture interactions.
+
+Current State:
+
+Strengths: You have implemented useHaptics and useEdgeSwipe, and your CSS handles safe areas (env(safe-area-inset-...)). The tap-target utility and :active scale animations (.btn-ios:active) are excellent details.
+
+Weaknesses: The custom edge swipe and overscroll behaviors usually conflict with Safari's native physics, creating an "uncanny valley" effect.
+
+Recommendations:
+
+Fix Scroll Physics & "Rubber Banding":
+
+Problem: In index.css, you have overscroll-behavior-y: none;. While this prevents the whole page from bouncing, it kills the native "rubber band" effect that makes iOS feel alive.
+
+Fix: Allow overscroll on scrollable containers (like your main content div) but keep it disabled on the body.
+
+Code Action: Ensure your scrollable main or div has -webkit-overflow-scrolling: touch.
+
+Refine the "Edge Swipe" (useEdgeSwipe.ts):
+
+Problem: Your custom useEdgeSwipe triggers Maps(-1). In a PWA installed to the home screen, this is often redundant because iOS provided a native gesture (in newer iOS versions for PWAs) or it simply snaps back without the visual "card stack" animation, breaking the illusion.
+
+Recommendation: If you want a true native feel, the previous screen needs to be visible under the current one while swiping. Since react-router-dom doesn't support this easily, consider locking the swipe navigation to purely DirectionalPageTransition and ensuring your transition durations match iOS defaults (~500ms spring).
+
+Quick Fix: Tune your velocity threshold. In useEdgeSwipe.ts, velocity > 0.5 is quite aggressive. iOS allows slower swipes if the distance is > 50%. Lower the velocity threshold to 0.3.
+
+Input Handling (The "Keyboard Jump"):
+
+Problem: index.css has fixes for inputs, but a common non-native issue is the viewport zooming or headers jumping when the keyboard opens.
+
+Recommendation: Ensure all inputs have font-size: 16px minimum to prevent auto-zoom. Your glass-input class doesn't explicitly set this.
+
+2. Data Efficiency & Performance Audit
+Your app currently over-fetches and relies on manual polling, which drains battery and slows down the UI.
+
+Current State:
+
+Strengths: You are using fetchAndCache for basic caching and Promise.allSettled in the Dashboard.
+
+Weaknesses: Dashboard.tsx fires 5 separate HTTP requests every time it loads or becomes visible. App.tsx uses a 30-second setInterval for notifications.
+
+Recommendations:
+
+Replace Polling with Realtime (or SWR):
+
+Problem: App.tsx polls /api/notifications every 30s. This keeps the radio active and drains battery.
+
+Fix: Since you are using Supabase (src/lib/supabase.ts), use Supabase Realtime subscriptions to listen for changes to the notifications table.
+
+Alternative: If you must poll, use a library like TanStack Query (React Query) or SWR. They automatically pause polling when the window is blurred/backgrounded, saving massive resources.
+
+Implement Request Batching:
+
+Problem: In Dashboard.tsx, fetchUserData fires 5 concurrent requests (bookings, rsvps, wellness, etc.). This causes a "waterfall" of network overhead.
+
+Fix: Create a single API endpoint (e.g., /api/member/dashboard-summary) that returns all this data in one JSON object. This reduces network latency overhead by 80%.
+
+Optimize DataContext.tsx:
+
+Problem: This context is a "God Object." It holds auth, cafe menu, events, and announcements. Any update to the cafe menu re-renders components that only care about Auth.
+
+Fix: Split this into granular contexts: AuthContext (User state), ContentContext (Static data like menus/events). This prevents the entire app from re-rendering when a minor data point changes.
+
+3. UI/Visuals Audit
+Your "Liquid Glass" system is ambitious and visually striking, but it carries performance risks.
+
+Current State:
+
+Strengths: The tailwind.config.js and index.css setup for glassmorphism is robust.
+
+Weaknesses: Heavy use of backdrop-filter: blur().
+
+Recommendations:
+
+GPU Layer Management:
+
+Problem: backdrop-filter is expensive. On older iPhones or Androids, scrolling a list of glass cards will drop frames (lag).
+
+Fix: In index.css, create a fallback for low-power mode or simple devices.
+
+CSS
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-card {
+    backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.95); /* Solid fallback */
+  }
+}
+Optimization: Ensure glass-card elements have will-change: transform or transform: translateZ(0) (which you have in .gpu-accelerated) to force them into their own compositor layer.
+
+Image Loading Strategy:
+
+Problem: DataContext.tsx imports images directly.
+
+Fix: Ensure all images in public/images are converted to WebP (which you seem to have done, good job!). Add loading="lazy" and explicit width/height attributes to your img tags in components to prevent "Layout Shift" (CLS) as the page loads.
+
+4. Code Quality & Maintenance
+Zustand vs. Context Confusion:
+
+You are using both DataContext (React Context) and userStore (Zustand) for user state.
+
+Recommendation: Migrate all global client-state (User, Guest Passes, Notifications) to Zustand. Keep React Context strictly for things that don't change often (Theme) or dependency injection.
+
+Why? Zustand selectors allow components to subscribe only to specific slices of state (e.g., useUserStore(state => state.unreadNotifications)), whereas using useData() forces a re-render whenever anything in the context changes.
+
+Hardcoded Data in Context:
+
+DataContext.tsx contains massive arrays (INITIAL_CAFE, INITIAL_EVENTS).
+
+Fix: Move these to a separate file src/data/defaults.ts or src/constants/mockData.ts. This cleans up your logic files significantly.
+
+Summary of Immediate Next Steps
+High Impact / Low Effort: Split the heavy fetchUserData in Dashboard.tsx into a single API call (Backend change) or at least wrap it in TanStack Query to handle caching and de-duplication automatically.
+
+UX Polish: Enable overscroll-behavior-y: auto on your main scroll container to restore the bounce, but keep it off on body.
+
+Refactor: Move INITIAL_ data out of DataContext and migrate the polling logic to a useEffect that respects document visibility (or use a library).

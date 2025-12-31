@@ -1,0 +1,295 @@
+
+Ports
+Learn more
+Internal Port
+External Port
+Name
+Pid
+0.0.0.0:80
+0.0.0.0:3001
+node
+118982
+0.0.0.0:5000
+node
+118867
+0.0.0.0:5001
+0.0.0.0:5002
+0.0.0.0:5003
+0.0.0.0:5004
+0.0.0.0:8080
+This port config is saved in the .
+Production
+Status
+Ever published 2 minutes ago
+Visibility
+Public
+Domain
+https://ever-house-app-beta--everhouse.replit.app
+https://everhouse.app
+Type
+Autoscale
+(2 vCPU / 4 GiB RAM / 6 Max)
+See all usage
+Database
+Production database connected
+24c4b293
+
+everhouse
+Ever
+published 24 minutes ago
+8712fef9
+
+everhouse
+Ever
+published about 1 hour ago
+fb56e1d1
+
+everhouse
+Ever
+published about 5 hours ago
+98a815f4
+
+everhouse
+Ever
+published about 5 hours ago
+426cd5de
+
+everhouse
+Ever
+published about 5 hours ago
+a963b37e
+
+everhouse
+Ever
+failed to publish about 5 hours ago
+7657c40d
+
+everhouse
+Ever
+published about 5 hours ago
+43148efa
+
+everhouse
+Ever
+published about 9 hours ago
+44485a8f
+
+everhouse
+Ever
+published about 17 hours ago
+b80e4f73
+
+everhouse
+Ever
+published about 20 hours ago
+304f4086
+
+everhouse
+Ever
+published 1 day ago
+6059306d
+
+everhouse
+Ever
+published 1 day ago
+ad081b8d
+
+everhouse
+Ever
+published 1 day ago
+91db4725
+
+everhouse
+Ever
+published 2 days ago
+8a929f43
+
+everhouse
+Ever
+published 2 days ago
+34ce66bf
+
+everhouse
+Ever
+published 2 days ago
+271fdd3c
+
+everhouse
+Ever
+published 2 days ago
+b44702be
+
+everhouse
+Ever
+published 2 days ago
+7bbfc66e
+
+everhouse
+Ever
+published 2 days ago
+757c8544
+
+everhouse
+Ever
+published 2 days ago
+Databases
+Production Database
+31.9MB / 100GB
+Development Database
+34.01MB / 10GB
+Billing Period
+Renews monthly, Jan 15
+Hours of Compute Used
+32.92 hours
+npm run dev
+8m
+ • 
+8 minutes ago
+npm run server
+8m
+ • 
+8 minutes ago
+Secrets
+SESSION_SECRET
+••••••••
+VAPID_PRIVATE_KEY
+••••••••
+AI_INTEGRATIONS_OPENAI_BASE_URL
+••••••••
+AI_INTEGRATIONS_OPENAI_API_KEY
+••••••••
+DEFAULT_OBJECT_STORAGE_BUCKET_ID
+••••••••
+PUBLIC_OBJECT_SEARCH_PATHS
+••••••••
+PRIVATE_OBJECT_DIR
+••••••••
+BASE_URL
+••••••••
+EVENTBRITE_PRIVATE_TOKEN
+••••••••
+HUBSPOT_ACCESS_TOKEN
+••••••••
+RESEND_API_KEY
+••••••••
+SUPABASE_ANON_KEY
+••••••••
+SUPABASE_URL
+••••••••
+VAPID_PRIVATE_KEY
+••••••••
+VITE_SUPABASE_ANON_KEY
+••••••••
+VITE_SUPABASE_URL
+••••••••
+Configurations
+Configurations are similar to secrets, but should only be used for non-sensitive information. They're useful for having a variable that's different between your published app and when testing on Replit.
+HUBSPOT_FORM_CONTACT
+63c397f3-faeb-4582-9176-ae9603188b9a
+HUBSPOT_FORM_GUEST_CHECKIN
+ba04af2b-b1d5-435b-9e3e-bfd9086d2fa9
+HUBSPOT_FORM_MEMBERSHIP
+6973a2ea-f8a5-4925-9898-2fcc373512f0
+HUBSPOT_FORM_PRIVATE_HIRE
+7b2eca31-2f78-40bc-9a67-e25ecd140047
+HUBSPOT_FORM_TOUR_REQUEST
+686db5e2-c17e-4c45-9ab9-21b466fd105c
+HUBSPOT_PORTAL_ID
+244200670
+SUPABASE_URL
+https://vramupyxmnzhgegltppg.supabase.co
+VAPID_PUBLIC_KEY
+BG-oXwIn5dHb93Y6SuyOpkHm7Qu2La9ge5pwQFAx98WRllqI6-zg-n3A5CURITIR_wA6sIo8zEaBVwGhLz3CCFw
+DEV_LOGIN_ENABLED
+true
+Remote Updates
+origin/main•upstream
+last fetched 6 min ago
+Commit
+There are no changes to commit.
+Published your App
+can you clean up the code and remove any files that we don't need anymore. aiming to have the file less than 100MB
+
+Checkpoint made
+•
+Free
+Saved your changes before starting work
+
+2 messages & 20 actions
+I'll check the current project size and identify what's taking up space.
+Start building
+Checkpoint made
+•
+Free
+Transitioned from Plan to Build mode
+
+3 messages & 40 actions
+I'll start cleaning up now. Let me remove the unused files.
+Checkpoint made
+Saved progress at the end of the loop
+Worked for 3 minutes
+Want users to get these changes? Republish this App.
+what other optimizations could we do
+
+Worked for 3 seconds
+Checkpoint made
+•
+Free
+•
+Publish
+Published your App
+what else can we do to optimize the app
+
+
+2 messages & 2 actions
+Let me get some strategic recommendations for further optimizations.
+explain what on the app would need to change for each of those
+
+Here's what each optimization would involve:
+
+1. Code Splitting
+What changes: Wrap page components with React.lazy() and Suspense
+
+Example: Instead of importing AdminDashboard directly, load it only when an admin navigates there
+Files affected: src/App.tsx (router), individual page imports
+User experience: Faster initial page load, slight delay when visiting new sections for the first time
+2. Image Optimization
+What changes: Generate multiple sizes of gallery/hero images
+
+Run a script to create small/medium/large versions of each image
+Update <img> tags to use srcset so browsers pick the right size
+Files affected: public/images/, gallery components
+User experience: Mobile users load smaller images, saves data
+3. Database Indexes
+What changes: Add index migrations for common queries
+
+Create indexes on: bookings(resource_id, start_time, status), users(email), users(hubspot_id)
+Files affected: New migration file in Drizzle
+User experience: Faster booking calendar loads, quicker member lookups
+4. Lazy Load Heavy Features
+What changes: Delay loading admin tools, notification sounds, haptics
+
+Move these into dynamically imported modules
+Only load when user is authenticated and on relevant pages
+Files affected: src/utils/sounds.ts, src/hooks/useHaptics.ts, admin components
+User experience: Faster login experience
+5. API Caching
+What changes: Add in-memory caching for read-heavy endpoints
+
+Cache announcements, events, menu items for a few minutes
+Invalidate cache when data changes
+Files affected: server/routes/ API handlers
+User experience: Faster page loads, less database load
+6. Bundle Analysis
+What changes: Run Vite's bundle analyzer to see what's biggest
+
+Identify large dependencies and evaluate alternatives
+No code changes initially—just analysis
+User experience: Potentially smaller download sizes
+7. Remove Dead Code
+What changes: Audit and delete unused components/hooks
+
+Scan for exports that aren't imported anywhere
+Remove commented-out code blocks
+Files affected: Various across src/
+User experience: Cleaner codebase, slightly smaller bundle

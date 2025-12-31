@@ -1,0 +1,3409 @@
+Here is the response to Replit and the generated code for the **Frontend Optimization Phase**.
+
+### Message to Replit
+
+---
+
+**"Agreed on all counts. Regarding the Sync Interval (Point 4):**
+
+I propose **Option B (Modified):** Let's lower the global `SYNC_INTERVAL` in `backgroundSync.ts` to **5 minutes**.
+
+* **Why?** 30 seconds (current `App.tsx`) is too aggressive for battery. 15 minutes is too slow for a 'red dot' notification. 5 minutes strikes a healthy balance for a PWA—it feels 'live enough' without keeping the radio active constantly.
+* The existing `THROTTLE_MS` (1 minute) protects us from over-fetching if the user tabs in and out frequently.
+
+**Execution Plan:**
+I am generating the code for all 6 files now.
+
+1. **`src/index.css`**: Adding `.native-scroller` and input fixes.
+2. **`src/hooks/useEdgeSwipe.ts`**: Tuning velocity to `0.3`.
+3. **`src/data/defaults.ts`**: **NEW FILE**. Hosting the static arrays.
+4. **`src/lib/backgroundSync.ts`**: Lowering interval to 5m, wiring up notifications via `userStore`.
+5. **`src/contexts/DataContext.tsx`**: Removing hardcoded arrays, importing from defaults.
+6. **`src/App.tsx`**: Removing the `setInterval` poll and applying the `.native-scroller` class.
+
+**Switching to Build Mode. Here are the files:**"
+
+---
+
+### Generated Code
+
+#### 1. `src/index.css`
+
+Restoring scroll physics for content while keeping the body locked, and fixing the iOS input zoom.
+
+```css
+@import "tailwindcss";
+
+:root {
+  /* Safe Area / Nav Clearance */
+  --nav-bottom-offset: 2rem; /* bottom-8 = 32px = 2rem */
+  --nav-height: 4rem; /* approximate nav bar height */
+  --nav-clearance: calc(var(--nav-height) + var(--nav-bottom-offset) + env(safe-area-inset-bottom, 0px));
+  
+  /* Brand Colors */
+  --brand-primary: #293515;
+  --brand-secondary: #F2F2EC;
+  --brand-accent: #CCB8E4;
+  
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  
+  /* Glassmorphism Design Tokens */
+  --glass-blur-sm: 8px;
+  --glass-blur-md: 12px;
+  --glass-blur-lg: 16px;
+  --glass-blur-xl: 24px;
+  --glass-bg-light: rgba(255, 255, 255, 0.6);
+  --glass-bg-light-subtle: rgba(255, 255, 255, 0.4);
+  --glass-bg-dark: rgba(255, 255, 255, 0.05);
+  --glass-bg-dark-subtle: rgba(255, 255, 255, 0.03);
+  --glass-border-light: rgba(255, 255, 255, 0.8);
+  --glass-border-dark: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  --glass-shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+
+  /* iOS Spring Physics & Tap Tokens */
+  --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --tap-scale: 0.97;
+  --tap-duration: 100ms;
+}
+
+@theme {
+  --font-family-display: "Playfair Display", Georgia, serif;
+  --font-family-sans: "Inter", sans-serif;
+  --font-family-serif: "Playfair Display", Georgia, serif;
+  
+  --color-primary: #293515;
+  --color-secondary: #E7E7DC;
+  --color-accent: #CCB8E4;
+  --color-accent-dark: #8B6FA8;
+  --color-surface-light: #FFFFFF;
+  --color-surface-dark: rgba(255, 255, 255, 0.05);
+  --color-brand-green: #293515;
+  --color-brand-bone: #F2F2EC;
+  --color-brand-lavender: #CCB8E4;
+  --color-brand-lavender-dark: #8B6FA8;
+  
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+}
+
+/* Global box-sizing reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Modal scroll lock - override the above when modal is open */
+html.overflow-hidden,
+html.overflow-hidden body,
+html.overflow-hidden #root {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+
+html, body {
+  width: 100%;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  background-color: #F2F2EC;
+  color: var(--brand-primary);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* NEW: Native scrolling container for main content */
+.native-scroller {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
+  height: 100%;
+}
+
+html.dark, html.dark body {
+  background-color: #0f120a;
+  color: #F2F2EC;
+}
+
+#root {
+  background-color: inherit;
+}
+
+/* Eliminate 300ms tap delay on touch devices */
+button, a, [role="button"], .tap-target, input[type="button"], input[type="submit"] {
+  touch-action: manipulation;
+}
+
+/* Images default to block display but preserve Tailwind sizing */
+img, video, svg {
+  display: block;
+}
+
+/* Utility class for responsive images that need to scale */
+.img-responsive {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Input Font Size Fix for iOS Zoom */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Glassmorphism Utility Classes */
+.glass-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur-xl));
+  -webkit-backdrop-filter: blur(var(--glass-blur-xl));
+  border: 1px solid var(--glass-border-light);
+  box-shadow: var(--glass-shadow);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.95);
+  }
+  .dark .glass-card {
+    background: rgba(20, 20, 20, 0.95);
+  }
+}
+
+.glass-card-subtle {
+  background: var(--glass-bg-light-subtle);
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.dark .glass-card {
+  background: var(--glass-bg-dark);
+  border: 1px solid var(--glass-border-dark);
+  box-shadow: var(--glass-shadow-dark);
+}
+
+.dark .glass-card-subtle {
+  background: var(--glass-bg-dark-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(var(--glass-blur-xl));
+  -webkit-backdrop-filter: blur(var(--glass-blur-xl));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.02);
+}
+
+.glass-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+}
+
+/* Modal max-height that fits between header and bottom nav */
+.modal-safe-height {
+  max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 160px);
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 160px);
+}
+
+/* iOS safe area support */
+.safe-area-bottom {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+}
+
+.safe-area-top {
+  padding-top: calc(env(safe-area-inset-top, 0));
+}
+
+.safe-area-inset {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+}
+
+/* Menu-specific safe area that preserves base padding */
+.safe-area-inset-menu {
+  padding-top: max(1.5rem, env(safe-area-inset-top, 0));
+  padding-bottom: max(2rem, calc(1rem + env(safe-area-inset-bottom, 0)));
+  padding-left: max(2rem, env(safe-area-inset-left, 0));
+  padding-right: max(2rem, env(safe-area-inset-right, 0));
+}
+
+/* Prevent horizontal overflow globally */
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+
+/* Minimum tap target size helper */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Mobile touch target improvements */
+@media (max-width: 768px) {
+  button,
+  a[role="button"],
+  [role="button"],
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Ensure buttons have adequate padding for touch */
+  button:not(.icon-only):not(.close-btn) {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  
+  /* Icon-only buttons get invisible touch padding */
+  .icon-only,
+  button.icon-button {
+    position: relative;
+  }
+  
+  .icon-only::before,
+  button.icon-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: inherit;
+  }
+}
+
+/* Touch target utility class */
+.touch-target-lg {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Back to top button styles */
+.back-to-top {
+  position: fixed;
+  bottom: 6rem;
+  right: 1.5rem;
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.3s ease-out;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+html.dark body {
+  background-color: #0f120a;
+  color: white;
+}
+
+.liquid-bg {
+  background: #0f120a;
+}
+
+/* --- Liquid Glass System (Futuristic iOS-inspired) --- */
+
+/* CSS Custom Properties for Liquid Glass */
+:root {
+  --liquid-glass-blur: 20px;
+  --liquid-glass-bg-light: rgba(255, 255, 255, 0.85);
+  --liquid-glass-bg-dark: rgba(0, 0, 0, 0.4);
+  --liquid-glass-border: rgba(255, 255, 255, 0.5);
+  --liquid-glass-border-dark: rgba(255, 255, 255, 0.3);
+  --liquid-glass-inner-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3), inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+  --liquid-glass-inner-shadow-dark: inset 0 1px 2px rgba(255, 255, 255, 0.15), inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+  --liquid-glass-outer-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --liquid-glass-outer-shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --liquid-transition: all 0.4s ease-in-out;
+  --liquid-radius: 1rem;
+}
+
+/* Liquid Glass Panel - for navigation bars, headers */
+.glass-panel {
+  background: var(--liquid-glass-bg-light);
+  backdrop-filter: blur(var(--liquid-glass-blur));
+  -webkit-backdrop-filter: blur(var(--liquid-glass-blur));
+  border: 1px solid var(--liquid-glass-border);
+  border-radius: var(--liquid-radius);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    var(--liquid-glass-outer-shadow);
+  transition: var(--liquid-transition);
+}
+
+html.dark .glass-panel {
+  background: var(--liquid-glass-bg-dark);
+  border-color: var(--liquid-glass-border-dark);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow-dark),
+    var(--liquid-glass-outer-shadow-dark);
+}
+
+/* Liquid Glass Card - for content cards, list items */
+.glass-card {
+  background: var(--liquid-glass-bg-light);
+  backdrop-filter: blur(var(--liquid-glass-blur));
+  -webkit-backdrop-filter: blur(var(--liquid-glass-blur));
+  border: 1px solid var(--liquid-glass-border);
+  border-radius: var(--liquid-radius);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    var(--liquid-glass-outer-shadow);
+  transition: var(--liquid-transition);
+}
+
+.glass-card:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+html.dark .glass-card {
+  background: var(--liquid-glass-bg-dark);
+  border-color: var(--liquid-glass-border-dark);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow-dark),
+    var(--liquid-glass-outer-shadow-dark);
+}
+
+html.dark .glass-card:active {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Liquid Glass Button */
+.glass-button {
+  background: var(--liquid-glass-bg-light);
+  border: 1px solid var(--liquid-glass-border);
+  border-radius: var(--liquid-radius);
+  backdrop-filter: blur(var(--liquid-glass-blur));
+  -webkit-backdrop-filter: blur(var(--liquid-glass-blur));
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: var(--liquid-transition);
+}
+
+.glass-button:active {
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(0.98);
+}
+
+html.dark .glass-button {
+  background: var(--liquid-glass-bg-dark);
+  border-color: var(--liquid-glass-border-dark);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow-dark),
+    0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .glass-button:active {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Liquid Glass Modal Overlay */
+.glass-modal-backdrop {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.glass-modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(var(--liquid-glass-blur));
+  -webkit-backdrop-filter: blur(var(--liquid-glass-blur));
+  border: 1px solid var(--liquid-glass-border);
+  border-radius: var(--liquid-radius);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    0 25px 50px rgba(0, 0, 0, 0.2), 0 10px 20px rgba(0, 0, 0, 0.1);
+  transition: var(--liquid-transition);
+}
+
+html.dark .glass-modal {
+  background: rgba(20, 25, 15, 0.95);
+  border-color: var(--liquid-glass-border-dark);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow-dark),
+    0 25px 50px rgba(0, 0, 0, 0.5), 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Liquid Glass Navigation Bar */
+.glass-navbar {
+  background: var(--liquid-glass-bg-light);
+  backdrop-filter: blur(var(--liquid-glass-blur));
+  -webkit-backdrop-filter: blur(var(--liquid-glass-blur));
+  border: 1px solid var(--liquid-glass-border);
+  border-radius: var(--liquid-radius);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    var(--liquid-glass-outer-shadow);
+  transition: var(--liquid-transition);
+}
+
+html.dark .glass-navbar {
+  background: var(--liquid-glass-bg-dark);
+  border-color: var(--liquid-glass-border-dark);
+  box-shadow: 
+    var(--liquid-glass-inner-shadow-dark),
+    var(--liquid-glass-outer-shadow-dark);
+}
+
+/* Liquid Glass Input */
+.glass-input {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(var(--liquid-glass-blur));
+  -webkit-backdrop-filter: blur(var(--liquid-glass-blur));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 1.5rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: var(--liquid-transition);
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.05),
+    0 0 0 3px rgba(204, 184, 228, 0.3);
+}
+
+html.dark .glass-input {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .glass-input:focus {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Modal form grid overflow fix - prevent inputs from causing horizontal scroll */
+[role="dialog"] .grid > * {
+  min-width: 0;
+}
+[role="dialog"] input,
+[role="dialog"] select,
+[role="dialog"] textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+/* Force date/time inputs to full width on iOS Safari */
+[role="dialog"] input[type="date"],
+[role="dialog"] input[type="time"],
+[role="dialog"] input[type="datetime-local"] {
+  width: 100% !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* iOS Safari dark mode date/time input fixes */
+html.dark input[type="date"],
+html.dark input[type="time"],
+html.dark input[type="datetime-local"] {
+  color-scheme: dark;
+  -webkit-text-fill-color: #fff;
+  color: #fff;
+}
+html.dark input[type="date"]::placeholder,
+html.dark input[type="time"]::placeholder,
+html.dark input[type="datetime-local"]::placeholder {
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.5);
+}
+html.dark input[type="date"]::-webkit-calendar-picker-indicator,
+html.dark input[type="time"]::-webkit-calendar-picker-indicator,
+html.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Tab bar horizontal scroll - smooth snap with instant taps */
+.tab-scroll {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  white-space: nowrap;
+  scroll-padding-inline: 24px;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.tab-scroll::-webkit-scrollbar { display: none; }
+.tab-scroll > * {
+  scroll-snap-align: start;
+  touch-action: manipulation;
+}
+
+/* Modal scrollable content - restore scrollbar for accessibility */
+.modal-scroll-content {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.modal-scroll-content::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+.modal-scroll-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+.modal-scroll-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+/* Debug Layout Mode - activate with ?debugLayout=1 */
+.debug-layout * {
+  outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+}
+.debug-layout *:hover {
+  outline: 2px solid red !important;
+  background: rgba(255, 0, 0, 0.1) !important;
+}
+.debug-layout [class*="overflow"] {
+  outline: 2px solid orange !important;
+}
+.debug-layout .debug-overflow-warning {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: red;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 99999;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Accessibility: Focus visible styles */
+:focus-visible {
+  outline: 2px solid #CCB8E4;
+  outline-offset: 2px;
+}
+
+/* Enhanced focus states for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #CCB8E4;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(204, 184, 228, 0.3);
+}
+
+.glass-button:focus-visible {
+  outline: 2px solid #CCB8E4;
+  outline-offset: 2px;
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    0 0 0 4px rgba(204, 184, 228, 0.4),
+    0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+.glass-card:focus-visible,
+.glass-panel:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+  box-shadow: 
+    var(--liquid-glass-inner-shadow),
+    0 0 0 4px rgba(204, 184, 228, 0.3),
+    var(--liquid-glass-outer-shadow);
+}
+
+.glass-input:focus-visible {
+  outline: none;
+  border-color: #CCB8E4;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.05),
+    0 0 0 3px rgba(204, 184, 228, 0.4);
+}
+
+html.dark button:focus-visible,
+html.dark a:focus-visible {
+  box-shadow: 0 0 0 4px rgba(204, 184, 228, 0.4);
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #293515;
+  color: white;
+  padding: 8px 16px;
+  z-index: 100;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 0 0 8px 0;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Improved text contrast for accessibility */
+.text-accessible-muted {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* WCAG-compliant accent text (4.5:1 contrast ratio on light backgrounds) */
+.text-accent-accessible {
+  color: #8B6FA8;
+}
+html.dark .text-accent-accessible {
+  color: #CCB8E4;
+}
+
+/* Scroll fade indicators for horizontal scroll areas */
+.scroll-fade-right {
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
+
+.scroll-fade-both {
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Icon Morph Animation */
+@keyframes iconMorph {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-icon-morph {
+  animation: iconMorph 0.3s ease-out forwards;
+}
+
+/* Staggered Slide Up Animation */
+@keyframes staggerFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-slide-up-stagger {
+  opacity: 0;
+  animation: staggerFadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Soft Layered Shadows - Premium floating card effect */
+.shadow-layered {
+  box-shadow:
+    0 2px 4px rgba(41, 53, 21, 0.02),
+    0 4px 8px rgba(41, 53, 21, 0.03),
+    0 8px 16px rgba(41, 53, 21, 0.04),
+    0 16px 32px rgba(41, 53, 21, 0.05),
+    0 32px 64px rgba(41, 53, 21, 0.06);
+}
+
+.shadow-layered-dark {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 4px 8px rgba(0, 0, 0, 0.12),
+    0 8px 16px rgba(0, 0, 0, 0.16),
+    0 16px 32px rgba(0, 0, 0, 0.20),
+    0 32px 64px rgba(0, 0, 0, 0.24);
+}
+
+/* Accordion expand animation */
+@keyframes accordionExpand {
+  0% {
+    max-height: 0;
+    opacity: 0;
+  }
+  100% {
+    max-height: 300px;
+    opacity: 1;
+  }
+}
+
+.accordion-content {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, opacity 0.25s ease-out;
+}
+
+.accordion-content.expanded {
+  max-height: 300px;
+  opacity: 1;
+}
+
+/* Pop In Animation - Used across the app (horizontal-aligned, no vertical offset) */
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pop-in {
+  opacity: 0;
+  animation: popIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Page Enter Animation - Quick fade for smooth navigation */
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-page-enter {
+  opacity: 0;
+  animation: pageEnter 0.12s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.page-fade-in {
+  opacity: 0;
+  animation: pageEnter 0.12s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Page Content Animation - Staggered fade for page elements (no vertical offset) */
+@keyframes pageContentEnter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-content-enter {
+  opacity: 0;
+  animation: pageContentEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-content-enter-delay-1 {
+  opacity: 0;
+  animation: pageContentEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.05s forwards;
+}
+
+.animate-content-enter-delay-2 {
+  opacity: 0;
+  animation: pageContentEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s forwards;
+}
+
+.animate-content-enter-delay-3 {
+  opacity: 0;
+  animation: pageContentEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.15s forwards;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Slide In Up Animation */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.25s ease-out forwards;
+}
+
+/* Slide In/Out Left Animation - Menu overlay */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-slide-out-left {
+  animation: slideOutLeft 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Backdrop Fade Animation */
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes backdropFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-backdrop-in {
+  animation: backdropFadeIn 0.25s ease-out forwards;
+}
+
+.animate-backdrop-out {
+  animation: backdropFadeOut 0.25s ease-out forwards;
+}
+
+/* iOS-style Button Bounce Animation */
+@keyframes button-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(var(--tap-scale)); }
+  60% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Quick Tap Feedback Animation */
+@keyframes tap-feedback {
+  0% { transform: scale(1); }
+  50% { transform: scale(var(--tap-scale)); }
+  100% { transform: scale(1); }
+}
+
+/* Shimmer Animation - Loading skeleton effect */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* GPU Acceleration Hints for Animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* iOS Tap Feedback & Animation Utilities */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+  transition: transform var(--tap-duration) var(--spring-smooth);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tap-target:active {
+  transform: scale(var(--tap-scale));
+}
+
+.animate-bounce-tap {
+  animation: button-bounce 0.4s var(--spring-bounce) forwards;
+}
+
+.btn-ios {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  transition: all var(--tap-duration) var(--spring-smooth);
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn-ios:active {
+  transform: scale(var(--tap-scale));
+  opacity: 0.8;
+}
+
+/* iOS HIG Spacing Utilities */
+.ios-section {
+  padding: 0 var(--space-4);
+}
+
+.ios-section-header {
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: rgba(41, 53, 21, 0.6);
+}
+
+.dark .ios-section-header {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ios-grouped-list {
+  background: white;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.dark .ios-grouped-list {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ios-list-item {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid rgba(41, 53, 21, 0.08);
+}
+
+.dark .ios-list-item {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.ios-list-item:last-child {
+  border-bottom: none;
+}
+
+.ios-inset {
+  margin-left: var(--space-4);
+  margin-right: var(--space-4);
+}
+
+.ios-card {
+  background: white;
+  border-radius: var(--radius-2xl);
+  padding: var(--space-4);
+  margin: 0 var(--space-4) var(--space-3);
+}
+
+.dark .ios-card {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Walking Golfer Loading Animation */
+@keyframes golferWalk {
+  0% {
+    transform: translateX(-100px) translateY(0);
+  }
+  10% {
+    transform: translateX(-70px) translateY(-3px);
+  }
+  20% {
+    transform: translateX(-40px) translateY(0);
+  }
+  30% {
+    transform: translateX(-10px) translateY(-3px);
+  }
+  40% {
+    transform: translateX(20px) translateY(0);
+  }
+  50% {
+    transform: translateX(50px) translateY(-3px);
+  }
+  60% {
+    transform: translateX(80px) translateY(0);
+  }
+  70% {
+    transform: translateX(110px) translateY(-3px);
+  }
+  80% {
+    transform: translateX(140px) translateY(0);
+  }
+  90% {
+    transform: translateX(170px) translateY(-3px);
+  }
+  100% {
+    transform: translateX(200px) translateY(0);
+  }
+}
+
+@keyframes legSwingRight {
+  0%, 100% {
+    transform: rotate(-8deg);
+    transform-origin: 50% 130px;
+  }
+  50% {
+    transform: rotate(8deg);
+    transform-origin: 50% 130px;
+  }
+}
+
+@keyframes legSwingLeft {
+  0%, 100% {
+    transform: rotate(8deg);
+    transform-origin: 80px 130px;
+  }
+  50% {
+    transform: rotate(-8deg);
+    transform-origin: 80px 130px;
+  }
+}
+
+.walking-golfer-container {
+  animation: golferWalk 1.5s ease-in-out infinite;
+}
+
+.walking-golfer .leg-right {
+  animation: legSwingRight 0.4s ease-in-out infinite;
+}
+
+.walking-golfer .leg-left {
+  animation: legSwingLeft 0.4s ease-in-out infinite;
+}
+
+/* Walking in place spinner */
+.walking-golfer-inplace {
+  animation: golferBob 0.4s ease-in-out infinite;
+}
+
+.walking-golfer-inplace .leg-right-inplace {
+  transform-origin: 40px 130px;
+  animation: legSwingRight 0.4s ease-in-out infinite;
+}
+
+.walking-golfer-inplace .leg-left-inplace {
+  transform-origin: 100px 130px;
+  animation: legSwingLeft 0.4s ease-in-out infinite;
+}
+
+@keyframes golferBob {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-2px); }
+  50% { transform: translateY(0); }
+  75% { transform: translateY(-2px); }
+}
+
+/* Hover effects only for pointer devices (not touch) */
+@media (hover: hover) and (pointer: fine) {
+  .glass-panel:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.01);
+  }
+  
+  html.dark .glass-panel:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.015);
+    box-shadow: 
+      var(--liquid-glass-inner-shadow),
+      0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  html.dark .glass-card:hover {
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 
+      var(--liquid-glass-inner-shadow-dark),
+      0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  .glass-button:hover {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(255, 255, 255, 0.7);
+    transform: scale(1.02);
+    box-shadow: 
+      var(--liquid-glass-inner-shadow),
+      0 6px 24px rgba(0, 0, 0, 0.12);
+  }
+  
+  html.dark .glass-button:hover {
+    background: rgba(0, 0, 0, 0.55);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 
+      var(--liquid-glass-inner-shadow-dark),
+      0 6px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Force remove transforms on touch devices */
+@media (hover: none) {
+  .glass-card:hover,
+  .glass-panel:hover,
+  .glass-button:hover {
+    transform: none !important;
+  }
+}
+
+/* Reduced Motion Support - Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .animate-spin {
+    animation: none !important;
+  }
+  
+  .animate-pulse,
+  .animate-pulse-slow {
+    animation: none !important;
+  }
+  
+  .animate-icon-morph,
+  .animate-slide-up-stagger,
+  .animate-pop-in,
+  .animate-page-enter,
+  .animate-content-enter,
+  .animate-content-enter-delay-1,
+  .animate-content-enter-delay-2,
+  .animate-content-enter-delay-3,
+  .animate-bounce-tap {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  
+  .glass-button:hover,
+  .glass-card:hover,
+  .tap-target:active,
+  .btn-ios:active {
+    transform: none !important;
+  }
+}
+
+/* Optimized Transitions - Use transform/opacity only */
+.transition-gpu {
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Faster liquid glass transition for snappier feel */
+.liquid-fast {
+  transition: all 0.2s ease-out;
+}
+
+/* Content visibility optimization for off-screen elements */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Image loading optimization */
+img {
+  content-visibility: auto;
+}
+
+img[loading="lazy"] {
+  contain-intrinsic-size: 200px 200px;
+}
+
+/* Gate hover effects for touch devices to prevent iOS double-tap */
+@media (hover: hover) and (pointer: fine) {
+  .hoverable-translate:hover {
+    transform: translateX(0.5rem);
+  }
+}
+
+/* Print Styles for Training Guide PDF */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Hide navigation, headers, floating elements, and interactive elements */
+  header,
+  nav,
+  .print\\:hidden,
+  [class*="fixed"][class*="bottom"],
+  [class*="fixed"][class*="top"]:not([class*="print"]) {
+    display: none !important;
+  }
+  
+  /* Hide floating overlays and backgrounds but keep content visible */
+  .fixed.inset-0:not(main):not([class*="training"]),
+  [class*="liquid-bg"]::before,
+  [class*="liquid-bg"]::after,
+  [class*="animate-pulse-slow"] {
+    display: none !important;
+  }
+  
+  /* Reset backdrop-blur for content (don't hide, just remove effect) */
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  /* Hide the expand arrow icons in print */
+  .material-symbols-outlined.text-primary\\/40[class*="rotate"],
+  .material-symbols-outlined.dark\\:text-white\\/40[class*="transition-transform"] {
+    display: none !important;
+  }
+  
+  /* Show print-only elements */
+  .print\\:block {
+    display: block !important;
+  }
+  
+  /* Reset glass effects for print */
+  .bg-white\\/60,
+  .dark\\:bg-white\\/5 {
+    background: white !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Ensure all sections are expanded */
+  .max-h-0 {
+    max-height: none !important;
+  }
+  
+  /* Page breaks */
+  .print\\:break-inside-avoid {
+    break-inside: avoid !important;
+  }
+  
+  /* Better text contrast for print */
+  .text-primary,
+  .text-primary\\/80,
+  .text-primary\\/70,
+  .text-primary\\/60,
+  .dark\\:text-white,
+  .dark\\:text-white\\/80,
+  .dark\\:text-white\\/70,
+  .dark\\:text-white\\/60 {
+    color: #333 !important;
+  }
+  
+  .text-primary\\/50,
+  .text-primary\\/40,
+  .dark\\:text-white\\/50,
+  .dark\\:text-white\\/40 {
+    color: #666 !important;
+  }
+  
+  /* Reset border colors */
+  .border-primary\\/10,
+  .dark\\:border-white\\/10 {
+    border-color: #ddd !important;
+  }
+  
+  /* Remove shadows */
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
+  
+  /* Adjust spacing */
+  .pb-32 {
+    padding-bottom: 2rem !important;
+  }
+  
+  /* Remove header padding from main content */
+  main,
+  [class*="pt-"][class*="safe-area"],
+  [class*="pt-20"],
+  [class*="pt-24"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+  
+  /* Page margins */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+}
+
+/* Pull-to-refresh header fade effect */
+body[data-ptr-active="true"] header[role="banner"] {
+  opacity: calc(1 - var(--ptr-progress, 0));
+  transition: opacity 0.15s ease-out;
+}
+
+body[data-ptr-active="true"]:has(.ptr-fill-overlay) header[role="banner"],
+body[data-ptr-active="true"]:has(.ptr-loader-overlay) header[role="banner"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+```
+
+#### 2. `src/hooks/useEdgeSwipe.ts`
+
+Tuning velocity threshold to `0.3` for better sensitivity.
+
+```typescript
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+interface EdgeSwipeConfig {
+  edgeWidth?: number;
+  threshold?: number;
+  velocityThreshold?: number;
+  enabled?: boolean;
+  onBack?: () => void;
+}
+
+interface EdgeSwipeState {
+  isActive: boolean;
+  progress: number;
+  startX: number;
+  startY: number;
+  currentX: number;
+}
+
+export function useEdgeSwipe(config: EdgeSwipeConfig = {}) {
+  const {
+    edgeWidth = 20,
+    threshold = 100,
+    velocityThreshold = 0.3, // Tuned for better native feel
+    enabled = true,
+    onBack
+  } = config;
+
+  const navigate = useNavigate();
+  const [state, setState] = useState<EdgeSwipeState>({
+    isActive: false,
+    progress: 0,
+    startX: 0,
+    startY: 0,
+    currentX: 0
+  });
+
+  const startTimeRef = useRef(0);
+  const isHorizontalRef = useRef<boolean | null>(null);
+
+  const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window;
+
+  const handleStart = useCallback((clientX: number, clientY: number) => {
+    if (!enabled || !isTouchDevice) return;
+    if (clientX <= edgeWidth) {
+      setState({
+        isActive: true,
+        progress: 0,
+        startX: clientX,
+        startY: clientY,
+        currentX: clientX
+      });
+      startTimeRef.current = Date.now();
+      isHorizontalRef.current = null;
+    }
+  }, [enabled, edgeWidth, isTouchDevice]);
+
+  const handleMove = useCallback((clientX: number, clientY: number) => {
+    if (!state.isActive) return;
+
+    const deltaX = clientX - state.startX;
+    const deltaY = clientY - state.startY;
+
+    if (isHorizontalRef.current === null) {
+      if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+        isHorizontalRef.current = Math.abs(deltaX) > Math.abs(deltaY);
+        if (!isHorizontalRef.current) {
+          setState(prev => ({ ...prev, isActive: false, progress: 0 }));
+          return;
+        }
+      }
+    }
+
+    if (isHorizontalRef.current && deltaX > 0) {
+      const progress = Math.min(deltaX / threshold, 1);
+      setState(prev => ({ ...prev, currentX: clientX, progress }));
+    }
+  }, [state.isActive, state.startX, state.startY, threshold]);
+
+  const handleEnd = useCallback(() => {
+    if (!state.isActive) return;
+
+    const deltaX = state.currentX - state.startX;
+    const durationMs = Date.now() - startTimeRef.current;
+    
+    const minDuration = 50;
+    const safeDuration = Math.max(durationMs, minDuration) / 1000;
+    const velocity = Math.min(deltaX / safeDuration / window.innerWidth, 2);
+
+    const shouldNavigate = (deltaX >= threshold && durationMs > minDuration) || 
+                           (velocity > velocityThreshold && deltaX > threshold * 0.5);
+
+    if (shouldNavigate && isHorizontalRef.current) {
+      if (onBack) {
+        onBack();
+      } else {
+        navigate(-1);
+      }
+    }
+
+    setState({
+      isActive: false,
+      progress: 0,
+      startX: 0,
+      startY: 0,
+      currentX: 0
+    });
+    isHorizontalRef.current = null;
+  }, [state.isActive, state.currentX, state.startX, threshold, velocityThreshold, navigate, onBack]);
+
+  useEffect(() => {
+    if (!enabled || !isTouchDevice) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      handleStart(touch.clientX, touch.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      handleMove(touch.clientX, touch.clientY);
+    };
+
+    const handleTouchEnd = () => handleEnd();
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [enabled, isTouchDevice, handleStart, handleMove, handleEnd]);
+
+  return {
+    isActive: state.isActive,
+    progress: state.progress
+  };
+}
+
+export default useEdgeSwipe;
+
+```
+
+#### 3. `src/data/defaults.ts`
+
+New file to host large static arrays.
+
+```typescript
+import type { CafeItem, EventData, Announcement, MemberProfile, Booking } from '../contexts/DataContext';
+
+export const INITIAL_CAFE: CafeItem[] = [
+  // COFFEE
+  { id: 'esp', category: "Coffee", name: "Espresso", price: 3, desc: "", icon: "coffee", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'drp', category: "Coffee", name: "Drip", price: 4, desc: "", icon: "coffee_maker", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'ame', category: "Coffee", name: "Americano", price: 4, desc: "", icon: "local_cafe", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'cap', category: "Coffee", name: "Cappuccino", price: 4, desc: "", icon: "coffee", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'flt', category: "Coffee", name: "Flat White", price: 4, desc: "", icon: "local_cafe", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'cor', category: "Coffee", name: "Cortado", price: 4, desc: "", icon: "local_cafe", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'flb', category: "Coffee", name: "Flash Brew", price: 5, desc: "Iced | Hot", icon: "ac_unit", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'lat', category: "Coffee", name: "Latte", price: 5, desc: "Rotating specialty roasts", icon: "local_cafe", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'pov', category: "Coffee", name: "Pour Over", price: 0, desc: "Lightly sweetened cold foam | Iced coffee or matcha", icon: "water_drop", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'tea', category: "Coffee", name: "Leaves and Flowers Tea", price: 5, desc: "Ichibana | Tropic Garden | Mountain Beauty", icon: "emoji_food_beverage", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'mat', category: "Coffee", name: "Nekohama Matcha", price: 8, desc: "Organic A1 pinnacle ceremonial grade", icon: "tea_bag", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'pit', category: "Coffee", name: "Pit Stop", price: 7, desc: "Seasonal cherry pie latte w/ graham cracker dust", icon: "pie_chart", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'sea', category: "Coffee", name: "Seasonal Tonic", price: 7, desc: "Pear-ginger | Served with espresso or matcha", icon: "spa", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'pec', category: "Coffee", name: "Pecan Prix", price: 8, desc: "Pecan pie matcha latte w/ maple creamtop", icon: "icecream", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'nik', category: "Coffee", name: "Niko No. 3", price: 5, desc: "Espresso over grass-fed cinnamon honey butter", icon: "cookie", image: "/images/cafe-bar-optimized.webp" },
+
+  // BREAKFAST
+  { id: 'egg_t', category: "Breakfast", name: "Egg Toast", price: 14, desc: "Schaner Farm scrambled eggs, whipped ricotta, chives, micro greens", icon: "bakery_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'avo', category: "Breakfast", name: "Avocado Toast", price: 16, desc: "Hass smashed avocado, radish, lemon, micro greens, dill", icon: "nutrition", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'ban', category: "Breakfast", name: "Banana & Honey Toast", price: 14, desc: "Banana, whipped ricotta, Hapa Honey Farm local honey", icon: "breakfast_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'smk_t', category: "Breakfast", name: "Smoked Salmon Toast", price: 20, desc: "Alaskan king smoked salmon, whipped cream cheese, dill, capers", icon: "set_meal", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'cro', category: "Breakfast", name: "Breakfast Croissant", price: 16, desc: "Schaner Farm eggs, New School american cheese", icon: "bakery_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'oml', category: "Breakfast", name: "French Omelette", price: 14, desc: "Schaner Farm eggs, cultured butter, fresh herbs", icon: "egg_alt", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'stk', category: "Breakfast", name: "Hanger Steak & Eggs", price: 24, desc: "Autonomy Farms Hanger steak, Schaner Farm eggs", icon: "restaurant", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'bac', category: "Breakfast", name: "Bacon & Eggs", price: 14, desc: "Applewood smoked bacon, Schaner Farm eggs", icon: "bento", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'yog', category: "Breakfast", name: "Yogurt Parfait", price: 14, desc: "Yogurt, seasonal fruits, farmstead granola, Hapa Honey", icon: "icecream", image: "/images/cafe-bar-optimized.webp" },
+
+  // LUNCH
+  { id: 'cae', category: "Lunch", name: "Caesar Salad", price: 15, desc: "Romaine lettuce, homemade dressing, grated Reggiano", icon: "dinner_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'wed', category: "Lunch", name: "Wedge Salad", price: 16, desc: "Iceberg lettuce, bacon, red onion, cherry tomatoes, bleu cheese", icon: "kebab_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'chk', category: "Lunch", name: "Chicken Salad Sandwich", price: 14, desc: "Autonomy Farms chicken, celery, toasted pan loaf", icon: "lunch_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'tun', category: "Lunch", name: "Tuna Salad Sandwich", price: 14, desc: "Wild pole-caught albacore tuna, sprouts, chimichurri", icon: "set_meal", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'grl', category: "Lunch", name: "Grilled Cheese", price: 12, desc: "New School american cheese, brioche pan loaf", icon: "fastfood", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'blt', category: "Lunch", name: "Heirloom BLT", price: 18, desc: "Applewood smoked bacon, butter lettuce, heirloom tomatoes", icon: "lunch_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'bra', category: "Lunch", name: "Bratwurst", price: 12, desc: "German bratwurst, sautéed onions & peppers, toasted brioche", icon: "kebab_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'bis', category: "Lunch", name: "Bison Serrano Chili", price: 14, desc: "Pasture raised bison, serrano, anaheim, cheddar cheese", icon: "soup_kitchen", image: "/images/cafe-bar-optimized.webp" },
+
+  // SIDES
+  { id: 's_bac', category: "Sides", name: "Bacon (2 slices)", price: 6, desc: "", icon: "bento", image: "/images/cafe-bar-optimized.webp" },
+  { id: 's_egg', category: "Sides", name: "Eggs, Scrambled", price: 8, desc: "", icon: "egg_alt", image: "/images/cafe-bar-optimized.webp" },
+  { id: 's_fru', category: "Sides", name: "Seasonal Fruit Bowl", price: 10, desc: "", icon: "nutrition", image: "/images/cafe-bar-optimized.webp" },
+  { id: 's_smk', category: "Sides", name: "Smoked Salmon", price: 9, desc: "", icon: "set_meal", image: "/images/cafe-bar-optimized.webp" },
+  { id: 's_tst', category: "Sides", name: "Toast (2 slices)", price: 3, desc: "", icon: "breakfast_dining", image: "/images/cafe-bar-optimized.webp" },
+  { id: 's_jam', category: "Sides", name: "Sqirl Seasonal Jam", price: 3, desc: "", icon: "kitchen", image: "" },
+  { id: 's_pis', category: "Sides", name: "Pistakio Spread", price: 4, desc: "", icon: "cookie", image: "" },
+
+  // KIDS
+  { id: 'k_grl', category: "Kids", name: "Grilled Cheese", price: 6, desc: "", icon: "fastfood", image: "" },
+  { id: 'k_dog', category: "Kids", name: "Hot Dog", price: 8, desc: "", icon: "kebab_dining", image: "" },
+
+  // DESSERT
+  { id: 'gel', category: "Dessert", name: "Gelato Sandwiches", price: 6, desc: "Vanilla bean w/ choc chip OR Sea salt caramel w/ snickerdoodle", icon: "icecream", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'pie', category: "Dessert", name: "Seasonal Pie, Slice", price: 6, desc: "With house made creme", icon: "pie_chart", image: "/images/cafe-bar-optimized.webp" },
+
+  // SHAREABLES
+  { id: 'clu', category: "Shareables", name: "Club Charcuterie", price: 32, desc: "", icon: "tapas", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'chi', category: "Shareables", name: "Chips & Salsa", price: 10, desc: "", icon: "tapas", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'cav', category: "Shareables", name: "Caviar Service", price: 0, desc: "", icon: "blur_circular", image: "/images/cafe-bar-optimized.webp" },
+  { id: 'tin', category: "Shareables", name: "Tinned Fish Tray", price: 47, desc: "", icon: "sardine", image: "/images/cafe-bar-optimized.webp" },
+];
+
+export const INITIAL_EVENTS: EventData[] = [
+  {
+    id: '1',
+    source: 'internal',
+    title: 'House Collectives: Chez Doc',
+    category: 'Social',
+    date: 'Fri, 20 Jan',
+    time: '11:00 PM',
+    location: 'Barcelona Club',
+    image: '/images/events-crowd-optimized.webp',
+    description: 'Join us for a special edition of House Collectives.',
+    attendees: [],
+    capacity: 50,
+    ticketsSold: 42
+  },
+  {
+    id: '2',
+    source: 'internal',
+    title: 'Brunch & Cocktails',
+    category: 'Dining',
+    date: 'Sat, 21 Jan',
+    time: '1:00 PM',
+    location: 'Soho House Barcelona',
+    image: '/images/cafe-bar-optimized.webp',
+    description: 'A curated brunch menu paired with signature botanical cocktails.',
+    attendees: [],
+    capacity: 30,
+    ticketsSold: 12
+  },
+  {
+    id: 'eb-101',
+    source: 'eventbrite',
+    externalLink: 'https://www.eventbrite.com',
+    title: 'Tustin Art Walk (Public)',
+    category: 'Social',
+    date: 'Sun, 22 Jan',
+    time: '10:00 AM',
+    location: 'Old Town Tustin',
+    image: '/images/venue-wide-optimized.webp',
+    description: 'Join the community for a guided walk through local galleries. Tickets handled via Eventbrite.',
+    attendees: [],
+    capacity: 100,
+    ticketsSold: 85
+  }
+];
+
+export const INITIAL_ANNOUNCEMENTS: Announcement[] = [];
+
+export const INITIAL_MEMBERS: MemberProfile[] = [
+  { 
+    id: '8821', 
+    name: "Alexander James", 
+    tier: "Core", 
+    isFounding: true,
+    status: "Active", 
+    email: "alex@example.com", 
+    phone: "+1 (949) 555-0101",
+    joinDate: "Jan 2021", 
+    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCfn5ddkAImjBeYIVGDC9eu6eVBy4VdxiMZcgL75jHdPGbriX1aGdJ5m2yagDgcPzq3dACO0xbgNxwfcG_j7f5rROEXbwGGTeqNRmAWD2vHkgY3JlItOfHUfgl3AcPUTZEqjxIFGt-zeP1Sf2r4YV9pchyafGGtpEaTBzfRHKZqzSudHdTUCdv2cK3fDpxYwcLaBeOvl6JhLuXfwLhz3sbhnDq188os16jhbKV6lfdMELIZ-W0XYNC9sWvU-NllhtC7X7JzcBQYv39_" 
+  },
+  { 
+    id: '8822', 
+    name: "Sarah Connor", 
+    tier: "Core", 
+    isFounding: false,
+    status: "Active", 
+    email: "sarah@example.com", 
+    phone: "+1 (949) 555-0102",
+    joinDate: "Mar 2022", 
+    avatar: "https://i.pravatar.cc/300?img=5" 
+  },
+  { 
+    id: '8823', 
+    name: "James Bond", 
+    tier: "Premium", 
+    isFounding: false,
+    status: "Active", 
+    email: "jb@example.com", 
+    phone: "+1 (949) 555-0007",
+    joinDate: "Dec 2023", 
+    avatar: "https://i.pravatar.cc/300?img=8" 
+  },
+  { 
+    id: '8824', 
+    name: "Ellen Ripley", 
+    tier: "Social", 
+    isFounding: false,
+    status: "Pending", 
+    email: "ellen@example.com", 
+    phone: "+1 (949) 555-0104",
+    joinDate: "Pending", 
+    avatar: "https://i.pravatar.cc/300?img=9" 
+  },
+  // Staff Accounts
+  { 
+    id: 'stf-1', 
+    name: "Adam Admin", 
+    tier: "Management", 
+    status: "Active", 
+    email: "adam@evenhouse.club", 
+    phone: "+1 (949) 555-9999",
+    role: 'admin', 
+    joinDate: "Jan 2020",
+    avatar: "https://i.pravatar.cc/300?img=11"
+  },
+  { 
+    id: 'stf-2', 
+    name: "Nick Staff", 
+    tier: "Concierge", 
+    status: "Active", 
+    email: "nick@evenhouse.club", 
+    phone: "+1 (949) 555-8888",
+    role: 'admin', // Promoted to admin
+    joinDate: "Mar 2021",
+    avatar: "https://i.pravatar.cc/300?img=12"
+  },
+];
+
+export const INITIAL_BOOKINGS: Booking[] = [
+    { id: 'b1', type: 'dining', title: 'Lunch at The Patio', date: 'Tue, Oct 24', time: '12:30 PM', details: '4 Guests', color: 'accent' },
+    { id: 'b2', type: 'golf', title: 'Golf Simulator Bay 2', date: 'Wed, Oct 25', time: '09:00 AM', details: '60 min', color: 'primary' }
+];
+
+```
+
+#### 4. `src/lib/backgroundSync.ts`
+
+Lowered sync interval to 5 minutes and wired up notifications.
+
+```typescript
+import { useUserStore } from '../stores/userStore';
+
+// Changed from 15 mins to 5 mins for better responsiveness
+const SYNC_INTERVAL = 5 * 60 * 1000;
+const THROTTLE_MS = 60 * 1000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1000;
+
+interface SyncCache {
+  data: any;
+  timestamp: number;
+}
+
+const lastFetch: Record<string, number> = {};
+const failedFetches: Record<string, number> = {};
+
+const isOnline = () => navigator.onLine;
+const isVisible = () => document.visibilityState === 'visible';
+
+export const getCached = <T>(key: string): T | null => {
+  try {
+    const raw = localStorage.getItem(`sync_${key}`);
+    if (!raw) return null;
+    const cache: SyncCache = JSON.parse(raw);
+    return cache.data as T;
+  } catch {
+    return null;
+  }
+};
+
+export const setCache = (key: string, data: any) => {
+  const cache: SyncCache = { data, timestamp: Date.now() };
+  try {
+    localStorage.setItem(`sync_${key}`, JSON.stringify(cache));
+  } catch (e) {
+  }
+};
+
+const shouldFetch = (key: string): boolean => {
+  const last = lastFetch[key] || 0;
+  return Date.now() - last > THROTTLE_MS;
+};
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const fetchAndCache = async <T>(
+  key: string,
+  url: string,
+  onUpdate?: (data: T) => void,
+  retryCount: number = 0
+): Promise<T | null> => {
+  if (!shouldFetch(key) && retryCount === 0) return getCached<T>(key);
+  if (!isOnline()) return getCached<T>(key);
+
+  if (retryCount === 0) {
+    lastFetch[key] = Date.now();
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    if (res.status === 304) {
+      failedFetches[key] = 0;
+      return getCached<T>(key);
+    }
+    
+    if (res.ok) {
+      const contentType = res.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const data = await res.json();
+        setCache(key, data);
+        failedFetches[key] = 0;
+        onUpdate?.(data);
+        return data;
+      }
+    } else if (res.status >= 500 && retryCount < MAX_RETRIES) {
+      await delay(RETRY_DELAY * (retryCount + 1));
+      return fetchAndCache(key, url, onUpdate, retryCount + 1);
+    }
+  } catch (e: any) {
+    if (e.name !== 'AbortError') {
+      console.error(`[sync] Failed to fetch ${key}:`, e);
+    }
+    
+    failedFetches[key] = (failedFetches[key] || 0) + 1;
+    
+    if (retryCount < MAX_RETRIES && failedFetches[key] <= MAX_RETRIES) {
+      await delay(RETRY_DELAY * (retryCount + 1));
+      return fetchAndCache(key, url, onUpdate, retryCount + 1);
+    }
+  }
+  return getCached<T>(key);
+};
+
+const syncAll = async () => {
+  if (!isVisible() || !isOnline()) return;
+
+  const tasks = [
+    fetchAndCache('events', '/api/events'),
+    fetchAndCache('cafe_menu', '/api/cafe-menu'),
+  ];
+
+  // Dynamically fetch notifications if user is logged in
+  const user = useUserStore.getState().user;
+  if (user?.email) {
+    tasks.push(
+      fetchAndCache(
+        'notifications', 
+        `/api/notifications?user_email=${encodeURIComponent(user.email)}&unread_only=true`,
+        (data: any[]) => {
+            // Update the store directly when background sync finds new data
+            useUserStore.setState({ unreadNotifications: data.length });
+            // Dispatch event for other listeners if needed
+            window.dispatchEvent(new CustomEvent('notifications-read'));
+        }
+      )
+    );
+  }
+
+  await Promise.allSettled(tasks);
+};
+
+let intervalId: number | null = null;
+let visibilityListenerAdded = false;
+
+export const startBackgroundSync = () => {
+  if (intervalId) return;
+  
+  syncAll();
+  intervalId = window.setInterval(syncAll, SYNC_INTERVAL);
+
+  if (!visibilityListenerAdded) {
+    visibilityListenerAdded = true;
+    document.addEventListener('visibilitychange', () => {
+      if (isVisible()) syncAll();
+    });
+  }
+};
+
+export const stopBackgroundSync = () => {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+};
+
+```
+
+#### 5. `src/contexts/DataContext.tsx`
+
+Cleaned up to use imported defaults.
+
+```typescript
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
+import { formatDateShort } from '../utils/dateUtils';
+import { useUserStore } from '../stores/userStore';
+import { getCached, fetchAndCache, startBackgroundSync } from '../lib/backgroundSync';
+import { 
+  INITIAL_CAFE, 
+  INITIAL_EVENTS, 
+  INITIAL_ANNOUNCEMENTS, 
+  INITIAL_MEMBERS, 
+  INITIAL_BOOKINGS 
+} from '../data/defaults';
+
+// --- Types ---
+
+export interface CafeItem {
+  id: string;
+  category: string;
+  name: string;
+  price: number;
+  desc: string;
+  icon: string;
+  image: string;
+}
+
+export type EventSource = 'internal' | 'eventbrite';
+
+export interface EventData {
+  id: string;
+  source: EventSource;
+  externalLink?: string;
+  title: string;
+  category: string;
+  date: string;
+  time: string;
+  location: string;
+  image: string;
+  description: string;
+  attendees: string[];
+  capacity?: number;
+  ticketsSold?: number;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  desc: string;
+  type: 'update' | 'announcement';
+  date: string;
+  createdAt?: string;
+  priority?: 'normal' | 'high' | 'urgent';
+  startDate?: string;
+  endDate?: string;
+  linkType?: 'events' | 'wellness' | 'golf' | 'external';
+  linkTarget?: string;
+}
+
+export interface MemberProfile {
+  id: string;
+  name: string;
+  tier: string;
+  tags?: string[];
+  isFounding?: boolean;
+  status: 'Active' | 'Pending';
+  email: string;
+  phone: string;
+  jobTitle?: string;
+  joinDate?: string;
+  avatar?: string;
+  role?: 'member' | 'staff' | 'admin';
+  mindbodyClientId?: string;
+  lifetimeVisits?: number;
+  lastBookingDate?: string;
+}
+
+export interface Booking {
+  id: string;
+  type: 'golf' | 'event' | 'wellness' | 'dining';
+  title: string;
+  date: string; // e.g., "Oct 24"
+  time: string; // e.g., "10:00 AM"
+  details: string; // e.g., "Bay 1 • 60 min"
+  color?: 'primary' | 'accent';
+}
+
+interface DataContextType {
+  user: MemberProfile | null;
+  actualUser: MemberProfile | null;
+  viewAsUser: MemberProfile | null;
+  isViewingAs: boolean;
+  cafeMenu: CafeItem[];
+  events: EventData[];
+  announcements: Announcement[];
+  members: MemberProfile[];
+  bookings: Booking[];
+  isLoading: boolean;
+  isDataReady: boolean;
+  
+  // Auth Actions
+  login: (email: string) => Promise<void>;
+  loginWithMember: (member: any) => void;
+  logout: () => void;
+  refreshUser: () => Promise<void>;
+  
+  // View As Actions
+  setViewAsUser: (member: MemberProfile) => Promise<void>;
+  clearViewAsUser: () => void;
+
+  // Data Actions
+  addCafeItem: (item: CafeItem) => Promise<void>;
+  updateCafeItem: (item: CafeItem) => Promise<void>;
+  deleteCafeItem: (id: string) => Promise<void>;
+  refreshCafeMenu: () => Promise<void>;
+  
+  addEvent: (event: EventData) => void;
+  updateEvent: (event: EventData) => void;
+  deleteEvent: (id: string) => void;
+  syncEventbrite: () => Promise<void>;
+
+  addAnnouncement: (ann: Announcement) => Promise<void>;
+  updateAnnouncement: (ann: Announcement) => Promise<void>;
+  deleteAnnouncement: (id: string) => Promise<void>;
+
+  updateMember: (member: MemberProfile) => void;
+
+  addBooking: (booking: Booking) => void;
+  deleteBooking: (id: string) => void;
+}
+
+// --- Context Setup ---
+
+const DataContext = createContext<DataContextType | undefined>(undefined);
+
+// Helper function to format time string from HH:MM:SS to 12-hour format
+const formatTimeString = (timeString: string): string => {
+  const [hours, minutes] = timeString.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
+
+export const DataProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+  const storeUser = useUserStore((s) => s.user);
+  const setStoreUser = useUserStore((s) => s.setUser);
+  const clearStoreUser = useUserStore((s) => s.clearUser);
+  const isHydrated = useUserStore((s) => s.isHydrated);
+  
+  const [actualUser, setActualUser] = useState<MemberProfile | null>(null);
+  const [viewAsUser, setViewAsUserState] = useState<MemberProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const sessionCheckDone = useRef(false);
+  const [cafeMenuLoaded, setCafeMenuLoaded] = useState(false);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+  const [announcementsLoaded, setAnnouncementsLoaded] = useState(false);
+  const [cafeMenu, setCafeMenu] = useState<CafeItem[]>([]);
+  const [events, setEvents] = useState<EventData[]>(INITIAL_EVENTS);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
+  const [members, setMembers] = useState<MemberProfile[]>(INITIAL_MEMBERS);
+  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  
+  const isDataReady = !isLoading && cafeMenuLoaded && eventsLoaded && announcementsLoaded;
+  
+  const isViewingAs = viewAsUser !== null;
+  const user = viewAsUser || actualUser;
+
+  useEffect(() => {
+    if (storeUser && !actualUser) {
+      setActualUser(storeUser as MemberProfile);
+      setIsLoading(false);
+    }
+  }, [storeUser, actualUser]);
+
+  useEffect(() => {
+    if (sessionCheckDone.current) return;
+    sessionCheckDone.current = true;
+    
+    const initializeUser = async () => {
+      try {
+        const sessionRes = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
+        
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          
+          if (sessionData.authenticated && sessionData.member) {
+            const sessionEmail = sessionData.member.email?.toLowerCase();
+            const savedMember = localStorage.getItem('eh_member');
+            const cachedEmail = savedMember ? JSON.parse(savedMember)?.email?.toLowerCase() : null;
+            const currentStoreUser = useUserStore.getState().user;
+            const storeEmail = currentStoreUser?.email?.toLowerCase();
+            
+            if ((cachedEmail && cachedEmail !== sessionEmail) || (storeEmail && storeEmail !== sessionEmail)) {
+              localStorage.removeItem('eh_member');
+              useUserStore.getState().clearUser();
+            }
+            
+            const sessionProfile: MemberProfile = {
+              id: sessionData.member.id,
+              name: [sessionData.member.firstName, sessionData.member.lastName].filter(Boolean).join(' ') || sessionData.member.email || 'Member',
+              tier: sessionData.member.tier || 'Social',
+              tags: sessionData.member.tags || [],
+              status: 'Active' as const,
+              email: sessionData.member.email,
+              phone: sessionData.member.phone || '',
+              jobTitle: sessionData.member.jobTitle || '',
+              role: sessionData.member.role || 'member',
+              mindbodyClientId: sessionData.member.mindbodyClientId || '',
+              lifetimeVisits: 0,
+              lastBookingDate: undefined
+            };
+            
+            localStorage.setItem('eh_member', JSON.stringify(sessionProfile));
+            setActualUser(sessionProfile);
+            useUserStore.getState().setUser(sessionProfile);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        if (sessionRes.status === 401 || sessionRes.status === 403) {
+          localStorage.removeItem('eh_member');
+          useUserStore.getState().clearUser();
+          setActualUser(null);
+          setIsLoading(false);
+          return;
+        }
+      } catch (sessionErr) {
+        console.error('Failed to verify session:', sessionErr);
+      }
+      
+      const currentStoreUser = useUserStore.getState().user;
+      if (currentStoreUser) {
+        setActualUser(currentStoreUser as MemberProfile);
+        setIsLoading(false);
+        return;
+      }
+      
+      const savedMember = localStorage.getItem('eh_member');
+      if (savedMember) {
+        try {
+          const member = JSON.parse(savedMember);
+          setActualUser(member);
+          useUserStore.getState().setUser(member);
+        } catch (err) {
+          localStorage.removeItem('eh_member');
+        }
+      }
+      setIsLoading(false);
+    };
+    
+    initializeUser();
+  }, []);
+  
+  // View As Functions - only for admins (not staff)
+  // Uses flushSync to ensure state updates are synchronous before navigation
+  const setViewAsUser = async (member: MemberProfile) => {
+    if (actualUser?.role === 'admin') {
+      try {
+        const res = await fetch(`/api/members/${encodeURIComponent(member.email)}/details`, { credentials: 'include' });
+        if (res.ok) {
+          const details = await res.json();
+          const fullMember: MemberProfile = {
+            ...member,
+            tier: details.tier || member.tier,
+            tags: details.tags || member.tags,
+            lifetimeVisits: details.lifetimeVisits || 0,
+            lastBookingDate: details.lastBookingDate || undefined,
+            mindbodyClientId: details.mindbodyClientId || ''
+          };
+          flushSync(() => {
+            setViewAsUserState(fullMember);
+          });
+        } else {
+          flushSync(() => {
+            setViewAsUserState(member);
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch member details:', err);
+        flushSync(() => {
+          setViewAsUserState(member);
+        });
+      }
+    }
+  };
+  
+  const clearViewAsUser = () => {
+    flushSync(() => {
+      setViewAsUserState(null);
+    });
+  };
+
+  // Fetch members from HubSpot for admin/staff users
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!actualUser || (actualUser.role !== 'admin' && actualUser.role !== 'staff')) return;
+      
+      try {
+        const res = await fetch('/api/hubspot/contacts');
+        if (res.ok) {
+          const contacts = await res.json();
+          const formatted: MemberProfile[] = contacts.map((contact: any) => ({
+            id: contact.id,
+            name: [contact.firstName, contact.lastName].filter(Boolean).join(' ') || contact.email || 'Unknown',
+            tier: contact.tier || 'Core',
+            status: contact.status || 'Active',
+            email: contact.email || '',
+            phone: contact.phone || '',
+            role: 'member'
+          }));
+          setMembers(formatted);
+        }
+      } catch (err) {
+        console.error('Failed to fetch HubSpot contacts:', err);
+      }
+    };
+    fetchMembers();
+  }, [actualUser]);
+
+  // Start background sync
+  useEffect(() => {
+    startBackgroundSync();
+  }, []);
+
+  // Fetch cafe menu with background sync
+  useEffect(() => {
+    const formatCafeData = (data: any[]) => data.map((item: any) => ({
+      id: item.id.toString(),
+      category: item.category,
+      name: item.name,
+      price: parseFloat(item.price) || 0,
+      desc: item.description || '',
+      icon: item.icon || '',
+      image: item.image_url || ''
+    }));
+
+    const isValidCafeData = (data: any): data is any[] => {
+      return Array.isArray(data) && data.length > 0 && data[0]?.name;
+    };
+
+    const cached = getCached<any[]>('cafe_menu');
+    if (isValidCafeData(cached)) {
+      setCafeMenu(formatCafeData(cached));
+    }
+
+    fetchAndCache<any[]>('cafe_menu', '/api/cafe-menu', (data) => {
+      if (isValidCafeData(data)) {
+        setCafeMenu(formatCafeData(data));
+        setCafeMenuLoaded(true);
+      }
+    });
+
+    const directFetch = async () => {
+      try {
+        const res = await fetch('/api/cafe-menu');
+        if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType?.includes('application/json')) {
+            const data = await res.json();
+            if (isValidCafeData(data)) {
+              setCafeMenu(formatCafeData(data));
+              setCafeMenuLoaded(true);
+            }
+          }
+        }
+      } catch {}
+      setCafeMenuLoaded(true);
+    };
+
+    const timer = setTimeout(() => {
+      if (cafeMenu.length === 0) directFetch();
+      else setCafeMenuLoaded(true);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Fetch announcements from API (active only - already filtered and priority-sorted by API)
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await fetch('/api/announcements?active_only=true');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setAnnouncements(data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch announcements:', err);
+      } finally {
+        setAnnouncementsLoaded(true);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
+
+  const refreshCafeMenu = useCallback(async () => {
+    const formatCafeData = (data: any[]) => data.map((item: any) => ({
+      id: item.id.toString(),
+      category: item.category,
+      name: item.name,
+      price: parseFloat(item.price) || 0,
+      desc: item.description || '',
+      icon: item.icon || '',
+      image: item.image_url || ''
+    }));
+    try {
+      const res = await fetch('/api/cafe-menu');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setCafeMenu(formatCafeData(data));
+        }
+      }
+    } catch {}
+  }, []);
+
+  // Fetch events with background sync
+  useEffect(() => {
+    const normalizeCategory = (cat: string | null | undefined): string => {
+      if (!cat) return 'Social';
+      const lower = cat.toLowerCase();
+      const categoryMap: Record<string, string> = {
+        'wellness': 'Wellness',
+        'social': 'Social',
+        'dining': 'Dining',
+        'sport': 'Sport',
+        'sports': 'Sport',
+      };
+      return categoryMap[lower] || cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+    };
+
+    const formatEventData = (data: any[]) => data.map((event: any) => ({
+      id: event.id.toString(),
+      source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
+      externalLink: event.eventbrite_url || undefined,
+      title: event.title,
+      category: normalizeCategory(event.category),
+      date: formatDateShort(event.event_date),
+      time: event.start_time ? formatTimeString(event.start_time) : 'TBD',
+      location: event.location || 'Even House',
+      image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',
+      description: event.description || '',
+      attendees: [],
+      capacity: event.max_attendees || undefined,
+      ticketsSold: undefined
+    })) as EventData[];
+
+    const cached = getCached<any[]>('events');
+    if (cached?.length) {
+      setEvents(formatEventData(cached));
+    }
+
+    fetchAndCache<any[]>('events', '/api/events', (data) => {
+      if (data?.length) setEvents(formatEventData(data));
+      setEventsLoaded(true);
+    });
+    
+    setTimeout(() => setEventsLoaded(true), 2000);
+  }, []);
+
+  // Auth Logic - verify member email
+  const login = async (email: string) => {
+    const res = await fetch('/api/auth/verify-member', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to verify membership');
+    }
+    
+    const { member } = await res.json();
+    
+    const memberProfile: MemberProfile = {
+      id: member.id,
+      name: [member.firstName, member.lastName].filter(Boolean).join(' ') || member.email || 'Member',
+      tier: member.tier || 'Core',
+      tags: member.tags || [],
+      status: 'Active',
+      email: member.email,
+      phone: member.phone || '',
+      jobTitle: member.jobTitle || '',
+      role: member.role || 'member',
+      mindbodyClientId: member.mindbodyClientId || '',
+      lifetimeVisits: member.lifetimeVisits || 0,
+      lastBookingDate: member.lastBookingDate || undefined
+    };
+    
+    localStorage.setItem('eh_member', JSON.stringify(memberProfile));
+    setActualUser(memberProfile);
+  };
+
+  const loginWithMember = (member: any) => {
+    const memberProfile: MemberProfile = {
+      id: member.id,
+      name: [member.firstName, member.lastName].filter(Boolean).join(' ') || member.email || 'Member',
+      tier: member.tier || 'Core',
+      tags: member.tags || [],
+      status: 'Active',
+      email: member.email,
+      phone: member.phone || '',
+      jobTitle: member.jobTitle || '',
+      role: member.role || 'member',
+      mindbodyClientId: member.mindbodyClientId || '',
+      lifetimeVisits: member.lifetimeVisits || 0,
+      lastBookingDate: member.lastBookingDate || undefined
+    };
+    
+    localStorage.setItem('eh_member', JSON.stringify(memberProfile));
+    setActualUser(memberProfile);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('eh_member');
+    useUserStore.getState().clearUser();
+    setActualUser(null);
+    setViewAsUserState(null);
+  };
+
+  const refreshUser = async () => {
+    if (!actualUser?.email) return;
+    
+    try {
+      const res = await fetch('/api/auth/verify-member', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: actualUser.email })
+      });
+      
+      if (res.ok) {
+        const { member } = await res.json();
+        const memberProfile: MemberProfile = {
+          id: member.id,
+          name: [member.firstName, member.lastName].filter(Boolean).join(' ') || member.email || 'Member',
+          tier: member.tier || 'Core',
+          tags: member.tags || [],
+          status: 'Active',
+          email: member.email,
+          phone: member.phone || '',
+          jobTitle: member.jobTitle || '',
+          role: member.role || 'member',
+          mindbodyClientId: member.mindbodyClientId || '',
+          lifetimeVisits: member.lifetimeVisits || 0,
+          lastBookingDate: member.lastBookingDate || undefined
+        };
+        
+        localStorage.setItem('eh_member', JSON.stringify(memberProfile));
+        setActualUser(memberProfile);
+      }
+    } catch (err) {
+      console.error('Failed to refresh user data:', err);
+    }
+  };
+
+  // Cafe Actions (now using API)
+  const addCafeItem = async (item: CafeItem) => {
+    try {
+      const res = await fetch('/api/cafe-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: item.category,
+          name: item.name,
+          price: item.price,
+          description: item.desc,
+          icon: item.icon,
+          image_url: item.image
+        })
+      });
+      if (res.ok) {
+        const newItem = await res.json();
+        setCafeMenu(prev => [...prev, {
+          id: newItem.id.toString(),
+          category: newItem.category,
+          name: newItem.name,
+          price: parseFloat(newItem.price) || 0,
+          desc: newItem.description || '',
+          icon: newItem.icon || '',
+          image: newItem.image_url || ''
+        }]);
+      }
+    } catch (err) {
+      console.error('Failed to add cafe item:', err);
+    }
+  };
+  
+  const updateCafeItem = async (item: CafeItem) => {
+    try {
+      const res = await fetch(`/api/cafe-menu/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: item.category,
+          name: item.name,
+          price: item.price,
+          description: item.desc,
+          icon: item.icon,
+          image_url: item.image
+        })
+      });
+      if (res.ok) {
+        setCafeMenu(prev => prev.map(i => i.id === item.id ? item : i));
+      }
+    } catch (err) {
+      console.error('Failed to update cafe item:', err);
+    }
+  };
+  
+  const deleteCafeItem = async (id: string) => {
+    try {
+      const res = await fetch(`/api/cafe-menu/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCafeMenu(prev => prev.filter(i => i.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete cafe item:', err);
+    }
+  };
+
+  // Event Actions
+  const addEvent = (item: EventData) => setEvents(prev => [...prev, item]);
+  const updateEvent = (item: EventData) => setEvents(prev => prev.map(i => i.id === item.id ? item : i));
+  const deleteEvent = (id: string) => setEvents(prev => prev.filter(i => i.id !== id));
+  
+  const syncEventbrite = async () => {
+    try {
+      const res = await fetch('/api/eventbrite/sync', { method: 'POST' });
+      if (res.ok) {
+        const eventsRes = await fetch('/api/events');
+        if (eventsRes.ok) {
+          const data = await eventsRes.json();
+          if (data?.length) {
+            const formatEventData = (events: any[]) => events.map((event: any) => ({
+              id: event.id.toString(),
+              source: event.source === 'eventbrite' ? 'eventbrite' : 'internal',
+              externalLink: event.eventbrite_url || undefined,
+              title: event.title,
+              category: event.category || 'Social',
+              date: formatDateShort(event.event_date),
+              time: event.start_time || 'TBD',
+              location: event.location || 'Even House',
+              image: event.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop',
+              description: event.description || '',
+              attendees: [],
+              capacity: event.max_attendees || undefined,
+              ticketsSold: undefined
+            })) as EventData[];
+            setEvents(formatEventData(data));
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync Eventbrite:', err);
+    }
+  };
+
+  // Announcement Actions - API backed
+  const addAnnouncement = async (item: Announcement) => {
+    try {
+      const res = await fetch('/api/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: item.title,
+          description: item.desc,
+          type: item.type,
+          priority: item.priority || 'normal',
+          startDate: item.startDate || null,
+          endDate: item.endDate || null,
+          linkType: item.linkType || null,
+          linkTarget: item.linkTarget || null
+        })
+      });
+      if (res.ok) {
+        const newItem = await res.json();
+        setAnnouncements(prev => [newItem, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to add announcement:', err);
+    }
+  };
+  
+  const updateAnnouncement = async (item: Announcement) => {
+    try {
+      const res = await fetch(`/api/announcements/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: item.title,
+          description: item.desc,
+          type: item.type,
+          priority: item.priority || 'normal',
+          startDate: item.startDate || null,
+          endDate: item.endDate || null,
+          linkType: item.linkType || null,
+          linkTarget: item.linkTarget || null
+        })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setAnnouncements(prev => prev.map(i => i.id === updated.id ? updated : i));
+      }
+    } catch (err) {
+      console.error('Failed to update announcement:', err);
+    }
+  };
+  
+  const deleteAnnouncement = async (id: string) => {
+    try {
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        setAnnouncements(prev => prev.filter(i => i.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete announcement:', err);
+    }
+  };
+
+  // Member Actions
+  const updateMember = (item: MemberProfile) => setMembers(prev => prev.map(m => m.id === item.id ? item : m));
+
+  // Booking Actions
+  const addBooking = (booking: Booking) => setBookings(prev => [booking, ...prev]);
+  const deleteBooking = (id: string) => setBookings(prev => prev.filter(b => b.id !== id));
+
+  return (
+    <DataContext.Provider value={{
+      user, actualUser, viewAsUser, isViewingAs,
+      login, loginWithMember, logout, refreshUser, setViewAsUser, clearViewAsUser,
+      cafeMenu, events, announcements, members, bookings, isLoading, isDataReady,
+      addCafeItem, updateCafeItem, deleteCafeItem, refreshCafeMenu,
+      addEvent, updateEvent, deleteEvent, syncEventbrite,
+      addAnnouncement, updateAnnouncement, deleteAnnouncement,
+      updateMember, addBooking, deleteBooking
+    }}>
+      {children}
+    </DataContext.Provider>
+  );
+};
+
+export const useData = () => {
+  const context = useContext(DataContext);
+  if (!context) {
+    throw new Error('useData must be used within a DataProvider');
+  }
+  return context;
+};
+
+```
+
+#### 6. `src/App.tsx`
+
+Removed polling, added native-scroller.
+
+```typescript
+import React, { useState, useEffect, useContext, ErrorInfo, useMemo, useRef, lazy, Suspense, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { DataProvider, useData } from './contexts/DataContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { SmoothScrollProvider } from './components/motion/SmoothScroll';
+import DirectionalPageTransition, { TransitionContext } from './components/motion/DirectionalPageTransition';
+import Logo from './components/Logo';
+import MenuOverlay from './components/MenuOverlay';
+import ViewAsBanner from './components/ViewAsBanner';
+import Avatar from './components/Avatar';
+import { ToastProvider } from './components/Toast';
+import OfflineBanner from './components/OfflineBanner';
+import { NotificationContext } from './contexts/NotificationContext';
+import { SafeAreaBottomOverlay } from './components/layout/SafeAreaBottomOverlay';
+import { BottomNavProvider } from './contexts/BottomNavContext';
+import { AnnouncementBadgeProvider } from './contexts/AnnouncementBadgeContext';
+import { BottomSentinel } from './components/layout/BottomSentinel';
+import MemberBottomNav from './components/MemberBottomNav';
+import { NavigationLoadingProvider, useNavigationLoading } from './contexts/NavigationLoadingContext';
+import { PageReadyProvider } from './contexts/PageReadyContext';
+import WalkingGolferLoader from './components/WalkingGolferLoader';
+import NavigationLoader from './components/NavigationLoader';
+import { useNotificationSounds } from './hooks/useNotificationSounds';
+import { useEdgeSwipe } from './hooks/useEdgeSwipe';
+import { useUserStore } from './stores/userStore';
+
+const INITIAL_LOAD_SAFETY_TIMEOUT_MS = 2000;
+
+const InitialLoadingScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isDataReady } = useData();
+  const [showLoader, setShowLoader] = React.useState(true);
+  const [hasHiddenLoader, setHasHiddenLoader] = React.useState(false);
+  const safetyTimerFiredRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (isDataReady && !hasHiddenLoader) {
+      const timer = setTimeout(() => {
+        setShowLoader(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isDataReady, hasHiddenLoader]);
+
+  React.useEffect(() => {
+    if (safetyTimerFiredRef.current) return;
+    
+    const safetyTimer = setTimeout(() => {
+      safetyTimerFiredRef.current = true;
+      setShowLoader(false);
+    }, INITIAL_LOAD_SAFETY_TIMEOUT_MS);
+    
+    return () => clearTimeout(safetyTimer);
+  }, []);
+
+  const handleFadeComplete = () => {
+    setHasHiddenLoader(true);
+  };
+
+  return (
+    <>
+      {!hasHiddenLoader && (
+        <WalkingGolferLoader 
+          isVisible={showLoader} 
+          onFadeComplete={handleFadeComplete} 
+        />
+      )}
+      {children}
+    </>
+  );
+};
+
+const PageSkeleton: React.FC = () => (
+  <div className="px-6 pt-4 animate-pulse">
+    <div className="h-8 w-48 bg-white/10 rounded-lg mb-2" />
+    <div className="h-4 w-32 bg-white/5 rounded mb-6" />
+    <div className="space-y-4">
+      <div className="h-24 bg-white/5 rounded-xl" />
+      <div className="h-24 bg-white/5 rounded-xl" />
+      <div className="h-24 bg-white/5 rounded-xl" />
+    </div>
+  </div>
+);
+
+const lazyWithPrefetch = (importFn: () => Promise<{ default: React.ComponentType<any> }>) => {
+  const Component = lazy(importFn);
+  (Component as any).prefetch = importFn;
+  return Component;
+};
+
+const Dashboard = lazy(() => import('./pages/Member/Dashboard'));
+const BookGolf = lazyWithPrefetch(() => import('./pages/Member/BookGolf'));
+const MemberEvents = lazyWithPrefetch(() => import('./pages/Member/Events'));
+const MemberWellness = lazyWithPrefetch(() => import('./pages/Member/Wellness'));
+const Profile = lazyWithPrefetch(() => import('./pages/Member/Profile'));
+const MemberUpdates = lazyWithPrefetch(() => import('./pages/Member/Updates'));
+const Landing = lazy(() => import('./pages/Public/Landing'));
+const Membership = lazy(() => import('./pages/Public/Membership'));
+const Contact = lazy(() => import('./pages/Public/Contact'));
+const Gallery = lazy(() => import('./pages/Public/Gallery'));
+const WhatsOn = lazy(() => import('./pages/Public/WhatsOn'));
+const PrivateHire = lazy(() => import('./pages/Public/PrivateHire'));
+const PublicCafe = lazy(() => import('./pages/Public/Cafe'));
+const FAQ = lazy(() => import('./pages/Public/FAQ'));
+const Login = lazy(() => import('./pages/Public/Login'));
+const AuthCallback = lazy(() => import('./pages/Public/AuthCallback'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
+
+import { prefetchRoute, prefetchAdjacentRoutes, prefetchOnIdle } from './lib/prefetch';
+
+const useDebugLayout = () => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const debugMode = params.get('debugLayout') === '1';
+    
+    if (debugMode) {
+      document.documentElement.classList.add('debug-layout');
+      
+      const checkOverflow = () => {
+        const existing = document.querySelector('.debug-overflow-warning');
+        if (document.documentElement.scrollWidth > window.innerWidth) {
+          if (!existing) {
+            const warning = document.createElement('div');
+            warning.className = 'debug-overflow-warning';
+            warning.textContent = `Overflow! ${document.documentElement.scrollWidth}px > ${window.innerWidth}px`;
+            document.body.appendChild(warning);
+          }
+        } else if (existing) {
+          existing.remove();
+        }
+      };
+      
+      checkOverflow();
+      window.addEventListener('resize', checkOverflow);
+      
+      return () => {
+        window.removeEventListener('resize', checkOverflow);
+        document.documentElement.classList.remove('debug-layout');
+        const warning = document.querySelector('.debug-overflow-warning');
+        if (warning) warning.remove();
+      };
+    }
+    
+    return undefined;
+  }, []);
+};
+
+interface ErrorBoundaryProps {
+  children?: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  retryCount: number;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, error: null, retryCount: 0 };
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  handleRetry = () => {
+    localStorage.removeItem('sync_events');
+    localStorage.removeItem('sync_cafe_menu');
+    
+    this.setState(prev => ({
+      hasError: false,
+      error: null,
+      retryCount: prev.retryCount + 1
+    }));
+  };
+
+  handleReload = () => {
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      const isNetworkError = this.state.error?.message?.toLowerCase().includes('fetch') ||
+                              this.state.error?.message?.toLowerCase().includes('network') ||
+                              this.state.error?.message?.toLowerCase().includes('load failed');
+      const canRetry = this.state.retryCount < 3;
+
+      return (
+        <div className="flex items-center justify-center h-screen bg-[#0f120a] text-white p-6">
+          <div className="glass-card rounded-2xl p-8 max-w-md text-center">
+            <span className="material-symbols-outlined text-6xl text-red-400 mb-4">
+              {isNetworkError ? 'wifi_off' : 'error'}
+            </span>
+            <h2 className="text-2xl font-bold mb-2">
+              {isNetworkError ? 'Connection Issue' : 'Something went wrong'}
+            </h2>
+            <p className="text-white/70 mb-6">
+              {isNetworkError 
+                ? 'Please check your internet connection and try again.'
+                : 'We\'re sorry for the inconvenience.'}
+            </p>
+            <div className="flex flex-col gap-3">
+              {canRetry && (
+                <button
+                  onClick={this.handleRetry}
+                  className="px-6 py-3 bg-accent rounded-xl font-semibold hover:opacity-90 transition-opacity text-brand-green"
+                >
+                  Try Again
+                </button>
+              )}
+              <button
+                onClick={this.handleReload}
+                className={`px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity ${
+                  canRetry ? 'bg-white/10 text-white' : 'bg-accent text-brand-green'
+                }`}
+              >
+                Reload Page
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return <React.Fragment key={this.state.retryCount}>{this.props.children}</React.Fragment>;
+  }
+}
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    });
+  }, [pathname]);
+  
+  return null;
+};
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useData();
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
+
+// Members Portal route guard - redirects staff/admin to Staff Portal (unless viewing as member or on profile page)
+const MemberPortalRoute: React.FC<{ children: React.ReactNode; allowStaffAccess?: boolean }> = ({ children, allowStaffAccess }) => {
+  const { user, actualUser, isViewingAs } = useData();
+  if (!user) return <Navigate to="/login" replace />;
+  
+  // If staff/admin is NOT viewing as a member, redirect to Staff Portal
+  // Exception: allow staff access to profile page for sign out
+  const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
+  if (isStaffOrAdmin && !isViewingAs && !allowStaffAccess) {
+    return <Navigate to="/admin" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { actualUser } = useData();
+  if (!actualUser) return <Navigate to="/login" replace />;
+  if (actualUser.role !== 'admin' && actualUser.role !== 'staff') return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
+const ROUTE_INDICES: Record<string, number> = {
+  '/dashboard': 0,
+  '/book': 1,
+  '/member-wellness': 2,
+  '/member-events': 3,
+  '/updates': 4,
+  '/profile': 5,
+};
+
+const AnimatedRoutes: React.FC = () => {
+  const location = useLocation();
+  const prevPathRef = useRef(location.pathname);
+  
+  useEffect(() => {
+    prefetchOnIdle();
+  }, []);
+  
+  const transitionState = useMemo(() => {
+    const prevPath = prevPathRef.current;
+    const currentPath = location.pathname;
+    
+    const prevIndex = ROUTE_INDICES[prevPath] ?? -1;
+    const currentIndex = ROUTE_INDICES[currentPath] ?? -1;
+    
+    if (prevIndex >= 0 && currentIndex >= 0 && prevPath !== currentPath) {
+      const direction = currentIndex > prevIndex ? 1 : -1;
+      const distance = Math.abs(currentIndex - prevIndex);
+      return { direction, distance: Math.max(0.1, distance) };
+    }
+    return { direction: 1, distance: 1 };
+  }, [location.pathname]);
+  
+  useEffect(() => {
+    prevPathRef.current = location.pathname;
+  }, [location.pathname]);
+
+  return (
+    <TransitionContext.Provider value={transitionState}>
+      <Suspense fallback={<PageSkeleton />}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<DirectionalPageTransition><Landing /></DirectionalPageTransition>} />
+            <Route path="/membership/*" element={<DirectionalPageTransition><Membership /></DirectionalPageTransition>} />
+            <Route path="/contact" element={<DirectionalPageTransition><Contact /></DirectionalPageTransition>} />
+            <Route path="/gallery" element={<DirectionalPageTransition><Gallery /></DirectionalPageTransition>} />
+            <Route path="/whats-on" element={<DirectionalPageTransition><WhatsOn /></DirectionalPageTransition>} />
+            <Route path="/private-hire" element={<DirectionalPageTransition><PrivateHire /></DirectionalPageTransition>} />
+            <Route path="/menu" element={<DirectionalPageTransition><PublicCafe /></DirectionalPageTransition>} />
+            <Route path="/faq" element={<DirectionalPageTransition><FAQ /></DirectionalPageTransition>} />
+            <Route path="/login" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
+            <Route path="/auth/callback" element={<DirectionalPageTransition><AuthCallback /></DirectionalPageTransition>} />
+            <Route path="/reset-password" element={<DirectionalPageTransition><Login /></DirectionalPageTransition>} />
+
+            <Route path="/admin" element={
+              <AdminProtectedRoute>
+                <DirectionalPageTransition><AdminDashboard /></DirectionalPageTransition>
+              </AdminProtectedRoute>
+            } />
+
+            <Route path="/dashboard" element={
+              <MemberPortalRoute>
+                <DirectionalPageTransition><Dashboard /></DirectionalPageTransition>
+              </MemberPortalRoute>
+            } />
+            <Route path="/book" element={
+              <MemberPortalRoute>
+                <DirectionalPageTransition><BookGolf /></DirectionalPageTransition>
+              </MemberPortalRoute>
+            } />
+            <Route path="/member-events" element={
+              <MemberPortalRoute>
+                <DirectionalPageTransition><MemberEvents /></DirectionalPageTransition>
+              </MemberPortalRoute>
+            } />
+            <Route path="/member-wellness" element={
+              <MemberPortalRoute>
+                <DirectionalPageTransition><MemberWellness /></DirectionalPageTransition>
+              </MemberPortalRoute>
+            } />
+            <Route path="/profile" element={
+              <MemberPortalRoute allowStaffAccess>
+                <DirectionalPageTransition><Profile /></DirectionalPageTransition>
+              </MemberPortalRoute>
+            } />
+            <Route path="/updates" element={
+              <MemberPortalRoute>
+                <DirectionalPageTransition><MemberUpdates /></DirectionalPageTransition>
+              </MemberPortalRoute>
+            } />
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+      </Suspense>
+    </TransitionContext.Provider>
+  );
+};
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { announcements, user, actualUser, isViewingAs } = useData();
+  const { effectiveTheme } = useTheme();
+  const { endNavigation } = useNavigationLoading();
+  const unreadCount = useUserStore(state => state.unreadNotifications);
+  const { processNotifications } = useNotificationSounds(false, user?.email);
+  
+  // End navigation loading when route changes
+  useEffect(() => {
+    endNavigation();
+  }, [location.pathname, location.search, endNavigation]);
+  
+  // Check if actual user is staff/admin (for header logic)
+  const isStaffOrAdmin = actualUser?.role === 'admin' || actualUser?.role === 'staff';
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
+
+  useDebugLayout();
+
+  // Edge swipe back navigation for member and staff pages on touch devices
+  const isRootPage = location.pathname === '/dashboard' || location.pathname === '/admin';
+  const isMemberOrStaff = !!user && (user.role === 'member' || user.role === 'staff' || user.role === 'admin');
+  const { isActive: isEdgeSwipeActive, progress: edgeSwipeProgress } = useEdgeSwipe({
+    enabled: isMemberOrStaff && !isRootPage && !isMenuOpen,
+    edgeWidth: 20,
+    threshold: 100
+  });
+
+  useEffect(() => {
+    const metaThemeColor = document.getElementById('theme-color-meta');
+    const isMember = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/updates'].some(path => location.pathname.startsWith(path));
+    const isAdmin = location.pathname.startsWith('/admin');
+    
+    const updateThemeColor = (scrolledPastHero: boolean) => {
+      if (!metaThemeColor) return;
+      
+      let themeColor: string;
+      if (location.pathname === '/' && !scrolledPastHero) {
+        themeColor = '#1a1610';
+      } else {
+        themeColor = '#293515';
+      }
+      metaThemeColor.setAttribute('content', themeColor);
+    };
+    
+    if (location.pathname !== '/') {
+      setHasScrolledPastHero(false);
+      updateThemeColor(false);
+      return;
+    }
+    
+    const handleScroll = () => {
+      const heroThreshold = window.innerHeight * 0.6;
+      const scrolledPast = window.scrollY > heroThreshold;
+      setHasScrolledPastHero(scrolledPast);
+      updateThemeColor(scrolledPast);
+    };
+    
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [location.pathname]);
+  
+  const isMemberRoute = ['/dashboard', '/book', '/member-events', '/member-wellness', '/profile', '/updates'].some(path => location.pathname.startsWith(path));
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isLandingPage = location.pathname === '/';
+  const isFullBleedHeroPage = isLandingPage || location.pathname === '/private-hire';
+  const isDarkTheme = (isAdminRoute || isMemberRoute) && effectiveTheme === 'dark';
+  const showHeader = !isAdminRoute;
+
+  const handleTopLeftClick = () => {
+    setIsMenuOpen(true);
+  };
+
+  const isProfilePage = location.pathname === '/profile';
+  
+  const handleTopRightClick = () => {
+    if (user) {
+        // On profile page, do nothing - already on settings
+        if (isProfilePage) {
+            return;
+        }
+        // For staff/admin (not viewing as member), go to Staff Portal
+        if (isStaffOrAdmin && !isViewingAs) {
+            navigate('/admin');
+        } else if (isMemberRoute) {
+            navigate('/profile');
+        } else {
+            // On public pages, staff/admin go to Staff Portal, members go to dashboard
+            if (isStaffOrAdmin) {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
+        }
+    } else {
+        navigate('/login');
+    }
+  };
+
+  const getTopRightIcon = () => {
+      if (!user) return 'login';
+      // On profile page, show gear icon (already on settings)
+      if (isProfilePage) return 'settings';
+      // For staff/admin not viewing as member, show admin icon
+      if (isStaffOrAdmin && !isViewingAs) return 'admin_panel_settings';
+      // Gear icon for member portal (including profile page)
+      if (isMemberRoute) return 'settings';
+      return 'account_circle';
+  };
+
+  const getPageTitle = () => {
+      if (!isMemberRoute) return null;
+      const path = location.pathname;
+      if (path === '/dashboard') return 'Dashboard';
+      if (path === '/profile') return 'Profile';
+      if (path.startsWith('/book')) return 'Book Golf';
+      if (path.startsWith('/member-wellness')) return 'Wellness';
+      if (path.startsWith('/updates')) return 'Updates';
+      if (path.startsWith('/member-events')) return 'Calendar';
+      return 'Dashboard';
+  };
+
+  const openNotifications = (tab?: 'updates' | 'announcements') => {
+    navigate(`/updates?tab=${tab || 'activity'}`);
+  };
+  
+  const headerClasses = isMemberRoute 
+    ? (isDarkTheme 
+        ? "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 border-b border-[#1e2810]"
+        : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20 border-b border-[#1e2810]")
+    : isLandingPage
+      ? (hasScrolledPastHero 
+          ? "bg-[#293515] text-white shadow-lg shadow-black/20 border-b border-white/10"
+          : "bg-transparent text-white")
+      : "bg-[#293515] text-[#F2F2EC] shadow-lg shadow-black/20";
+  const headerBtnClasses = "text-white hover:opacity-70 active:scale-95 transition-all";
+
+  const headerContent = showHeader ? (
+    <header className={`fixed top-0 left-0 right-0 flex items-center justify-between px-6 pt-[max(16px,env(safe-area-inset-top))] pb-4 z-[9998] pointer-events-auto transition-all duration-300 ${headerClasses}`} role="banner">
+      {isMemberRoute ? (
+        <button 
+          onClick={() => navigate('/')}
+          className={`flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg py-1`}
+          aria-label="Go to home"
+        >
+          <img 
+            src="/assets/logos/mascot-white.webp" 
+            alt="Even House" 
+            className="h-10 w-auto object-contain"
+          />
+        </button>
+      ) : (
+        <button 
+          onClick={handleTopLeftClick}
+          className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg`}
+          aria-label="Open menu"
+        >
+          <span className="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+      )}
+      
+      {isMemberRoute ? (
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+          <h1 className="text-lg font-bold text-[#F2F2EC] tracking-wide">
+            {getPageTitle()}
+          </h1>
+        </div>
+      ) : (
+        <button 
+          className="absolute left-1/2 -translate-x-1/2 cursor-pointer flex items-center justify-center focus:ring-2 focus:ring-accent focus:outline-none rounded-lg" 
+          onClick={() => navigate('/')}
+          aria-label="Go to home"
+        >
+          <Logo 
+            isMemberRoute={isMemberRoute} 
+            isDarkBackground={true} 
+            className="h-14 w-auto"
+          />
+        </button>
+      )}
+
+      <div className="flex items-center gap-1 ml-auto">
+        {isMemberRoute && user && (
+          <button 
+            onClick={() => isStaffOrAdmin && !isViewingAs ? navigate('/admin?tab=updates') : navigate('/updates?tab=activity')}
+            className={`w-10 h-10 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-lg relative`}
+            aria-label={isStaffOrAdmin && !isViewingAs ? "Updates" : "Notifications"}
+          >
+            <span className="material-symbols-outlined text-[24px]">{isStaffOrAdmin && !isViewingAs ? 'campaign' : 'notifications'}</span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+        )}
+        {isMemberRoute && user ? (
+          <button 
+            onClick={handleTopRightClick}
+            className={`flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-full`}
+            aria-label="View profile"
+          >
+            <Avatar name={user.name} email={user.email} size="md" />
+          </button>
+        ) : (
+          <button 
+            onClick={handleTopRightClick}
+            className={`px-4 py-2 flex items-center justify-center ${headerBtnClasses} focus:ring-2 focus:ring-accent focus:outline-none rounded-full backdrop-blur-xl bg-white/15 border border-white/40 shadow-[0_4px_16px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.4)] text-sm font-semibold tracking-wide hover:bg-white/25 hover:border-white/50 transition-all duration-300`}
+            aria-label={user ? 'Go to dashboard' : 'Members login'}
+          >
+            Members
+          </button>
+        )}
+      </div>
+    </header>
+  ) : null;
+
+  return (
+    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
+      
+      {/* Edge swipe indicator - back arrow that fades and bounces */}
+      <div 
+        className={`fixed left-0 top-1/2 -translate-y-1/2 z-[9999] pointer-events-none transition-all duration-200 ${isEdgeSwipeActive ? 'opacity-100' : 'opacity-0'}`}
+        style={{ 
+          transform: `translateY(-50%) translateX(${isEdgeSwipeActive ? Math.min(edgeSwipeProgress * 60, 50) : -40}px) scale(${0.8 + edgeSwipeProgress * 0.3})`,
+          transition: isEdgeSwipeActive ? 'none' : 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        }}
+      >
+        <div 
+          className="w-10 h-10 rounded-full bg-accent/90 backdrop-blur-sm flex items-center justify-center shadow-lg"
+          style={{ opacity: Math.min(edgeSwipeProgress * 1.5, 1) }}
+        >
+          <span className="material-symbols-outlined text-white text-xl">arrow_back</span>
+        </div>
+      </div>
+
+      {isDarkTheme ? (
+        <>
+            <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow"></div>
+            <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#E7E7DC]/5 rounded-full blur-[100px] pointer-events-none animate-pulse-slow" style={{animationDelay: '2s'}}></div>
+        </>
+      ) : (
+        <>
+            <div className="fixed top-[-20%] right-[-20%] w-[600px] h-[600px] bg-white rounded-full blur-[80px] pointer-events-none opacity-60"></div>
+            <div className="fixed bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#E7E7DC] rounded-full blur-[60px] pointer-events-none opacity-40"></div>
+        </>
+      )}
+      
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+
+      <NotificationContext.Provider value={{ openNotifications }}>
+        <ViewAsBanner />
+        
+        {/* Header rendered via portal to escape transform context */}
+        {headerContent && createPortal(headerContent, document.body)}
+        
+        <div className={`relative w-full min-h-screen flex flex-col ${isDarkTheme ? 'text-white' : 'text-primary'}`}>
+
+            <main 
+                id="main-content"
+                className={`flex-1 relative native-scroller ${showHeader && !isFullBleedHeroPage ? 'pt-[max(88px,calc(env(safe-area-inset-top)+72px))]' : ''}`}
+            >
+                {children}
+                {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}
+            </main>
+
+            {isMemberRoute && !isAdminRoute && !isProfilePage && user && (
+              <MemberBottomNav currentPath={location.pathname} isDarkTheme={isDarkTheme} />
+            )}
+
+            <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        </div>
+      </NotificationContext.Provider>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <ThemeProvider>
+        <DataProvider>
+          <ToastProvider>
+          <BottomNavProvider>
+          <AnnouncementBadgeProvider>
+          <NavigationLoadingProvider>
+          <PageReadyProvider>
+          <InitialLoadingScreen>
+            <OfflineBanner />
+            <HashRouter>
+              <NavigationLoader />
+              <SmoothScrollProvider>
+                <ScrollToTop />
+                <Layout>
+                  <AnimatedRoutes />
+                </Layout>
+              </SmoothScrollProvider>
+            </HashRouter>
+          </InitialLoadingScreen>
+          </PageReadyProvider>
+          </NavigationLoadingProvider>
+          </AnnouncementBadgeProvider>
+          </BottomNavProvider>
+          </ToastProvider>
+        </DataProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
+};
+
+export default App;
+
+```

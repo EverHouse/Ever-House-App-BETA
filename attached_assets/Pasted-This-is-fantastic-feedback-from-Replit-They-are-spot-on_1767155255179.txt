@@ -1,0 +1,253 @@
+This is fantastic feedback from Replit. They are spot-on about the scroll physics nuance—if we blindly remove `overscroll-behavior-y: none` from the `body`, the entire app will bounce (including the nav bar), breaking the "app" illusion. We need to target *only* the content container.
+
+I also accept their offer to handle the backend `dashboard-summary` endpoint. That's a perfect division of labor.
+
+Here is the code to execute the **Frontend Phase** of our plan.
+
+### **Phase 1: Frontend "Native Feel" & Optimization**
+
+#### **1. CSS Fixes (`src/index.css`)**
+
+**Changes:**
+
+* Kept `overscroll-behavior-y: none` on `body` (as Replit advised).
+* Added `.native-scroller` utility to restore physics *only* where needed.
+* Enforced `16px` font size on inputs to prevent iOS zoom.
+
+```css
+/* src/index.css */
+
+/* ... existing imports ... */
+
+/* Update the html, body block */
+html, body {
+  width: 100%;
+  /* Keep this to prevent whole-app bouncing/refreshing */
+  overscroll-behavior-y: none; 
+  -webkit-tap-highlight-color: transparent;
+  background-color: #F2F2EC;
+  color: var(--brand-primary);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Add this NEW utility for the main content area */
+.native-scroller {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Momentum scrolling */
+  overscroll-behavior-y: auto; /* Allow rubber-banding here */
+  height: 100%;
+}
+
+/* ... existing styles ... */
+
+/* Add this specific iOS Input Fix */
+/* Prevents iOS from zooming in when focusing an input */
+input, select, textarea {
+  font-size: 16px !important; 
+}
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ... rest of the file ... */
+
+```
+
+#### **2. Tuned Edge Swipe (`src/hooks/useEdgeSwipe.ts`)**
+
+**Changes:** Lowered velocity threshold to `0.3` for easier actuation.
+
+```typescript
+// src/hooks/useEdgeSwipe.ts
+
+// ... imports
+
+export function useEdgeSwipe(config: EdgeSwipeConfig = {}) {
+  const {
+    edgeWidth = 20,
+    threshold = 100,
+    // CHANGED: Lowered from 0.5 to 0.3 for easier triggering
+    velocityThreshold = 0.3, 
+    enabled = true,
+    onBack
+  } = config;
+
+  // ... rest of the file remains the same
+
+```
+
+#### **3. Clean Data Defaults (`src/data/defaults.ts`)**
+
+**Action:** Create this file to hold the massive arrays, decluttering your Context.
+
+```typescript
+// src/data/defaults.ts
+import type { CafeItem, EventData, Announcement, MemberProfile, Booking } from '../contexts/DataContext';
+
+export const INITIAL_CAFE: CafeItem[] = [
+  // ... copy the full array from DataContext.tsx here ...
+  { id: 'esp', category: "Coffee", name: "Espresso", price: 3, desc: "", icon: "coffee", image: "/images/cafe-bar-optimized.webp" },
+  // ... (for brevity, move all items here)
+];
+
+export const INITIAL_EVENTS: EventData[] = [
+  {
+    id: '1',
+    source: 'internal',
+    title: 'House Collectives: Chez Doc',
+    category: 'Social',
+    date: 'Fri, 20 Jan',
+    time: '11:00 PM',
+    location: 'Barcelona Club',
+    image: '/images/events-crowd-optimized.webp',
+    description: 'Join us for a special edition of House Collectives.',
+    attendees: [],
+    capacity: 50,
+    ticketsSold: 42
+  },
+  // ... rest of events
+];
+
+export const INITIAL_ANNOUNCEMENTS: Announcement[] = [];
+
+export const INITIAL_MEMBERS: MemberProfile[] = [
+  // ... copy INITIAL_MEMBERS array here
+];
+
+export const INITIAL_BOOKINGS: Booking[] = [
+  { id: 'b1', type: 'dining', title: 'Lunch at The Patio', date: 'Tue, Oct 24', time: '12:30 PM', details: '4 Guests', color: 'accent' },
+  { id: 'b2', type: 'golf', title: 'Golf Simulator Bay 2', date: 'Wed, Oct 25', time: '09:00 AM', details: '60 min', color: 'primary' }
+];
+
+```
+
+#### **4. Optimized Background Sync (`src/lib/backgroundSync.ts`)**
+
+**Changes:** Added `notifications` to the sync loop. It uses `useUserStore` to dynamically get the email, fixing the "static" limitation.
+
+```typescript
+// src/lib/backgroundSync.ts
+import { useUserStore } from '../stores/userStore';
+
+// ... existing constants and helper functions (getCached, setCache, shouldFetch, delay, fetchAndCache) ...
+
+const syncAll = async () => {
+  // 1. Check visibility and online status
+  if (!isVisible() || !isOnline()) return;
+
+  const tasks = [
+    fetchAndCache('events', '/api/events'),
+    fetchAndCache('cafe_menu', '/api/cafe-menu'),
+  ];
+
+  // 2. DYNAMICALLY fetch notifications if user is logged in
+  const user = useUserStore.getState().user;
+  if (user?.email) {
+    tasks.push(
+      fetchAndCache(
+        'notifications', 
+        `/api/notifications?user_email=${encodeURIComponent(user.email)}&unread_only=true`,
+        (data: any[]) => {
+            // Update the store directly when background sync finds new data
+            useUserStore.setState({ unreadNotifications: data.length });
+            // Dispatch event for other listeners if needed
+            window.dispatchEvent(new CustomEvent('notifications-read'));
+        }
+      )
+    );
+  }
+
+  await Promise.allSettled(tasks);
+};
+
+// ... existing startBackgroundSync / stopBackgroundSync ...
+
+```
+
+#### **5. Wiring it up in `App.tsx**`
+
+**Changes:** Removed the manual `setInterval` polling. The `Layout` component is now much cleaner.
+
+```typescript
+// src/App.tsx
+
+// ... imports
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // ... existing hooks ...
+  
+  // CHANGED: Use the store state directly, which is updated by backgroundSync
+  // We no longer need local state 'unreadCount' or the setInterval!
+  const unreadCount = useUserStore(state => state.unreadNotifications); 
+  const { processNotifications } = useNotificationSounds(false, user?.email);
+  
+  // REMOVED: The useEffect with setInterval for notifications.
+  // backgroundSync.ts is already running globally (started in DataContext).
+
+  // ... rest of Layout component ...
+
+  // Ensure your main content wrapper has the new class
+  return (
+      // ...
+            <main 
+                id="main-content"
+                // ADDED: native-scroller class
+                className={`flex-1 relative native-scroller ${showHeader && !isFullBleedHeroPage ? 'pt-[max(88px,calc(env(safe-area-inset-top)+72px))]' : ''}`}
+            >
+                {children}
+                {isMemberRoute && !isAdminRoute && !isProfilePage && <BottomSentinel />}
+            </main>
+      // ...
+  );
+};
+
+```
+
+#### **6. Applying Defaults to `DataContext.tsx**`
+
+**Changes:** Import the data instead of hardcoding it.
+
+```typescript
+// src/contexts/DataContext.tsx
+import { 
+  INITIAL_CAFE, 
+  INITIAL_EVENTS, 
+  INITIAL_ANNOUNCEMENTS, 
+  INITIAL_MEMBERS, 
+  INITIAL_BOOKINGS 
+} from '../data/defaults';
+
+// ... remove the hardcoded arrays ...
+
+// The rest of the file uses these imported constants automatically.
+
+```
+
+### **Message to Replit**
+
+Once you have applied these changes, you can send this to Replit:
+
+---
+
+**"Frontend optimization phase complete. I've implemented the CSS scroll fixes (using a dedicated `.native-scroller` class per your advice), tuned the swipe velocity, and refactored the data layer. Most importantly, I've wired notifications into `backgroundSync.ts` and removed the manual polling from `App.tsx`.**
+
+**I'm ready for you to build the backend aggregation endpoint: `GET /api/dashboard/summary`.**
+
+**Suggested Payload Structure (Confirmed):**
+
+```json
+{
+  "upcomingBookings": [],
+  "upcomingRsvps": [],
+  "wellnessAppointments": [],
+  "guestPassBalance": { "used": 0, "total": 5, "remaining": 5 },
+  "unreadNotificationsCount": 0
+}
+
+```
+
+**Let me know when the endpoint is live, and I'll update `Dashboard.tsx` to consume it!"**
