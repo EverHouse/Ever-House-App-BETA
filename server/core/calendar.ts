@@ -495,13 +495,13 @@ export async function getConferenceRoomBookingsFromCalendar(
   }
 }
 
-export async function syncGoogleCalendarEvents(): Promise<{ synced: number; created: number; updated: number; deleted: number; error?: string }> {
+export async function syncGoogleCalendarEvents(): Promise<{ synced: number; created: number; updated: number; deleted: number; pushedToCalendar: number; error?: string }> {
   try {
     const calendar = await getGoogleCalendarClient();
     const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.events.name);
     
     if (!calendarId) {
-      return { synced: 0, created: 0, updated: 0, deleted: 0, error: `Calendar "${CALENDAR_CONFIG.events.name}" not found` };
+      return { synced: 0, created: 0, updated: 0, deleted: 0, pushedToCalendar: 0, error: `Calendar "${CALENDAR_CONFIG.events.name}" not found` };
     }
     
     const oneYearAgo = new Date();
@@ -520,14 +520,27 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
     const fetchedEventIds = new Set<string>();
     let created = 0;
     let updated = 0;
+    let pushedToCalendar = 0;
     
     for (const event of events) {
       if (!event.id || !event.summary) continue;
       
       const googleEventId = event.id;
+      const googleEtag = event.etag || null;
+      const googleUpdatedAt = event.updated ? new Date(event.updated) : null;
       fetchedEventIds.add(googleEventId);
       const title = event.summary;
       const description = event.description || null;
+      
+      const extProps = event.extendedProperties?.private || {};
+      const appMetadata = {
+        imageUrl: extProps['ehApp_imageUrl'] || null,
+        externalUrl: extProps['ehApp_externalUrl'] || null,
+        maxAttendees: extProps['ehApp_maxAttendees'] ? parseInt(extProps['ehApp_maxAttendees']) : null,
+        visibility: extProps['ehApp_visibility'] || null,
+        requiresRsvp: extProps['ehApp_requiresRsvp'] === 'true',
+        location: extProps['ehApp_location'] || null,
+      };
       
       let eventDate: string;
       let startTime: string;
@@ -550,60 +563,149 @@ export async function syncGoogleCalendarEvents(): Promise<{ synced: number; crea
         continue;
       }
       
-      const location = event.location || null;
+      const location = event.location || appMetadata.location || null;
       
       const existing = await pool.query(
-        'SELECT id FROM events WHERE google_calendar_id = $1',
+        `SELECT id, locally_edited, app_last_modified_at, google_event_updated_at,
+                title, description, event_date, start_time, end_time, location, category,
+                image_url, external_url, max_attendees, visibility, requires_rsvp
+         FROM events WHERE google_calendar_id = $1`,
         [googleEventId]
       );
       
       if (existing.rows.length > 0) {
-        await pool.query(
-          `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, 
-           end_time = $5, location = $6, source = 'google_calendar', visibility = 'public', requires_rsvp = false
-           WHERE google_calendar_id = $7`,
-          [title, description, eventDate, startTime, endTime, location, googleEventId]
-        );
-        updated++;
+        const dbRow = existing.rows[0];
+        const appModifiedAt = dbRow.app_last_modified_at ? new Date(dbRow.app_last_modified_at) : null;
+        
+        if (dbRow.locally_edited === true && appModifiedAt) {
+          const calendarIsNewer = googleUpdatedAt && googleUpdatedAt > appModifiedAt;
+          
+          if (calendarIsNewer) {
+            await pool.query(
+              `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, 
+               end_time = $5, location = $6, source = 'google_calendar',
+               image_url = COALESCE($7, image_url),
+               external_url = COALESCE($8, external_url),
+               max_attendees = COALESCE($9, max_attendees),
+               visibility = COALESCE($10, visibility),
+               requires_rsvp = COALESCE($11, requires_rsvp),
+               google_event_etag = $12, google_event_updated_at = $13, last_synced_at = NOW(),
+               locally_edited = false, app_last_modified_at = NULL
+               WHERE google_calendar_id = $14`,
+              [title, description, eventDate, startTime, endTime, location,
+               appMetadata.imageUrl, appMetadata.externalUrl, appMetadata.maxAttendees,
+               appMetadata.visibility, appMetadata.requiresRsvp,
+               googleEtag, googleUpdatedAt, googleEventId]
+            );
+            updated++;
+          } else {
+            try {
+              const extendedProps: Record<string, string> = {
+                'ehApp_type': 'event',
+                'ehApp_id': String(dbRow.id),
+              };
+              if (dbRow.image_url) extendedProps['ehApp_imageUrl'] = dbRow.image_url;
+              if (dbRow.external_url) extendedProps['ehApp_externalUrl'] = dbRow.external_url;
+              if (dbRow.max_attendees) extendedProps['ehApp_maxAttendees'] = String(dbRow.max_attendees);
+              if (dbRow.visibility) extendedProps['ehApp_visibility'] = dbRow.visibility;
+              if (dbRow.requires_rsvp !== null) extendedProps['ehApp_requiresRsvp'] = String(dbRow.requires_rsvp);
+              if (dbRow.location) extendedProps['ehApp_location'] = dbRow.location;
+              
+              const patchResult = await calendar.events.patch({
+                calendarId,
+                eventId: googleEventId,
+                requestBody: {
+                  summary: dbRow.title,
+                  description: dbRow.description,
+                  location: dbRow.location,
+                  start: {
+                    dateTime: `${dbRow.event_date}T${dbRow.start_time}`,
+                    timeZone: 'America/Los_Angeles',
+                  },
+                  end: dbRow.end_time ? {
+                    dateTime: `${dbRow.event_date}T${dbRow.end_time}`,
+                    timeZone: 'America/Los_Angeles',
+                  } : undefined,
+                  extendedProperties: {
+                    private: extendedProps,
+                  },
+                },
+              });
+              
+              const newEtag = patchResult.data.etag || null;
+              const newUpdatedAt = patchResult.data.updated ? new Date(patchResult.data.updated) : null;
+              
+              await pool.query(
+                `UPDATE events SET last_synced_at = NOW(), locally_edited = false, 
+                 google_event_etag = $2, google_event_updated_at = $3, app_last_modified_at = NULL 
+                 WHERE id = $1`,
+                [dbRow.id, newEtag, newUpdatedAt]
+              );
+              pushedToCalendar++;
+            } catch (pushError) {
+              console.error(`[Events Sync] Failed to push local edits to calendar for event #${dbRow.id}:`, pushError);
+            }
+          }
+        } else {
+          await pool.query(
+            `UPDATE events SET title = $1, description = $2, event_date = $3, start_time = $4, 
+             end_time = $5, location = $6, source = 'google_calendar',
+             image_url = COALESCE($7, image_url),
+             external_url = COALESCE($8, external_url),
+             max_attendees = COALESCE($9, max_attendees),
+             visibility = COALESCE($10, visibility),
+             requires_rsvp = COALESCE($11, requires_rsvp),
+             google_event_etag = $12, google_event_updated_at = $13, last_synced_at = NOW()
+             WHERE google_calendar_id = $14`,
+            [title, description, eventDate, startTime, endTime, location,
+             appMetadata.imageUrl, appMetadata.externalUrl, appMetadata.maxAttendees,
+             appMetadata.visibility, appMetadata.requiresRsvp,
+             googleEtag, googleUpdatedAt, googleEventId]
+          );
+          updated++;
+        }
       } else {
         await pool.query(
           `INSERT INTO events (title, description, event_date, start_time, end_time, location, category, 
-           source, visibility, requires_rsvp, google_calendar_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-          [title, description, eventDate, startTime, endTime, location, 'Social', 'google_calendar', 'public', false, googleEventId]
+           source, visibility, requires_rsvp, google_calendar_id, image_url, external_url, max_attendees,
+           google_event_etag, google_event_updated_at, last_synced_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())`,
+          [title, description, eventDate, startTime, endTime, location, 'Social', 'google_calendar', 
+           appMetadata.visibility || 'public', appMetadata.requiresRsvp || false, googleEventId,
+           appMetadata.imageUrl, appMetadata.externalUrl, appMetadata.maxAttendees,
+           googleEtag, googleUpdatedAt]
         );
         created++;
       }
     }
     
-    // Delete events that no longer exist in the Google Calendar
+    // Delete events that no longer exist in the Google Calendar (only calendar-sourced events)
     const existingEvents = await pool.query(
-      'SELECT id, google_calendar_id FROM events WHERE google_calendar_id IS NOT NULL'
+      `SELECT id, google_calendar_id FROM events WHERE google_calendar_id IS NOT NULL AND source = 'google_calendar'`
     );
     
     let deleted = 0;
     for (const dbEvent of existingEvents.rows) {
       if (!fetchedEventIds.has(dbEvent.google_calendar_id)) {
-        // This event's source no longer exists in Google Calendar, delete it
         await pool.query('DELETE FROM events WHERE id = $1', [dbEvent.id]);
         deleted++;
       }
     }
     
-    return { synced: events.length, created, updated, deleted };
+    return { synced: events.length, created, updated, deleted, pushedToCalendar };
   } catch (error) {
     console.error('Error syncing Google Calendar events:', error);
-    return { synced: 0, created: 0, updated: 0, deleted: 0, error: 'Failed to sync events' };
+    return { synced: 0, created: 0, updated: 0, deleted: 0, pushedToCalendar: 0, error: 'Failed to sync events' };
   }
 }
 
-export async function syncWellnessCalendarEvents(): Promise<{ synced: number; created: number; updated: number; deleted: number; error?: string }> {
+export async function syncWellnessCalendarEvents(): Promise<{ synced: number; created: number; updated: number; deleted: number; pushedToCalendar: number; error?: string }> {
   try {
     const calendar = await getGoogleCalendarClient();
     const calendarId = await getCalendarIdByName(CALENDAR_CONFIG.wellness.name);
     
     if (!calendarId) {
-      return { synced: 0, created: 0, updated: 0, deleted: 0, error: `Calendar "${CALENDAR_CONFIG.wellness.name}" not found` };
+      return { synced: 0, created: 0, updated: 0, deleted: 0, pushedToCalendar: 0, error: `Calendar "${CALENDAR_CONFIG.wellness.name}" not found` };
     }
     
     const oneYearAgo = new Date();
@@ -622,18 +724,28 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
     const fetchedEventIds = new Set<string>();
     let created = 0;
     let updated = 0;
+    let pushedToCalendar = 0;
     
     for (const event of events) {
       if (!event.id || !event.summary) continue;
       
       const googleEventId = event.id;
+      const googleEtag = event.etag || null;
+      const googleUpdatedAt = event.updated ? new Date(event.updated) : null;
       fetchedEventIds.add(googleEventId);
       const rawTitle = event.summary;
       const description = event.description || null;
       
+      const extProps = event.extendedProperties?.private || {};
+      const appMetadata = {
+        imageUrl: extProps['ehApp_imageUrl'] || null,
+        externalUrl: extProps['ehApp_externalUrl'] || null,
+        spots: extProps['ehApp_spots'] || null,
+        status: extProps['ehApp_status'] || null,
+      };
+      
       let eventDate: string;
       let startTime: string;
-      let endTime: string | null = null;
       let durationMinutes = 60;
       
       if (event.start?.dateTime) {
@@ -679,33 +791,139 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
       }
       
       const duration = `${durationMinutes} min`;
-      const spots = '10 spots';
-      const status = 'Open';
+      const spots = appMetadata.spots || '10 spots';
+      const status = appMetadata.status || 'Open';
       
       const existing = await pool.query(
-        'SELECT id, locally_edited FROM wellness_classes WHERE google_calendar_id = $1',
+        `SELECT id, locally_edited, app_last_modified_at, google_event_updated_at, 
+                image_url, external_url, spots, status, title, time, instructor, duration, category, date
+         FROM wellness_classes WHERE google_calendar_id = $1`,
         [googleEventId]
       );
       
       if (existing.rows.length > 0) {
-        if (existing.rows[0].locally_edited === true) {
-          continue;
+        const dbRow = existing.rows[0];
+        const appModifiedAt = dbRow.app_last_modified_at ? new Date(dbRow.app_last_modified_at) : null;
+        
+        if (dbRow.locally_edited === true && appModifiedAt) {
+          const calendarIsNewer = googleUpdatedAt && googleUpdatedAt > appModifiedAt;
+          
+          if (calendarIsNewer) {
+            await pool.query(
+              `UPDATE wellness_classes SET 
+                title = $1, time = $2, instructor = $3, duration = $4, 
+                category = $5, spots = $6, status = $7, description = $8, 
+                date = $9, is_active = true, updated_at = NOW(),
+                image_url = COALESCE($10, image_url),
+                external_url = COALESCE($11, external_url),
+                google_event_etag = $12, google_event_updated_at = $13, last_synced_at = NOW(),
+                locally_edited = false, app_last_modified_at = NULL
+               WHERE google_calendar_id = $14`,
+              [title, startTime, instructor, duration, category, spots, status, description, eventDate,
+               appMetadata.imageUrl, appMetadata.externalUrl, googleEtag, googleUpdatedAt, googleEventId]
+            );
+            updated++;
+          } else {
+            try {
+              const calendarTitle = `${dbRow.category} - ${dbRow.title} with ${dbRow.instructor}`;
+              const calendarDescription = [dbRow.description || '', `Duration: ${dbRow.duration}`, `Spots: ${dbRow.spots}`].filter(Boolean).join('\n');
+              
+              const convertTo24Hour = (timeStr: string): string => {
+                const match12h = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                if (match12h) {
+                  let hours = parseInt(match12h[1]);
+                  const minutes = match12h[2];
+                  const period = match12h[3].toUpperCase();
+                  if (period === 'PM' && hours !== 12) hours += 12;
+                  if (period === 'AM' && hours === 12) hours = 0;
+                  return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+                }
+                const match24h = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+                if (match24h) {
+                  return `${match24h[1].padStart(2, '0')}:${match24h[2]}:${match24h[3] || '00'}`;
+                }
+                return '09:00:00';
+              };
+              
+              const calculateEndTime = (startTime24: string, durationStr: string): string => {
+                const durationMatch = durationStr.match(/(\d+)/);
+                const durationMins = durationMatch ? parseInt(durationMatch[1]) : 60;
+                const [hours, minutes] = startTime24.split(':').map(Number);
+                const totalMinutes = hours * 60 + minutes + durationMins;
+                const endHours = Math.floor(totalMinutes / 60) % 24;
+                const endMins = totalMinutes % 60;
+                return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
+              };
+              
+              const startTime24 = convertTo24Hour(dbRow.time);
+              const endTime24 = calculateEndTime(startTime24, dbRow.duration);
+              
+              const extendedProps: Record<string, string> = {
+                'ehApp_type': 'wellness',
+                'ehApp_id': String(dbRow.id),
+              };
+              if (dbRow.image_url) extendedProps['ehApp_imageUrl'] = dbRow.image_url;
+              if (dbRow.external_url) extendedProps['ehApp_externalUrl'] = dbRow.external_url;
+              if (dbRow.spots) extendedProps['ehApp_spots'] = dbRow.spots;
+              if (dbRow.status) extendedProps['ehApp_status'] = dbRow.status;
+              
+              const patchResult = await calendar.events.patch({
+                calendarId,
+                eventId: googleEventId,
+                requestBody: {
+                  summary: calendarTitle,
+                  description: calendarDescription,
+                  start: {
+                    dateTime: `${dbRow.date}T${startTime24}`,
+                    timeZone: 'America/Los_Angeles',
+                  },
+                  end: {
+                    dateTime: `${dbRow.date}T${endTime24}`,
+                    timeZone: 'America/Los_Angeles',
+                  },
+                  extendedProperties: {
+                    private: extendedProps,
+                  },
+                },
+              });
+              
+              const newEtag = patchResult.data.etag || null;
+              const newUpdatedAt = patchResult.data.updated ? new Date(patchResult.data.updated) : null;
+              
+              await pool.query(
+                `UPDATE wellness_classes SET last_synced_at = NOW(), locally_edited = false,
+                 google_event_etag = $2, google_event_updated_at = $3, app_last_modified_at = NULL
+                 WHERE id = $1`,
+                [dbRow.id, newEtag, newUpdatedAt]
+              );
+              pushedToCalendar++;
+            } catch (pushError) {
+              console.error(`[Wellness Sync] Failed to push local edits to calendar for class #${dbRow.id}:`, pushError);
+            }
+          }
+        } else {
+          await pool.query(
+            `UPDATE wellness_classes SET 
+              title = $1, time = $2, instructor = $3, duration = $4, 
+              category = $5, spots = $6, status = $7, description = $8, 
+              date = $9, is_active = true, updated_at = NOW(),
+              image_url = COALESCE($10, image_url),
+              external_url = COALESCE($11, external_url),
+              google_event_etag = $12, google_event_updated_at = $13, last_synced_at = NOW()
+             WHERE google_calendar_id = $14`,
+            [title, startTime, instructor, duration, category, spots, status, description, eventDate,
+             appMetadata.imageUrl, appMetadata.externalUrl, googleEtag, googleUpdatedAt, googleEventId]
+          );
+          updated++;
         }
-        await pool.query(
-          `UPDATE wellness_classes SET 
-            title = $1, time = $2, instructor = $3, duration = $4, 
-            category = $5, spots = $6, status = $7, description = $8, 
-            date = $9, is_active = true, updated_at = NOW()
-           WHERE google_calendar_id = $10`,
-          [title, startTime, instructor, duration, category, spots, status, description, eventDate, googleEventId]
-        );
-        updated++;
       } else {
         await pool.query(
           `INSERT INTO wellness_classes 
-            (title, time, instructor, duration, category, spots, status, description, date, is_active, google_calendar_id, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10, NOW())`,
-          [title, startTime, instructor, duration, category, spots, status, description, eventDate, googleEventId]
+            (title, time, instructor, duration, category, spots, status, description, date, is_active, 
+             google_calendar_id, image_url, external_url, google_event_etag, google_event_updated_at, last_synced_at, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10, $11, $12, $13, $14, NOW(), NOW())`,
+          [title, startTime, instructor, duration, category, spots, status, description, eventDate, googleEventId,
+           appMetadata.imageUrl, appMetadata.externalUrl, googleEtag, googleUpdatedAt]
         );
         created++;
       }
@@ -719,16 +937,15 @@ export async function syncWellnessCalendarEvents(): Promise<{ synced: number; cr
     let deleted = 0;
     for (const dbClass of existingClasses.rows) {
       if (!fetchedEventIds.has(dbClass.google_calendar_id)) {
-        // This wellness class's source no longer exists in Google Calendar, deactivate it
         await pool.query('UPDATE wellness_classes SET is_active = false WHERE id = $1', [dbClass.id]);
         deleted++;
       }
     }
     
-    return { synced: events.length, created, updated, deleted };
+    return { synced: events.length, created, updated, deleted, pushedToCalendar };
   } catch (error) {
     console.error('Error syncing Wellness Calendar events:', error);
-    return { synced: 0, created: 0, updated: 0, deleted: 0, error: 'Failed to sync wellness classes' };
+    return { synced: 0, created: 0, updated: 0, deleted: 0, pushedToCalendar: 0, error: 'Failed to sync wellness classes' };
   }
 }
 

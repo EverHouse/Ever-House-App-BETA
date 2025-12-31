@@ -82,6 +82,10 @@ export const wellnessClasses = pgTable("wellness_classes", {
   imageUrl: text("image_url"),
   externalUrl: text("external_url"),
   locallyEdited: boolean("locally_edited").default(false),
+  googleEventEtag: varchar("google_event_etag"),
+  googleEventUpdatedAt: timestamp("google_event_updated_at"),
+  appLastModifiedAt: timestamp("app_last_modified_at"),
+  lastSyncedAt: timestamp("last_synced_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -207,6 +211,11 @@ export const events = pgTable("events", {
   visibility: varchar("visibility").default("public"),
   googleCalendarId: varchar("google_calendar_id"),
   requiresRsvp: boolean("requires_rsvp").default(false),
+  locallyEdited: boolean("locally_edited").default(false),
+  googleEventEtag: varchar("google_event_etag"),
+  googleEventUpdatedAt: timestamp("google_event_updated_at"),
+  appLastModifiedAt: timestamp("app_last_modified_at"),
+  lastSyncedAt: timestamp("last_synced_at"),
 });
 
 // Event RSVPs table - event registrations

@@ -259,6 +259,8 @@ router.put('/api/events/:id', isStaffOrAdmin, async (req, res) => {
       imageUrl: image_url,
       maxAttendees: max_attendees,
       externalUrl: external_url || null,
+      locallyEdited: true,
+      appLastModifiedAt: new Date(),
     }).where(eq(events.id, parseInt(id))).returning();
     
     if (result.length === 0) {
