@@ -56,8 +56,19 @@ export function ModalShell({
       }
     };
     
+    // Save current scroll position
+    const scrollY = window.scrollY;
+    
     document.addEventListener('keydown', handleEscapeKey);
+    
+    // Lock body scroll - more robust approach for iOS
     document.documentElement.classList.add('overflow-hidden');
+    document.body.classList.add('overflow-hidden');
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.overscrollBehavior = 'none';
     
     setTimeout(() => {
       modalRef.current?.focus();
@@ -65,7 +76,18 @@ export function ModalShell({
 
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
+      
+      // Restore scroll position
       document.documentElement.classList.remove('overflow-hidden');
+      document.body.classList.remove('overflow-hidden');
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.overscrollBehavior = '';
+      
+      // Restore scroll position after removing fixed positioning
+      window.scrollTo(0, scrollY);
       
       if (previousActiveElement.current) {
         previousActiveElement.current.focus();
@@ -78,16 +100,18 @@ export function ModalShell({
 
   const modalContent = (
     <div 
-      className={`fixed inset-0 z-[10001] overflow-y-auto ${isDark ? 'dark' : ''}`}
-      style={{ overscrollBehavior: 'contain' }}
+      className={`fixed inset-0 z-[10001] ${isDark ? 'dark' : ''}`}
+      style={{ overscrollBehavior: 'contain', touchAction: 'none' }}
     >
       <div 
         className="fixed inset-0 bg-black/60 backdrop-blur-sm"
         aria-hidden="true"
+        style={{ touchAction: 'none' }}
       />
       
       <div 
         className="fixed inset-0 overflow-y-auto"
+        style={{ overscrollBehavior: 'contain' }}
         onClick={(e) => {
           if (dismissible && e.target === e.currentTarget) {
             onClose();
@@ -133,7 +157,10 @@ export function ModalShell({
               </div>
             )}
             
-            <div className="max-h-[calc(90vh-120px)] overflow-y-auto overflow-x-hidden">
+            <div 
+              className="max-h-[calc(90vh-120px)] overflow-y-auto overflow-x-hidden"
+              style={{ touchAction: 'pan-y', overscrollBehavior: 'contain' }}
+            >
               {children}
             </div>
           </div>

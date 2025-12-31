@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.22",
+    date: "2025-12-31",
+    title: "Modal Scroll Lock Fix",
+    changes: [
+      "Fixed background page scrolling when modals are open",
+      "Prevents accidental pull-to-refresh when interacting with modals on iOS",
+      "Improved scroll containment within modal content areas",
+      "Scroll position now properly restored when closing modals"
+    ]
+  },
+  {
     version: "7.21",
     date: "2025-12-31",
     title: "Staff Portal Announcements Tab Fix",
