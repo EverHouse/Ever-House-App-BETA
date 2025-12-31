@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "7.11",
+    date: "2025-12-31",
+    title: "PWA Layer Cake Fix",
+    changes: [
+      "Complete iOS PWA status bar fix with multi-layer approach",
+      "Changed base html/body background to brand green as safety layer",
+      "Landing page now uses green background to match status bar",
+      "Other pages correctly display bone white background"
+    ]
+  },
+  {
     version: "7.10",
     date: "2025-12-31",
     title: "iOS PWA Splash Screen",

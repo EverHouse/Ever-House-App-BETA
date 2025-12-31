@@ -106,7 +106,7 @@ html, body {
   width: 100%;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
-  background-color: #F2F2EC;
+  background-color: #293515;
   color: var(--brand-primary);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;

@@ -587,7 +587,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   ) : null;
 
   return (
-    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
+    <div className={`${isDarkTheme ? 'dark liquid-bg text-white' : isLandingPage ? 'bg-[#293515] text-primary' : 'bg-[#F2F2EC] text-primary'} min-h-screen w-full relative transition-colors duration-500 font-sans`}>
       
       {/* Edge swipe indicator - back arrow that fades and bounces */}
       <div 
